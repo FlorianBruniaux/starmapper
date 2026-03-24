@@ -1,0 +1,15 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model GeoCache {
+  key String @id
+  lat Float?
+  lng Float?
+
+  @@map("geocache")
+}

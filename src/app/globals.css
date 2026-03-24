@@ -24,3 +24,25 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+.starmapper-popup .maplibregl-popup-content {
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 10px;
+  color: #e6edf3;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+  padding: 12px 16px;
+}
+.starmapper-popup .maplibregl-popup-tip {
+  border-top-color: #161b22;
+  border-bottom-color: #161b22;
+}
+.starmapper-popup .maplibregl-popup-close-button {
+  color: #8b949e;
+  font-size: 16px;
+  padding: 4px 8px;
+}
+.starmapper-popup .maplibregl-popup-close-button:hover {
+  color: #f0f6fc;
+  background: none;
+}
