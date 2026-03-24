@@ -955,9 +955,37 @@ export default function MapPage({
         ← Back
       </a>
 
-      {/* Bottom-left — vertical dock: secondary actions + Share CTA */}
+      {/* Bottom-left — vertical dock: follower filter + secondary actions + Share CTA */}
       {(stats || allStargazers.length > 0) && (
         <div className="absolute bottom-6 left-4 z-10 flex flex-col gap-2">
+
+          {/* Follower tier filter */}
+          <div className="bg-[rgba(13,17,23,0.88)] border border-[#30363d] rounded-lg px-3 py-2 backdrop-blur-md flex flex-col gap-1">
+            <span className="text-[10px] text-[#484f58] uppercase tracking-widest mb-0.5">Filter map</span>
+            {([
+              { key: "all", label: "All", dot: null },
+              { key: "high", label: "500+ followers", dot: "bg-[#f85149]" },
+              { key: "mid", label: "100–500", dot: "bg-[#ffa657]" },
+              { key: "low", label: "<100", dot: "bg-[#58a6ff]" },
+            ] as const).map(({ key, label, dot }) => {
+              const active = followerMapFilter === key;
+              return (
+                <button
+                  key={key}
+                  onClick={() => setFollowerMapFilter(active && key !== "all" ? "all" : key)}
+                  className={`flex items-center gap-2 rounded px-1.5 py-0.5 text-xs transition-colors text-left ${
+                    active ? "bg-[#21262d] text-[#f0f6fc]" : "text-[#8b949e] hover:bg-[#161b22] hover:text-[#f0f6fc]"
+                  }`}
+                >
+                  {dot
+                    ? <span className={`inline-block w-2 h-2 rounded-full ${dot} flex-shrink-0`} />
+                    : <span className="inline-block w-2 h-2 flex-shrink-0" />
+                  }
+                  {label}
+                </button>
+              );
+            })}
+          </div>
           {stats && (
             <button
               onClick={() => setStatsOpen(true)}

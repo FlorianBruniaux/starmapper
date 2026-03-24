@@ -15,7 +15,7 @@ interface Props {
 }
 
 const JAWG_TOKEN = process.env.NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN ?? "";
-const STYLE_URL = `https://api.jawg.io/styles/jawg-dark.json?access-token=${JAWG_TOKEN}`;
+const STYLE_URL = `https://api.jawg.io/styles/jawg-dark.json?access-token=${JAWG_TOKEN}&lang=en`;
 const CLUSTER_MAX_ZOOM = 12;
 
 function buildGeoJSON(pts: StargazerPoint[]) {
@@ -212,6 +212,22 @@ export function StargazerMap({ points, comparePoints, flyTarget, onFlyDone, onRe
               }
             }
           }
+
+          // Remove ocean / marine / water-body label layers (noisy, not useful)
+          json.layers = (json.layers ?? []).filter((layer) => {
+            const sl = (layer as { "source-layer"?: string })["source-layer"];
+            if (sl === "water_name" || sl === "marine") return false;
+            const id = layer.id ?? "";
+            if (/^(ocean|marine|water.?name)/i.test(id)) return false;
+            return true;
+          });
+
+          // Force English label names if Jawg lang param isn't enough
+          const fixed = JSON.parse(
+            JSON.stringify(json).replace(/"name:fr"/g, '"name:en"'),
+          ) as StyleSpecification;
+          Object.assign(json, fixed);
+
           style = json;
         }
       } catch { /* fall back to URL */ }
