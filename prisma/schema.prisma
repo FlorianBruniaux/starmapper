@@ -13,3 +13,15 @@ model GeoCache {
 
   @@map("geocache")
 }
+
+model BadgeCache {
+  owner        String
+  repo         String
+  mappedCount  Int
+  countryCount Int
+  totalCount   Int
+  updatedAt    DateTime @updatedAt @default(now())
+
+  @@id([owner, repo])
+  @@map("badge_cache")
+}

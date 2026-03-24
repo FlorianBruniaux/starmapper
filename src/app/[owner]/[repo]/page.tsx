@@ -277,6 +277,25 @@ export default function MapPage({
         latestStarredAt: newestStarredAt,
       });
       saveBookmark(owner, repo, allPoints.length + allUnmapped.length);
+
+      // Update badge cache (fire-and-forget)
+      const countrySet = new Set(
+        allPoints
+          .map((p) => p.location?.split(",").pop()?.trim())
+          .filter(Boolean),
+      );
+      fetch("/api/badge-update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          owner,
+          repo,
+          mappedCount: allPoints.length,
+          countryCount: countrySet.size,
+          totalCount: allPoints.length + allUnmapped.length,
+        }),
+      }).catch(() => {});
+
       setStatus("done");
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Unknown error");
