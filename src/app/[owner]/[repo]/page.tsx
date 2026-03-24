@@ -856,44 +856,15 @@ export default function MapPage({
         </div>
       </div>
 
-      {/* Legend — clickable to filter map */}
-      <div className="absolute bottom-6 right-4 z-10
-        bg-[rgba(13,17,23,0.88)] border border-[#30363d] rounded-lg px-3 py-2
-        text-[11px] backdrop-blur-md select-none">
-        {followerMapFilter !== "all" && (
-          <button
-            onClick={() => setFollowerMapFilter("all")}
-            className="text-[10px] text-[#484f58] hover:text-[#8b949e] mb-1.5 w-full text-left transition-colors"
-          >
-            ✕ Show all
-          </button>
-        )}
-        {(["high", "mid", "low"] as const).map((tier) => {
-          const active = followerMapFilter === tier;
-          const dot = tier === "high" ? { size: "w-2.5 h-2.5", color: "bg-[#f85149]" }
-            : tier === "mid" ? { size: "w-2 h-2", color: "bg-[#ffa657]" }
-            : { size: "w-1.5 h-1.5", color: "bg-[#58a6ff]" };
-          const label = tier === "high" ? "500+ followers" : tier === "mid" ? "100–500" : "<100";
-          return (
-            <button
-              key={tier}
-              onClick={() => setFollowerMapFilter(active ? "all" : tier)}
-              className={`flex items-center gap-2 w-full mb-1 last:mb-0 rounded px-1 py-0.5 transition-colors ${
-                active ? "bg-[#21262d]" : "hover:bg-[#161b22]"
-              } ${active ? "text-[#f0f6fc]" : "text-[#8b949e]"}`}
-            >
-              <span className={`inline-block ${dot.size} rounded-full ${dot.color} flex-shrink-0`} />
-              {label}
-            </button>
-          );
-        })}
-        {compareOwner && compareRepo && (
-          <div className="flex items-center gap-2 mt-2 pt-2 border-t border-[#21262d]">
-            <span className="inline-block w-2 h-2 rounded-full bg-[#a371f7] flex-shrink-0" />
-            <span className="text-[#8b949e] text-[10px] truncate max-w-[120px]">{compareRepo}</span>
-          </div>
-        )}
-      </div>
+      {/* Legend — compare mode indicator only */}
+      {compareOwner && compareRepo && (
+        <div className="absolute bottom-6 right-4 z-10
+          bg-[rgba(13,17,23,0.88)] border border-[#30363d] rounded-lg px-3 py-2
+          text-[11px] backdrop-blur-md select-none flex items-center gap-2">
+          <span className="inline-block w-2 h-2 rounded-full bg-[#a371f7] flex-shrink-0" />
+          <span className="text-[#8b949e] text-[10px] truncate max-w-[120px]">{compareRepo}</span>
+        </div>
+      )}
 
       {/* Unmapped drawer */}
       {drawerOpen && (
