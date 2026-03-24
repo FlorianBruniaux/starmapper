@@ -1192,7 +1192,7 @@ export default function MapPage({
                     </th>
                     <th className="px-3 py-2.5 text-right text-[#8b949e] font-medium">
                       <button onClick={() => toggleSort("followers")} className="flex items-center gap-1 hover:text-[#f0f6fc] ml-auto">
-                        {allSort.key === "followers" ? (allSort.dir === -1 ? "↓" : "↑") : <span className="opacity-30">↕</span>} Followers
+                        {allSort.key === "followers" ? (allSort.dir === -1 ? "↑" : "↓") : <span className="opacity-30">↕</span>} Followers
                       </button>
                     </th>
                     <th className="px-3 py-2.5 text-left text-[#8b949e] font-medium hidden sm:table-cell">
@@ -1202,7 +1202,7 @@ export default function MapPage({
                     </th>
                     <th className="px-3 py-2.5 text-left text-[#8b949e] font-medium hidden md:table-cell">
                       <button onClick={() => toggleSort("starredAt")} className="flex items-center gap-1 hover:text-[#f0f6fc]">
-                        Starred {allSort.key === "starredAt" ? (allSort.dir === -1 ? "↓" : "↑") : <span className="opacity-30">↕</span>}
+                        Starred {allSort.key === "starredAt" ? (allSort.dir === -1 ? "↑" : "↓") : <span className="opacity-30">↕</span>}
                       </button>
                     </th>
                     <th className="px-3 py-2.5 text-left text-[#8b949e] font-medium hidden lg:table-cell">
