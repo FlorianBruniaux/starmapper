@@ -1531,7 +1531,7 @@ export default function MapPage({
                   Share on X
                 </a>
                 <a
-                  href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}`}
+                  href={`https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(window.location.href)}&title=${encodeURIComponent(`${owner}/${repo} — ${repoInfo.stars >= 1000 ? `${(repoInfo.stars / 1000).toFixed(1)}k` : repoInfo.stars} stars from ${stats?.countryCount ?? "?"} countries`)}&summary=${encodeURIComponent(`See where in the world ${owner}/${repo} stargazers are located. ${points.length} mapped across ${stats?.countryCount ?? "?"} countries.`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex-1 flex items-center justify-center gap-2 bg-[#21262d] hover:bg-[#30363d] border border-[#30363d] text-[#8b949e] hover:text-[#f0f6fc] text-xs py-2 rounded-lg transition-colors"
