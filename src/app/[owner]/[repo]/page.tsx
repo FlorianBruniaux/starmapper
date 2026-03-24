@@ -955,18 +955,18 @@ export default function MapPage({
         ← Back
       </a>
 
-      {/* Bottom-left — secondary actions + Share CTA */}
+      {/* Bottom-left — vertical dock: secondary actions + Share CTA */}
       {(stats || allStargazers.length > 0) && (
-        <div className="absolute bottom-6 left-4 z-10 flex gap-1.5 flex-wrap max-w-[calc(100vw-180px)]">
+        <div className="absolute bottom-6 left-4 z-10 flex flex-col gap-2">
           {stats && (
             <button
               onClick={() => setStatsOpen(true)}
               className="bg-[rgba(13,17,23,0.88)] border border-[#30363d] rounded-lg
-                px-2.5 py-1.5 text-[11px] text-[#8b949e] hover:text-[#f0f6fc]
-                hover:border-[#58a6ff]/50 backdrop-blur-md transition-all flex items-center gap-1.5"
+                px-3 py-2.5 text-xs text-[#8b949e] hover:text-[#f0f6fc]
+                hover:border-[#58a6ff]/50 backdrop-blur-md transition-all flex items-center gap-2"
               title="Stargazer stats"
             >
-              <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" className="text-[#58a6ff]" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" className="text-[#58a6ff] flex-shrink-0" aria-hidden="true">
                 <path d="M1.5 1.75a.75.75 0 00-1.5 0v12.5c0 .414.336.75.75.75h14.5a.75.75 0 000-1.5H1.5V1.75zm13.28 4.47a.75.75 0 00-1.06-1.06L10 8.94 7.53 6.47a.75.75 0 00-1.06 0L3.22 9.72a.75.75 0 001.06 1.06L7 8.06l2.47 2.47a.75.75 0 001.06 0l4.25-4.32z"/>
               </svg>
               <span>Stats</span>
@@ -976,15 +976,15 @@ export default function MapPage({
             <button
               onClick={() => setAllOpen(true)}
               className="bg-[rgba(13,17,23,0.88)] border border-[#30363d] rounded-lg
-                px-2.5 py-1.5 text-[11px] text-[#8b949e] hover:text-[#f0f6fc]
-                hover:border-[#a371f7]/50 backdrop-blur-md transition-all flex items-center gap-1.5"
+                px-3 py-2.5 text-xs text-[#8b949e] hover:text-[#f0f6fc]
+                hover:border-[#a371f7]/50 backdrop-blur-md transition-all flex items-center gap-2"
               title="All stargazers"
             >
-              <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" className="text-[#a371f7]" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" className="text-[#a371f7] flex-shrink-0" aria-hidden="true">
                 <path d="M2 5.5a3.5 3.5 0 115.898 2.549 5.508 5.508 0 013.034 4.084.75.75 0 11-1.482.235 4 4 0 00-7.9 0 .75.75 0 01-1.482-.236A5.507 5.507 0 013.102 8.05 3.493 3.493 0 012 5.5zM11 4a3 3 0 102.22 5.018 5.01 5.01 0 012.56 3.012.75.75 0 11-1.45.39 3.504 3.504 0 00-6.66 0 .75.75 0 11-1.45-.39A5.01 5.01 0 018.78 9.018 3 3 0 0111 4z"/>
               </svg>
               <span>Stargazers</span>
-              <span className="bg-[#30363d] text-[#8b949e] text-[10px] px-1.5 py-px rounded-full tabular-nums leading-none">
+              <span className="bg-[#30363d] text-[#8b949e] text-[10px] px-1.5 py-px rounded-full tabular-nums leading-none ml-auto">
                 {allStargazers.length.toLocaleString()}
               </span>
             </button>
@@ -993,11 +993,11 @@ export default function MapPage({
             <button
               onClick={() => setGrowthOpen(true)}
               className="bg-[rgba(13,17,23,0.88)] border border-[#30363d] rounded-lg
-                px-2.5 py-1.5 text-[11px] text-[#8b949e] hover:text-[#f0f6fc]
-                hover:border-[#3fb950]/50 backdrop-blur-md transition-all flex items-center gap-1.5"
+                px-3 py-2.5 text-xs text-[#8b949e] hover:text-[#f0f6fc]
+                hover:border-[#3fb950]/50 backdrop-blur-md transition-all flex items-center gap-2"
               title="Star growth chart"
             >
-              <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-[#3fb950]" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-[#3fb950] flex-shrink-0" aria-hidden="true">
                 <path d="M1.5 12.5 5 8l3 3 3.5-5 3 3"/>
               </svg>
               <span>Growth</span>
@@ -1008,29 +1008,29 @@ export default function MapPage({
             target="_blank"
             rel="noopener noreferrer"
             className="bg-[rgba(13,17,23,0.88)] border border-[#30363d] rounded-lg
-              px-2.5 py-1.5 text-[11px] text-[#8b949e] hover:text-[#f0f6fc]
-              hover:border-[#ffa657]/50 backdrop-blur-md transition-all flex items-center gap-1.5"
+              px-3 py-2.5 text-xs text-[#8b949e] hover:text-[#f0f6fc]
+              hover:border-[#ffa657]/50 backdrop-blur-md transition-all flex items-center gap-2"
             title="View star history on star-history.com"
           >
-            <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" className="text-[#ffa657]" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" className="text-[#ffa657] flex-shrink-0" aria-hidden="true">
               <path d="M8 .25a.75.75 0 01.673.418l1.882 3.815 4.21.612a.75.75 0 01.416 1.279l-3.046 2.97.719 4.192a.75.75 0 01-1.088.791L8 12.347l-3.766 1.98a.75.75 0 01-1.088-.79l.72-4.194L.818 6.374a.75.75 0 01.416-1.28l4.21-.611L7.327.668A.75.75 0 018 .25z"/>
             </svg>
             <span>History</span>
           </a>
 
-          {/* Share CTA — green, always visible, inline with secondary actions */}
+          {/* Share CTA */}
           <button
             onClick={() => setShareOpen(true)}
             className="bg-[#238636] hover:bg-[#2ea043] active:bg-[#1a7f2e]
               border border-[#2ea043]/60 hover:border-[#3fb950]/60
-              rounded-lg px-3 py-1.5
-              text-white text-[11px] font-semibold
+              rounded-lg px-3 py-2.5
+              text-white text-xs font-semibold
               backdrop-blur-md transition-all duration-150
-              flex items-center gap-1.5
+              flex items-center gap-2 w-full
               shadow-[0_0_12px_rgba(35,134,54,0.3)] hover:shadow-[0_0_20px_rgba(46,160,67,0.45)]"
             aria-label="Share this stargazer map"
           >
-            <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" className="flex-shrink-0" aria-hidden="true">
               <path d="M2.75 3.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h2a.75.75 0 010 1.5h-2A1.75 1.75 0 011 11.25v-7.5C1 2.784 1.784 2 2.75 2h2.5a.75.75 0 010 1.5h-2.5zm10.5 0a.75.75 0 010-1.5h-4.5a.75.75 0 00-.75.75v3.5a.75.75 0 001.5 0V4.56L13.47 8l-3.97 3.44V9.75a.75.75 0 00-1.5 0v3.5c0 .414.336.75.75.75h4.5a.75.75 0 000-1.5h-2.5z"/>
             </svg>
             Share
