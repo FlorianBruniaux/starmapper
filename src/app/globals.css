@@ -25,6 +25,10 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+button, a {
+  cursor: pointer;
+}
+
 .starmapper-popup .maplibregl-popup-content {
   background: #161b22;
   border: 1px solid #30363d;
