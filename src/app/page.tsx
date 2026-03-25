@@ -132,16 +132,32 @@ export default function HomePage() {
       </header>
 
       {/* Main */}
-      <main className="min-h-screen bg-[#0d1117] flex flex-col items-center justify-center px-4 pt-16 pb-16">
-        <div className="max-w-md w-full">
+      <main className="min-h-screen bg-[#0d1117] flex flex-col lg:flex-row pt-14">
 
-          {/* Hero — minimal, text-left to align with form */}
-          <div className="mb-7">
-            <h1 className="text-2xl font-bold text-[#f0f6fc] mb-1">
-              Map your stargazers
+        {/* Left column — hero + form + how it works */}
+        <div className="lg:w-[480px] lg:shrink-0 flex flex-col justify-center px-8 py-12 lg:py-16 lg:border-r lg:border-[#21262d]">
+        <div className="w-full max-w-sm mx-auto lg:mx-0">
+
+          {/* Hero */}
+          <div className="mb-8">
+            <div className="flex items-center gap-2 mb-4">
+              <span
+                className="inline-flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-widest
+                           text-accent-blue bg-accent-blue/10 border border-accent-blue/20 rounded-full px-3 py-1"
+              >
+                <svg width="8" height="8" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                  <path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.751.751 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z" />
+                </svg>
+                GitHub Stargazer Analytics
+              </span>
+            </div>
+            <h1 className="text-3xl font-bold text-foreground leading-tight mb-3">
+              Where in the world does<br />
+              your repo shine?
             </h1>
-            <p className="text-[#8b949e] text-sm">
-              See where in the world your GitHub repo is loved.
+            <p className="text-muted text-sm leading-relaxed">
+              Drop a GitHub repo URL and get an interactive world map of every stargazer,
+              geocoded in real time.
             </p>
           </div>
 
@@ -265,15 +281,47 @@ export default function HomePage() {
           )}
         </div>
 
-        {/* Explore — repos already mapped */}
+        {/* How it works — vertical list in left column */}
+        <div className="w-full max-w-sm mx-auto lg:mx-0 mt-10">
+          <p className="text-muted-subtle text-[10px] uppercase tracking-widest mb-3">How it works</p>
+          <div className="flex flex-col gap-2">
+            {[
+              { color: "#58a6ff", bg: "rgba(88,166,255,0.08)", label: "Interactive map", desc: "Stargazers geocoded and plotted in real time as they load.", icon: <path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Zm4.94-2.06a.75.75 0 0 1 1.06 0l1.5 1.5 3-3a.75.75 0 1 1 1.06 1.06l-3.5 3.5a.75.75 0 0 1-1.06 0l-2-2a.75.75 0 0 1 0-1.06Z" /> },
+              { color: "#3fb950", bg: "rgba(63,185,80,0.08)", label: "Stats & export", desc: "Top countries, cities, companies, followers. Export image, Markdown or LinkedIn.", icon: <path d="M1.5 1.75V13.5h13.75a.75.75 0 0 1 0 1.5H.75a.75.75 0 0 1-.75-.75V1.75a.75.75 0 0 1 1.5 0Zm14.28 2.53-5.25 5.25a.75.75 0 0 1-1.06 0L7 7.06 4.28 9.78a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042l3.25-3.25a.75.75 0 0 1 1.06 0L9 7.94l4.72-4.72a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042Z" /> },
+              { color: "#ffa657", bg: "rgba(255,166,87,0.08)", label: "Shared cache", desc: "First scan populates a global cache — next visitor loads instantly.", icon: <path d="M11.93 8.5a4.002 4.002 0 0 1-7.86 0H.75a.75.75 0 0 1 0-1.5h3.32a4.002 4.002 0 0 1 7.86 0h3.32a.75.75 0 0 1 0 1.5Zm-1.43-.75a2.5 2.5 0 1 0-5 0 2.5 2.5 0 0 0 5 0Z" /> },
+            ].map(({ color, bg, label, desc, icon }) => (
+              <div key={label} className="flex items-start gap-3 bg-surface border border-border-subtle rounded-lg px-4 py-3">
+                <div className="mt-0.5 size-7 shrink-0 flex items-center justify-center rounded-md" style={{ background: bg }}>
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill={color} aria-hidden="true">{icon}</svg>
+                </div>
+                <div>
+                  <div className="text-xs font-semibold mb-0.5" style={{ color }}>{label}</div>
+                  <div className="text-muted text-xs leading-relaxed">{desc}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        </div>{/* end left column */}
+
+        {/* Right column — repos table */}
         {repos.length > 0 && (
-          <div className="w-full max-w-3xl mt-14">
-            <p className="text-[#484f58] text-[10px] uppercase tracking-widest mb-3">
-              Already mapped · {repos.length} repos
-            </p>
+          <div className="flex-1 flex flex-col px-8 py-12 lg:py-16 overflow-auto">
+            <div className="flex items-center justify-between mb-5">
+              <div>
+                <p className="text-muted-subtle text-[10px] uppercase tracking-widest mb-1">Community maps</p>
+                <p className="text-foreground text-sm font-semibold">{repos.length} repos already mapped</p>
+              </div>
+              <span className="flex items-center gap-1.5 text-xs text-muted">
+                <span className="size-1.5 rounded-full bg-accent-blue/70 animate-pulse inline-block" />
+                Live data
+              </span>
+            </div>
             <RepoTable repos={repos} />
           </div>
         )}
+
       </main>
 
       {/* Minimal footer — context link, not in the main flow */}
