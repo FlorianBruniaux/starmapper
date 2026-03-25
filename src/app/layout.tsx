@@ -4,14 +4,19 @@ import "./globals.css";
 
 const geist = Geist({ subsets: ["latin"] });
 
+const APP_URL = "https://starmapper.bruniaux.com";
+
 export const metadata: Metadata = {
   title: "StarMapper — Map your GitHub stargazers",
   description: "See where in the world your GitHub repo's fans are — geocoded, clustered, and beautiful.",
+  metadataBase: new URL(APP_URL),
+  alternates: { canonical: "/" },
   openGraph: {
     title: "StarMapper — Map your GitHub stargazers",
     description: "See where in the world your GitHub repo's fans are — geocoded, clustered, and beautiful.",
     siteName: "StarMapper",
     type: "website",
+    url: APP_URL,
   },
   twitter: {
     card: "summary_large_image",
@@ -20,9 +25,118 @@ export const metadata: Metadata = {
   },
 };
 
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "SoftwareApplication",
+      "@id": `${APP_URL}/#app`,
+      name: "StarMapper",
+      url: APP_URL,
+      description:
+        "StarMapper visualizes where your GitHub repository's stargazers are located on an interactive world map. It geocodes user locations, clusters them by geography, and shows country/city statistics — free, with no login required.",
+      applicationCategory: "DeveloperApplication",
+      operatingSystem: "Web",
+      browserRequirements: "Requires JavaScript",
+      offers: {
+        "@type": "Offer",
+        price: "0",
+        priceCurrency: "USD",
+        description: "Free, no account required",
+      },
+      featureList: [
+        "Interactive world map of GitHub stargazers",
+        "Automatic geocoding of user locations",
+        "Country and city breakdown statistics",
+        "Top contributors by follower count",
+        "Embeddable badge with live star count",
+        "No login or GitHub account required",
+        "Works with any public GitHub repository",
+      ],
+      screenshot: `${APP_URL}/opengraph-image`,
+      author: {
+        "@type": "Person",
+        name: "Florian Bruniaux",
+        url: "https://bruniaux.com",
+      },
+    },
+    {
+      "@type": "Organization",
+      "@id": `${APP_URL}/#org`,
+      name: "StarMapper",
+      url: APP_URL,
+      founder: {
+        "@type": "Person",
+        name: "Florian Bruniaux",
+        url: "https://bruniaux.com",
+      },
+    },
+    {
+      "@type": "FAQPage",
+      "@id": `${APP_URL}/#faq`,
+      mainEntity: [
+        {
+          "@type": "Question",
+          name: "What is StarMapper?",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "StarMapper is a free web tool that shows you where your GitHub repository's stargazers are located. It fetches all stargazers via the GitHub API, geocodes their profile locations, and renders them on an interactive world map with country, city, and company statistics.",
+          },
+        },
+        {
+          "@type": "Question",
+          name: "Is StarMapper free to use?",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "Yes, StarMapper is completely free. No account, no login, and no credit card required. Just paste a GitHub repository URL and click Map It.",
+          },
+        },
+        {
+          "@type": "Question",
+          name: "How does StarMapper work?",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "StarMapper fetches the list of stargazers for a GitHub repository using the GitHub GraphQL API. It then geocodes each user's self-reported location using a shared geocoding cache. The results are rendered on an interactive MapLibre GL map with native clustering, grouped by country and city.",
+          },
+        },
+        {
+          "@type": "Question",
+          name: "Does StarMapper work with private repositories?",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "StarMapper only works with public GitHub repositories. Private repository data is not accessible via the public GitHub API.",
+          },
+        },
+        {
+          "@type": "Question",
+          name: "How accurate is the stargazer location data?",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "Location accuracy depends on what GitHub users enter in their profile. StarMapper geocodes free-text location fields, so accuracy varies. On average, 60–80% of stargazers have a mappable location. Users who leave their location blank appear in the 'Unmapped' list.",
+          },
+        },
+        {
+          "@type": "Question",
+          name: "Can I embed a StarMapper badge in my README?",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "Yes. After scanning a repository, StarMapper generates an embeddable SVG badge showing the star count and number of mapped countries. You can copy the Markdown snippet directly from the map page.",
+          },
+        },
+      ],
+    },
+  ],
+};
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      </head>
       <body className={`${geist.className} bg-[#0d1117]`}>{children}</body>
     </html>
   );

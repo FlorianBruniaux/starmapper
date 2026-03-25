@@ -211,6 +211,24 @@ export default function MapPage({
     setLatestStarredAt(cache.latestStarredAt);
     setStatus("cached");
     saveBookmark(owner, repo, cache.totalCount);
+
+    // Sync badge_cache from localStorage (repos scanned before badge-update existed)
+    const countrySet = new Set(
+      cache.points
+        .map((p) => p.location?.split(",").pop()?.trim())
+        .filter(Boolean),
+    );
+    fetch("/api/badge-update", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        owner,
+        repo,
+        mappedCount: cache.points.length,
+        countryCount: countrySet.size,
+        totalCount: cache.totalCount,
+      }),
+    }).catch(() => {});
   }, [owner, repo]);
 
   // Check DB cache on mount — falls back to badge_cache metadata (last scan date)
