@@ -144,6 +144,8 @@ export default function MapPage({
   const [followerMapFilter, setFollowerMapFilter] = useState<"all" | "high" | "mid" | "low">("all");
   const [filterDate, setFilterDate] = useState<"all" | "30d" | "90d" | "1y">("all");
   const [filterCompany, setFilterCompany] = useState("");
+  const [filterCountry, setFilterCountry] = useState("");
+  const [filterCity, setFilterCity] = useState("");
   const [flyTarget, setFlyTarget] = useState<{ lat: number; lng: number; login: string } | null>(null);
   const [growthOpen, setGrowthOpen] = useState(false);
   const [tokenOpen, setTokenOpen] = useState(false);
@@ -468,6 +470,8 @@ export default function MapPage({
       list = list.filter((u) => u.starredAt && new Date(u.starredAt).getTime() >= cutoff);
     }
     if (filterCompany) list = list.filter((u) => u.company?.toLowerCase().includes(filterCompany.toLowerCase()));
+    if (filterCountry) list = list.filter((u) => u.location?.toLowerCase().includes(filterCountry.toLowerCase()));
+    if (filterCity) list = list.filter((u) => u.location?.toLowerCase().includes(filterCity.toLowerCase()));
     return [...list].sort((a, b) => {
       if (allSort.key === "followers") return (b.followers - a.followers) * allSort.dir;
       if (allSort.key === "login") return a.login.localeCompare(b.login) * allSort.dir;
@@ -482,6 +486,27 @@ export default function MapPage({
       return la.localeCompare(lb) * allSort.dir;
     });
   }, [allStargazers, deferredSearch, allSort, filterFollowers, filterMapped, filterDate, filterCompany]);
+
+  const countryOptions = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const u of allStargazers) {
+      const c = u.location?.split(",").pop()?.trim();
+      if (c) counts.set(c, (counts.get(c) ?? 0) + 1);
+    }
+    return [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 100).map(([c]) => c);
+  }, [allStargazers]);
+
+  const cityOptions = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const u of allStargazers) {
+      const parts = u.location?.split(",");
+      if (parts && parts.length >= 2) {
+        const c = parts[0]?.trim();
+        if (c) counts.set(c, (counts.get(c) ?? 0) + 1);
+      }
+    }
+    return [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 100).map(([c]) => c);
+  }, [allStargazers]);
 
   // Reset scroll to top whenever the filtered list changes (sort/filter/search)
   useEffect(() => {
@@ -1143,10 +1168,34 @@ export default function MapPage({
                 className="bg-[#0d1117] border border-[#30363d] rounded px-2 py-0.5 text-[10px] text-[#e6edf3] placeholder-[#484f58] focus:outline-none focus:border-[#58a6ff] w-24"
               />
 
+              {/* Country filter */}
+              <input
+                value={filterCountry}
+                onChange={(e) => setFilterCountry(e.target.value)}
+                list="country-options"
+                placeholder="Country…"
+                className="bg-[#0d1117] border border-[#30363d] rounded px-2 py-0.5 text-[10px] text-[#e6edf3] placeholder-[#484f58] focus:outline-none focus:border-[#58a6ff] w-24"
+              />
+              <datalist id="country-options">
+                {countryOptions.map((c) => <option key={c} value={c} />)}
+              </datalist>
+
+              {/* City filter */}
+              <input
+                value={filterCity}
+                onChange={(e) => setFilterCity(e.target.value)}
+                list="city-options"
+                placeholder="City…"
+                className="bg-[#0d1117] border border-[#30363d] rounded px-2 py-0.5 text-[10px] text-[#e6edf3] placeholder-[#484f58] focus:outline-none focus:border-[#58a6ff] w-24"
+              />
+              <datalist id="city-options">
+                {cityOptions.map((c) => <option key={c} value={c} />)}
+              </datalist>
+
               {/* Active filters count + reset */}
-              {(filterFollowers > 0 || filterMapped !== "all" || filterDate !== "all" || filterCompany) && (
+              {(filterFollowers > 0 || filterMapped !== "all" || filterDate !== "all" || filterCompany || filterCountry || filterCity) && (
                 <button
-                  onClick={() => { setFilterFollowers(0); setFilterMapped("all"); setFilterDate("all"); setFilterCompany(""); }}
+                  onClick={() => { setFilterFollowers(0); setFilterMapped("all"); setFilterDate("all"); setFilterCompany(""); setFilterCountry(""); setFilterCity(""); }}
                   className="ml-auto text-[10px] text-[#484f58] hover:text-[#8b949e] transition-colors"
                 >
                   ✕ Reset filters
