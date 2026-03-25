@@ -5,6 +5,7 @@ import { StargazerMapDynamic } from "@/components/map/stargazer-map-dynamic";
 import type { StargazerPoint, ChunkResponse } from "@/app/api/chunk/route";
 import { TokenModal, getStoredToken } from "@/components/token-modal";
 import { saveBookmark } from "@/lib/bookmarks";
+import { FilterCombobox } from "@/components/filter-combobox";
 
 type AnyStargazer = {
   login: string;
@@ -1180,28 +1181,20 @@ export default function MapPage({
               />
 
               {/* Country filter */}
-              <input
+              <FilterCombobox
                 value={filterCountry}
-                onChange={(e) => setFilterCountry(e.target.value)}
-                list="country-options"
+                onChange={setFilterCountry}
+                options={countryOptions}
                 placeholder="Country…"
-                className="bg-[#0d1117] border border-[#30363d] rounded px-2 py-0.5 text-[10px] text-[#e6edf3] placeholder-[#484f58] focus:outline-none focus:border-[#58a6ff] w-24"
               />
-              <datalist id="country-options">
-                {countryOptions.map((c) => <option key={c} value={c} />)}
-              </datalist>
 
               {/* City filter */}
-              <input
+              <FilterCombobox
                 value={filterCity}
-                onChange={(e) => setFilterCity(e.target.value)}
-                list="city-options"
+                onChange={setFilterCity}
+                options={cityOptions}
                 placeholder="City…"
-                className="bg-[#0d1117] border border-[#30363d] rounded px-2 py-0.5 text-[10px] text-[#e6edf3] placeholder-[#484f58] focus:outline-none focus:border-[#58a6ff] w-24"
               />
-              <datalist id="city-options">
-                {cityOptions.map((c) => <option key={c} value={c} />)}
-              </datalist>
 
               {/* Active filters count + reset */}
               {(filterFollowers > 0 || filterMapped !== "all" || filterDate !== "all" || filterCompany || filterCountry || filterCity) && (
