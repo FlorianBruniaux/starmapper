@@ -135,6 +135,7 @@ export default function MapPage({
   const [allSearch, setAllSearch] = useState("");
   const deferredSearch = useDeferredValue(allSearch);
   const [tableScrollTop, setTableScrollTop] = useState(0);
+  const [tableVisibleCount, setTableVisibleCount] = useState(14);
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const [allSort, setAllSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: "followers", dir: -1 });
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -485,7 +486,7 @@ export default function MapPage({
       const lb = b.location ?? "";
       return la.localeCompare(lb) * allSort.dir;
     });
-  }, [allStargazers, deferredSearch, allSort, filterFollowers, filterMapped, filterDate, filterCompany]);
+  }, [allStargazers, deferredSearch, allSort, filterFollowers, filterMapped, filterDate, filterCompany, filterCountry, filterCity]);
 
   const countryOptions = useMemo(() => {
     const counts = new Map<string, number>();
@@ -517,7 +518,17 @@ export default function MapPage({
   // Virtual scroll: only render visible rows
   const TABLE_ROW_H = 40;
   const TABLE_OVERSCAN = 5;
-  const tableVisibleCount = 14;
+
+  // Dynamic virtual scroll row count based on container height
+  useEffect(() => {
+    const el = tableContainerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => {
+      setTableVisibleCount(Math.max(5, Math.ceil(el.clientHeight / TABLE_ROW_H)));
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [TABLE_ROW_H]);
   const tableVStart = Math.max(0, Math.floor(tableScrollTop / TABLE_ROW_H) - TABLE_OVERSCAN);
   const tableVEnd = Math.min(filteredStargazers.length, tableVStart + tableVisibleCount + TABLE_OVERSCAN * 2);
   const tableSlice = filteredStargazers.slice(tableVStart, tableVEnd);
@@ -1645,6 +1656,18 @@ export default function MapPage({
                   Share on LinkedIn
                 </a>
               </div>
+              {/* README badge */}
+              <button
+                onClick={() => {
+                  const origin = window.location.origin;
+                  const md = `[![StarMapper](${origin}/api/badge/${owner}/${repo})](${origin}/${owner}/${repo})`;
+                  navigator.clipboard.writeText(md).catch(() => {});
+                }}
+                className="w-full flex items-center justify-center gap-2 bg-[#21262d] hover:bg-[#30363d] border border-[#30363d] text-[#8b949e] hover:text-[#f0f6fc] text-xs py-2 rounded-lg transition-colors"
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+                Copy README badge
+              </button>
             </div>
           </div>
         </div>
