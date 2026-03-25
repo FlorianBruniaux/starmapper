@@ -7,6 +7,7 @@ import type { RepoStats } from "@/app/api/stats/[owner]/[repo]/route";
 import { TokenModal, getStoredToken } from "@/components/token-modal";
 import { saveBookmark } from "@/lib/bookmarks";
 import { FilterCombobox } from "@/components/filter-combobox";
+import { isCountry, normalizeCountry } from "@/lib/countries";
 
 type AnyStargazer = {
   login: string;
@@ -215,7 +216,7 @@ export default function MapPage({
     // Sync badge_cache from localStorage (repos scanned before badge-update existed)
     const countrySet = new Set(
       cache.points
-        .map((p) => p.location?.split(",").pop()?.trim())
+        .map((p) => { const s = p.location?.split(",").pop()?.trim(); return s && isCountry(s) ? normalizeCountry(s) : null; })
         .filter(Boolean),
     );
     fetch("/api/badge-update", {
@@ -350,7 +351,7 @@ export default function MapPage({
       // Update badge cache (fire-and-forget)
       const countrySet = new Set(
         allPoints
-          .map((p) => p.location?.split(",").pop()?.trim())
+          .map((p) => { const s = p.location?.split(",").pop()?.trim(); return s && isCountry(s) ? normalizeCountry(s) : null; })
           .filter(Boolean),
       );
       fetch("/api/badge-update", {
@@ -587,8 +588,11 @@ export default function MapPage({
   const countryOptions = useMemo(() => {
     const counts = new Map<string, number>();
     for (const u of allStargazers) {
-      const c = u.location?.split(",").pop()?.trim();
-      if (c) counts.set(c, (counts.get(c) ?? 0) + 1);
+      const raw = u.location?.split(",").pop()?.trim();
+      if (raw && isCountry(raw)) {
+        const c = normalizeCountry(raw);
+        counts.set(c, (counts.get(c) ?? 0) + 1);
+      }
     }
     return [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 100).map(([c]) => c);
   }, [allStargazers]);
@@ -702,10 +706,11 @@ export default function MapPage({
     for (const p of points) {
       if (p.location) {
         const parts = p.location.split(",").map((s) => s.trim()).filter(Boolean);
-        const country = parts.length > 1 ? parts[parts.length - 1] : parts[0];
-        const city = parts[0];
+        const lastSegment = parts[parts.length - 1];
+        const country = isCountry(lastSegment) ? normalizeCountry(lastSegment) : null;
+        const city = parts.length > 1 ? parts[0] : null;
         if (country) countryCount.set(country, (countryCount.get(country) ?? 0) + 1);
-        if (parts.length > 1 && city) cityCount.set(city, (cityCount.get(city) ?? 0) + 1);
+        if (city) cityCount.set(city, (cityCount.get(city) ?? 0) + 1);
       }
       if (p.company) {
         const c = p.company.trim();

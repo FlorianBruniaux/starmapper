@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { isCountry, normalizeCountry } from "@/lib/countries";
 
 export type RepoStats = {
   totalStars: number;
@@ -17,10 +18,12 @@ const parseLocation = (location: string | null): { country: string | null; city:
   if (!location) return { country: null, city: null };
   const parts = location.split(",").map((s) => s.trim()).filter(Boolean);
   if (!parts.length) return { country: null, city: null };
-  return {
-    country: parts.length > 1 ? parts[parts.length - 1] : parts[0],
-    city: parts.length > 1 ? parts[0] : null,
-  };
+
+  const lastSegment = parts[parts.length - 1];
+  const country = isCountry(lastSegment) ? normalizeCountry(lastSegment) : null;
+  const city = parts.length > 1 ? parts[0] : (country ? null : parts[0]);
+
+  return { country, city };
 };
 
 export const GET = async (
