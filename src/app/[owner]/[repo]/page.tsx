@@ -127,6 +127,7 @@ export default function MapPage({
   const [findInput, setFindInput] = useState("");
   const [findStatus, setFindStatus] = useState<"idle" | "searching" | "found" | "no-location" | "not-found">("idle");
   const [cachedAt, setCachedAt] = useState<number | null>(null);
+  const [lastDbScan, setLastDbScan] = useState<string | null>(null);
   const [latestStarredAt, setLatestStarredAt] = useState<string | null>(null);
   const [statsOpen, setStatsOpen] = useState(false);
   const [statsTab, setStatsTab] = useState<"countries" | "cities" | "top" | "companies">("top");
@@ -207,6 +208,38 @@ export default function MapPage({
     setLatestStarredAt(cache.latestStarredAt);
     setStatus("cached");
     saveBookmark(owner, repo, cache.totalCount);
+  }, [owner, repo]);
+
+  // Check DB cache on mount — falls back to badge_cache metadata (last scan date)
+  useEffect(() => {
+    if (loadCache(owner, repo)) return; // localStorage takes priority
+    fetch(`/api/stargazer-cache/${owner}/${repo}`)
+      .then(async (r) => {
+        if (r.status === 206) {
+          const d = await r.json();
+          setLastDbScan(d.lastScan);
+          return;
+        }
+        if (!r.ok) return;
+        const data = await r.json();
+        if (!data.points) return;
+        const scannedMs = new Date(data.scannedAt).getTime();
+        setPoints(data.points);
+        setUnmapped(data.unmapped);
+        setTotal(data.totalCount);
+        setProcessed(data.totalCount);
+        setCachedAt(scannedMs);
+        setStatus("cached");
+        saveBookmark(owner, repo, data.totalCount);
+        saveCache(owner, repo, {
+          points: data.points,
+          unmapped: data.unmapped,
+          totalCount: data.totalCount,
+          scannedAt: scannedMs,
+          latestStarredAt: null,
+        });
+      })
+      .catch(() => {});
   }, [owner, repo]);
 
   // Countdown ticker when waiting
@@ -302,6 +335,16 @@ export default function MapPage({
           totalCount: allPoints.length + allUnmapped.length,
         }),
       }).catch(() => {});
+
+      // Save to DB cache for repos ≤ 15k stars (shared across users, fire-and-forget)
+      const finalTotal = allPoints.length + allUnmapped.length;
+      if (finalTotal > 0 && finalTotal <= 15_000) {
+        fetch("/api/stargazer-cache", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ owner, repo, points: allPoints, unmapped: allUnmapped, totalCount: finalTotal }),
+        }).catch(() => {});
+      }
 
       setStatus("done");
     } catch (e: unknown) {
@@ -704,16 +747,24 @@ export default function MapPage({
               </div>
             )}
 
-            <p className="text-[#8b949e] text-xs mb-6 leading-relaxed">
-              Stargazers are geocoded via their GitHub location field.
-              Subsequent visits will load instantly from local cache.
-            </p>
+            {lastDbScan ? (
+              <div className="flex items-center gap-2 bg-[#0d1117] border border-[#238636]/40 rounded-lg px-4 py-2.5 mb-6">
+                <span className="text-[#3fb950] text-xs">✓ Last scanned {timeAgo(new Date(lastDbScan).getTime())}</span>
+                <span className="text-[#30363d] text-xs">·</span>
+                <span className="text-[#484f58] text-xs">Results shared with other users</span>
+              </div>
+            ) : (
+              <p className="text-[#8b949e] text-xs mb-6 leading-relaxed">
+                Stargazers are geocoded via their GitHub location field.
+                Results are cached and shared — subsequent visitors load instantly.
+              </p>
+            )}
 
             <button
               onClick={startScraping}
               className="w-full bg-[#238636] hover:bg-[#2ea043] text-white font-medium py-3 rounded-lg transition-colors text-sm"
             >
-              Start indexing {total.toLocaleString()} stars →
+              {lastDbScan ? `Rescan ${total.toLocaleString()} stars →` : `Start indexing ${total.toLocaleString()} stars →`}
             </button>
           </div>
         </div>

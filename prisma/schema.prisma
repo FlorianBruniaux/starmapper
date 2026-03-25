@@ -25,3 +25,15 @@ model BadgeCache {
   @@id([owner, repo])
   @@map("badge_cache")
 }
+
+model StargazerCache {
+  owner      String
+  repo       String
+  points     Json
+  unmapped   Json
+  totalCount Int
+  scannedAt  DateTime @default(now())
+
+  @@id([owner, repo])
+  @@map("stargazer_cache")
+}

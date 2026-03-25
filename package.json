@@ -5,7 +5,11 @@
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",
-    "start": "next start"
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "db:push": "sh -c 'set -a && . .env.local && set +a && prisma db push'",
+    "db:generate": "prisma generate",
+    "db:studio": "sh -c 'set -a && . .env.local && set +a && prisma studio'"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.2",
