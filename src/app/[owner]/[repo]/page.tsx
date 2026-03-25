@@ -132,6 +132,8 @@ export default function MapPage({
   const [statsTab, setStatsTab] = useState<"countries" | "cities" | "top" | "companies">("top");
   const [statsFilter, setStatsFilter] = useState("");
   const [shareOpen, setShareOpen] = useState(false);
+  const [liPanelOpen, setLiPanelOpen] = useState(false);
+  const [liDraft, setLiDraft] = useState("");
   const [liCopied, setLiCopied] = useState(false);
   const [allOpen, setAllOpen] = useState(false);
   const [allSearch, setAllSearch] = useState("");
@@ -1645,18 +1647,56 @@ export default function MapPage({
                 <button
                   onClick={() => {
                     const starsLabel = repoInfo.stars >= 1000 ? `${(repoInfo.stars / 1000).toFixed(1)}k` : repoInfo.stars;
-                    const text = `🌍 ${repo} just hit ${starsLabel} ⭐ — with stargazers from ${stats?.countryCount ?? "?"} countries!\n\n${window.location.href}`;
-                    navigator.clipboard.writeText(text).catch(() => {});
-                    setLiCopied(true);
-                    setTimeout(() => setLiCopied(false), 3000);
-                    window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}`, "_blank", "noopener,noreferrer");
+                    setLiDraft(`🌍 ${repo} just hit ${starsLabel} ⭐ — with stargazers from ${stats?.countryCount ?? "?"} countries!\n\n${window.location.href}`);
+                    setLiCopied(false);
+                    setLiPanelOpen(true);
                   }}
-                  className="flex-1 flex items-center justify-center gap-2 bg-[#21262d] hover:bg-[#30363d] border border-[#30363d] text-xs py-2 rounded-lg transition-colors"
-                  style={{ color: liCopied ? "#3fb950" : undefined }}
+                  className="flex-1 flex items-center justify-center gap-2 bg-[#21262d] hover:bg-[#30363d] border border-[#30363d] text-[#8b949e] hover:text-[#f0f6fc] text-xs py-2 rounded-lg transition-colors"
                 >
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
-                  {liCopied ? "✓ Text copied — paste in LinkedIn!" : "Share on LinkedIn"}
+                  Share on LinkedIn
                 </button>
+
+                {/* LinkedIn pre-share panel */}
+                {liPanelOpen && (
+                  <div className="absolute inset-0 z-10 rounded-xl bg-[#0d1117] border border-[#30363d] flex flex-col p-4 gap-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-medium text-[#f0f6fc]">Your LinkedIn post</span>
+                      <button onClick={() => setLiPanelOpen(false)} className="text-[#8b949e] hover:text-white text-lg leading-none">×</button>
+                    </div>
+                    <textarea
+                      value={liDraft}
+                      onChange={(e) => setLiDraft(e.target.value)}
+                      rows={5}
+                      className="w-full bg-[#161b22] border border-[#30363d] rounded-lg px-3 py-2 text-xs text-[#e6edf3] resize-none focus:outline-none focus:border-[#58a6ff]"
+                    />
+                    <p className="text-[10px] text-[#484f58]">LinkedIn doesn&apos;t allow pre-filled text. Copy this post, then paste it after clicking below.</p>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(liDraft).catch(() => {});
+                          setLiCopied(true);
+                          setTimeout(() => setLiCopied(false), 3000);
+                        }}
+                        className="flex-1 bg-[#21262d] border border-[#30363d] text-xs py-2 rounded-lg transition-colors hover:bg-[#30363d]"
+                        style={{ color: liCopied ? "#3fb950" : "#8b949e" }}
+                      >
+                        {liCopied ? "✓ Copied!" : "Copy text"}
+                      </button>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(liDraft).catch(() => {});
+                          window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}`, "_blank", "noopener,noreferrer");
+                          setLiPanelOpen(false);
+                        }}
+                        className="flex-1 bg-[#0a66c2] hover:bg-[#0856a5] text-white text-xs py-2 rounded-lg transition-colors font-medium flex items-center justify-center gap-1.5"
+                      >
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+                        Post on LinkedIn →
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
               {/* README badge */}
               <button
