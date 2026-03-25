@@ -3,6 +3,7 @@
 import { use, useEffect, useRef, useState, useCallback, useMemo, useDeferredValue } from "react";
 import { StargazerMapDynamic } from "@/components/map/stargazer-map-dynamic";
 import type { StargazerPoint, ChunkResponse } from "@/app/api/chunk/route";
+import type { RepoStats } from "@/app/api/stats/[owner]/[repo]/route";
 import { TokenModal, getStoredToken } from "@/components/token-modal";
 import { saveBookmark } from "@/lib/bookmarks";
 import { FilterCombobox } from "@/components/filter-combobox";
@@ -129,6 +130,7 @@ export default function MapPage({
   const [cachedAt, setCachedAt] = useState<number | null>(null);
   const [lastDbScan, setLastDbScan] = useState<string | null>(null);
   const [latestStarredAt, setLatestStarredAt] = useState<string | null>(null);
+  const [serverStats, setServerStats] = useState<RepoStats | null>(null);
   const [statsOpen, setStatsOpen] = useState(false);
   const [statsTab, setStatsTab] = useState<"countries" | "cities" | "top" | "companies">("top");
   const [statsFilter, setStatsFilter] = useState("");
@@ -239,6 +241,14 @@ export default function MapPage({
           latestStarredAt: null,
         });
       })
+      .catch(() => {});
+  }, [owner, repo]);
+
+  // Fetch server-side stats from DB (fallback for repos not in StargazerCache, or >15k stars)
+  useEffect(() => {
+    fetch(`/api/stats/${owner}/${repo}`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((data: RepoStats | null) => { if (data) setServerStats(data); })
       .catch(() => {});
   }, [owner, repo]);
 
@@ -667,18 +677,24 @@ export default function MapPage({
     }
     const topCountries = [...countryCount.entries()].sort((a, b) => b[1] - a[1]).slice(0, 30);
     const topCities = [...cityCount.entries()].sort((a, b) => b[1] - a[1]).slice(0, 30);
-    const topUsers = [...points].sort((a, b) => b.followers - a.followers).slice(0, 20);
+    const topUsers = [...points]
+      .sort((a, b) => b.followers - a.followers)
+      .slice(0, 20)
+      .map((u) => ({ login: u.login, name: u.name, followers: u.followers, location: u.location, avatarUrl: u.avatarUrl }));
     const topCompanies = [...companyCount.entries()].sort((a, b) => b[1] - a[1]).slice(0, 30);
     const mappingRate = Math.round((points.length / (points.length + unmapped.length)) * 100);
     const avgFollowers = points.length > 0
       ? Math.round(points.reduce((s, p) => s + p.followers, 0) / points.length)
       : 0;
-    return { topCountries, topCities, topUsers, topCompanies, mappingRate, countryCount: countryCount.size, avgFollowers };
+    const totalStars = points.length + unmapped.length;
+    return { topCountries, topCities, topUsers, topCompanies, mappingRate, countryCount: countryCount.size, avgFollowers, totalStars };
   }, [points, unmapped]);
 
   const pct = total > 0 ? Math.round((processed / total) * 100) : 0;
   const estimate = total > 0 ? estimateScan(total) : null;
   const newStarsCount = repoInfo && total > 0 ? Math.max(0, repoInfo.stars - total) : 0;
+  // Client-side stats take priority; fall back to server stats when no points loaded yet
+  const displayStats = stats ?? serverStats;
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-[#0d1117]">
@@ -1020,7 +1036,7 @@ export default function MapPage({
       </a>
 
       {/* Bottom-left — vertical dock: follower filter + secondary actions + Share CTA */}
-      {(stats || allStargazers.length > 0) && (
+      {(displayStats || allStargazers.length > 0) && (
         <div className="absolute bottom-6 left-4 z-10 flex flex-col gap-2">
 
           {/* Follower tier filter */}
@@ -1050,7 +1066,7 @@ export default function MapPage({
               );
             })}
           </div>
-          {stats && (
+          {displayStats && (
             <button
               onClick={() => setStatsOpen(true)}
               className="bg-[rgba(13,17,23,0.88)] border border-[#30363d] rounded-lg
@@ -1523,16 +1539,16 @@ export default function MapPage({
                   <div className="text-2xl font-bold text-[#58a6ff]">{points.length.toLocaleString()}</div>
                   <div className="text-[10px] text-[#484f58] uppercase tracking-wide mt-0.5">mapped</div>
                 </div>
-                {stats && (
+                {displayStats && (
                   <div className="flex-1 bg-[#161b22] rounded-lg p-3 text-center">
-                    <div className="text-2xl font-bold text-[#3fb950]">{stats.countryCount}</div>
+                    <div className="text-2xl font-bold text-[#3fb950]">{displayStats.countryCount}</div>
                     <div className="text-[10px] text-[#484f58] uppercase tracking-wide mt-0.5">countries</div>
                   </div>
                 )}
               </div>
-              {stats && stats.topCountries.slice(0, 3).length > 0 && (
+              {displayStats && displayStats.topCountries.slice(0, 3).length > 0 && (
                 <div className="flex gap-2 flex-wrap">
-                  {stats.topCountries.slice(0, 3).map(([country, count]) => (
+                  {displayStats.topCountries.slice(0, 3).map(([country, count]) => (
                     <span key={country} className="text-xs bg-[#161b22] border border-[#30363d] rounded px-2 py-1 text-[#8b949e]">
                       {country} · {count}
                     </span>
@@ -1581,7 +1597,7 @@ export default function MapPage({
 
                   // Avatar height + name + stats + tags + footer
                   const boxH = Math.round(66 * S);
-                  const tagsH = stats?.topCountries.length ? Math.round(34 * S) : 0;
+                  const tagsH = displayStats?.topCountries.length ? Math.round(34 * S) : 0;
                   const footerH = Math.round(28 * S);
                   const panelH = pad + avatarSize + Math.round(12 * S) + boxH + tagsH + footerH + pad;
 
@@ -1621,7 +1637,7 @@ export default function MapPage({
                   const statsArr = [
                     { v: repoInfo!.stars ?? total, label: "★ STARS", color: "#ffa657" },
                     { v: points.length, label: "MAPPED", color: "#58a6ff" },
-                    { v: stats?.countryCount ?? 0, label: "COUNTRIES", color: "#3fb950" },
+                    { v: displayStats?.countryCount ?? 0, label: "COUNTRIES", color: "#3fb950" },
                   ];
                   for (let i = 0; i < 3; i++) {
                     const bx = panelX + pad + i * (bW + gap);
@@ -1641,12 +1657,12 @@ export default function MapPage({
                   }
 
                   // Top countries tags
-                  if (stats?.topCountries.length) {
+                  if (displayStats?.topCountries.length) {
                     const tagsY = statsY + boxH + Math.round(8 * S);
                     let tagX = panelX + pad;
                     const tSize = Math.round(9 * S);
                     ctx.font = `${tSize}px -apple-system, sans-serif`;
-                    for (const [country, count] of stats.topCountries.slice(0, 3)) {
+                    for (const [country, count] of displayStats.topCountries.slice(0, 3)) {
                       const text = `${country} · ${count}`;
                       const tw = ctx.measureText(text).width + Math.round(14 * S);
                       const tH = Math.round(20 * S);
@@ -1698,7 +1714,7 @@ export default function MapPage({
                 <button
                   onClick={() => {
                     const starsLabel = repoInfo.stars >= 1000 ? `${(repoInfo.stars / 1000).toFixed(1)}k` : repoInfo.stars;
-                    setLiDraft(`🌍 ${repo} just hit ${starsLabel} ⭐ — with stargazers from ${stats?.countryCount ?? "?"} countries!\n\n${window.location.href}`);
+                    setLiDraft(`🌍 ${repo} just hit ${starsLabel} ⭐ — with stargazers from ${displayStats?.countryCount ?? "?"} countries!\n\n${window.location.href}`);
                     setLiCopied(false);
                     setLiPanelOpen(true);
                   }}
@@ -1767,7 +1783,7 @@ export default function MapPage({
       )}
 
       {/* Stats modal */}
-      {statsOpen && stats && (
+      {statsOpen && displayStats && (
         <div
           className="absolute inset-0 z-40 flex items-center justify-center bg-[rgba(13,17,23,0.85)] backdrop-blur-sm"
           onClick={() => setStatsOpen(false)}
@@ -1785,21 +1801,21 @@ export default function MapPage({
                     const md = [
                       `# StarMapper — ${owner}/${repo}`,
                       ``,
-                      `- **Total stargazers**: ${(points.length + unmapped.length).toLocaleString()} (${stats.mappingRate}% mapped)`,
-                      `- **Countries**: ${stats.countryCount}`,
-                      `- **Cities**: ${stats.topCities.length}`,
-                      `- **Avg followers**: ${stats.avgFollowers.toLocaleString()}`,
+                      `- **Total stargazers**: ${displayStats.totalStars.toLocaleString()} (${displayStats.mappingRate}% mapped)`,
+                      `- **Countries**: ${displayStats.countryCount}`,
+                      `- **Cities**: ${displayStats.topCities.length}`,
+                      `- **Avg followers**: ${displayStats.avgFollowers.toLocaleString()}`,
                       ``,
                       `## Top Countries`,
-                      ...stats.topCountries.slice(0, 10).map(([c, n], i) => `${i + 1}. ${c} — ${n}`),
+                      ...displayStats.topCountries.slice(0, 10).map(([c, n], i) => `${i + 1}. ${c} — ${n}`),
                       ``,
                       `## Top Cities`,
-                      ...stats.topCities.slice(0, 10).map(([c, n], i) => `${i + 1}. ${c} — ${n}`),
+                      ...displayStats.topCities.slice(0, 10).map(([c, n], i) => `${i + 1}. ${c} — ${n}`),
                       `## Top Companies`,
-                      ...(stats.topCompanies.length ? stats.topCompanies.slice(0, 10).map(([c, n], i) => `${i + 1}. ${c} — ${n}`) : ["No company data"]),
+                      ...(displayStats.topCompanies.length ? displayStats.topCompanies.slice(0, 10).map(([c, n], i) => `${i + 1}. ${c} — ${n}`) : ["No company data"]),
                       ``,
                       `## Top Stargazers`,
-                      ...stats.topUsers.slice(0, 10).map((u, i) => `${i + 1}. [@${u.login}](https://github.com/${u.login}) — ${u.followers.toLocaleString()} followers`),
+                      ...displayStats.topUsers.slice(0, 10).map((u, i) => `${i + 1}. [@${u.login}](https://github.com/${u.login}) — ${u.followers.toLocaleString()} followers`),
                       ``,
                       `*Generated by [StarMapper](https://starmapper.app)*`,
                     ].join("\n");
@@ -1820,20 +1836,20 @@ export default function MapPage({
             {/* Summary cards */}
             <div className="grid grid-cols-4 gap-2 px-5 py-4 border-b border-[#21262d] flex-shrink-0">
               <div className="bg-[#0d1117] rounded-lg px-2 py-2 text-center">
-                <div className="text-xl font-bold text-[#3fb950]">{stats.mappingRate}%</div>
+                <div className="text-xl font-bold text-[#3fb950]">{displayStats.mappingRate}%</div>
                 <div className="text-[10px] text-[#8b949e] uppercase tracking-wide mt-0.5">mapped</div>
               </div>
               <div className="bg-[#0d1117] rounded-lg px-2 py-2 text-center">
-                <div className="text-xl font-bold text-[#f0f6fc]">{stats.countryCount}</div>
+                <div className="text-xl font-bold text-[#f0f6fc]">{displayStats.countryCount}</div>
                 <div className="text-[10px] text-[#8b949e] uppercase tracking-wide mt-0.5">countries</div>
               </div>
               <div className="bg-[#0d1117] rounded-lg px-2 py-2 text-center">
-                <div className="text-xl font-bold text-[#f0f6fc]">{stats.topCities.length}</div>
+                <div className="text-xl font-bold text-[#f0f6fc]">{displayStats.topCities.length}</div>
                 <div className="text-[10px] text-[#8b949e] uppercase tracking-wide mt-0.5">cities</div>
               </div>
               <div className="bg-[#0d1117] rounded-lg px-2 py-2 text-center">
                 <div className="text-xl font-bold text-[#ffa657]">
-                  {stats.avgFollowers >= 1000 ? `${(stats.avgFollowers / 1000).toFixed(1)}k` : stats.avgFollowers}
+                  {displayStats.avgFollowers >= 1000 ? `${(displayStats.avgFollowers / 1000).toFixed(1)}k` : displayStats.avgFollowers}
                 </div>
                 <div className="text-[10px] text-[#8b949e] uppercase tracking-wide mt-0.5">avg flw</div>
               </div>
@@ -1872,7 +1888,7 @@ export default function MapPage({
             <div className="overflow-y-auto flex-1 px-5 py-3">
               {statsTab === "top" && (
                 <div className="space-y-2.5">
-                  {stats.topUsers.map((u, i) => (
+                  {displayStats.topUsers.map((u, i) => (
                     <div key={u.login} className="flex items-center gap-3 py-0.5">
                       <span className="text-[#484f58] text-xs w-5 text-right flex-shrink-0">{i + 1}</span>
                       {u.avatarUrl
@@ -1901,19 +1917,19 @@ export default function MapPage({
               )}
               {statsTab === "countries" && (
                 <StatsList
-                  items={stats.topCountries.filter(([name]) => !statsFilter || name.toLowerCase().includes(statsFilter.toLowerCase()))}
-                  max={stats.topCountries[0]?.[1] ?? 1}
+                  items={displayStats.topCountries.filter(([name]) => !statsFilter || name.toLowerCase().includes(statsFilter.toLowerCase()))}
+                  max={displayStats.topCountries[0]?.[1] ?? 1}
                 />
               )}
               {statsTab === "cities" && (
                 <StatsList
-                  items={stats.topCities.filter(([name]) => !statsFilter || name.toLowerCase().includes(statsFilter.toLowerCase()))}
-                  max={stats.topCities[0]?.[1] ?? 1}
+                  items={displayStats.topCities.filter(([name]) => !statsFilter || name.toLowerCase().includes(statsFilter.toLowerCase()))}
+                  max={displayStats.topCities[0]?.[1] ?? 1}
                 />
               )}
               {statsTab === "companies" && (
                 <div className="space-y-2">
-                  {stats.topCompanies
+                  {displayStats.topCompanies
                     .filter(([company]) => !statsFilter || company.toLowerCase().includes(statsFilter.toLowerCase()))
                     .map(([company, count], idx) => (
                     <div key={company} className="flex items-center gap-3">
@@ -1924,12 +1940,12 @@ export default function MapPage({
                           <span className="text-[#8b949e] text-xs ml-2 flex-shrink-0">{count}</span>
                         </div>
                         <div className="h-1 bg-[#21262d] rounded-full">
-                          <div className="h-1 bg-[#58a6ff] rounded-full" style={{ width: `${(count / (stats.topCompanies[0]?.[1] ?? 1)) * 100}%` }} />
+                          <div className="h-1 bg-[#58a6ff] rounded-full" style={{ width: `${(count / (displayStats.topCompanies[0]?.[1] ?? 1)) * 100}%` }} />
                         </div>
                       </div>
                     </div>
                   ))}
-                  {stats.topCompanies.length === 0 && (
+                  {displayStats.topCompanies.length === 0 && (
                     <div className="text-center text-[#484f58] text-xs py-8">No company data available</div>
                   )}
                 </div>

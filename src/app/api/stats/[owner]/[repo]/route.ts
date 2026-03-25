@@ -10,7 +10,7 @@ export type RepoStats = {
   topCountries: [string, number][];
   topCities: [string, number][];
   topCompanies: [string, number][];
-  topUsers: { login: string; name: string | null; followers: number }[];
+  topUsers: { login: string; name: string | null; followers: number; location: string | null; avatarUrl: string }[];
 };
 
 const parseLocation = (location: string | null): { country: string | null; city: string | null } => {
@@ -67,7 +67,13 @@ export const GET = async (
 
     const total = events.length;
     const topUsers = events
-      .map(({ user: u }) => ({ login: u.login, name: u.name, followers: u.followers }))
+      .map(({ user: u }) => ({
+        login: u.login,
+        name: u.name,
+        followers: u.followers,
+        location: u.location,
+        avatarUrl: `https://github.com/${u.login}.png`,
+      }))
       .sort((a, b) => b.followers - a.followers)
       .slice(0, 20);
 
