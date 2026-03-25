@@ -11,7 +11,7 @@ export const POST = async (req: NextRequest) => {
       typeof owner !== "string" || !repoNameRe.test(owner) ||
       typeof repo !== "string" || !repoNameRe.test(repo) ||
       typeof mappedCount !== "number" || mappedCount < 0 || mappedCount > 10_000_000 ||
-      typeof countryCount !== "number" || countryCount < 0 || countryCount > 300 ||
+      typeof countryCount !== "number" || countryCount < 0 || countryCount > 10_000 ||
       typeof totalCount !== "number" || totalCount < 0 || totalCount > 10_000_000
     ) {
       return NextResponse.json({ error: "invalid_params" }, { status: 400 });
