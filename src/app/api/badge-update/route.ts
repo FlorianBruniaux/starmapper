@@ -6,12 +6,13 @@ export const POST = async (req: NextRequest) => {
     const body = await req.json();
     const { owner, repo, mappedCount, countryCount, totalCount } = body;
 
+    const repoNameRe = /^[a-zA-Z0-9._-]{1,100}$/;
     if (
-      typeof owner !== "string" || !owner ||
-      typeof repo !== "string" || !repo ||
-      typeof mappedCount !== "number" ||
-      typeof countryCount !== "number" ||
-      typeof totalCount !== "number"
+      typeof owner !== "string" || !repoNameRe.test(owner) ||
+      typeof repo !== "string" || !repoNameRe.test(repo) ||
+      typeof mappedCount !== "number" || mappedCount < 0 || mappedCount > 10_000_000 ||
+      typeof countryCount !== "number" || countryCount < 0 || countryCount > 300 ||
+      typeof totalCount !== "number" || totalCount < 0 || totalCount > 10_000_000
     ) {
       return NextResponse.json({ error: "invalid_params" }, { status: 400 });
     }

@@ -63,6 +63,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ users: results });
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 });
+    console.error("[user-details] Error:", e);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

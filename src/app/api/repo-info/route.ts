@@ -6,6 +6,11 @@ export async function GET(req: NextRequest) {
   const repo = searchParams.get("repo");
   if (!owner || !repo) return NextResponse.json({ error: "Missing params" }, { status: 400 });
 
+  const repoNameRe = /^[a-zA-Z0-9._-]{1,100}$/;
+  if (!repoNameRe.test(owner) || !repoNameRe.test(repo)) {
+    return NextResponse.json({ error: "Invalid owner/repo format" }, { status: 400 });
+  }
+
   const token = req.headers.get("x-gh-token") || process.env.GITHUB_TOKEN;
   const res = await fetch(`https://api.github.com/repos/${owner}/${repo}`, {
     headers: {

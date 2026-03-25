@@ -42,6 +42,11 @@ export async function POST(req: NextRequest) {
     const { owner, repo, cursor, since } = await req.json();
     if (!owner || !repo) return NextResponse.json({ error: "Missing owner/repo" }, { status: 400 });
 
+    const repoNameRe = /^[a-zA-Z0-9._-]{1,100}$/;
+    if (!repoNameRe.test(owner) || !repoNameRe.test(repo)) {
+      return NextResponse.json({ error: "Invalid owner/repo format" }, { status: 400 });
+    }
+
     const clientToken = req.headers.get("x-gh-token") ?? undefined;
     const page = await fetchStargazersPage(owner, repo, cursor ?? null, since ?? undefined, clientToken);
 
@@ -75,7 +80,11 @@ const geoMap = await geocodeBatch(locations);
       latestStarredAt,
     } satisfies ChunkResponse);
   } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : "Unknown error";
+    // Log internally but never expose raw error messages to the client
+    console.error("[chunk] Error:", err);
+    const msg = err instanceof Error && err.message.startsWith("GitHub API error")
+      ? err.message
+      : "Internal server error";
     return NextResponse.json({ error: msg }, { status: 500 });
   } finally {
     activeSessions--;

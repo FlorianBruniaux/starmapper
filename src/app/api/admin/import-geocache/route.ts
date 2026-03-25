@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 
 export async function POST(req: NextRequest) {
+  const adminSecret = process.env.ADMIN_SECRET;
+  if (!adminSecret || req.headers.get("x-admin-secret") !== adminSecret) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const entries = await req.json() as Record<string, [number, number] | null>;
     const rows = Object.entries(entries).map(([key, val]) => ({
@@ -32,7 +37,7 @@ export async function POST(req: NextRequest) {
 
     const total = await prisma.geoCache.count();
     return NextResponse.json({ inserted, skipped, total });
-  } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 });
+  } catch {
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
