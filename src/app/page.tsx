@@ -303,6 +303,48 @@ export default function HomePage() {
           </div>
         </div>
 
+        {/* FAQ — visible for users + indexed by AI crawlers */}
+        <div className="w-full max-w-sm mx-auto lg:mx-0 mt-10">
+          <p className="text-muted-subtle text-[10px] uppercase tracking-widest mb-3">FAQ</p>
+          <div className="flex flex-col divide-y divide-[#21262d] border border-[#21262d] rounded-lg overflow-hidden">
+            {[
+              {
+                q: "Is StarMapper free?",
+                a: "Yes — no account, no login, no credit card. Paste a repo URL and click Map It.",
+              },
+              {
+                q: "How accurate is the location data?",
+                a: "Accuracy depends on what GitHub users enter in their profile. On average 60–80% of stargazers have a geocodable location. Users without a location appear in the Unmapped list.",
+              },
+              {
+                q: "Does it work with private repos?",
+                a: "No. StarMapper only works with public repositories — the GitHub API does not expose stargazer data for private repos.",
+              },
+              {
+                q: "Can I embed a badge in my README?",
+                a: "Yes. After scanning a repo, StarMapper generates an embeddable SVG badge with the star count and number of mapped countries. Copy the Markdown snippet directly from the map page.",
+              },
+            ].map(({ q, a }) => (
+              <details key={q} className="group bg-surface">
+                <summary className="flex items-center justify-between gap-3 px-4 py-3 cursor-pointer list-none text-xs font-medium text-foreground hover:text-accent-blue transition-colors select-none">
+                  {q}
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 16 16"
+                    fill="currentColor"
+                    className="shrink-0 text-muted group-open:rotate-180 transition-transform"
+                    aria-hidden="true"
+                  >
+                    <path d="M12.78 5.22a.749.749 0 0 1 0 1.06l-4.25 4.25a.749.749 0 0 1-1.06 0L3.22 6.28a.749.749 0 1 1 1.06-1.06L8 8.939l3.72-3.719a.749.749 0 0 1 1.06 0Z" />
+                  </svg>
+                </summary>
+                <p className="px-4 pb-3 text-xs text-muted leading-relaxed">{a}</p>
+              </details>
+            ))}
+          </div>
+        </div>
+
         </div>{/* end left column */}
 
         {/* Right column — repos table */}
