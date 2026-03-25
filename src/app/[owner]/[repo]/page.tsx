@@ -159,6 +159,7 @@ export default function MapPage({
   const [tokenOpen, setTokenOpen] = useState(false);
   const captureMapRef = useRef<(() => Promise<string | null>) | null>(null);
   const runningRef = useRef(false);
+  const pendingScanRef = useRef(false);
 
   // Compare repo state
   const [compareOwner, setCompareOwner] = useState<string | null>(null);
@@ -439,6 +440,24 @@ export default function MapPage({
     }
   }, [fetchNextChunk, latestStarredAt, owner, repo, total]);
 
+  // Require a GitHub token before starting a full scan
+  const handleStartScan = useCallback(() => {
+    if (!getStoredToken()) {
+      pendingScanRef.current = true;
+      setTokenOpen(true);
+      return;
+    }
+    startScraping();
+  }, [startScraping]);
+
+  const handleTokenClose = useCallback(() => {
+    setTokenOpen(false);
+    if (pendingScanRef.current) {
+      pendingScanRef.current = false;
+      if (getStoredToken()) startScraping();
+    }
+  }, [startScraping]);
+
   const startCompareScan = useCallback(async () => {
     if (!compareOwner || !compareRepo || compareRunningRef.current) return;
     compareRunningRef.current = true;
@@ -699,7 +718,7 @@ export default function MapPage({
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-[#0d1117]">
 
-      {tokenOpen && <TokenModal onClose={() => setTokenOpen(false)} />}
+      {tokenOpen && <TokenModal onClose={handleTokenClose} />}
 
       {/* Top-right token button */}
       <button
@@ -777,7 +796,7 @@ export default function MapPage({
             )}
 
             <button
-              onClick={startScraping}
+              onClick={handleStartScan}
               className="w-full bg-[#238636] hover:bg-[#2ea043] text-white font-medium py-3 rounded-lg transition-colors text-sm"
             >
               {lastDbScan ? `Rescan ${total.toLocaleString()} stars →` : `Start indexing ${total.toLocaleString()} stars →`}
@@ -915,7 +934,7 @@ export default function MapPage({
               </button>
             )}
             <button
-              onClick={startScraping}
+              onClick={handleStartScan}
               className="text-[10px] text-[#8b949e] hover:text-[#f0f6fc] hover:underline"
             >
               Full rescan
