@@ -173,10 +173,12 @@ export default function MapPage({
   // Read compare param from URL on mount
   useEffect(() => {
     const p = new URLSearchParams(window.location.search).get("compare");
-    if (p && p.includes("/")) {
+    if (p && p.includes("/") && p.split("/").length === 2) {
       const [o, r] = p.split("/");
-      setCompareOwner(o);
-      setCompareRepo(r);
+      if (o && r) {
+        setCompareOwner(o);
+        setCompareRepo(r);
+      }
     }
   }, []);
 
@@ -342,7 +344,7 @@ export default function MapPage({
       saveCache(owner, repo, {
         points: allPoints,
         unmapped: allUnmapped,
-        totalCount: total,
+        totalCount: allPoints.length + allUnmapped.length,
         scannedAt: now,
         latestStarredAt: newestStarredAt,
       });

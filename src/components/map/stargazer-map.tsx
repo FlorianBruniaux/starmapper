@@ -140,33 +140,62 @@ async function showSpider(
   activeRef.current = true;
 }
 
-const escHtml = (s: string) =>
-  s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[c]!));
+function makePopupElement(props: Record<string, unknown>): HTMLElement {
+  const login = String(props.login ?? "");
+  const name = props.name ? String(props.name) : login;
+  const location = props.location ? String(props.location) : "";
+  const bio = props.bio ? String(props.bio) : "";
+  const company = props.company ? String(props.company) : "";
+  const avatarUrl = props.avatarUrl ? String(props.avatarUrl) : "";
 
-function makePopupHtml(props: Record<string, unknown>) {
-  const login = escHtml(String(props.login ?? ""));
-  const name = props.name ? escHtml(String(props.name)) : login;
-  const location = props.location ? escHtml(String(props.location)) : "";
-  const bio = props.bio ? escHtml(String(props.bio)) : "";
-  const company = props.company ? escHtml(String(props.company)) : "";
-  const avatar = props.avatarUrl ? escHtml(String(props.avatarUrl)) : "";
-  return `
-    <div style="padding:4px 0;min-width:200px">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-        ${avatar ? `<img src="${avatar}" alt="" style="width:36px;height:36px;border-radius:50%;flex-shrink:0;border:1px solid rgba(255,255,255,0.1)">` : ""}
-        <div>
-          <div style="font-weight:600;font-size:13px;color:#f0f6fc;line-height:1.3">${name}</div>
-          <a href="https://github.com/${login}" target="_blank" style="color:#58a6ff;text-decoration:none;font-size:11px">@${login}</a>
-        </div>
-      </div>
-      ${bio ? `<div style="font-size:11px;color:#c9d1d9;margin-bottom:6px;line-height:1.5;font-style:italic">${bio}</div>` : ""}
-      <div style="font-size:11px;color:#8b949e;line-height:1.9">
-        ${company ? `🏢 ${company}<br>` : ""}
-        ${location ? `📍 ${location}<br>` : ""}
-        ${props.followers ? `👥 ${Number(props.followers).toLocaleString()} followers` : ""}
-      </div>
-    </div>
-  `;
+  const el = document.createElement("div");
+  el.style.cssText = "padding:4px 0;min-width:200px";
+
+  const header = document.createElement("div");
+  header.style.cssText = "display:flex;align-items:center;gap:10px;margin-bottom:8px";
+
+  if (avatarUrl) {
+    const img = document.createElement("img");
+    img.src = avatarUrl;
+    img.alt = "";
+    img.style.cssText = "width:36px;height:36px;border-radius:50%;flex-shrink:0;border:1px solid rgba(255,255,255,0.1)";
+    header.appendChild(img);
+  }
+
+  const nameBlock = document.createElement("div");
+  const nameEl = document.createElement("div");
+  nameEl.style.cssText = "font-weight:600;font-size:13px;color:#f0f6fc;line-height:1.3";
+  nameEl.textContent = name;
+
+  const link = document.createElement("a");
+  link.href = `https://github.com/${login}`;
+  link.target = "_blank";
+  link.rel = "noopener noreferrer";
+  link.style.cssText = "color:#58a6ff;text-decoration:none;font-size:11px";
+  link.textContent = `@${login}`;
+
+  nameBlock.appendChild(nameEl);
+  nameBlock.appendChild(link);
+  header.appendChild(nameBlock);
+  el.appendChild(header);
+
+  if (bio) {
+    const bioEl = document.createElement("div");
+    bioEl.style.cssText = "font-size:11px;color:#c9d1d9;margin-bottom:6px;line-height:1.5;font-style:italic";
+    bioEl.textContent = bio;
+    el.appendChild(bioEl);
+  }
+
+  const meta = document.createElement("div");
+  meta.style.cssText = "font-size:11px;color:#8b949e;line-height:1.9";
+  const lines: string[] = [];
+  if (company) lines.push(`🏢 ${company}`);
+  if (location) lines.push(`📍 ${location}`);
+  if (props.followers) lines.push(`👥 ${Number(props.followers).toLocaleString()} followers`);
+  meta.textContent = lines.join(" · ");
+  if (lines.length) el.appendChild(meta);
+
+  return el;
 }
 
 export function StargazerMap({ points, comparePoints, flyTarget, onFlyDone, onReady }: Props) {
@@ -370,7 +399,7 @@ export function StargazerMap({ points, comparePoints, flyTarget, onFlyDone, onRe
           const coords = (e.features![0].geometry as GeoJSON.Point).coordinates as [number, number];
           new maplibregl.Popup({ className: "starmapper-popup", maxWidth: "260px" })
             .setLngLat(coords)
-            .setHTML(makePopupHtml(props))
+            .setDOMContent(makePopupElement(props))
             .addTo(map);
         });
 
@@ -381,7 +410,7 @@ export function StargazerMap({ points, comparePoints, flyTarget, onFlyDone, onRe
           const coords = (e.features![0].geometry as GeoJSON.Point).coordinates as [number, number];
           new maplibregl.Popup({ className: "starmapper-popup", maxWidth: "260px" })
             .setLngLat(coords)
-            .setHTML(makePopupHtml(props))
+            .setDOMContent(makePopupElement(props))
             .addTo(map);
           e.originalEvent.stopPropagation();
         });

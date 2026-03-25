@@ -19,7 +19,8 @@ export const POST = async (req: NextRequest) => {
       return NextResponse.json({ error: "invalid_params" }, { status: 400 });
     }
 
-    if (totalCount > MAX_CACHEABLE_STARS) {
+    // Validate actual array sizes, not the client-declared totalCount
+    if (points.length + unmapped.length > MAX_CACHEABLE_STARS) {
       return NextResponse.json({ error: "too_large" }, { status: 413 });
     }
 

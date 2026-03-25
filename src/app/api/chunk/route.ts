@@ -49,6 +49,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid owner/repo format" }, { status: 400 });
     }
 
+    if (since !== undefined && (typeof since !== "string" || isNaN(new Date(since).getTime()))) {
+      return NextResponse.json({ error: "Invalid since parameter" }, { status: 400 });
+    }
+
     const clientToken = req.headers.get("x-gh-token") ?? undefined;
     const page = await fetchStargazersPage(owner, repo, cursor ?? null, since ?? undefined, clientToken);
 
@@ -70,7 +74,7 @@ export async function POST(req: NextRequest) {
       .filter(Boolean);
 
     const cacheHits = logins.length - locationsToGeocode.length;
-    if (cacheHits > 0) console.log(`[chunk] cache hit: ${cacheHits}/${logins.length}, geocoded: ${locationsToGeocode.length}`);
+    if (cacheHits > 0) console.debug(`[chunk] cache hit: ${cacheHits}/${logins.length}, geocoded: ${locationsToGeocode.length}`);
 
     const geoMap = await geocodeBatch(locationsToGeocode);
 

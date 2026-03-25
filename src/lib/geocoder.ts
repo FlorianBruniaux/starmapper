@@ -20,7 +20,8 @@ const isJawgAvailable = (): boolean => {
 
 const recordJawgError = () => {
   jawgErrorCount++;
-  if (jawgErrorCount === ERROR_THRESHOLD) {
+  // Use >= + guard to handle concurrent increments correctly
+  if (jawgErrorCount >= ERROR_THRESHOLD && jawgCircuitOpenAt === 0) {
     jawgCircuitOpenAt = Date.now();
     console.warn("[geocoder] Jawg circuit open — falling back to Nominatim");
   }
@@ -94,16 +95,12 @@ const callNominatim = async (location: string): Promise<[number, number] | null>
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-// --- Public API ---
-export async function geocode(location: string): Promise<[number, number] | null> {
-  const key = location.trim().toLowerCase();
-  if (!key) return null;
-
-  const cached = await cacheRead(key);
-  if (cached !== undefined && cached !== null) {
-    return cached.lat !== null && cached.lng !== null ? [cached.lat, cached.lng] : null;
-  }
-
+// Internal: call external API (Jawg → Nominatim fallback) + write cache.
+// Used by both geocode() and geocodeBatch() to avoid double cache reads.
+const _resolveAndCache = async (
+  location: string,
+  key: string,
+): Promise<[number, number] | null> => {
   let coords: [number, number] | null = null;
 
   if (isJawgAvailable()) {
@@ -125,6 +122,19 @@ export async function geocode(location: string): Promise<[number, number] | null
   coords = await callNominatim(location);
   await cacheWrite(key, coords?.[0] ?? null, coords?.[1] ?? null);
   return coords;
+};
+
+// --- Public API ---
+export async function geocode(location: string): Promise<[number, number] | null> {
+  const key = location.trim().toLowerCase();
+  if (!key) return null;
+
+  const cached = await cacheRead(key);
+  if (cached !== undefined && cached !== null) {
+    return cached.lat !== null && cached.lng !== null ? [cached.lat, cached.lng] : null;
+  }
+
+  return _resolveAndCache(location, key);
 }
 
 export async function geocodeBatch(
@@ -147,17 +157,20 @@ export async function geocodeBatch(
   const useJawg = isJawgAvailable();
 
   if (useJawg) {
-    // Jawg: batch of 5 in parallel
+    // Jawg: batch of 5 in parallel — call _resolveAndCache directly (no redundant cache read)
     const CONCURRENCY = 5;
     for (let i = 0; i < misses.length; i += CONCURRENCY) {
       const batch = misses.slice(i, i + CONCURRENCY);
-      const results = await Promise.all(batch.map((loc) => geocode(loc)));
+      const results = await Promise.all(
+        batch.map((loc) => _resolveAndCache(loc, loc.trim().toLowerCase())),
+      );
       missResults.push(...results);
     }
   } else {
-    // Nominatim: sequential with 1100ms delay
+    // Nominatim: sequential with 1100ms delay (polite use policy)
     for (let i = 0; i < misses.length; i++) {
-      const result = await geocode(misses[i]);
+      const loc = misses[i];
+      const result = await _resolveAndCache(loc, loc.trim().toLowerCase());
       missResults.push(result);
       if (i < misses.length - 1) await sleep(1100);
     }

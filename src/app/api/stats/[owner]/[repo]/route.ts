@@ -41,6 +41,7 @@ export const GET = async (
   try {
     const events = await prisma.starEvent.findMany({
       where: key,
+      take: 10_000, // cap in-memory aggregation; repos > 10k stars get approximate stats
       select: {
         user: {
           select: { login: true, name: true, location: true, company: true, followers: true, lat: true, lng: true },
