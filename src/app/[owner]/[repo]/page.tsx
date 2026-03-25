@@ -318,6 +318,7 @@ export default function MapPage({
     let newPoints: StargazerPoint[] = [];
     let newUnmapped: { login: string; name: string | null; followers: number; starredAt: string | null }[] = [];
     let newestStarredAt: string | null = null;
+    let latestTotalCount = total;
 
     try {
       while (true) {
@@ -339,6 +340,7 @@ export default function MapPage({
         }
 
         if (!newestStarredAt && chunk!.latestStarredAt) newestStarredAt = chunk!.latestStarredAt;
+        latestTotalCount = chunk!.totalCount;
         setTotal(chunk!.totalCount);
         newPoints = [...newPoints, ...chunk!.points];
         newUnmapped = [...newUnmapped, ...chunk!.unmapped];
@@ -358,13 +360,13 @@ export default function MapPage({
       const updatedLatest = newestStarredAt ?? latestStarredAt;
       setLatestStarredAt(updatedLatest);
 
-      // Save updated cache
+      // Save updated cache — use latestTotalCount (local var) to avoid stale closure on `total`
       setPoints((pts) => {
         setUnmapped((unm) => {
           saveCache(owner, repo, {
             points: pts,
             unmapped: unm,
-            totalCount: total,
+            totalCount: latestTotalCount,
             scannedAt: now,
             latestStarredAt: updatedLatest,
           });
