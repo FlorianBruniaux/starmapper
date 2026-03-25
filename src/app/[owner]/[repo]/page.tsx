@@ -132,6 +132,7 @@ export default function MapPage({
   const [statsTab, setStatsTab] = useState<"countries" | "cities" | "top" | "companies">("top");
   const [statsFilter, setStatsFilter] = useState("");
   const [shareOpen, setShareOpen] = useState(false);
+  const [liCopied, setLiCopied] = useState(false);
   const [allOpen, setAllOpen] = useState(false);
   const [allSearch, setAllSearch] = useState("");
   const deferredSearch = useDeferredValue(allSearch);
@@ -1641,15 +1642,21 @@ export default function MapPage({
                   <svg width="13" height="13" viewBox="0 0 1200 1227" fill="currentColor"><path d="M714.163 519.284 1160.89 0h-105.86L667.137 450.887 357.328 0H0l468.492 681.821L0 1226.37h105.866l409.625-476.152 327.181 476.152H1200L714.137 519.284h.026ZM569.165 687.828l-47.468-67.894-377.686-540.24h162.604l304.797 435.991 47.468 67.894 396.2 566.721H892.476L569.165 687.854v-.026Z"/></svg>
                   Share on X
                 </a>
-                <a
-                  href={`https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(window.location.href)}&title=${encodeURIComponent(`${owner}/${repo} — ${repoInfo.stars >= 1000 ? `${(repoInfo.stars / 1000).toFixed(1)}k` : repoInfo.stars} stars from ${stats?.countryCount ?? "?"} countries`)}&summary=${encodeURIComponent(`See where in the world ${owner}/${repo} stargazers are located. ${points.length} mapped across ${stats?.countryCount ?? "?"} countries.`)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-1 flex items-center justify-center gap-2 bg-[#21262d] hover:bg-[#30363d] border border-[#30363d] text-[#8b949e] hover:text-[#f0f6fc] text-xs py-2 rounded-lg transition-colors"
+                <button
+                  onClick={() => {
+                    const starsLabel = repoInfo.stars >= 1000 ? `${(repoInfo.stars / 1000).toFixed(1)}k` : repoInfo.stars;
+                    const text = `${owner}/${repo} has ${starsLabel} ⭐ from ${stats?.countryCount ?? "?"} countries.\n\nSee who's starring it on StarMapper → ${window.location.href}`;
+                    navigator.clipboard.writeText(text).catch(() => {});
+                    setLiCopied(true);
+                    setTimeout(() => setLiCopied(false), 3000);
+                    window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}`, "_blank", "noopener,noreferrer");
+                  }}
+                  className="flex-1 flex items-center justify-center gap-2 bg-[#21262d] hover:bg-[#30363d] border border-[#30363d] text-xs py-2 rounded-lg transition-colors"
+                  style={{ color: liCopied ? "#3fb950" : undefined }}
                 >
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
-                  Share on LinkedIn
-                </a>
+                  {liCopied ? "✓ Text copied — paste in LinkedIn!" : "Share on LinkedIn"}
+                </button>
               </div>
               {/* README badge */}
               <button
