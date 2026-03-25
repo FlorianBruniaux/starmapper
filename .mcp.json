@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "postgres-starmapper": {
+      "type": "stdio",
+      "command": "/Users/florianbruniaux/.nvm/versions/node/v22.18.0/bin/node",
+      "args": [
+        "${CLAUDE_PROJECT_DIR}/.claude/scripts/postgres-mcp-dev.js"
+      ],
+      "env": {
+        "CLAUDE_PROJECT_DIR": "${CLAUDE_PROJECT_DIR}"
+      }
+    }
+  }
+}
