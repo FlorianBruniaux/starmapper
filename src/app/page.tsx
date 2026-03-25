@@ -4,7 +4,9 @@ import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { TokenModal, getStoredToken } from "@/components/token-modal";
 import { getBookmarks } from "@/lib/bookmarks";
+import { RepoTable } from "@/components/repo-table";
 import type { Bookmark } from "@/lib/bookmarks";
+import type { MappedRepo } from "@/app/api/repos/route";
 
 type Suggestion = { owner: string; repo: string };
 
@@ -29,11 +31,21 @@ export default function HomePage() {
   const [tokenOpen, setTokenOpen] = useState(false);
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [hasToken, setHasToken] = useState(false);
+  const [repos, setRepos] = useState<MappedRepo[]>([]);
   const router = useRouter();
 
   useEffect(() => {
     setBookmarks(getBookmarks());
     setHasToken(!!getStoredToken());
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/repos")
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data.repos)) setRepos(data.repos);
+      })
+      .catch(() => {});
   }, []);
 
   // Merge bookmarks + examples, deduplicate, bookmarks first
@@ -252,6 +264,16 @@ export default function HomePage() {
             </div>
           )}
         </div>
+
+        {/* Explore — repos already mapped */}
+        {repos.length > 0 && (
+          <div className="w-full max-w-3xl mt-14">
+            <p className="text-[#484f58] text-[10px] uppercase tracking-widest mb-3">
+              Already mapped · {repos.length} repos
+            </p>
+            <RepoTable repos={repos} />
+          </div>
+        )}
       </main>
 
       {/* Minimal footer — context link, not in the main flow */}
