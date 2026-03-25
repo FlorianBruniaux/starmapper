@@ -796,7 +796,7 @@ export default function MapPage({
             )}
 
             <button
-              onClick={handleStartScan}
+              onClick={lastDbScan ? handleStartScan : startScraping}
               className="w-full bg-[#238636] hover:bg-[#2ea043] text-white font-medium py-3 rounded-lg transition-colors text-sm"
             >
               {lastDbScan ? `Rescan ${total.toLocaleString()} stars →` : `Start indexing ${total.toLocaleString()} stars →`}
