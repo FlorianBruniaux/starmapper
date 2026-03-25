@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 
-const MAX_CACHEABLE_STARS = 15_000;
+const MAX_CACHEABLE_STARS = 100_000;
 
 export const POST = async (req: NextRequest) => {
   try {

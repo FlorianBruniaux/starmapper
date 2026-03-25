@@ -368,7 +368,7 @@ export default function MapPage({
 
       // Save to DB cache for repos ≤ 15k stars (shared across users, fire-and-forget)
       const finalTotal = allPoints.length + allUnmapped.length;
-      if (finalTotal > 0 && finalTotal <= 15_000) {
+      if (finalTotal > 0 && finalTotal <= 100_000) {
         fetch("/api/stargazer-cache", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
