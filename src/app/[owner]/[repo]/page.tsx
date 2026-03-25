@@ -1489,7 +1489,7 @@ export default function MapPage({
                 </div>
               )}
               <div className="mt-4 pt-3 border-t border-[#21262d] flex items-center justify-between">
-                <span className="text-[10px] text-[#484f58]">🌍 starmapper.io</span>
+                <span className="text-[10px] text-[#484f58]">🌍 starmapper.bruniaux.com</span>
                 <span className="text-[10px] text-[#484f58]">+ live map in download</span>
               </div>
             </div>
@@ -1618,7 +1618,7 @@ export default function MapPage({
                   ctx.fillStyle = "#58a6ff";
                   ctx.font = `${Math.round(11 * S)}px -apple-system, sans-serif`;
                   ctx.textAlign = "left";
-                  ctx.fillText("🌍 starmapper.io", Math.round(12 * S), brandY + Math.round(18 * S));
+                  ctx.fillText("🌍 starmapper.bruniaux.com", Math.round(12 * S), brandY + Math.round(18 * S));
 
                   out.toBlob((blob) => {
                     if (!blob) return;
