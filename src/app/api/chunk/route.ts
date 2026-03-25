@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { fetchStargazersPage } from "@/lib/github";
 import { geocodeBatch } from "@/lib/geocoder";
+import { checkDbHealth, DB_WARN_PCT } from "@/lib/db-health";
+import { bulkUpsertUsers, bulkUpsertStarEvents } from "@/lib/user-cache";
 
 export interface StargazerPoint {
   login: string;
@@ -71,6 +73,26 @@ const geoMap = await geocodeBatch(locations);
 
     // First stargazer has the most recent starredAt (DESC order)
     const latestStarredAt = page.stargazers[0]?.starredAt ?? null;
+
+    // Fire-and-forget: persist users + star events to DB for cross-repo analytics.
+    // Never awaited — does not affect chunk response time.
+    const ownerKey = owner.toLowerCase();
+    const repoKey = repo.toLowerCase();
+    checkDbHealth().then((health) => {
+      const dbWarn = health.ok && health.usagePct >= DB_WARN_PCT;
+      if (dbWarn) console.warn(`[chunk] DB storage at ${health.usagePct}%`);
+
+      bulkUpsertUsers(points, health).catch(console.error);
+      bulkUpsertStarEvents(
+        page.stargazers.map((sg) => ({
+          login: sg.login,
+          owner: ownerKey,
+          repo: repoKey,
+          starredAt: sg.starredAt,
+        })),
+        health,
+      ).catch(console.error);
+    }).catch(console.error);
 
     return NextResponse.json({
       points,
