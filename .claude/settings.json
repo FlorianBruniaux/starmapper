@@ -1,0 +1,99 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(//**/.env*)",
+      "Edit(//**/.env*)",
+      "Write(//**/.env*)",
+      "Bash(cat */**.env*:*)",
+      "Bash(head */**.env*:*)",
+      "Bash(tail */**.env*:*)",
+      "Bash(grep */**.env*:*)",
+      "Bash(cat *secret*:*)",
+      "Bash(cat *token*:*)",
+      "Read(//**/*.pem)",
+      "Read(//**/*.key)",
+      "Read(//**/*.cert)",
+      "Edit(//**/*.pem)",
+      "Edit(//**/*.key)",
+      "Edit(//**/*.cert)",
+      "Write(//**/*.pem)",
+      "Write(//**/*.key)",
+      "Write(//**/*.cert)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/dangerous-actions-blocker.sh",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/security-gate.sh",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/rtk-suggest.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/auto-format.sh",
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": ".claude/hooks/typecheck-feedback.sh",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/notification.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/git-context.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}
