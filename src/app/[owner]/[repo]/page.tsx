@@ -1634,7 +1634,7 @@ export default function MapPage({
               {/* Social share */}
               <div className="flex gap-2">
                 <a
-                  href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`${owner}/${repo} has ${repoInfo.stars >= 1000 ? `${(repoInfo.stars / 1000).toFixed(1)}k` : repoInfo.stars} stars from ${stats?.countryCount ?? "?"} countries. See the map →`)}&url=${encodeURIComponent(window.location.href)}`}
+                  href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`🌍 ${repo} just hit ${repoInfo.stars >= 1000 ? `${(repoInfo.stars / 1000).toFixed(1)}k` : repoInfo.stars} ⭐ — with stargazers from ${stats?.countryCount ?? "?"} countries!`)}&url=${encodeURIComponent(window.location.href)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex-1 flex items-center justify-center gap-2 bg-[#21262d] hover:bg-[#30363d] border border-[#30363d] text-[#8b949e] hover:text-[#f0f6fc] text-xs py-2 rounded-lg transition-colors"
@@ -1645,7 +1645,7 @@ export default function MapPage({
                 <button
                   onClick={() => {
                     const starsLabel = repoInfo.stars >= 1000 ? `${(repoInfo.stars / 1000).toFixed(1)}k` : repoInfo.stars;
-                    const text = `${owner}/${repo} has ${starsLabel} ⭐ from ${stats?.countryCount ?? "?"} countries.\n\nSee who's starring it on StarMapper → ${window.location.href}`;
+                    const text = `🌍 ${repo} just hit ${starsLabel} ⭐ — with stargazers from ${stats?.countryCount ?? "?"} countries!\n\n${window.location.href}`;
                     navigator.clipboard.writeText(text).catch(() => {});
                     setLiCopied(true);
                     setTimeout(() => setLiCopied(false), 3000);
