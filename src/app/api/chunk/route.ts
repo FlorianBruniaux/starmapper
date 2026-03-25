@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { fetchStargazersPage } from "@/lib/github";
 import { geocodeBatch } from "@/lib/geocoder";
 import { checkDbHealth, DB_WARN_PCT } from "@/lib/db-health";
-import { bulkUpsertUsers, bulkUpsertStarEvents } from "@/lib/user-cache";
+import { bulkUpsertUsers, bulkUpsertStarEvents, bulkReadUsers } from "@/lib/user-cache";
 
 export interface StargazerPoint {
   login: string;
@@ -52,18 +52,44 @@ export async function POST(req: NextRequest) {
     const clientToken = req.headers.get("x-gh-token") ?? undefined;
     const page = await fetchStargazersPage(owner, repo, cursor ?? null, since ?? undefined, clientToken);
 
-    const locations = page.stargazers
+    // Phase 2: check user cache before geocoding — skip Jawg for known users.
+    const STALE_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+    const logins = page.stargazers.map((s) => s.login);
+    const knownUsers = await bulkReadUsers(logins);
+
+    // Only geocode locations for users not in cache, or whose location changed.
+    const locationsToGeocode = page.stargazers
+      .filter((sg) => {
+        const known = knownUsers.get(sg.login);
+        if (!known) return true; // new user — geocode
+        const isStale = Date.now() - known.fetchedAt.getTime() > STALE_MS;
+        const locationChanged = known.location !== (sg.location ?? null);
+        return isStale && locationChanged; // stale AND moved — re-geocode
+      })
       .map((s) => s.location ?? "")
       .filter(Boolean);
 
-const geoMap = await geocodeBatch(locations);
+    const cacheHits = logins.length - locationsToGeocode.length;
+    if (cacheHits > 0) console.log(`[chunk] cache hit: ${cacheHits}/${logins.length}, geocoded: ${locationsToGeocode.length}`);
+
+    const geoMap = await geocodeBatch(locationsToGeocode);
 
     const points: StargazerPoint[] = [];
     const unmapped: ChunkResponse["unmapped"] = [];
 
     for (const sg of page.stargazers) {
+      const known = knownUsers.get(sg.login);
       const loc = sg.location ?? "";
-      const coords = loc ? geoMap.get(loc) ?? null : null;
+
+      // Use cached coords if available and location hasn't changed
+      let coords: [number, number] | null = null;
+      if (known?.lat !== null && known?.lat !== undefined && known?.lng !== null && known?.lng !== undefined && known.location === loc) {
+        coords = [known.lat, known.lng];
+      } else if (loc) {
+        const geo = geoMap.get(loc) ?? null;
+        coords = geo;
+      }
+
       if (coords) {
         points.push({ login: sg.login, name: sg.name, bio: sg.bio, company: sg.company, location: sg.location, followers: sg.followers, avatarUrl: sg.avatarUrl, lat: coords[0], lng: coords[1], starredAt: sg.starredAt });
       } else {
