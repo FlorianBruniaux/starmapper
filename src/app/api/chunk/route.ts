@@ -112,16 +112,19 @@ export async function POST(req: NextRequest) {
       const dbWarn = health.ok && health.usagePct >= DB_WARN_PCT;
       if (dbWarn) console.warn(`[chunk] DB storage at ${health.usagePct}%`);
 
-      bulkUpsertUsers(points, health).catch(console.error);
-      bulkUpsertStarEvents(
-        page.stargazers.map((sg) => ({
-          login: sg.login,
-          owner: ownerKey,
-          repo: repoKey,
-          starredAt: sg.starredAt,
-        })),
-        health,
-      ).catch(console.error);
+      // Only upsert users that are new or have changed data — avoids WAL bloat
+      const pointsToWrite = points.filter((p) => {
+        const known = knownUsers.get(p.login);
+        if (!known) return true; // new user
+        return known.location !== (p.location ?? null) || known.lat !== p.lat || known.lng !== p.lng;
+      });
+      if (pointsToWrite.length > 0) bulkUpsertUsers(pointsToWrite, health).catch(console.error);
+
+      // Only upsert star events for users not already tracked
+      const newStarEvents = page.stargazers
+        .filter((sg) => !knownUsers.has(sg.login))
+        .map((sg) => ({ login: sg.login, owner: ownerKey, repo: repoKey, starredAt: sg.starredAt }));
+      if (newStarEvents.length > 0) bulkUpsertStarEvents(newStarEvents, health).catch(console.error);
     }).catch(console.error);
 
     return NextResponse.json({
