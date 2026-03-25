@@ -10,7 +10,7 @@ async function cacheRead(key: string) {
   }
 }
 
-async function cacheWrite(key: string, lat: number, lng: number) {
+async function cacheWrite(key: string, lat: number | null, lng: number | null) {
   try {
     await prisma.geoCache.upsert({
       where: { key },
@@ -56,7 +56,9 @@ export async function geocode(location: string): Promise<[number, number] | null
       await cacheWrite(key, lat, lng);
       return [lat, lng];
     }
-    return null; // 0 results — don't cache, location string may geocode later
+    // Cache the "not found" result so we never call Jawg again for this location
+    await cacheWrite(key, null, null);
+    return null;
   } catch {
     return null;
   }
@@ -67,7 +69,8 @@ export async function geocodeBatch(locations: string[]): Promise<Map<string, [nu
   const unique = [...new Set(locations.filter(Boolean).map((l) => l.trim().toLowerCase()))];
 
   const cached = await cacheBulkRead(unique);
-  // Only include positive cache hits — null entries are treated as misses so they get re-geocoded
+  // Track ALL cache hits (including null = "not found") to avoid re-calling Jawg
+  const cachedKeys = new Set(cached.map((c) => c.key));
   const cacheMap = new Map(
     cached
       .filter((c) => c.lat !== null && c.lng !== null)
@@ -75,7 +78,7 @@ export async function geocodeBatch(locations: string[]): Promise<Map<string, [nu
   );
 
   const misses = [...new Set(
-    locations.filter((loc) => !cacheMap.has(loc.trim().toLowerCase()))
+    locations.filter((loc) => !cachedKeys.has(loc.trim().toLowerCase()))
   )];
 
   // Limit concurrency to 5 to avoid Jawg rate limiting
