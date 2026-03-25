@@ -12,7 +12,7 @@ This file provides guidance to Claude Code when working with code in this reposi
 
 **Relation to TechMapper**: StarMapper is a companion tool — same author, same map aesthetic (CARTO dark tiles, MapLibre GL), but read-only and repo-centric rather than profile-centric.
 
-**Tech Stack**: Next.js 16.2.0 (App Router, Turbopack), TypeScript 5, MapLibre GL 5.x, Prisma 7 + Neon Postgres (geocache only), GitHub GraphQL API, Nominatim (geocoding), Tailwind CSS, Vercel (deployment).
+**Tech Stack**: Next.js 16.2.0 (App Router, Turbopack), TypeScript 5, MapLibre GL 5.x, Prisma 7.5 + @prisma/adapter-neon + Neon Postgres, GitHub GraphQL API + REST, Nominatim (geocoding), Tailwind CSS v4 (@theme inline), Vercel (deployment).
 
 ---
 
@@ -49,11 +49,41 @@ Vercel free tier = 10s max function duration. A 2000-star repo needs ~38 API cal
 
 **Purpose**: Skip Nominatim calls for locations already geocoded.
 
-**Schema**: Single `geocache` table — `key` (location string, lowercased) → `lat`/`lng` (nullable = "not found").
+**Schema**: `geocache` table — `key` (location string, lowercased) → `lat`/`lng` (nullable = "not found").
 
 **Shared**: All repos benefit from the same cache. "Paris" geocoded once for TechMapper user = cached for StarMapper.
 
 **Resilience**: If DB is down, geocoder falls back to direct Nominatim (no crash).
+
+### BadgeCache
+
+**Purpose**: Store pre-computed badge stats so badge SVG renders instantly without re-fetching all stargazers.
+
+**Schema**: `badge_cache` table — composite PK `(owner, repo)` → `mappedCount`, `countryCount`, `totalCount`, `updatedAt`.
+
+**Flow**: Map page calls `POST /api/badge-update` after chunk loop completes → `GET /api/badge/[owner]/[repo]` reads from cache to serve the SVG badge (cached 6h at CDN).
+
+### Additional Endpoints
+
+```
+POST /api/user-details
+  Header: x-gh-token (optional, falls back to server GITHUB_TOKEN)
+  Body: { logins: string[] }  — max 200 users per request
+  Returns: { users: UserDetail[] }
+  Note: GitHub REST, concurrency 10 — for stargazer detail cards (bio, followers, etc.)
+
+GET /api/badge/[owner]/[repo]
+  Returns: SVG image (shield badge)
+  Cache: public, 6h CDN — reads BadgeCache, graceful fallback if DB down
+
+POST /api/badge-update
+  Body: { owner, repo, mappedCount, countryCount, totalCount }
+  Returns: { ok: true }
+  Note: called by browser after chunk loop completes
+
+GET /api/admin/clear-geocache   — admin: truncate geocache table
+POST /api/admin/import-geocache — admin: bulk-import geocache entries
+```
 
 ---
 
@@ -63,57 +93,67 @@ Vercel free tier = 10s max function duration. A 2000-star repo needs ~38 API cal
 /
 ├── src/
 │   ├── app/
-│   │   ├── page.tsx                     # Landing — URL input form
-│   │   ├── [owner]/[repo]/page.tsx      # Map page — chunk loop + UI
+│   │   ├── layout.tsx                         # Root layout + metadata
+│   │   ├── globals.css                        # @theme tokens, popup styles
+│   │   ├── page.tsx                           # Landing — URL input form
+│   │   ├── [owner]/[repo]/
+│   │   │   ├── page.tsx                       # Map page — chunk loop + UI
+│   │   │   └── opengraph-image.tsx            # OG image generation
 │   │   └── api/
-│   │       ├── chunk/route.ts           # POST — fetch + geocode 100 users
-│   │       └── repo-info/route.ts       # GET  — repo metadata
+│   │       ├── chunk/route.ts                 # POST — fetch + geocode 100 users
+│   │       ├── repo-info/route.ts             # GET  — repo metadata
+│   │       ├── user-details/route.ts          # POST — stargazer details (bio, followers)
+│   │       ├── badge-update/route.ts          # POST — upsert BadgeCache
+│   │       ├── badge/[owner]/[repo]/route.ts  # GET  — serve SVG shield badge
+│   │       └── admin/
+│   │           ├── clear-geocache/route.ts    # GET  — truncate geocache (admin)
+│   │           └── import-geocache/route.ts   # POST — bulk import geocache (admin)
 │   ├── components/
+│   │   ├── token-modal.tsx                    # GitHub token input modal
 │   │   └── map/
-│   │       ├── stargazer-map.tsx         # MapLibre GL component (client)
-│   │       └── stargazer-map-dynamic.tsx # Dynamic import wrapper (ssr:false)
+│   │       ├── stargazer-map.tsx              # MapLibre GL component (client)
+│   │       └── stargazer-map-dynamic.tsx      # Dynamic import wrapper (ssr:false)
 │   └── lib/
-│       ├── db.ts                        # PrismaClient singleton
-│       ├── geocoder.ts                  # geocode() + geocodeBatch() with cache
-│       └── github.ts                    # fetchStargazersPage() — GraphQL
+│       ├── db.ts                              # Prisma + Neon adapter singleton
+│       ├── geocoder.ts                        # geocode() + geocodeBatch() with cache
+│       ├── github.ts                          # fetchStargazersPage() — GraphQL
+│       └── bookmarks.ts                       # Client-side repo bookmarks
 ├── prisma/
-│   ├── schema.prisma                    # GeoCache model only
-│   └── migrations/
-├── prisma.config.ts                     # Prisma 7 config
-└── .env.local                           # DATABASE_URL + GITHUB_TOKEN
+│   └── schema.prisma                          # GeoCache + BadgeCache models
+└── .env.local                                 # DATABASE_URL + GITHUB_TOKEN
 ```
 
 ---
 
 ## IV. Known Gotchas (PRIORITY #3 — read before touching anything)
 
-### Prisma 7 Breaking Changes
+### Prisma 7 + Neon Adapter Pattern
 
-1. **`schema.prisma` MUST have `url = env("DATABASE_URL")`** in the datasource block. Without it, `PrismaClient()` throws at boot even before connecting.
+StarMapper uses the `@prisma/adapter-neon` driver adapter. This changes the setup compared to the "standard" Prisma docs.
 
-2. **`PrismaClient` constructor does NOT accept `datasourceUrl`** in v7. The URL comes from the schema/env only.
-
-3. **`prisma.config.ts`** uses `datasource: { url: ... }` (not `datasourceUrl` at root level).
+**Key difference**: The connection string is passed via the adapter, NOT via `url` in `schema.prisma`.
 
 ```prisma
-# schema.prisma — correct
+# schema.prisma — correct (no url needed with adapter)
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 ```
 
 ```ts
-// db.ts — correct
-export const prisma = globalForPrisma.prisma ?? new PrismaClient();
+// db.ts — correct (adapter receives DATABASE_URL)
+import { PrismaNeon } from "@prisma/adapter-neon";
+
+const createPrismaClient = () => {
+  const adapter = new PrismaNeon({ connectionString: process.env.DATABASE_URL });
+  return new PrismaClient({ adapter });
+};
+export const prisma = globalForPrisma.prisma ?? createPrismaClient();
 ```
 
-```ts
-// prisma.config.ts — correct
-export default defineConfig({
-  datasource: { url: process.env.DATABASE_URL },
-});
-```
+**No `prisma.config.ts`** — deleted, no longer needed with the adapter pattern.
+
+**Why adapter?** Neon uses HTTP-based serverless connections (`@neondatabase/serverless`). The adapter makes Prisma use Neon's WebSocket/HTTP transport instead of standard TCP — required for Vercel Edge/serverless.
 
 ### MapLibre GL 5.x Breaking Changes
 
@@ -221,10 +261,12 @@ npx prisma generate       # Regenerate Prisma client after schema change
 **Commit scopes**:
 - `map` — MapLibre component, clustering, popups
 - `api` — /api/chunk, /api/repo-info routes
+- `badge` — /api/badge, /api/badge-update, BadgeCache
 - `geocoder` — geocoder.ts, Nominatim, geocache logic
-- `github` — github.ts, GraphQL queries
+- `github` — github.ts, GraphQL/REST queries
 - `db` — schema.prisma, Prisma config, migrations
 - `ui` — landing page, map page, stats panel, drawer
+- `admin` — admin-only endpoints (clear-geocache, import-geocache)
 - `config` — env, next.config, tsconfig, settings
 - `deps` — package.json, pnpm-lock
 
@@ -255,11 +297,11 @@ vercel --prod
 - Auth / user accounts (StarMapper is stateless read-only)
 - Storing star history over time (different product: star-history.com)
 - Real-time updates / webhooks
-- Individual stargazer profile pages
+- Full standalone stargazer profile pages (detail cards with bio/followers are in scope for map enrichment — separate pages are not)
 - Server-side rate limit queuing (client loop handles retries)
 - Fuzzy matching on location strings (Nominatim handles it)
 
 ---
 
-*Last updated: 2026-03-22*
+*Last updated: 2026-03-25*
 *Version: 0.1.0*
