@@ -1,36 +1,118 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# StarMapper
 
-## Getting Started
+See who stars your repo, on a map.
 
-First, run the development server:
+Enter any GitHub repository URL and StarMapper fetches all stargazers, geocodes their locations, and renders an interactive world map with native clustering. Results load progressively as chunks arrive, so large repos (2000+ stars) work without any timeout issues.
+
+<!-- screenshot -->
+
+## Features
+
+- Interactive world map with GeoJSON clustering (MapLibre GL)
+- Progressive loading via client-side chunk loop — no serverless timeout limit
+- 3-level geocoding cascade: Jawg (primary), Geoapify (fallback), Nominatim (ultimate fallback)
+- Geocache shared across all repos — locations geocoded once, reused forever
+- Embeddable SVG badge showing mapped count and country stats
+- Optional GitHub token input for higher rate limits
+- Stargazer detail cards (bio, followers, company) on click
+
+## Quick Start
+
+**Prerequisites**: Node.js 20+, pnpm, a Neon Postgres database, a GitHub personal access token.
+
+### 1. Clone and install
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/your-username/starmapper.git
+cd starmapper
+pnpm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Configure environment variables
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Copy the example below into `.env.local` at the project root and fill in your values:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+# Required
+DATABASE_URL=postgresql://...          # Neon connection string
+GITHUB_TOKEN=ghp_...                   # PAT with read:user scope
 
-## Learn More
+# Map tiles + geocoding (primary)
+JAWGMAP_ACCESS_TOKEN=...               # Jawg access token (server-side)
+NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN=...   # Jawg access token (client-side map tiles)
 
-To learn more about Next.js, take a look at the following resources:
+# Geocoding fallback
+GEOAPIFY_APIKEY=...                    # Geoapify API key
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# Optional
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### 3. Initialize the database
 
-## Deploy on Vercel
+```bash
+npx prisma db push
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+This creates the `geocache` and `badge_cache` tables on your Neon database. No migration files are generated — `db push` is the intended workflow.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### 4. Start the dev server
+
+```bash
+pnpm dev
+```
+
+Open [http://localhost:3000](http://localhost:3000), enter any public GitHub repo URL, and the map loads.
+
+## Environment Variables
+
+| Variable | Required | Description |
+|---|---|---|
+| `DATABASE_URL` | Yes | Neon Postgres connection string |
+| `GITHUB_TOKEN` | Yes | GitHub PAT with `read:user` scope |
+| `JAWGMAP_ACCESS_TOKEN` | Recommended | Geocoding primary provider + server-side tile requests |
+| `NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN` | Yes (client) | Jawg token for client-side MapLibre tile URL |
+| `GEOAPIFY_APIKEY` | Recommended | Geocoding fallback when Jawg fails |
+| `NEXT_PUBLIC_APP_URL` | No | App base URL, used for OG metadata |
+
+Without `JAWGMAP_ACCESS_TOKEN` and `GEOAPIFY_APIKEY`, geocoding falls back to Nominatim only, which is rate-limited to 1 request per second and may be slower on large repos.
+
+Without `GITHUB_TOKEN`, GitHub's unauthenticated rate limit applies (60 requests/hour), which will block any repo above roughly 6000 stars.
+
+## Architecture
+
+Vercel's free tier caps serverless functions at 10 seconds. Rather than running one long server call, StarMapper has the browser orchestrate a loop of `POST /api/chunk` requests, each processing 100 stargazers and returning in well under 10 seconds. The browser accumulates points progressively and renders them on the map as they arrive.
+
+Full architecture documentation: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Framework | Next.js 16.2 (App Router, Turbopack) |
+| Language | TypeScript 5 |
+| Map | MapLibre GL 5.x |
+| Database | Neon Postgres via Prisma 7.5 + `@prisma/adapter-neon` |
+| Geocoding | Jawg, Geoapify, Nominatim |
+| Styling | Tailwind CSS v4 (`@theme inline`) |
+| Deployment | Vercel (free tier compatible) |
+
+## Development Commands
+
+```bash
+pnpm dev                  # Dev server with Turbopack
+pnpm build                # Production build
+pnpm typecheck            # tsc --noEmit
+
+npx prisma db push        # Apply schema changes to Neon
+npx prisma studio         # GUI to browse geocache and badge_cache
+npx prisma generate       # Regenerate Prisma client after schema edits
+```
+
+## Contributing
+
+Open an issue before sending a pull request for anything beyond a typo fix. The project is intentionally minimal — see `CLAUDE.md` section X for what is explicitly out of scope.
+
+## License
+
+MIT
