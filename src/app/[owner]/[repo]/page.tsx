@@ -1102,20 +1102,20 @@ export default function MapPage({
 
         <div className={`absolute bottom-6 left-4 z-10 flex-col gap-2 ${sidebarOpen ? "flex" : "hidden"} lg:flex`}>
 
-          {/* Close button — mobile only */}
-          <button
-            onClick={() => setSidebarOpen(false)}
-            className="lg:hidden self-end text-[#484f58] hover:text-[#8b949e] transition-colors p-1 -mb-1"
-            aria-label="Close controls"
-          >
-            <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-              <path d="M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l3.22-3.22a.749.749 0 0 1 1.275.326.749.749 0 0 1-.215.734L9.06 8l3.22 3.22a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215L8 9.06l-3.22 3.22a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042L6.94 8 3.72 4.78a.75.75 0 0 1 0-1.06Z" />
-            </svg>
-          </button>
-
           {/* Follower tier filter */}
           <div className="bg-[rgba(13,17,23,0.88)] border border-[#30363d] rounded-lg px-3 py-2 backdrop-blur-md flex flex-col gap-1">
-            <span className="text-[10px] text-[#484f58] uppercase tracking-widest mb-0.5">Filter map</span>
+            <div className="flex items-center justify-between mb-0.5">
+              <span className="text-[10px] text-[#484f58] uppercase tracking-widest">Filter map</span>
+              <button
+                onClick={() => setSidebarOpen(false)}
+                className="lg:hidden text-[#8b949e] hover:text-[#f0f6fc] transition-colors p-0.5 -mr-0.5 rounded"
+                aria-label="Close controls"
+              >
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                  <path d="M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l3.22-3.22a.749.749 0 0 1 1.275.326.749.749 0 0 1-.215.734L9.06 8l3.22 3.22a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215L8 9.06l-3.22 3.22a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042L6.94 8 3.72 4.78a.75.75 0 0 1 0-1.06Z" />
+                </svg>
+              </button>
+            </div>
             {([
               { key: "all", label: "All", dot: null },
               { key: "high", label: "500+ followers", dot: "bg-[#f85149]" },
