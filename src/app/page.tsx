@@ -345,6 +345,23 @@ export default function HomePage() {
           </div>
         </div>
 
+        {/* Not on the map callout */}
+        <div className="w-full max-w-sm mx-auto lg:mx-0 mt-6">
+          <a
+            href="https://github.com/settings/profile"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-3 px-4 py-3 bg-surface border border-border-subtle rounded-lg hover:border-accent-blue/40 transition-colors group"
+          >
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" className="shrink-0 text-accent-blue/60 group-hover:text-accent-blue transition-colors" aria-hidden="true">
+              <path d="m12.596 11.596-3.535 3.536a1.5 1.5 0 0 1-2.122 0l-3.535-3.536a6.5 6.5 0 1 1 9.192 0Zm-1.06-1.06a5 5 0 1 0-7.072 0L8 14.07l3.536-3.534ZM8 9a2 2 0 1 1-.001-3.999A2 2 0 0 1 8 9Z" />
+            </svg>
+            <span className="text-xs text-muted-subtle group-hover:text-muted transition-colors">
+              Not on the map? <span className="text-accent-blue">Add a location to your GitHub profile</span>
+            </span>
+          </a>
+        </div>
+
         </div>{/* end left column */}
 
         {/* Right column — repos table */}
@@ -366,20 +383,6 @@ export default function HomePage() {
 
       </main>
 
-      {/* Minimal footer — context link, not in the main flow */}
-      <footer className="fixed bottom-0 left-0 right-0 flex items-center justify-center px-6 py-3 bg-background/70 backdrop-blur-sm border-t border-border-subtle">
-        <p className="text-muted-subtle text-[11px]">
-          Not on the map?{" "}
-          <a
-            href="https://github.com/settings/profile"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-muted hover:text-accent-blue transition-colors"
-          >
-            Add a location to your GitHub profile
-          </a>
-        </p>
-      </footer>
     </>
   );
 }
