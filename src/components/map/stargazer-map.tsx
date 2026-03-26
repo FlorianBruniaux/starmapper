@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import maplibregl from "maplibre-gl";
 import type { StyleSpecification } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
@@ -204,6 +204,7 @@ export function StargazerMap({ points, comparePoints, flyTarget, onFlyDone, onRe
   const pointsRef = useRef<StargazerPoint[]>(points);
   const comparePointsRef = useRef<StargazerPoint[]>(comparePoints ?? []);
   const spiderActiveRef = useRef(false);
+  const [mapReady, setMapReady] = useState(false);
 
   useEffect(() => {
     pointsRef.current = points;
@@ -427,6 +428,9 @@ export function StargazerMap({ points, comparePoints, flyTarget, onFlyDone, onRe
         // Zoom → clear spider
         map.on("zoomstart", () => clearSpider(map, spiderActiveRef));
 
+        // Signal that the map and all sources/layers are ready
+        setMapReady(true);
+
         // Cursor pointers
         for (const layer of ["clusters", "unclustered-point"] as const) {
           map.on("mouseenter", layer, () => { map.getCanvas().style.cursor = "pointer"; });
@@ -449,24 +453,24 @@ export function StargazerMap({ points, comparePoints, flyTarget, onFlyDone, onRe
 
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !map.isStyleLoaded()) return;
+    if (!map || !mapReady) return;
     const source = map.getSource("stargazers") as maplibregl.GeoJSONSource | undefined;
     if (!source) return;
     source.setData(buildGeoJSON(points));
-  }, [points]);
+  }, [points, mapReady]);
 
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !map.isStyleLoaded()) return;
+    if (!map || !mapReady) return;
     const src = map.getSource("stargazers-compare") as maplibregl.GeoJSONSource | undefined;
     if (src) src.setData(buildGeoJSON(comparePoints ?? []));
-  }, [comparePoints]);
+  }, [comparePoints, mapReady]);
 
   useEffect(() => {
-    if (!flyTarget || !mapRef.current || !mapRef.current.isStyleLoaded()) return;
+    if (!flyTarget || !mapRef.current || !mapReady) return;
     mapRef.current.flyTo({ center: [flyTarget.lng, flyTarget.lat], zoom: 12, duration: 1200 });
     onFlyDone?.();
-  }, [flyTarget, onFlyDone]);
+  }, [flyTarget, onFlyDone, mapReady]);
 
   return <div ref={containerRef} className="w-full h-full" />;
 }
