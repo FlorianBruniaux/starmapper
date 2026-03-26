@@ -1,13 +1,18 @@
 import { prisma } from "@/lib/db";
 
 const JAWG_GEOCODING = "https://api.jawg.io/places/v1/search";
+const GEOAPIFY_GEOCODING = "https://api.geoapify.com/v1/geocode/search";
 const NOMINATIM_GEOCODING = "https://nominatim.openstreetmap.org/search";
 
-// --- Circuit breaker (in-memory, per Vercel instance) ---
-let jawgErrorCount = 0;
-let jawgCircuitOpenAt = 0;
+// --- Circuit breakers (in-memory, per Vercel instance) ---
 const CIRCUIT_RESET_MS = 60 * 60 * 1000; // 1h
 const ERROR_THRESHOLD = 3;
+
+let jawgErrorCount = 0;
+let jawgCircuitOpenAt = 0;
+
+let geoapifyErrorCount = 0;
+let geoapifyCircuitOpenAt = 0;
 
 const isJawgAvailable = (): boolean => {
   if (jawgErrorCount < ERROR_THRESHOLD) return true;
@@ -20,10 +25,26 @@ const isJawgAvailable = (): boolean => {
 
 const recordJawgError = () => {
   jawgErrorCount++;
-  // Use >= + guard to handle concurrent increments correctly
   if (jawgErrorCount >= ERROR_THRESHOLD && jawgCircuitOpenAt === 0) {
     jawgCircuitOpenAt = Date.now();
-    console.warn("[geocoder] Jawg circuit open — falling back to Nominatim");
+    console.warn("[geocoder] Jawg circuit open — falling back to Geoapify");
+  }
+};
+
+const isGeoapifyAvailable = (): boolean => {
+  if (geoapifyErrorCount < ERROR_THRESHOLD) return true;
+  if (Date.now() - geoapifyCircuitOpenAt > CIRCUIT_RESET_MS) {
+    geoapifyErrorCount = 0;
+    return true;
+  }
+  return false;
+};
+
+const recordGeoapifyError = () => {
+  geoapifyErrorCount++;
+  if (geoapifyErrorCount >= ERROR_THRESHOLD && geoapifyCircuitOpenAt === 0) {
+    geoapifyCircuitOpenAt = Date.now();
+    console.warn("[geocoder] Geoapify circuit open — falling back to Nominatim");
   }
 };
 
@@ -57,6 +78,26 @@ async function cacheBulkRead(keys: string[]) {
 }
 
 // --- API callers ---
+const callGeoapify = async (
+  location: string,
+  token: string,
+): Promise<[number, number] | null | "error"> => {
+  try {
+    const url = `${GEOAPIFY_GEOCODING}?text=${encodeURIComponent(location)}&limit=1&apiKey=${token}`;
+    const res = await fetch(url);
+    if (!res.ok) return "error"; // 429, 401, 5xx — transient, don't cache
+    const data = await res.json();
+    const feature = data.features?.[0];
+    if (feature) {
+      const [lng, lat] = feature.geometry.coordinates as [number, number];
+      return [lat, lng];
+    }
+    return null; // valid "not found"
+  } catch {
+    return "error";
+  }
+};
+
 const callJawg = async (
   location: string,
   token: string,
@@ -95,39 +136,71 @@ const callNominatim = async (location: string): Promise<[number, number] | null>
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-// Internal: call external API (Jawg → Nominatim fallback) + write cache.
+// Internal: call external API (Jawg → Mapbox → Nominatim) + write cache.
 // Used by both geocode() and geocodeBatch() to avoid double cache reads.
 const _resolveAndCache = async (
   location: string,
   key: string,
 ): Promise<[number, number] | null> => {
-  let coords: [number, number] | null = null;
-
+  // 1. Jawg (primary)
   if (isJawgAvailable()) {
     const token = process.env.JAWGMAP_ACCESS_TOKEN;
     if (token) {
       const jawgResult = await callJawg(location, token);
       if (jawgResult === "error") {
         recordJawgError();
-        // fall through to Nominatim
+        // fall through to Geoapify
       } else {
-        coords = jawgResult;
-        await cacheWrite(key, coords?.[0] ?? null, coords?.[1] ?? null);
-        return coords;
+        await cacheWrite(key, jawgResult?.[0] ?? null, jawgResult?.[1] ?? null);
+        return jawgResult;
       }
     }
   }
 
-  // Nominatim fallback
-  coords = await callNominatim(location);
+  // 2. Geoapify fallback
+  if (isGeoapifyAvailable()) {
+    const token = process.env.GEOAPIFY_APIKEY;
+    if (token) {
+      const geoapifyResult = await callGeoapify(location, token);
+      if (geoapifyResult === "error") {
+        recordGeoapifyError();
+        // fall through to Nominatim
+      } else {
+        await cacheWrite(key, geoapifyResult?.[0] ?? null, geoapifyResult?.[1] ?? null);
+        return geoapifyResult;
+      }
+    }
+  }
+
+  // 3. Nominatim (ultimate fallback)
+  const coords = await callNominatim(location);
   await cacheWrite(key, coords?.[0] ?? null, coords?.[1] ?? null);
   return coords;
+};
+
+// Returns false for strings that are clearly not real geographic locations.
+// Avoids wasting geocoding quota (and polluting the map) with TLDs, symbols,
+// placeholders, or bare phone prefixes that GitHub users put in their location field.
+const isGeocodeableLocation = (location: string): boolean => {
+  const s = location.trim();
+  if (s.length < 2) return false;
+  // Must have at least 2 consecutive Latin/Unicode letters
+  if (!/[a-zA-ZÀ-ÖØ-öø-ÿ]{2}/.test(s)) return false;
+  // Reject TLD-like strings: .de, .hack//metaverse, .local, .nl
+  if (s.startsWith(".")) return false;
+  // Reject URL-like strings: https://, .hack//metaverse
+  if (s.includes("://") || s.includes("//")) return false;
+  // Reject bare phone prefixes: +62, +233 (digits only after +)
+  if (/^\+\d[\d\s]*$/.test(s)) return false;
+  // Common GitHub placeholder values
+  if (/^\(?(null|undefined|none|n\/a|na|tbd|remote|anywhere|earth|world|internet|online|everywhere)\)?$/i.test(s)) return false;
+  return true;
 };
 
 // --- Public API ---
 export async function geocode(location: string): Promise<[number, number] | null> {
   const key = location.trim().toLowerCase();
-  if (!key) return null;
+  if (!key || !isGeocodeableLocation(key)) return null;
 
   const cached = await cacheRead(key);
   if (cached !== undefined && cached !== null) {
@@ -151,13 +224,15 @@ export async function geocodeBatch(
       .map((c) => [c.key, [c.lat, c.lng] as [number, number]]),
   );
 
-  const misses = [...new Set(locations.filter((loc) => !cachedKeys.has(loc.trim().toLowerCase())))];
+  const misses = [...new Set(
+    locations.filter((loc) => !cachedKeys.has(loc.trim().toLowerCase()) && isGeocodeableLocation(loc)),
+  )];
 
   const missResults: ([number, number] | null)[] = [];
-  const useJawg = isJawgAvailable();
+  const useParallel = isJawgAvailable() || isGeoapifyAvailable();
 
-  if (useJawg) {
-    // Jawg: batch of 5 in parallel — call _resolveAndCache directly (no redundant cache read)
+  if (useParallel) {
+    // Jawg or Geoapify available: batch of 5 in parallel (no Nominatim rate limit concern)
     const CONCURRENCY = 5;
     for (let i = 0; i < misses.length; i += CONCURRENCY) {
       const batch = misses.slice(i, i + CONCURRENCY);
@@ -167,7 +242,7 @@ export async function geocodeBatch(
       missResults.push(...results);
     }
   } else {
-    // Nominatim: sequential with 1100ms delay (polite use policy)
+    // Both Jawg and Mapbox down: sequential Nominatim with 1100ms delay (polite use policy)
     for (let i = 0; i < misses.length; i++) {
       const loc = misses[i];
       const result = await _resolveAndCache(loc, loc.trim().toLowerCase());
