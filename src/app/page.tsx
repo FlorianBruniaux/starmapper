@@ -100,8 +100,8 @@ export default function HomePage() {
       )}
 
       {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-10 flex items-center justify-between px-6 py-3 bg-[#0d1117]/80 backdrop-blur-sm border-b border-[#21262d]">
-        <div className="flex items-center gap-2 text-[#f0f6fc] font-semibold text-sm">
+      <header className="fixed top-0 left-0 right-0 z-10 flex items-center justify-between px-6 py-3 bg-background/80 backdrop-blur-sm border-b border-border-subtle">
+        <div className="flex items-center gap-2 text-foreground font-semibold text-sm">
           <span aria-hidden="true">🌍</span>
           <span>StarMapper</span>
         </div>
@@ -109,8 +109,8 @@ export default function HomePage() {
           onClick={() => setTokenOpen(true)}
           className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border transition-colors ${
             hasToken
-              ? "border-[#238636] text-[#3fb950] hover:bg-[#238636]/10"
-              : "border-[#30363d] text-[#8b949e] hover:text-[#f0f6fc] hover:border-[#58a6ff]"
+              ? "border-accent-green-emphasis text-accent-green hover:bg-accent-green-emphasis/10"
+              : "border-border text-muted hover:text-foreground hover:border-accent-blue"
           }`}
         >
           {hasToken ? (
@@ -132,10 +132,10 @@ export default function HomePage() {
       </header>
 
       {/* Main */}
-      <main className="min-h-screen bg-[#0d1117] flex flex-col lg:flex-row pt-14">
+      <main className="min-h-screen bg-background flex flex-col lg:flex-row pt-14">
 
         {/* Left column — hero + form + how it works */}
-        <div className="lg:w-[480px] lg:shrink-0 flex flex-col justify-center px-8 py-12 lg:py-16 lg:border-r lg:border-[#21262d]">
+        <div className="lg:w-[480px] lg:shrink-0 flex flex-col justify-start px-8 py-12 lg:py-16 lg:border-r lg:border-border-subtle">
         <div className="w-full max-w-sm mx-auto lg:mx-0">
 
           {/* Hero */}
@@ -171,7 +171,7 @@ export default function HomePage() {
                 setError("");
               }}
               placeholder="github.com/owner/repo"
-              className="w-full bg-[#161b22] border border-[#30363d] rounded-lg px-4 py-3 text-[#f0f6fc] placeholder-[#484f58] focus:outline-none focus:border-[#58a6ff] text-sm transition-colors"
+              className="w-full bg-surface border border-border rounded-lg px-4 py-3 text-foreground placeholder-muted-subtle focus:outline-none focus:border-accent-blue text-sm transition-colors"
               autoFocus
               aria-label="GitHub repository URL"
             />
@@ -187,7 +187,7 @@ export default function HomePage() {
                   }}
                   placeholder="Compare with: github.com/owner/repo"
                   autoFocus
-                  className="w-full bg-[#161b22] border border-[#30363d] rounded-lg px-4 py-3 pr-10 text-[#f0f6fc] placeholder-[#484f58] focus:outline-none focus:border-[#a371f7] text-sm transition-colors"
+                  className="w-full bg-surface border border-border rounded-lg px-4 py-3 pr-10 text-foreground placeholder-muted-subtle focus:outline-none focus:border-accent-purple text-sm transition-colors"
                   aria-label="Compare with repository"
                 />
                 <button
@@ -196,7 +196,7 @@ export default function HomePage() {
                     setShowCompare(false);
                     setCompareInput("");
                   }}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#484f58] hover:text-[#8b949e] transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-subtle hover:text-muted transition-colors"
                   aria-label="Remove compare"
                 >
                   <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
@@ -208,7 +208,7 @@ export default function HomePage() {
 
             {/* Error */}
             {error && (
-              <p className="text-[#f85149] text-xs px-1" role="alert">
+              <p className="text-accent-red text-xs px-1" role="alert">
                 {error}
               </p>
             )}
@@ -217,7 +217,7 @@ export default function HomePage() {
             <div className="flex gap-2">
               <button
                 type="submit"
-                className="flex-1 bg-[#238636] hover:bg-[#2ea043] text-white font-medium py-3 px-6 rounded-lg transition-colors text-sm"
+                className="flex-1 bg-accent-green-emphasis hover:bg-[#2ea043] text-white font-medium py-3 px-6 rounded-lg transition-colors text-sm"
               >
                 Map Stargazers
               </button>
@@ -225,7 +225,7 @@ export default function HomePage() {
                 <button
                   type="button"
                   onClick={() => setShowCompare(true)}
-                  className="flex items-center gap-1.5 px-3 py-3 bg-[#161b22] border border-[#30363d] hover:border-[#58a6ff] text-[#8b949e] hover:text-[#58a6ff] rounded-lg transition-colors text-xs whitespace-nowrap"
+                  className="flex items-center gap-1.5 px-3 py-3 bg-surface border border-border hover:border-accent-blue text-muted hover:text-accent-blue rounded-lg transition-colors text-xs whitespace-nowrap"
                   title="Compare with another repo"
                 >
                   <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
@@ -238,12 +238,12 @@ export default function HomePage() {
 
             {/* Token nudge — inline, low weight */}
             {!hasToken && (
-              <p className="text-[11px] text-[#484f58] text-center pt-0.5">
-                <span className="text-[#f0883e]">No token:</span> 60 req/hr limit.{" "}
+              <p className="text-[11px] text-muted-subtle text-center pt-0.5">
+                <span className="text-accent-orange">No token:</span> 60 req/hr limit.{" "}
                 <button
                   type="button"
                   onClick={() => setTokenOpen(true)}
-                  className="text-[#58a6ff] hover:underline"
+                  className="text-accent-blue hover:underline"
                 >
                   Add yours
                 </button>{" "}
@@ -255,7 +255,7 @@ export default function HomePage() {
           {/* Suggestions — unified: bookmarks first, then examples to fill */}
           {suggestions.length > 0 && (
             <div className="mt-6">
-              <p className="text-[#484f58] text-[10px] uppercase tracking-widest mb-2.5">
+              <p className="text-muted-subtle text-[10px] uppercase tracking-widest mb-2.5">
                 {bookmarks.length > 0 ? "Recent & examples" : "Try these"}
               </p>
               <div className="flex gap-2 flex-wrap">
@@ -268,8 +268,8 @@ export default function HomePage() {
                       onClick={() => handleSuggestion(b)}
                       className={`text-xs rounded px-2.5 py-1 border transition-colors ${
                         recent
-                          ? "bg-[#161b22] border-[#30363d] text-[#8b949e] hover:text-[#f0f6fc] hover:border-[#58a6ff]"
-                          : "bg-transparent border-[#21262d] text-[#484f58] hover:text-[#8b949e] hover:border-[#30363d]"
+                          ? "bg-surface border-border text-muted hover:text-foreground hover:border-accent-blue"
+                          : "bg-transparent border-border-subtle text-muted-subtle hover:text-muted hover:border-border"
                       }`}
                     >
                       {b.repo}
@@ -306,7 +306,7 @@ export default function HomePage() {
         {/* FAQ — visible for users + indexed by AI crawlers */}
         <div className="w-full max-w-sm mx-auto lg:mx-0 mt-10">
           <p className="text-muted-subtle text-[10px] uppercase tracking-widest mb-3">FAQ</p>
-          <div className="flex flex-col divide-y divide-[#21262d] border border-[#21262d] rounded-lg overflow-hidden">
+          <div className="flex flex-col divide-y divide-border-subtle border border-border-subtle rounded-lg overflow-hidden">
             {[
               {
                 q: "Is StarMapper free?",
@@ -367,14 +367,14 @@ export default function HomePage() {
       </main>
 
       {/* Minimal footer — context link, not in the main flow */}
-      <footer className="fixed bottom-0 left-0 right-0 flex items-center justify-center px-6 py-3 bg-[#0d1117]/70 backdrop-blur-sm border-t border-[#21262d]">
-        <p className="text-[#484f58] text-[11px]">
+      <footer className="fixed bottom-0 left-0 right-0 flex items-center justify-center px-6 py-3 bg-background/70 backdrop-blur-sm border-t border-border-subtle">
+        <p className="text-muted-subtle text-[11px]">
           Not on the map?{" "}
           <a
             href="https://github.com/settings/profile"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-[#8b949e] hover:text-[#58a6ff] transition-colors"
+            className="text-muted hover:text-accent-blue transition-colors"
           >
             Add a location to your GitHub profile
           </a>

@@ -21,7 +21,7 @@ const timeAgo = (iso: string): string => {
 };
 
 const SortIcon = ({ active, dir }: { active: boolean; dir: SortDir }) => (
-  <span className={`ml-1 transition-opacity ${active ? "opacity-100" : "opacity-30"}`}>
+  <span className={`ml-1 transition-opacity ${active ? "opacity-100" : "opacity-40"}`}>
     {active && dir === "asc" ? "↑" : "↓"}
   </span>
 );
@@ -42,7 +42,7 @@ const ColHeader = ({
   onSort: (col: SortCol) => void;
 }) => (
   <th
-    className={`py-2 px-3 text-[10px] uppercase tracking-widest text-[#484f58] font-normal cursor-pointer select-none hover:text-[#8b949e] transition-colors ${align === "right" ? "text-right" : "text-left"}`}
+    className={`py-2.5 px-4 text-xs uppercase tracking-wider text-muted-subtle font-medium cursor-pointer select-none hover:text-muted transition-colors ${align === "right" ? "text-right" : "text-left"}`}
     onClick={() => onSort(col)}
   >
     {label}
@@ -76,8 +76,8 @@ export const RepoTable = ({ repos }: { repos: MappedRepo[] }) => {
     <div className="w-full overflow-x-auto">
       <table className="w-full border-collapse text-sm">
         <thead>
-          <tr className="border-b border-[#21262d]">
-            <th className="py-2 px-3 text-[10px] uppercase tracking-widest text-[#484f58] font-normal text-left">
+          <tr className="border-b border-border-subtle">
+            <th className="py-2.5 px-4 text-xs uppercase tracking-wider text-muted-subtle font-medium text-left">
               Repo
             </th>
             <ColHeader label="Stars" col="totalCount" active={sortCol === "totalCount"} dir={sortDir} onSort={handleSort} />
@@ -90,39 +90,45 @@ export const RepoTable = ({ repos }: { repos: MappedRepo[] }) => {
           {sorted.map((r) => (
             <tr
               key={`${r.owner}/${r.repo}`}
-              className="border-b border-[#21262d]/50 hover:bg-[#161b22] transition-colors group"
+              className="border-b border-border-subtle/50 hover:bg-surface transition-colors group"
             >
-              <td className="py-2.5 px-3">
+              <td className="py-3 px-4">
                 <Link
                   href={`/${r.owner}/${r.repo}`}
-                  className="flex flex-col leading-tight"
+                  className="inline-flex items-baseline gap-0.5 group"
                 >
-                  <span className="text-[10px] text-[#484f58]">{r.owner}</span>
-                  <span className="text-sm text-[#f0f6fc] group-hover:text-[#58a6ff] transition-colors font-medium">
+                  <span className="text-xs text-muted-subtle">{r.owner}</span>
+                  <span className="text-xs text-muted-subtle">/</span>
+                  <span className="text-sm text-foreground font-medium group-hover:text-accent-blue transition-colors">
                     {r.repo}
                   </span>
                 </Link>
               </td>
-              <td className="py-2.5 px-3 text-right text-[#8b949e] text-xs tabular-nums">
-                {formatCount(r.totalCount)}
+              <td className="py-3 px-4 text-right tabular-nums">
+                <span className="inline-flex items-center justify-end gap-1 text-xs text-muted">
+                  <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor" className="text-accent-orange/50 shrink-0" aria-hidden="true">
+                    <path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.751.751 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z" />
+                  </svg>
+                  {formatCount(r.totalCount)}
+                </span>
               </td>
-              <td className="py-2.5 px-3 text-right tabular-nums">
+              <td className="py-3 px-4 text-right tabular-nums">
                 <span
-                  className={`text-xs font-semibold ${
+                  className={`inline-block text-xs font-semibold px-2 py-0.5 rounded-full ${
                     r.mappedPercent >= 50
-                      ? "text-[#3fb950]"
+                      ? "text-accent-green bg-accent-green/10"
                       : r.mappedPercent >= 25
-                      ? "text-[#f0883e]"
-                      : "text-[#8b949e]"
+                      ? "text-accent-orange bg-accent-orange/10"
+                      : "text-muted bg-muted/10"
                   }`}
                 >
                   {r.mappedPercent}%
                 </span>
               </td>
-              <td className="py-2.5 px-3 text-right text-[#8b949e] text-xs tabular-nums">
+              <td className="py-3 px-4 text-right text-xs tabular-nums text-muted">
                 {r.countryCount}
               </td>
-              <td className="py-2.5 px-3 text-right text-[#484f58] text-xs whitespace-nowrap">
+              <td className="py-3 px-4 text-right text-xs whitespace-nowrap text-muted-subtle" title={r.updatedAt}>
                 {timeAgo(r.updatedAt)}
               </td>
             </tr>
