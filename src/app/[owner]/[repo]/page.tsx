@@ -157,6 +157,7 @@ export default function MapPage({
   const [filterCity, setFilterCity] = useState("");
   const [flyTarget, setFlyTarget] = useState<{ lat: number; lng: number; login: string } | null>(null);
   const [growthOpen, setGrowthOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [tokenOpen, setTokenOpen] = useState(false);
   const captureMapRef = useRef<(() => Promise<string | null>) | null>(null);
   const runningRef = useRef(false);
@@ -1081,7 +1082,36 @@ export default function MapPage({
 
       {/* Bottom-left — vertical dock: follower filter + secondary actions + Share CTA */}
       {(displayStats || allStargazers.length > 0) && (
-        <div className="absolute bottom-6 left-4 z-10 flex flex-col gap-2">
+        <>
+        {/* Mobile toggle — visible only when sidebar is collapsed */}
+        {!sidebarOpen && (
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="lg:hidden absolute bottom-6 left-4 z-10 bg-[rgba(13,17,23,0.88)] border border-[#30363d] rounded-lg px-3 py-2.5 backdrop-blur-md flex items-center gap-2 text-xs text-[#8b949e] hover:text-[#f0f6fc] hover:border-[#58a6ff]/50 transition-all"
+            aria-label="Open controls"
+          >
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+              <path d="M1 2.75A.75.75 0 0 1 1.75 2h12.5a.75.75 0 0 1 0 1.5H1.75A.75.75 0 0 1 1 2.75Zm0 5A.75.75 0 0 1 1.75 7h12.5a.75.75 0 0 1 0 1.5H1.75A.75.75 0 0 1 1 7.75ZM1.75 12h12.5a.75.75 0 0 1 0 1.5H1.75a.75.75 0 0 1 0-1.5Z" />
+            </svg>
+            Controls
+            {followerMapFilter !== "all" && (
+              <span className="size-1.5 rounded-full bg-[#58a6ff] inline-block" />
+            )}
+          </button>
+        )}
+
+        <div className={`absolute bottom-6 left-4 z-10 flex-col gap-2 ${sidebarOpen ? "flex" : "hidden"} lg:flex`}>
+
+          {/* Close button — mobile only */}
+          <button
+            onClick={() => setSidebarOpen(false)}
+            className="lg:hidden self-end text-[#484f58] hover:text-[#8b949e] transition-colors p-1 -mb-1"
+            aria-label="Close controls"
+          >
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+              <path d="M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l3.22-3.22a.749.749 0 0 1 1.275.326.749.749 0 0 1-.215.734L9.06 8l3.22 3.22a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215L8 9.06l-3.22 3.22a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042L6.94 8 3.72 4.78a.75.75 0 0 1 0-1.06Z" />
+            </svg>
+          </button>
 
           {/* Follower tier filter */}
           <div className="bg-[rgba(13,17,23,0.88)] border border-[#30363d] rounded-lg px-3 py-2 backdrop-blur-md flex flex-col gap-1">
@@ -1188,6 +1218,7 @@ export default function MapPage({
             Share
           </button>
         </div>
+        </>
       )}
 
       {/* Stargazers table modal */}
