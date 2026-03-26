@@ -1,5 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
+import { gunzipSync } from "zlib";
 import { prisma } from "@/lib/db";
+
+// Decompress points/unmapped stored as gzip+base64 string, or return as-is if legacy JSON array.
+const decompress = (value: unknown): unknown[] => {
+  if (typeof value === "string") {
+    // New format: gzip+base64 encoded
+    return JSON.parse(gunzipSync(Buffer.from(value, "base64")).toString("utf8"));
+  }
+  // Legacy format: plain JSON array (rows written before this change)
+  return Array.isArray(value) ? value : [];
+};
 
 export const GET = async (
   _req: NextRequest,
@@ -12,9 +23,19 @@ export const GET = async (
     const cached = await prisma.stargazerCache.findUnique({ where: { owner_repo: key } });
 
     if (cached) {
+      const points = decompress(cached.points) as Record<string, unknown>[];
+      const unmapped = decompress(cached.unmapped);
+
+      // Reconstruct avatarUrl from login (stripped on write to save space)
+      // Legacy rows already have avatarUrl — only add if missing
+      const pointsWithAvatar = points.map((p) => ({
+        ...p,
+        avatarUrl: p.avatarUrl ?? `https://github.com/${p.login}.png`,
+      }));
+
       return NextResponse.json({
-        points: cached.points,
-        unmapped: cached.unmapped,
+        points: pointsWithAvatar,
+        unmapped,
         totalCount: cached.totalCount,
         scannedAt: cached.scannedAt.toISOString(),
       });
