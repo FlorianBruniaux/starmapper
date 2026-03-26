@@ -120,9 +120,10 @@ export async function POST(req: NextRequest) {
       });
       if (pointsToWrite.length > 0) bulkUpsertUsers(pointsToWrite, health).catch(console.error);
 
-      // Only upsert star events for users not already tracked
+      // Only upsert star events for users we just wrote to github_user (FK constraint)
+      const writtenLogins = new Set(pointsToWrite.map((p) => p.login));
       const newStarEvents = page.stargazers
-        .filter((sg) => !knownUsers.has(sg.login))
+        .filter((sg) => writtenLogins.has(sg.login))
         .map((sg) => ({ login: sg.login, owner: ownerKey, repo: repoKey, starredAt: sg.starredAt }));
       if (newStarEvents.length > 0) bulkUpsertStarEvents(newStarEvents, health).catch(console.error);
     }).catch(console.error);
