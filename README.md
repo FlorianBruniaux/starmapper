@@ -1,5 +1,7 @@
 # StarMapper
 
+[![StarMapper](https://starmapper.bruniaux.com/api/badge/florianbruniaux/starmapper)](https://starmapper.bruniaux.com/florianbruniaux/starmapper)
+
 See who stars your repo, on a map.
 
 Enter any GitHub repository URL and StarMapper fetches all stargazers, geocodes their locations, and renders an interactive world map with native clustering. Results load progressively as chunks arrive, so large repos (2000+ stars) work without any timeout issues.

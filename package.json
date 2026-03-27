@@ -11,7 +11,9 @@
     "db:generate": "prisma generate",
     "db:studio": "sh -c 'set -a && . .env.local && set +a && prisma studio'",
     "seed:geonames": "tsx scripts/seed-geocache-geonames.ts",
-    "seed:geonames:dry": "tsx scripts/seed-geocache-geonames.ts --dry-run"
+    "seed:geonames:dry": "tsx scripts/seed-geocache-geonames.ts --dry-run",
+    "batch:scan": "tsx scripts/batch-scan.ts",
+    "batch:scan:dry": "tsx scripts/batch-scan.ts --dry-run"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.2",
@@ -24,10 +26,13 @@
     "react-dom": "19.2.4"
   },
   "devDependencies": {
+    "@prisma/adapter-pg": "^7.6.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/pg": "^8.20.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "pg": "^8.20.0",
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
     "typescript": "^5"

@@ -15,7 +15,7 @@ export const GET = async () => {
   try {
     const rows = await prisma.badgeCache.findMany({
       orderBy: { updatedAt: "desc" },
-      take: 200,
+      take: 500,
     });
 
     const repos: MappedRepo[] = rows.map((r) => ({

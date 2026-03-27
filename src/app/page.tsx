@@ -7,6 +7,7 @@ import { getBookmarks } from "@/lib/bookmarks";
 import { RepoTable } from "@/components/repo-table";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Footer } from "@/components/footer";
+import { CommandSearch } from "@/components/command-search";
 import type { Bookmark } from "@/lib/bookmarks";
 import type { MappedRepo } from "@/app/api/repos/route";
 
@@ -92,6 +93,8 @@ export default function HomePage() {
 
   return (
     <>
+      <CommandSearch repos={repos} />
+
       {tokenOpen && (
         <TokenModal
           onClose={() => {
@@ -376,7 +379,15 @@ export default function HomePage() {
             <div className="flex items-center justify-between mb-5">
               <div>
                 <p className="text-muted-subtle text-[10px] uppercase tracking-widest mb-1">Community maps</p>
-                <p className="text-foreground text-sm font-semibold">{repos.length} repos already mapped</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-foreground text-sm font-semibold">{repos.length} repos already mapped</p>
+                  <kbd
+                    className="hidden lg:inline-flex items-center text-[10px] text-muted-subtle border border-border rounded px-1.5 py-0.5 cursor-pointer hover:border-accent-blue hover:text-accent-blue transition-colors"
+                    title="Search mapped repos (Cmd+K)"
+                  >
+                    ⌘K
+                  </kbd>
+                </div>
               </div>
               <span className="flex items-center gap-1.5 text-xs text-muted">
                 <span className="size-1.5 rounded-full bg-accent-blue/70 animate-pulse inline-block" />
