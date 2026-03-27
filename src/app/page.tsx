@@ -26,6 +26,14 @@ const parseRepo = (val: string): { owner: string; repo: string } | null => {
   return null;
 };
 
+// Returns username if input is a bare username or github.com/username (no repo)
+const parseUsername = (val: string): string | null => {
+  const cleaned = val.trim().replace(/\/$/, "").replace("https://github.com/", "");
+  const parts = cleaned.split("/").filter(Boolean);
+  if (parts.length === 1 && /^[a-zA-Z0-9._-]{1,100}$/.test(parts[0])) return parts[0];
+  return null;
+};
+
 export default function HomePage() {
   const [input, setInput] = useState("");
   const [compareInput, setCompareInput] = useState("");
@@ -69,18 +77,24 @@ export default function HomePage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const parsed = parseRepo(input);
-    if (!parsed) {
-      setError("Enter a valid GitHub repo URL or owner/repo");
+    if (parsed) {
+      if (compareInput.trim()) {
+        const parsed2 = parseRepo(compareInput);
+        if (parsed2) {
+          router.push(`/${parsed.owner}/${parsed.repo}?compare=${parsed2.owner}/${parsed2.repo}`);
+          return;
+        }
+      }
+      router.push(`/${parsed.owner}/${parsed.repo}`);
       return;
     }
-    if (compareInput.trim()) {
-      const parsed2 = parseRepo(compareInput);
-      if (parsed2) {
-        router.push(`/${parsed.owner}/${parsed.repo}?compare=${parsed2.owner}/${parsed2.repo}`);
-        return;
-      }
+    // Bare username → batch scan page
+    const username = parseUsername(input);
+    if (username) {
+      router.push(`/${username}`);
+      return;
     }
-    router.push(`/${parsed.owner}/${parsed.repo}`);
+    setError("Enter a GitHub repo (owner/repo) or a username to scan all repos");
   };
 
   const handleSuggestion = (b: Suggestion) => {
@@ -178,11 +192,20 @@ export default function HomePage() {
                 setInput(e.target.value);
                 setError("");
               }}
-              placeholder="github.com/owner/repo"
+              placeholder="owner/repo or just a username"
               className="w-full bg-surface border border-border rounded-lg px-4 py-3 text-foreground placeholder-muted-subtle focus:outline-none focus:border-accent-blue text-sm transition-colors"
               autoFocus
-              aria-label="GitHub repository URL"
+              aria-label="GitHub repository URL or username"
             />
+
+            {/* Username hint — shown when input looks like a bare username */}
+            {parseUsername(input) && (
+              <p className="text-xs text-muted-subtle px-1">
+                Looks like a username —{" "}
+                <span className="text-accent-blue">Map Stargazers</span> will scan all repos for{" "}
+                <span className="text-foreground font-medium">{parseUsername(input)}</span>
+              </p>
+            )}
 
             {/* Compare input — shown inline when toggled */}
             {showCompare && (
