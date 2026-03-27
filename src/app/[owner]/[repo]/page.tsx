@@ -784,7 +784,7 @@ export default function MapPage({
 
       {/* Pre-scan overlay (no cache) */}
       {status === "idle" && repoInfo && estimate && (
-        <div className="absolute inset-0 z-30 flex items-center justify-center bg-background/[0.85] backdrop-blur-sm">
+        <div className="absolute inset-0 z-30 flex items-center justify-center bg-background/85 backdrop-blur-sm">
           <div className="bg-surface border border-border rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
             <div className="flex items-center gap-3 mb-6">
               {repoInfo.avatar && (
@@ -844,7 +844,7 @@ export default function MapPage({
 
       {/* Rate limit overlay */}
       {status === "waiting" && (
-        <div className="absolute inset-0 z-30 flex items-center justify-center bg-background/[0.75] backdrop-blur-sm">
+        <div className="absolute inset-0 z-30 flex items-center justify-center bg-background/75 backdrop-blur-sm">
           <div className="bg-surface border border-border rounded-2xl p-8 max-w-sm w-full mx-4 shadow-2xl text-center">
             <div className="flex justify-center mb-5">
               <svg className="animate-spin w-10 h-10 text-accent-blue" viewBox="0 0 24 24" fill="none">
@@ -870,7 +870,7 @@ export default function MapPage({
 
       {/* Top panel */}
       <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10
-        bg-background/[0.92] border border-border rounded-xl
+        bg-background/90 border border-border rounded-xl
         px-5 py-3 text-center backdrop-blur-md shadow-2xl min-w-[320px]">
 
         <div className="flex items-center justify-center gap-2 mb-1">
@@ -1024,7 +1024,7 @@ export default function MapPage({
       {/* Legend — compare mode indicator only */}
       {compareOwner && compareRepo && (
         <div className="absolute bottom-6 right-4 z-10
-          bg-background/[0.88] border border-border rounded-lg px-3 py-2
+          bg-background/90 border border-border rounded-lg px-3 py-2
           text-[11px] backdrop-blur-md select-none flex items-center gap-2">
           <span className="inline-block w-2 h-2 rounded-full bg-accent-purple flex-shrink-0" />
           <span className="text-muted text-[10px] truncate max-w-[120px]">{compareRepo}</span>
@@ -1034,7 +1034,7 @@ export default function MapPage({
       {/* Unmapped drawer */}
       {drawerOpen && (
         <div className="absolute bottom-0 left-0 right-0 z-20
-          bg-background/[0.97] border-t border-border backdrop-blur-md
+          bg-background/95 border-t border-border backdrop-blur-md
           flex flex-col max-h-[45vh]">
           <div className="flex items-center justify-between px-5 py-3 border-b border-border-subtle flex-shrink-0">
             <div>
@@ -1085,7 +1085,7 @@ export default function MapPage({
       {/* Back link */}
       <a
         href="/"
-        className="absolute top-4 left-4 z-10 bg-background/[0.88] border border-border
+        className="absolute top-4 left-4 z-10 bg-background/90 border border-border
           rounded-lg px-3 py-2 text-xs text-muted hover:text-foreground backdrop-blur-md transition-colors"
       >
         ← Back
@@ -1098,7 +1098,7 @@ export default function MapPage({
         {!sidebarOpen && (
           <button
             onClick={() => setSidebarOpen(true)}
-            className="lg:hidden absolute bottom-6 left-4 z-10 bg-background/[0.88] border border-border rounded-lg px-3 py-2.5 backdrop-blur-md flex items-center gap-2 text-xs text-muted hover:text-foreground hover:border-accent-blue/50 transition-all"
+            className="lg:hidden absolute bottom-6 left-4 z-10 bg-background/90 border border-border rounded-lg px-3 py-2.5 backdrop-blur-md flex items-center gap-2 text-xs text-muted hover:text-foreground hover:border-accent-blue/50 transition-all"
             aria-label="Open controls"
           >
             <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
@@ -1114,7 +1114,7 @@ export default function MapPage({
         <div className={`absolute bottom-6 left-4 z-10 flex-col gap-2 ${sidebarOpen ? "flex" : "hidden"} lg:flex`}>
 
           {/* Follower tier filter */}
-          <div className="bg-background/[0.88] border border-border rounded-lg px-3 py-2 backdrop-blur-md flex flex-col gap-1">
+          <div className="bg-background/90 border border-border rounded-lg px-3 py-2 backdrop-blur-md flex flex-col gap-1">
             <div className="flex items-center justify-between mb-0.5">
               <span className="text-[10px] text-muted-subtle uppercase tracking-widest">Filter map</span>
               <button
@@ -1154,7 +1154,7 @@ export default function MapPage({
           {displayStats && (
             <button
               onClick={() => setStatsOpen(true)}
-              className="bg-background/[0.88] border border-border rounded-lg
+              className="bg-background/90 border border-border rounded-lg
                 px-3 py-2.5 text-xs text-muted hover:text-foreground
                 hover:border-accent-blue/50 backdrop-blur-md transition-all flex items-center gap-2"
               title="Stargazer stats"
@@ -1168,7 +1168,7 @@ export default function MapPage({
           {allStargazers.length > 0 && (
             <button
               onClick={() => setAllOpen(true)}
-              className="bg-background/[0.88] border border-border rounded-lg
+              className="bg-background/90 border border-border rounded-lg
                 px-3 py-2.5 text-xs text-muted hover:text-foreground
                 hover:border-accent-purple/50 backdrop-blur-md transition-all flex items-center gap-2"
               title="All stargazers"
@@ -1185,7 +1185,7 @@ export default function MapPage({
           {growthData.length > 0 && (
             <button
               onClick={() => setGrowthOpen(true)}
-              className="bg-background/[0.88] border border-border rounded-lg
+              className="bg-background/90 border border-border rounded-lg
                 px-3 py-2.5 text-xs text-muted hover:text-foreground
                 hover:border-accent-green/50 backdrop-blur-md transition-all flex items-center gap-2"
               title="Star growth chart"
@@ -1200,7 +1200,7 @@ export default function MapPage({
             href={`https://star-history.com/#${owner}/${repo}&type=Date`}
             target="_blank"
             rel="noopener noreferrer"
-            className="bg-background/[0.88] border border-border rounded-lg
+            className="bg-background/90 border border-border rounded-lg
               px-3 py-2.5 text-xs text-muted hover:text-foreground
               hover:border-accent-orange/50 backdrop-blur-md transition-all flex items-center gap-2"
             title="View star history on star-history.com"
@@ -1235,7 +1235,7 @@ export default function MapPage({
       {/* Stargazers table modal */}
       {allOpen && (
         <div
-          className="absolute inset-0 z-40 flex items-center justify-center bg-background/[0.85] backdrop-blur-sm"
+          className="absolute inset-0 z-40 flex items-center justify-center bg-background/85 backdrop-blur-sm"
           onClick={() => setAllOpen(false)}
         >
           <div
@@ -1570,7 +1570,7 @@ export default function MapPage({
       {/* Growth chart modal */}
       {growthOpen && growthData.length > 0 && (
         <div
-          className="absolute inset-0 z-40 flex items-center justify-center bg-background/[0.85] backdrop-blur-sm"
+          className="absolute inset-0 z-40 flex items-center justify-center bg-background/85 backdrop-blur-sm"
           onClick={() => setGrowthOpen(false)}
         >
           <div
@@ -1594,7 +1594,7 @@ export default function MapPage({
       {/* Share modal */}
       {shareOpen && repoInfo && (
         <div
-          className="absolute inset-0 z-50 flex items-center justify-center bg-background/[0.85] backdrop-blur-sm"
+          className="absolute inset-0 z-50 flex items-center justify-center bg-background/85 backdrop-blur-sm"
           onClick={() => setShareOpen(false)}
         >
           <div
@@ -1831,8 +1831,7 @@ export default function MapPage({
                           setLiCopied(true);
                           setTimeout(() => setLiCopied(false), 3000);
                         }}
-                        className="flex-1 bg-surface-alt border border-border text-xs py-2 rounded-lg transition-colors hover:bg-border"
-                        style={{ color: liCopied ? "#3fb950" : "#8b949e" }}
+                        className={`flex-1 bg-surface-alt border border-border text-xs py-2 rounded-lg transition-colors hover:bg-border ${liCopied ? "text-accent-green" : "text-muted"}`}
                       >
                         {liCopied ? "✓ Copied!" : "Copy text"}
                       </button>
@@ -1871,7 +1870,7 @@ export default function MapPage({
       {/* Stats modal */}
       {statsOpen && displayStats && (
         <div
-          className="absolute inset-0 z-40 flex items-center justify-center bg-background/[0.85] backdrop-blur-sm"
+          className="absolute inset-0 z-40 flex items-center justify-center bg-background/85 backdrop-blur-sm"
           onClick={() => setStatsOpen(false)}
         >
           <div
@@ -2105,9 +2104,9 @@ const GrowthChart = ({ data }: { data: [string, number][] }) => {
         {/* Average line */}
         <line
           x1={0} y1={avgY} x2={W} y2={avgY}
-          stroke="#ffa657" strokeWidth={1} strokeDasharray="5,4" opacity={0.5}
+          stroke="var(--color-accent-orange)" strokeWidth={1} strokeDasharray="5,4" opacity={0.5}
         />
-        <text x={W - 2} y={avgY - 3} fontSize={7} fill="#ffa657" textAnchor="end" opacity={0.7}>avg</text>
+        <text x={W - 2} y={avgY - 3} fontSize={7} fill="var(--color-accent-orange)" textAnchor="end" opacity={0.7}>avg</text>
 
         {data.map(([date, count], i) => {
           const barH = Math.max(2, (count / max) * H);
@@ -2118,7 +2117,7 @@ const GrowthChart = ({ data }: { data: [string, number][] }) => {
             <g key={date}>
               <rect
                 x={x} y={H - barH} width={barW} height={barH}
-                fill={isPeak ? "#ffa657" : "#58a6ff"}
+                fill={isPeak ? "var(--color-accent-orange)" : "var(--color-accent-blue)"}
                 opacity={isHovered ? 1 : isPeak ? 0.9 : 0.65}
                 rx={1}
               />
@@ -2129,7 +2128,7 @@ const GrowthChart = ({ data }: { data: [string, number][] }) => {
                 onMouseEnter={() => setHoveredIdx(i)}
               />
               {i % labelStep === 0 && (
-                <text x={x} y={H + 14} fontSize={8} fill="#484f58" textAnchor="middle" dx={barW / 2}>
+                <text x={x} y={H + 14} fontSize={8} fill="var(--color-muted-subtle)" textAnchor="middle" dx={barW / 2}>
                   {date.slice(5)}
                 </text>
               )}
@@ -2142,12 +2141,12 @@ const GrowthChart = ({ data }: { data: [string, number][] }) => {
           <g>
             <rect
               x={tooltipX} y={Math.max(2, tooltipY)} width={tooltipW} height={30}
-              rx={4} fill="#21262d" stroke="#30363d" strokeWidth={1}
+              rx={4} fill="var(--color-surface-alt)" stroke="var(--color-border)" strokeWidth={1}
             />
-            <text x={tooltipX + 8} y={Math.max(14, tooltipY + 12)} fontSize={8} fill="#8b949e">
+            <text x={tooltipX + 8} y={Math.max(14, tooltipY + 12)} fontSize={8} fill="var(--color-muted)">
               {hoveredItem[0].slice(5)}
             </text>
-            <text x={tooltipX + 8} y={Math.max(26, tooltipY + 24)} fontSize={9} fill="#f0f6fc" fontWeight="bold">
+            <text x={tooltipX + 8} y={Math.max(26, tooltipY + 24)} fontSize={9} fill="var(--color-foreground)" fontWeight="bold">
               {hoveredItem[1].toLocaleString()} stars
             </text>
           </g>

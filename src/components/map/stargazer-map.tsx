@@ -135,7 +135,7 @@ async function showSpider(
       "circle-color": ["step", ["get", "followers"], "#58a6ff", 100, "#ffa657", 500, "#f85149"],
       "circle-opacity": 0.95,
       "circle-stroke-width": 1.5,
-      "circle-stroke-color": "#0d1117",
+      "circle-stroke-color": "rgba(0,0,0,0.25)",
     },
   });
 
