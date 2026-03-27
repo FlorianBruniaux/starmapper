@@ -192,6 +192,8 @@ const isGeocodeableLocation = (location: string): boolean => {
   if (s.includes("://") || s.includes("//")) return false;
   // Reject bare phone prefixes: +62, +233 (digits only after +)
   if (/^\+\d[\d\s]*$/.test(s)) return false;
+  // Reject hashtags, shell vars, code artifacts: #pnw, $home, <html>, [object Object], {{}}, \f.x
+  if (/^[#$<>\[{\\!"]/.test(s)) return false;
   // Common GitHub placeholder values
   if (/^\(?(null|undefined|none|n\/a|na|tbd|remote|anywhere|earth|world|internet|online|everywhere)\)?$/i.test(s)) return false;
   return true;
@@ -224,9 +226,13 @@ export async function geocodeBatch(
       .map((c) => [c.key, [c.lat, c.lng] as [number, number]]),
   );
 
-  const misses = [...new Set(
-    locations.filter((loc) => !cachedKeys.has(loc.trim().toLowerCase()) && isGeocodeableLocation(loc)),
-  )];
+  const seenKeys = new Set<string>();
+  const misses = locations.filter((loc) => {
+    const key = loc.trim().toLowerCase();
+    if (cachedKeys.has(key) || seenKeys.has(key) || !isGeocodeableLocation(loc)) return false;
+    seenKeys.add(key);
+    return true;
+  });
 
   const missResults: ([number, number] | null)[] = [];
   const useParallel = isJawgAvailable() || isGeoapifyAvailable();
