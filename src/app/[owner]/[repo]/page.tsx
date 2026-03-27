@@ -201,7 +201,11 @@ export default function MapPage({
   const [tokenOpen, setTokenOpen] = useState(false);
   const [hasToken, setHasToken] = useState(false);
   const [cacheCheckDone, setCacheCheckDone] = useState(false);
-  const captureMapRef = useRef<(() => Promise<string | null>) | null>(null);
+  const mapControlsRef = useRef<{
+    captureCanvas: () => Promise<string | null>;
+    setViewMode: (mode: "clusters" | "heatmap") => void;
+  } | null>(null);
+  const [viewMode, setViewMode] = useState<"clusters" | "heatmap">("clusters");
   const runningRef = useRef(false);
   const pendingScanRef = useRef(false);
 
@@ -576,6 +580,16 @@ export default function MapPage({
     startCompareScan();
   }, [compareOwner, compareRepo, startCompareScan]);
 
+  // Sync viewMode to map imperatively (no re-render)
+  useEffect(() => {
+    mapControlsRef.current?.setViewMode(viewMode);
+  }, [viewMode]);
+
+  // Reset to clusters when compare mode activates
+  useEffect(() => {
+    if (compareOwner && compareRepo) setViewMode("clusters");
+  }, [compareOwner, compareRepo]);
+
   const allStargazers = useMemo<AnyStargazer[]>(() => [
     ...points.map((p) => ({
       login: p.login, name: p.name, bio: p.bio, company: p.company,
@@ -791,7 +805,8 @@ export default function MapPage({
       ? Math.round(points.reduce((s, p) => s + p.followers, 0) / points.length)
       : 0;
     const totalStars = points.length + unmapped.length;
-    return { topCountries, topCities, topUsers, topCompanies, mappingRate, countryCount: countryCount.size, avgFollowers, totalStars };
+    // botCount and enrichedUserCount come from server stats only (requires dataVersion field)
+    return { topCountries, topCities, topUsers, topCompanies, mappingRate, countryCount: countryCount.size, avgFollowers, totalStars, botCount: 0, enrichedUserCount: 0 };
   }, [points, unmapped]);
 
   const pct = total > 0 ? Math.round((processed / total) * 100) : 0;
@@ -830,7 +845,7 @@ export default function MapPage({
         comparePoints={comparePoints}
         flyTarget={flyTarget}
         onFlyDone={() => setFlyTarget(null)}
-        onReady={(fn) => { captureMapRef.current = fn; }}
+        onReady={(controls) => { mapControlsRef.current = controls; }}
         styleUrl={mapStyleUrl}
       />
 
@@ -1192,7 +1207,37 @@ export default function MapPage({
 
         <div className={`absolute bottom-6 left-4 z-10 flex-col gap-2 ${sidebarOpen ? "flex" : "hidden"} lg:flex`}>
 
+          {/* View mode toggle — Clusters / Heatmap */}
+          {points.length > 0 && (
+            <div className="bg-background/90 border border-border rounded-lg p-1 backdrop-blur-md flex gap-1">
+              {(["clusters", "heatmap"] as const).map((mode) => {
+                const isActive = viewMode === mode;
+                const isDisabled = !!(compareOwner && compareRepo);
+                return (
+                  <button
+                    key={mode}
+                    onClick={() => !isDisabled && setViewMode(mode)}
+                    disabled={isDisabled}
+                    title={isDisabled ? "Disable compare mode first" : undefined}
+                    className={`flex-1 text-[11px] font-medium py-1 rounded transition-colors capitalize ${
+                      isDisabled
+                        ? "opacity-40 cursor-not-allowed text-muted"
+                        : isActive && mode === "clusters"
+                          ? "bg-accent-blue/15 text-accent-blue"
+                          : isActive && mode === "heatmap"
+                            ? "bg-accent-orange/15 text-accent-orange"
+                            : "text-muted hover:text-foreground hover:bg-surface"
+                    }`}
+                  >
+                    {mode}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
           {/* Follower tier filter */}
+          {viewMode === "clusters" && (
           <div className="bg-background/90 border border-border rounded-lg px-3 py-2 backdrop-blur-md flex flex-col gap-1">
             <div className="flex items-center justify-between mb-0.5">
               <span className="text-[10px] text-muted-subtle uppercase tracking-widest">Filter map</span>
@@ -1230,6 +1275,8 @@ export default function MapPage({
               );
             })}
           </div>
+          )}
+
           {displayStats && (
             <button
               onClick={() => setStatsOpen(true)}
@@ -1753,7 +1800,7 @@ export default function MapPage({
               </button>
               <button
                 onClick={async () => {
-                  const dataUrl = await captureMapRef.current?.();
+                  const dataUrl = await mapControlsRef.current?.captureCanvas();
                   if (!dataUrl) return;
                   const mapImg = new Image();
                   await new Promise<void>((res) => { mapImg.onload = () => res(); mapImg.src = dataUrl; });
@@ -2122,7 +2169,7 @@ export default function MapPage({
             </div>
 
             {/* Summary cards */}
-            <div className="grid grid-cols-4 gap-2 px-5 py-4 border-b border-border-subtle flex-shrink-0">
+            <div className="grid grid-cols-5 gap-2 px-5 py-4 border-b border-border-subtle flex-shrink-0">
               <div className="bg-background rounded-lg px-2 py-2 text-center">
                 <div className="text-xl font-bold text-accent-green">{displayStats.mappingRate}%</div>
                 <div className="text-[10px] text-muted uppercase tracking-wide mt-0.5">mapped</div>
@@ -2140,6 +2187,20 @@ export default function MapPage({
                   {displayStats.avgFollowers >= 1000 ? `${(displayStats.avgFollowers / 1000).toFixed(1)}k` : displayStats.avgFollowers}
                 </div>
                 <div className="text-[10px] text-muted uppercase tracking-wide mt-0.5">avg flw</div>
+              </div>
+              <div className="bg-background rounded-lg px-2 py-2 text-center">
+                {(() => {
+                  const { botCount, enrichedUserCount } = displayStats;
+                  const pct = enrichedUserCount > 0 ? Math.round((botCount / enrichedUserCount) * 100) : null;
+                  return (
+                    <>
+                      <div className={`text-xl font-bold ${pct !== null && pct > 20 ? "text-accent-red" : "text-muted"}`}>
+                        {pct !== null ? `${pct}%` : "—"}
+                      </div>
+                      <div className="text-[10px] text-muted uppercase tracking-wide mt-0.5">suspect</div>
+                    </>
+                  );
+                })()}
               </div>
             </div>
 

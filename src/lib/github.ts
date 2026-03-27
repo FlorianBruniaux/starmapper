@@ -7,6 +7,9 @@ export interface StargazerRaw {
   company: string | null;
   location: string | null;
   followers: number;
+  following: number;
+  publicRepos: number;
+  accountCreatedAt: string | null;
   avatarUrl: string;
   starredAt: string; // ISO 8601
 }
@@ -40,7 +43,10 @@ export async function fetchStargazersPage(
               company
               location
               avatarUrl
+              createdAt
               followers { totalCount }
+              following { totalCount }
+              repositories(first: 0) { totalCount }
             }
           }
         }
@@ -80,6 +86,9 @@ export async function fetchStargazersPage(
       company: e.node.company ? e.node.company.trim().replace(/^@/, "") : null,
       location: e.node.location ?? null,
       followers: e.node.followers.totalCount,
+      following: e.node.following.totalCount,
+      publicRepos: e.node.repositories.totalCount,
+      accountCreatedAt: e.node.createdAt ?? null,
       avatarUrl: e.node.avatarUrl,
       starredAt: e.starredAt,
     });

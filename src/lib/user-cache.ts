@@ -1,6 +1,18 @@
 import { prisma } from "@/lib/db";
 import { checkDbHealth, DB_CRITICAL_PCT } from "@/lib/db-health";
-import type { StargazerPoint } from "@/app/api/chunk/route";
+
+export type UserWritePayload = {
+  login: string;
+  name: string | null;
+  company: string | null;
+  location: string | null;
+  followers: number;
+  following: number;
+  publicRepos: number;
+  accountCreatedAt: string | null;
+  lat: number;
+  lng: number;
+};
 
 // Run promises with a max concurrency to avoid thundering herd on Neon
 async function concurrentMap<T, R>(
@@ -24,7 +36,7 @@ type StarEventInput = {
 };
 
 export const bulkUpsertUsers = async (
-  points: StargazerPoint[],
+  users: UserWritePayload[],
   health?: Awaited<ReturnType<typeof checkDbHealth>>,
 ): Promise<void> => {
   const h = health ?? (await checkDbHealth());
@@ -34,26 +46,34 @@ export const bulkUpsertUsers = async (
   }
 
   try {
-    await concurrentMap(points, (p) =>
+    await concurrentMap(users, (u) =>
       prisma.gitHubUser.upsert({
-        where: { login: p.login },
+        where: { login: u.login },
         create: {
-          login: p.login,
-          name: p.name ?? null,
-          company: p.company ?? null,
-          location: p.location ?? null,
-          followers: p.followers,
-          lat: p.lat,
-          lng: p.lng,
+          login: u.login,
+          name: u.name ?? null,
+          company: u.company ?? null,
+          location: u.location ?? null,
+          followers: u.followers,
+          following: u.following,
+          publicRepos: u.publicRepos,
+          accountCreatedAt: u.accountCreatedAt ? new Date(u.accountCreatedAt) : null,
+          dataVersion: 1,
+          lat: u.lat,
+          lng: u.lng,
           fetchedAt: new Date(),
         },
         update: {
-          name: p.name ?? null,
-          company: p.company ?? null,
-          location: p.location ?? null,
-          followers: p.followers,
-          lat: p.lat,
-          lng: p.lng,
+          name: u.name ?? null,
+          company: u.company ?? null,
+          location: u.location ?? null,
+          followers: u.followers,
+          following: u.following,
+          publicRepos: u.publicRepos,
+          accountCreatedAt: u.accountCreatedAt ? new Date(u.accountCreatedAt) : null,
+          dataVersion: 1,
+          lat: u.lat,
+          lng: u.lng,
           fetchedAt: new Date(),
         },
       }),
@@ -92,15 +112,15 @@ export const bulkUpsertStarEvents = async (
 
 export const bulkReadUsers = async (
   logins: string[],
-): Promise<Map<string, { lat: number | null; lng: number | null; location: string | null; fetchedAt: Date }>> => {
+): Promise<Map<string, { lat: number | null; lng: number | null; location: string | null; fetchedAt: Date; dataVersion: number }>> => {
   if (!logins.length) return new Map();
 
   try {
     const rows = await prisma.gitHubUser.findMany({
       where: { login: { in: logins } },
-      select: { login: true, lat: true, lng: true, location: true, fetchedAt: true },
+      select: { login: true, lat: true, lng: true, location: true, fetchedAt: true, dataVersion: true },
     });
-    return new Map(rows.map((r) => [r.login, { lat: r.lat, lng: r.lng, location: r.location, fetchedAt: r.fetchedAt }]));
+    return new Map(rows.map((r) => [r.login, { lat: r.lat, lng: r.lng, location: r.location, fetchedAt: r.fetchedAt, dataVersion: r.dataVersion }]));
   } catch {
     return new Map(); // DB unavailable — fallback to full geocoding
   }

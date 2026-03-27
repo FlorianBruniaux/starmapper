@@ -12,6 +12,8 @@ export type RepoStats = {
   topCities: [string, number][];
   topCompanies: [string, number][];
   topUsers: { login: string; name: string | null; followers: number; location: string | null; avatarUrl: string }[];
+  botCount: number;
+  enrichedUserCount: number;
 };
 
 const parseLocation = (location: string | null): { country: string | null; city: string | null } => {
@@ -44,7 +46,10 @@ export const GET = async (
       take: 10_000, // cap in-memory aggregation; repos > 10k stars get approximate stats
       select: {
         user: {
-          select: { login: true, name: true, location: true, company: true, followers: true, lat: true, lng: true },
+          select: {
+            login: true, name: true, location: true, company: true, followers: true,
+            following: true, publicRepos: true, dataVersion: true, lat: true, lng: true,
+          },
         },
       },
     });
@@ -58,6 +63,8 @@ export const GET = async (
     const companyCount = new Map<string, number>();
     let followerSum = 0;
     let mappedCount = 0;
+    let botCount = 0;
+    let enrichedUserCount = 0;
 
     for (const { user: u } of events) {
       if (u.lat !== null && u.lng !== null) mappedCount++;
@@ -67,6 +74,11 @@ export const GET = async (
       if (city) cityCount.set(city, (cityCount.get(city) ?? 0) + 1);
       if (u.company) companyCount.set(u.company, (companyCount.get(u.company) ?? 0) + 1);
       followerSum += u.followers;
+
+      if (u.dataVersion >= 1) {
+        enrichedUserCount++;
+        if (u.followers < 5 && u.following < 5 && u.publicRepos < 2) botCount++;
+      }
     }
 
     const total = events.length;
@@ -91,6 +103,8 @@ export const GET = async (
       topCities: [...cityCount.entries()].sort((a, b) => b[1] - a[1]).slice(0, 30),
       topCompanies: [...companyCount.entries()].sort((a, b) => b[1] - a[1]).slice(0, 30),
       topUsers,
+      botCount,
+      enrichedUserCount,
     };
 
     return NextResponse.json(stats, {

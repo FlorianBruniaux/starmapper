@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { fetchStargazersPage } from "@/lib/github";
 import { geocodeBatch } from "@/lib/geocoder";
 import { checkDbHealth, DB_WARN_PCT } from "@/lib/db-health";
-import { bulkUpsertUsers, bulkUpsertStarEvents, bulkReadUsers } from "@/lib/user-cache";
+import { bulkUpsertUsers, bulkUpsertStarEvents, bulkReadUsers, type UserWritePayload } from "@/lib/user-cache";
 
 export interface StargazerPoint {
   login: string;
@@ -112,13 +112,33 @@ export async function POST(req: NextRequest) {
       const dbWarn = health.ok && health.usagePct >= DB_WARN_PCT;
       if (dbWarn) console.warn(`[chunk] DB storage at ${health.usagePct}%`);
 
-      // Only upsert users that are new or have changed data — avoids WAL bloat
+      // Only upsert users that are new, changed, or not yet enriched with v0.3.0 data
+      const sgByLogin = new Map(page.stargazers.map((sg) => [sg.login, sg]));
       const pointsToWrite = points.filter((p) => {
         const known = knownUsers.get(p.login);
         if (!known) return true; // new user
+        if (known.dataVersion < 1) return true; // pre-v0.3.0 user — force re-write to enrich
         return known.location !== (p.location ?? null) || known.lat !== p.lat || known.lng !== p.lng;
       });
-      if (pointsToWrite.length > 0) bulkUpsertUsers(pointsToWrite, health).catch(console.error);
+      const usersToWrite: UserWritePayload[] = pointsToWrite
+        .map((p) => {
+          const sg = sgByLogin.get(p.login);
+          if (!sg) return null;
+          return {
+            login: p.login,
+            name: p.name,
+            company: p.company,
+            location: p.location,
+            followers: sg.followers,
+            following: sg.following,
+            publicRepos: sg.publicRepos,
+            accountCreatedAt: sg.accountCreatedAt,
+            lat: p.lat,
+            lng: p.lng,
+          };
+        })
+        .filter((u): u is UserWritePayload => u !== null);
+      if (usersToWrite.length > 0) bulkUpsertUsers(usersToWrite, health).catch(console.error);
 
       // Only upsert star events for users we just wrote to github_user (FK constraint)
       const writtenLogins = new Set(pointsToWrite.map((p) => p.login));

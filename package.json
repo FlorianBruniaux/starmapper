@@ -23,7 +23,9 @@
     "next": "16.2.0",
     "prisma": "^7.5.0",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "topojson-client": "^3.1.0",
+    "world-atlas": "^2.0.2"
   },
   "devDependencies": {
     "@prisma/adapter-pg": "^7.6.0",
@@ -32,6 +34,8 @@
     "@types/pg": "^8.20.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/topojson-client": "^3.1.5",
+    "@types/topojson-specification": "^1.0.5",
     "pg": "^8.20.0",
     "tailwindcss": "^4",
     "tsx": "^4.21.0",

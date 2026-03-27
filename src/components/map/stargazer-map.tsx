@@ -11,7 +11,10 @@ interface Props {
   comparePoints?: StargazerPoint[];
   flyTarget?: { lat: number; lng: number; login: string } | null;
   onFlyDone?: () => void;
-  onReady?: (captureCanvas: () => Promise<string | null>) => void;
+  onReady?: (controls: {
+    captureCanvas: () => Promise<string | null>;
+    setViewMode: (mode: "clusters" | "heatmap") => void;
+  }) => void;
   // Optional: override the map tile style URL (for light/dark switching)
   styleUrl?: string;
 }
@@ -19,6 +22,17 @@ interface Props {
 const JAWG_TOKEN = process.env.NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN ?? "";
 const STYLE_URL = `https://api.jawg.io/styles/jawg-dark.json?access-token=${JAWG_TOKEN}&lang=en`;
 const CLUSTER_MAX_ZOOM = 12;
+
+function buildHeatGeoJSON(pts: StargazerPoint[]) {
+  return {
+    type: "FeatureCollection" as const,
+    features: pts.map((p) => ({
+      type: "Feature" as const,
+      geometry: { type: "Point" as const, coordinates: [p.lng, p.lat] },
+      properties: { followers: p.followers },
+    })),
+  };
+}
 
 function buildGeoJSON(pts: StargazerPoint[]) {
   return {
@@ -275,15 +289,28 @@ export function StargazerMap({ points, comparePoints, flyTarget, onFlyDone, onRe
         minZoom: 1,
       });
 
-      // Expose async capture: triggers a repaint and grabs the canvas during
-      // the render event (before WebGL swaps the buffer — no preserveDrawingBuffer needed)
-      onReady?.(() => new Promise<string | null>((resolve) => {
+      // Expose controls: canvas capture + view mode toggle (cluster / heatmap)
+      const captureCanvas = () => new Promise<string | null>((resolve) => {
         map.once("render", () => {
           try { resolve(map.getCanvas().toDataURL("image/png")); }
           catch { resolve(null); }
         });
         map.triggerRepaint();
-      }));
+      });
+
+      const setViewMode = (mode: "clusters" | "heatmap") => {
+        const clusterLayers = ["clusters", "cluster-count", "unclustered-point"];
+        if (mode === "heatmap") {
+          for (const id of clusterLayers) map.setLayoutProperty(id, "visibility", "none");
+          map.setLayoutProperty("heatmap", "visibility", "visible");
+          clearSpider(map, spiderActiveRef);
+        } else {
+          for (const id of clusterLayers) map.setLayoutProperty(id, "visibility", "visible");
+          map.setLayoutProperty("heatmap", "visibility", "none");
+        }
+      };
+
+      onReady?.({ captureCanvas, setViewMode });
 
       map.addControl(new maplibregl.NavigationControl(), "bottom-right");
 
@@ -333,6 +360,29 @@ export function StargazerMap({ points, comparePoints, flyTarget, onFlyDone, onRe
             "circle-stroke-color": "rgba(255,255,255,0.15)",
           },
         });
+
+        // Heatmap source (non-clustered, stripped properties for memory efficiency)
+        map.addSource("stargazers-heat", {
+          type: "geojson",
+          data: buildHeatGeoJSON(pointsRef.current),
+        });
+
+        map.addLayer({
+          id: "heatmap",
+          type: "heatmap",
+          source: "stargazers-heat",
+          paint: {
+            "heatmap-weight": ["interpolate", ["linear"], ["get", "followers"], 0, 0.4, 100, 0.7, 500, 1, 5000, 2],
+            "heatmap-intensity": ["interpolate", ["linear"], ["zoom"], 0, 0.6, 6, 1.2, 12, 2],
+            "heatmap-color": ["interpolate", ["linear"], ["heatmap-density"],
+              0, "rgba(0,0,0,0)", 0.1, "#313695", 0.3, "#4575b4", 0.5, "#74add1",
+              0.6, "#abd9e9", 0.7, "#fee090", 0.85, "#f46d43", 1, "#d73027",
+            ],
+            "heatmap-radius": ["interpolate", ["linear"], ["zoom"], 0, 4, 4, 12, 8, 24, 12, 40],
+            "heatmap-opacity": ["interpolate", ["linear"], ["zoom"], 0, 0.85, 9, 0.7, 14, 0.3, 16, 0],
+          },
+          layout: { visibility: "none" },
+        }, "clusters");
 
         // Compare repo overlay (purple)
         map.addSource("stargazers-compare", {
@@ -458,8 +508,9 @@ export function StargazerMap({ points, comparePoints, flyTarget, onFlyDone, onRe
     const map = mapRef.current;
     if (!map || !mapReady) return;
     const source = map.getSource("stargazers") as maplibregl.GeoJSONSource | undefined;
-    if (!source) return;
-    source.setData(buildGeoJSON(points));
+    if (source) source.setData(buildGeoJSON(points));
+    const heatSrc = map.getSource("stargazers-heat") as maplibregl.GeoJSONSource | undefined;
+    if (heatSrc) heatSrc.setData(buildHeatGeoJSON(points));
   }, [points, mapReady]);
 
   useEffect(() => {

@@ -39,15 +39,19 @@ model StargazerCache {
 }
 
 model GitHubUser {
-  login     String      @id
-  name      String?
-  company   String?
-  location  String?
-  followers Int         @default(0)
-  lat       Float?
-  lng       Float?
-  fetchedAt DateTime    @default(now())
-  stars     StarEvent[]
+  login            String      @id
+  name             String?
+  company          String?
+  location         String?
+  followers        Int         @default(0)
+  following        Int         @default(0)
+  publicRepos      Int         @default(0)
+  accountCreatedAt DateTime?
+  dataVersion      Int         @default(0)
+  lat              Float?
+  lng              Float?
+  fetchedAt        DateTime    @default(now())
+  stars            StarEvent[]
 
   @@map("github_user")
 }
