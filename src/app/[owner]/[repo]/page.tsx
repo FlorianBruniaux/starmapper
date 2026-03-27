@@ -55,6 +55,34 @@ interface LocalCache {
 
 const cacheKey = (owner: string, repo: string) => `starmapper:${owner}/${repo}`;
 
+// Compress an array client-side (gzip+base64) to keep POST body under Vercel's 4.5MB limit.
+// CompressionStream is available in all modern browsers (Chrome 80+, Firefox 113+, Safari 16.4+).
+const compressToBase64 = async (data: unknown[]): Promise<string> => {
+  const encoded = new TextEncoder().encode(JSON.stringify(data));
+  const cs = new CompressionStream("gzip");
+  const writer = cs.writable.getWriter();
+  writer.write(encoded);
+  writer.close();
+  const chunks: Uint8Array[] = [];
+  const reader = cs.readable.getReader();
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunks.push(value);
+  }
+  const total = chunks.reduce((s, c) => s + c.length, 0);
+  const merged = new Uint8Array(total);
+  let off = 0;
+  for (const c of chunks) { merged.set(c, off); off += c.length; }
+  // Base64 in chunks to avoid stack overflow on large arrays
+  let binary = "";
+  const CHUNK = 8192;
+  for (let i = 0; i < merged.length; i += CHUNK) {
+    binary += String.fromCharCode(...merged.subarray(i, i + CHUNK));
+  }
+  return btoa(binary);
+};
+
 const loadCache = (owner: string, repo: string): LocalCache | null => {
   try {
     const raw = localStorage.getItem(cacheKey(owner, repo));
@@ -386,14 +414,26 @@ export default function MapPage({
         }),
       }).catch(() => {});
 
-      // Save to DB cache for repos ≤ 15k stars (shared across users, fire-and-forget)
+      // Save to DB cache (shared across users, fire-and-forget).
+      // Compress client-side first to stay under Vercel's 4.5MB request body limit —
+      // raw JSON for large repos (e.g. 50k stars) exceeds that limit without compression.
       const finalTotal = allPoints.length + allUnmapped.length;
-      if (finalTotal > 0 && finalTotal <= 100_000) {
-        fetch("/api/stargazer-cache", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ owner, repo, points: allPoints, unmapped: allUnmapped, totalCount: finalTotal }),
-        }).catch(() => {});
+      if (finalTotal > 0) {
+        (async () => {
+          try {
+            type SlimPoint = Omit<StargazerPoint, "bio" | "avatarUrl">;
+            const slim: SlimPoint[] = allPoints.map(({ bio: _b, avatarUrl: _av, ...rest }) => rest);
+            const [pointsGz, unmappedGz] = await Promise.all([
+              compressToBase64(slim),
+              compressToBase64(allUnmapped),
+            ]);
+            await fetch("/api/stargazer-cache", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ owner, repo, pointsGz, unmappedGz, totalCount: finalTotal }),
+            });
+          } catch { /* fire-and-forget, non-critical */ }
+        })();
       }
 
       setStatus("done");

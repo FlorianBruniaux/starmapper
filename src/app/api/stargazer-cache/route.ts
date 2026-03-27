@@ -7,39 +7,43 @@ const MAX_CACHEABLE_STARS = 100_000;
 export const POST = async (req: NextRequest) => {
   try {
     const body = await req.json();
-    const { owner, repo, points, unmapped, totalCount } = body;
+    const { owner, repo, points, unmapped, pointsGz, unmappedGz, totalCount } = body;
 
     const nameRe = /^[a-zA-Z0-9._-]{1,100}$/;
     if (
       typeof owner !== "string" || !nameRe.test(owner) ||
       typeof repo !== "string" || !nameRe.test(repo) ||
-      !Array.isArray(points) ||
-      !Array.isArray(unmapped) ||
-      typeof totalCount !== "number" || totalCount < 0
+      typeof totalCount !== "number" || totalCount < 0 || totalCount > MAX_CACHEABLE_STARS
     ) {
       return NextResponse.json({ error: "invalid_params" }, { status: 400 });
     }
 
-    // Validate actual array sizes, not the client-declared totalCount
-    if (points.length + unmapped.length > MAX_CACHEABLE_STARS) {
-      return NextResponse.json({ error: "too_large" }, { status: 413 });
-    }
-
     const key = { owner: owner.toLowerCase(), repo: repo.toLowerCase() };
 
-    // Strip bio + avatarUrl (bio: fetched on-demand, avatarUrl: reconstructed from login on read)
-    type RawPoint = { bio?: unknown; avatarUrl?: unknown; [k: string]: unknown };
-    const slim = (points as RawPoint[]).map(({ bio: _bio, avatarUrl: _av, ...rest }) => rest);
+    let finalPointsGz: string;
+    let finalUnmappedGz: string;
 
-    // Gzip + base64 encode — no schema change needed, stored as JSON string
-    // Reduces storage ~3x vs PostgreSQL TOAST pglz alone
-    const pointsGz = gzipSync(JSON.stringify(slim)).toString("base64");
-    const unmappedGz = gzipSync(JSON.stringify(unmapped)).toString("base64");
+    if (typeof pointsGz === "string" && typeof unmappedGz === "string") {
+      // New format: client compressed client-side to stay under Vercel's 4.5MB body limit
+      finalPointsGz = pointsGz;
+      finalUnmappedGz = unmappedGz;
+    } else if (Array.isArray(points) && Array.isArray(unmapped)) {
+      // Legacy format: raw arrays — compress on server
+      if (points.length + unmapped.length > MAX_CACHEABLE_STARS) {
+        return NextResponse.json({ error: "too_large" }, { status: 413 });
+      }
+      type RawPoint = { bio?: unknown; avatarUrl?: unknown; [k: string]: unknown };
+      const slim = (points as RawPoint[]).map(({ bio: _bio, avatarUrl: _av, ...rest }) => rest);
+      finalPointsGz = gzipSync(JSON.stringify(slim)).toString("base64");
+      finalUnmappedGz = gzipSync(JSON.stringify(unmapped)).toString("base64");
+    } else {
+      return NextResponse.json({ error: "invalid_params" }, { status: 400 });
+    }
 
     await prisma.stargazerCache.upsert({
       where: { owner_repo: key },
-      create: { ...key, points: pointsGz, unmapped: unmappedGz, totalCount, scannedAt: new Date() },
-      update: { points: pointsGz, unmapped: unmappedGz, totalCount, scannedAt: new Date() },
+      create: { ...key, points: finalPointsGz, unmapped: finalUnmappedGz, totalCount, scannedAt: new Date() },
+      update: { points: finalPointsGz, unmapped: finalUnmappedGz, totalCount, scannedAt: new Date() },
     });
 
     return NextResponse.json({ ok: true });
