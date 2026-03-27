@@ -12,17 +12,23 @@ Historique des changements significatifs du projet.
 
 ## [Next Release]
 
+### Nouvelles fonctionnalités
+
+- **Badge button sidebar** : Bouton "Badge" dans la sidebar de la page map (entre History et Share) → mini-modal dédié avec preview live du badge, code Markdown sélectionnable, et bouton "Copy Markdown" avec feedback.
+- **Badge dans Share modal** : Section "README badge" en bas du panneau Share — même preview et copy que le modal dédié.
+- **Footer ecosystem** : Footer sur la landing page avec liens projets (Claude Code Guide, Cowork, ccboard, cc-copilot-bridge, RTK), liens auteur (Blog, Dev With AI, GitHub), et "Made by Florian Bruniaux".
+- **Pagination community maps** : Le tableau des repos sur la landing page est désormais paginé (20 lignes/page) avec boutons Prev/Next. Limite API relevée de 50 à 200 repos.
+
 ### Performances
 
+- **Compression client-side gzip avant écriture cache** : Les données de scan sont désormais compressées côté client (Web CompressionStream API, gzip+base64) avant envoi à `POST /api/stargazer-cache`. Résout un bug silencieux : pour les repos >~15k étoiles, le payload JSON brut (~15MB) dépassait la limite Vercel de 4.5MB → le cache n'était jamais écrit → les visiteurs suivants devaient rescanner. La compression réduit le payload à ~800KB.
 - **Geocache GeoNames warm-up** : Pre-seeding de la geocache avec ~51k entrées issues de GeoNames (villes pop >15k + pays + codes ISO2/ISO3). Hit rate mesuré >99% sur les scans réels — les appels aux APIs de géocodage (Jawg, Geoapify, Nominatim) sont quasi-éliminés pour les locations communes.
 - **Nettoyage geocache** : Suppression de 36 entrées garbage (#hashtags, $variables shell, `[object Object]`, XSS artifacts, templates Jinja). Ajout du script `scripts/clean-geocache-garbage.ts`.
 
-### Nouvelles fonctionnalités
-
-- **Pagination community maps** : Le tableau des repos sur la landing page est désormais paginé (20 lignes/page) avec boutons Prev/Next. Limite API relevée de 50 à 200 repos.
-
 ### Corrections
 
+- **React hydration fix** : Accès à `localStorage` pendant le render SSR causait React error #418 + crash `y.map is not a function`. Fix : état `hasToken` initialisé à `false` (SSR-safe), synchronisé via `useEffect`.
+- **Race condition pre-scan modal** : La modale de pré-scan apparaissait brièvement même pour les repos déjà indexés. Fix : état `cacheCheckDone`, la modale est conditionnée à la complétion de la vérification DB.
 - **Geocoder** : Filtre `isGeocodeableLocation` étendu aux préfixes `#$<>[{\"!` — bloque hashtags, variables shell, code artifacts avant tout appel API ou écriture en cache.
 
 ### Technique

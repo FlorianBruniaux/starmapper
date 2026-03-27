@@ -90,23 +90,21 @@ Sur la base des GitHub issues des outils similaires et des discussions HN/Reddit
 6. **"Email list of my stargazers"** — demandé mais sensible (privacy)
 7. **"Who are the influencers in my stars?"** — "les gros followers qui m'ont starré"
 
-StarMapper couvre 1, 2, 3, 7 déjà. Il manque le badge (4) et la vue historique géo (5).
+StarMapper couvre 1, 2, 3, 4 ✅, 7 déjà. Il manque la vue historique géo (5).
 
 ---
 
 ## 5. Recommandations prioritaires
 
-### #1 — Badge README dynamique (ROI maximal, effort minimal)
+### #1 — Badge README dynamique ✅ FAIT
 
 ```
-[![StarMapper](https://starmapper.app/badge/vercel/next.js)](https://starmapper.app/vercel/next.js)
+[![StarMapper](https://starmapper.bruniaux.com/api/badge/vercel/next.js)](https://starmapper.bruniaux.com/vercel/next.js)
 ```
 
-Affiche : `🗺️ 42 countries • 1,247 stargazers mapped`
+Affiche : `mapped • XX countries • YYY stars`
 
-**Pourquoi** : chaque maintainer qui l'ajoute = pub permanente dans un README potentiellement lu par des milliers de devs. star-history.com a fait toute sa croissance comme ça.
-
-**Implémentation** : Route `/api/badge/[owner]/[repo]` qui retourne un SVG shields.io-style. Scan rapide (cache Neon 24h TTL).
+**Implémenté** : Route `/api/badge/[owner]/[repo]` (SVG shields-style, cache CDN 6h). Bouton "Badge" dans la sidebar de la page map + section dans le Share modal. Markdown copiable en 1 clic.
 
 ### #2 — "Show HN" / Product Hunt au bon moment
 
@@ -148,4 +146,4 @@ Stocker en DB les snapshots géo par date (pays x date x count). Permettre d'"an
 
 ---
 
-*Analyse figée août 2025 — à mettre à jour avec recherche live si permissions WebSearch disponibles*
+*Analyse figée août 2025 — mise à jour statut features 2026-03-27*

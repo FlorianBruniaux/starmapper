@@ -217,11 +217,60 @@ Base unit : 4px (Tailwind default).
 
 StarMapper supporte les deux modes via un toggle dans le header. Le mode par défaut est **dark**.
 
-Les tokens CSS sont définis en double dans `globals.css` via `@theme inline` :
-- `:root` → valeurs dark (défaut)
-- `[data-theme="light"]` (ou `.light`) → valeurs light overridées
+### Architecture du système
 
-**Règle** : Toujours utiliser les tokens CSS (`bg-background`, `text-foreground`...) — jamais de valeurs hex directes. Les tokens s'adaptent automatiquement au mode actif.
+Trois couches collaborent :
+
+**1. `src/lib/theme.ts`** — logique pure, côté client uniquement (`"use client"`).
+- `getStoredTheme()` / `setStoredTheme()` : lit/écrit `starmapper:theme` dans `localStorage` (`"light" | "dark" | null`)
+- `getSystemTheme()` : lit `prefers-color-scheme`
+- `applyTheme(theme)` : applique la classe `"dark"` ou `"light"` sur `<html>` et retourne le thème résolu
+- `MAP_STYLE_DARK(token)` / `MAP_STYLE_LIGHT(token)` : retourne l'URL Jawg correspondante (jawg-dark vs jawg-sunny)
+
+**2. `src/app/layout.tsx`** — prévention du FOUC (Flash Of Unstyled Content).
+Un inline script synchrone s'exécute avant le premier paint pour lire `localStorage` et appliquer la classe correcte sur `<html>` immédiatement.
+
+```ts
+// Script injecté via dangerouslySetInnerHTML dans <head>
+(function() {
+  var stored = localStorage.getItem('starmapper:theme');
+  var preferLight = window.matchMedia('(prefers-color-scheme: light)').matches;
+  var resolved = stored === 'light' || stored === 'dark' ? stored : (preferLight ? 'light' : 'dark');
+  document.documentElement.classList.add(resolved);
+})();
+```
+
+**3. `src/app/globals.css`** — tokens CSS définis en trois blocs :
+
+```css
+/* Base (dark — défaut si aucune classe) */
+:root { --color-background: #0d1117; ... }
+
+/* Override auto OS */
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) { --color-background: #ffffff; ... }
+}
+
+/* Override manuel (classe appliquée par applyTheme()) */
+html.light { --color-background: #ffffff; ... }
+html.dark  { --color-background: #0d1117; ... }
+```
+
+**4. `src/components/theme-toggle.tsx`** — bouton dans le header, appelle `applyTheme()` + `setStoredTheme()` au clic.
+
+### Priorité de résolution
+
+```
+localStorage override ("light" | "dark")
+    > prefers-color-scheme OS preference
+        > dark (défaut)
+```
+
+### Règles d'implémentation
+
+- **Toujours utiliser les tokens CSS** (`bg-background`, `text-foreground`...) — jamais de valeurs hex directes. Les tokens s'adaptent automatiquement au mode actif.
+- **Les tuiles MapLibre** sont swappées via `MAP_STYLE_DARK`/`MAP_STYLE_LIGHT` dans `theme.ts` — le map écoute le changement de thème et recharge son style.
+- **`"use client"` obligatoire** sur tout composant qui importe de `theme.ts` (accès localStorage).
 
 ---
 
@@ -237,4 +286,4 @@ Les tokens CSS sont définis en double dans `globals.css` via `@theme inline` :
 
 ---
 
-*Dernière mise à jour : 2026-03-27*
+*Dernière mise à jour : 2026-03-27 (v0.2.0)*
