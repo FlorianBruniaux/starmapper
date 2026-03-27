@@ -140,14 +140,17 @@ export async function POST(req: NextRequest) {
           };
         })
         .filter((u): u is UserWritePayload => u !== null);
-      if (usersToWrite.length > 0) bulkUpsertUsers(usersToWrite, health).catch(console.error);
-
-      // Only upsert star events for users we just wrote to github_user (FK constraint)
-      const writtenLogins = new Set(pointsToWrite.map((p) => p.login));
-      const newStarEvents = page.stargazers
-        .filter((sg) => writtenLogins.has(sg.login))
-        .map((sg) => ({ login: sg.login, owner: ownerKey, repo: repoKey, starredAt: sg.starredAt }));
-      if (newStarEvents.length > 0) bulkUpsertStarEvents(newStarEvents, health).catch(console.error);
+      if (usersToWrite.length > 0) {
+        const writtenLogins = new Set(usersToWrite.map((u) => u.login));
+        const newStarEvents = page.stargazers
+          .filter((sg) => writtenLogins.has(sg.login))
+          .map((sg) => ({ login: sg.login, owner: ownerKey, repo: repoKey, starredAt: sg.starredAt }));
+        bulkUpsertUsers(usersToWrite, health)
+          .then((ok) => {
+            if (ok && newStarEvents.length > 0) return bulkUpsertStarEvents(newStarEvents, health);
+          })
+          .catch(console.error);
+      }
     }).catch(console.error);
 
     return NextResponse.json({

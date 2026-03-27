@@ -39,12 +39,13 @@ type StarEventInput = {
 export const bulkUpsertUsers = async (
   users: UserWritePayload[],
   health?: Awaited<ReturnType<typeof checkDbHealth>>,
-): Promise<void> => {
+): Promise<boolean> => {
   const h = health ?? (await checkDbHealth());
   if (!h.ok || (h.ok && h.usagePct >= DB_CRITICAL_PCT)) {
     if (h.ok) console.warn(`[user-cache] DB critical (${h.usagePct}%) — skipping user upserts`);
-    return;
+    return false;
   }
+
 
   try {
     await concurrentMap(users, (u) =>
@@ -81,8 +82,10 @@ export const bulkUpsertUsers = async (
         },
       }),
     );
+    return true;
   } catch (err) {
     console.error("[user-cache] bulkUpsertUsers failed:", err);
+    return false;
   }
 };
 
