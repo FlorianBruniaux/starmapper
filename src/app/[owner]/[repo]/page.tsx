@@ -168,6 +168,7 @@ export default function MapPage({
   const [growthOpen, setGrowthOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [tokenOpen, setTokenOpen] = useState(false);
+  const [hasToken, setHasToken] = useState(false);
   const captureMapRef = useRef<(() => Promise<string | null>) | null>(null);
   const runningRef = useRef(false);
   const pendingScanRef = useRef(false);
@@ -198,6 +199,9 @@ export default function MapPage({
     if (t) h["x-gh-token"] = t;
     return h;
   }, []);
+
+  // Sync hasToken state client-side (localStorage not available during SSR)
+  useEffect(() => { setHasToken(!!getStoredToken()); }, []);
 
   // Load repo info
   useEffect(() => {
@@ -483,6 +487,7 @@ export default function MapPage({
 
   const handleTokenClose = useCallback(() => {
     setTokenOpen(false);
+    setHasToken(!!getStoredToken());
     if (pendingScanRef.current) {
       pendingScanRef.current = false;
       if (getStoredToken()) startScraping();
@@ -761,7 +766,7 @@ export default function MapPage({
         <button
           onClick={() => setTokenOpen(true)}
           className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border transition-colors ${
-            getStoredToken()
+            hasToken
               ? "border-accent-green-emphasis text-accent-green bg-background/80 hover:bg-accent-green-emphasis/10"
               : "border-border text-muted bg-background/80 hover:text-foreground hover:border-accent-blue"
           }`}
@@ -770,7 +775,7 @@ export default function MapPage({
           <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
             <path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Zm7-3.25v2.992l2.028.812a.75.75 0 0 1-.557 1.392l-2.5-1A.751.751 0 0 1 7 8.25v-3.5a.75.75 0 0 1 1.5 0Z"/>
           </svg>
-          {getStoredToken() ? "Token set" : "Add token"}
+          {hasToken ? "Token set" : "Add token"}
         </button>
       </div>
 
@@ -834,7 +839,7 @@ export default function MapPage({
               </p>
             )}
 
-            {total >= TOKEN_REQUIRED_STARS && !getStoredToken() && (
+            {total >= TOKEN_REQUIRED_STARS && !hasToken && (
               <div className="flex items-start gap-2.5 bg-accent-orange/10 border border-accent-orange/30 rounded-lg px-4 py-3 mb-6">
                 <span className="text-accent-orange mt-0.5 flex-shrink-0 text-sm">⚠</span>
                 <div>
@@ -858,9 +863,9 @@ export default function MapPage({
 
             <button
               onClick={lastDbScan ? handleStartScan : (total >= TOKEN_REQUIRED_STARS ? handleStartScan : startScraping)}
-              disabled={total >= TOKEN_REQUIRED_STARS && !getStoredToken()}
+              disabled={total >= TOKEN_REQUIRED_STARS && !hasToken}
               className={`w-full bg-accent-green-emphasis text-white font-medium py-3 rounded-lg transition-colors text-sm ${
-                total >= TOKEN_REQUIRED_STARS && !getStoredToken()
+                total >= TOKEN_REQUIRED_STARS && !hasToken
                   ? "opacity-40 cursor-not-allowed"
                   : "hover:opacity-90"
               }`}
