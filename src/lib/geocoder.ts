@@ -78,13 +78,19 @@ async function cacheBulkRead(keys: string[]) {
 }
 
 // --- API callers ---
+const fetchWithTimeout = (url: string, ms: number, options?: RequestInit): Promise<Response> => {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), ms);
+  return fetch(url, { ...options, signal: controller.signal }).finally(() => clearTimeout(timer));
+};
+
 const callGeoapify = async (
   location: string,
   token: string,
 ): Promise<[number, number] | null | "error"> => {
   try {
     const url = `${GEOAPIFY_GEOCODING}?text=${encodeURIComponent(location)}&limit=1&apiKey=${token}`;
-    const res = await fetch(url);
+    const res = await fetchWithTimeout(url, 3000);
     if (!res.ok) return "error"; // 429, 401, 5xx — transient, don't cache
     const data = await res.json();
     const feature = data.features?.[0];
@@ -104,7 +110,7 @@ const callJawg = async (
 ): Promise<[number, number] | null | "error"> => {
   try {
     const url = `${JAWG_GEOCODING}?text=${encodeURIComponent(location)}&size=1&access-token=${token}`;
-    const res = await fetch(url);
+    const res = await fetchWithTimeout(url, 3000);
     if (!res.ok) return "error"; // 429, 402, 5xx — transient, don't cache
     const data = await res.json();
     if (data.features?.length > 0) {
