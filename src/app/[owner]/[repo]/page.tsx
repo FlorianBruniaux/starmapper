@@ -169,6 +169,7 @@ export default function MapPage({
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [tokenOpen, setTokenOpen] = useState(false);
   const [hasToken, setHasToken] = useState(false);
+  const [cacheCheckDone, setCacheCheckDone] = useState(false);
   const captureMapRef = useRef<(() => Promise<string | null>) | null>(null);
   const runningRef = useRef(false);
   const pendingScanRef = useRef(false);
@@ -250,7 +251,7 @@ export default function MapPage({
 
   // Check DB cache on mount — falls back to badge_cache metadata (last scan date)
   useEffect(() => {
-    if (loadCache(owner, repo)) return; // localStorage takes priority
+    if (loadCache(owner, repo)) { setCacheCheckDone(true); return; } // localStorage takes priority
     fetch(`/api/stargazer-cache/${owner}/${repo}`)
       .then(async (r) => {
         if (r.status === 206) {
@@ -277,7 +278,8 @@ export default function MapPage({
           latestStarredAt: null,
         });
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setCacheCheckDone(true));
   }, [owner, repo]);
 
   // Fetch server-side stats from DB (fallback for repos not in StargazerCache, or >15k stars)
@@ -790,7 +792,7 @@ export default function MapPage({
       />
 
       {/* Pre-scan overlay (no cache) */}
-      {status === "idle" && repoInfo && estimate && (
+      {status === "idle" && cacheCheckDone && repoInfo && estimate && (
         <div className="absolute inset-0 z-30 flex items-center justify-center bg-background/85 backdrop-blur-sm">
           <div className="bg-surface border border-border rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
             <div className="flex items-center gap-3 mb-6">
