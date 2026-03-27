@@ -174,6 +174,7 @@ export default function MapPage({
   const [statsFilter, setStatsFilter] = useState("");
   const [shareOpen, setShareOpen] = useState(false);
   const [badgeOpen, setBadgeOpen] = useState(false);
+  const [badgeTab, setBadgeTab] = useState<"map" | "shield">("map");
   const [liPanelOpen, setLiPanelOpen] = useState(false);
   const [liDraft, setLiDraft] = useState("");
   const [liCopied, setLiCopied] = useState(false);
@@ -1944,32 +1945,29 @@ export default function MapPage({
               </div>
               {/* README badge */}
               <div className="border border-border rounded-lg overflow-hidden">
-                <div className="px-3 py-2 border-b border-border-subtle flex items-center justify-between">
+                <div className="px-3 py-2 border-b border-border-subtle">
                   <span className="text-foreground text-xs font-medium">README badge</span>
-                  <img
-                    src={`/api/badge/${owner}/${repo}`}
-                    alt="StarMapper badge"
-                    className="h-5"
-                  />
                 </div>
                 <div className="bg-surface-alt px-3 py-2">
-                  <code className="text-muted text-xs break-all select-all leading-relaxed">
-                    {`[![StarMapper](${typeof window !== "undefined" ? window.location.origin : ""}/api/badge/${owner}/${repo})](${typeof window !== "undefined" ? window.location.origin : ""}/${owner}/${repo})`}
+                  <code className="text-muted text-xs break-all select-all leading-relaxed whitespace-pre-wrap">
+                    {typeof window !== "undefined"
+                      ? `<a href="${window.location.origin}/${owner}/${repo}">\n  <picture>\n    <source media="(prefers-color-scheme: dark)" srcset="${window.location.origin}/api/map-image/${owner}/${repo}?theme=dark" />\n    <source media="(prefers-color-scheme: light)" srcset="${window.location.origin}/api/map-image/${owner}/${repo}?theme=light" />\n    <img alt="StarMapper" src="${window.location.origin}/api/map-image/${owner}/${repo}" />\n  </picture>\n</a>`
+                      : ""}
                   </code>
                 </div>
                 <div className="px-3 py-2 border-t border-border-subtle">
                   <button
                     onClick={() => {
                       const origin = window.location.origin;
-                      const md = `[![StarMapper](${origin}/api/badge/${owner}/${repo})](${origin}/${owner}/${repo})`;
-                      navigator.clipboard.writeText(md).catch(() => {});
+                      const html = `<a href="${origin}/${owner}/${repo}">\n  <picture>\n    <source media="(prefers-color-scheme: dark)" srcset="${origin}/api/map-image/${owner}/${repo}?theme=dark" />\n    <source media="(prefers-color-scheme: light)" srcset="${origin}/api/map-image/${owner}/${repo}?theme=light" />\n    <img alt="StarMapper" src="${origin}/api/map-image/${owner}/${repo}" />\n  </picture>\n</a>`;
+                      navigator.clipboard.writeText(html).catch(() => {});
                       setBadgeCopied(true);
                       setTimeout(() => setBadgeCopied(false), 2000);
                     }}
                     className="w-full flex items-center justify-center gap-2 bg-surface-alt hover:bg-border border border-border text-muted hover:text-foreground text-xs py-1.5 rounded-md transition-colors"
                   >
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                    {badgeCopied ? "Copied ✓" : "Copy Markdown"}
+                    {badgeCopied ? "Copied ✓" : "Copy HTML"}
                   </button>
                 </div>
               </div>
@@ -1985,7 +1983,7 @@ export default function MapPage({
           onClick={() => setBadgeOpen(false)}
         >
           <div
-            className="bg-surface border border-border rounded-2xl shadow-2xl w-full max-w-sm mx-4"
+            className="bg-surface border border-border rounded-2xl shadow-2xl w-full max-w-md mx-4"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between px-5 py-4 border-b border-border-subtle">
@@ -1993,40 +1991,79 @@ export default function MapPage({
               <button onClick={() => setBadgeOpen(false)} className="text-muted hover:text-foreground text-xl leading-none">×</button>
             </div>
             <div className="px-5 py-4 space-y-4">
-              <p className="text-muted text-xs leading-relaxed">
-                Add this badge to your repo&apos;s README to show your stargazer map.
-              </p>
-              {/* Live preview */}
-              <div className="flex items-center justify-center py-3 bg-surface-alt rounded-lg border border-border-subtle">
+              {/* Map image preview */}
+              <div className="rounded-lg border border-border-subtle overflow-hidden bg-[#010409]">
                 <img
-                  src={`/api/badge/${owner}/${repo}`}
-                  alt="StarMapper badge preview"
-                  className="h-6"
+                  src={`/api/map-image/${owner}/${repo}?theme=dark`}
+                  alt="StarMapper map preview"
+                  className="w-full"
                 />
               </div>
-              {/* Markdown code */}
-              <div>
-                <label className="block text-foreground text-xs font-medium mb-1.5">Markdown</label>
-                <div className="bg-background border border-border rounded-lg px-3 py-2.5">
-                  <code className="text-muted text-xs break-all select-all leading-relaxed">
-                    {`[![StarMapper](${typeof window !== "undefined" ? window.location.origin : ""}/api/badge/${owner}/${repo})](${typeof window !== "undefined" ? window.location.origin : ""}/${owner}/${repo})`}
-                  </code>
-                </div>
+              {/* Tabs */}
+              <div className="flex gap-1 bg-surface-alt rounded-lg p-1">
+                <button
+                  onClick={() => setBadgeTab("map")}
+                  className={`flex-1 text-xs py-1.5 rounded-md transition-colors font-medium ${badgeTab === "map" ? "bg-surface text-foreground" : "text-muted hover:text-foreground"}`}
+                >
+                  Map image
+                </button>
+                <button
+                  onClick={() => setBadgeTab("shield")}
+                  className={`flex-1 text-xs py-1.5 rounded-md transition-colors font-medium ${badgeTab === "shield" ? "bg-surface text-foreground" : "text-muted hover:text-foreground"}`}
+                >
+                  Shield badge
+                </button>
               </div>
+              {badgeTab === "map" ? (
+                <div>
+                  <p className="text-muted text-xs leading-relaxed mb-2">
+                    Embeds the map image in your README — switches between dark and light theme automatically.
+                  </p>
+                  <div className="bg-background border border-border rounded-lg px-3 py-2.5">
+                    <code className="text-muted text-xs break-all select-all leading-relaxed whitespace-pre-wrap">
+                      {typeof window !== "undefined"
+                        ? `## StarMapper\n\n<a href="${window.location.origin}/${owner}/${repo}">\n  <picture>\n    <source media="(prefers-color-scheme: dark)" srcset="${window.location.origin}/api/map-image/${owner}/${repo}?theme=dark" />\n    <source media="(prefers-color-scheme: light)" srcset="${window.location.origin}/api/map-image/${owner}/${repo}?theme=light" />\n    <img alt="StarMapper" src="${window.location.origin}/api/map-image/${owner}/${repo}" />\n  </picture>\n</a>`
+                        : ""}
+                    </code>
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <p className="text-muted text-xs leading-relaxed mb-2">
+                    Classic shield badge for Markdown READMEs.
+                  </p>
+                  <div className="flex justify-center py-2">
+                    <img
+                      src={`/api/badge/${owner}/${repo}`}
+                      alt="StarMapper badge"
+                      className="h-5"
+                    />
+                  </div>
+                  <div className="bg-background border border-border rounded-lg px-3 py-2.5 mt-2">
+                    <code className="text-muted text-xs break-all select-all leading-relaxed">
+                      {typeof window !== "undefined"
+                        ? `[![StarMapper](${window.location.origin}/api/badge/${owner}/${repo})](${window.location.origin}/${owner}/${repo})`
+                        : ""}
+                    </code>
+                  </div>
+                </div>
+              )}
             </div>
             <div className="px-5 pb-4">
               <button
                 onClick={() => {
                   const origin = window.location.origin;
-                  const md = `[![StarMapper](${origin}/api/badge/${owner}/${repo})](${origin}/${owner}/${repo})`;
-                  navigator.clipboard.writeText(md).catch(() => {});
+                  const text = badgeTab === "map"
+                    ? `## StarMapper\n\n<a href="${origin}/${owner}/${repo}">\n  <picture>\n    <source media="(prefers-color-scheme: dark)" srcset="${origin}/api/map-image/${owner}/${repo}?theme=dark" />\n    <source media="(prefers-color-scheme: light)" srcset="${origin}/api/map-image/${owner}/${repo}?theme=light" />\n    <img alt="StarMapper" src="${origin}/api/map-image/${owner}/${repo}" />\n  </picture>\n</a>`
+                    : `[![StarMapper](${origin}/api/badge/${owner}/${repo})](${origin}/${owner}/${repo})`;
+                  navigator.clipboard.writeText(text).catch(() => {});
                   setBadgeCopied(true);
                   setTimeout(() => setBadgeCopied(false), 2000);
                 }}
                 className="w-full flex items-center justify-center gap-2 bg-accent-green-emphasis hover:opacity-90 text-white text-xs font-medium py-2.5 rounded-lg transition-opacity"
               >
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                {badgeCopied ? "Copied ✓" : "Copy Markdown"}
+                {badgeCopied ? "Copied ✓" : badgeTab === "map" ? "Copy HTML" : "Copy Markdown"}
               </button>
             </div>
           </div>
@@ -2068,7 +2105,7 @@ export default function MapPage({
                       `## Top Stargazers`,
                       ...displayStats.topUsers.slice(0, 10).map((u, i) => `${i + 1}. [@${u.login}](https://github.com/${u.login}) — ${u.followers.toLocaleString()} followers`),
                       ``,
-                      `*Generated by [StarMapper](https://starmapper.app)*`,
+                      `*Generated by [StarMapper](https://starmapper.bruniaux.com)*`,
                     ].join("\n");
                     navigator.clipboard.writeText(md).catch(() => {});
                   }}
