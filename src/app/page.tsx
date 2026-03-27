@@ -6,6 +6,7 @@ import { TokenModal, getStoredToken } from "@/components/token-modal";
 import { getBookmarks } from "@/lib/bookmarks";
 import { RepoTable } from "@/components/repo-table";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { Footer } from "@/components/footer";
 import type { Bookmark } from "@/lib/bookmarks";
 import type { MappedRepo } from "@/app/api/repos/route";
 
@@ -387,6 +388,8 @@ export default function HomePage() {
         )}
 
       </main>
+
+      <Footer />
 
     </>
   );
