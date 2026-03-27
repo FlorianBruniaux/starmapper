@@ -136,23 +136,29 @@ Style CSS dans `globals.css` (classe `.starmapper-popup`) — hors Tailwind.
 
 ### 5.1 Landing Page
 
+Layout deux colonnes sur desktop (`lg:flex-row`), colonne unique sur mobile.
+
 ```
-┌─────────────────────────────────────┐
-│ Header (h-12, sticky)               │
-│ Logo | [Token button]               │
-├─────────────────────────────────────┤
-│ Main (flex-1, flex items-center)    │
-│                                     │
-│  Title (xl, bold)                   │
-│  Subtitle (sm, muted)               │
-│                                     │
-│  [URL Input         ] [Map →]       │
-│  [Compare toggle + input]           │
-│                                     │
-│  Suggestions (grid 2-3 cols)        │
-│                                     │
-└─────────────────────────────────────┘
+┌──────────────────────────────────────────────────────┐
+│ Header (h-14, sticky)                                │
+│ Logo | [Theme toggle] [Token button]                 │
+├───────────────────────┬──────────────────────────────┤
+│ Left panel (form)     │ Right panel (community table)│
+│                       │                              │
+│  Title (xl, bold)     │  "Community Maps"            │
+│  Subtitle (sm, muted) │  [Sortable table — repos]    │
+│                       │  [Pagination prev/next]      │
+│  [URL Input ] [Map →] │                              │
+│  [Compare toggle]     │                              │
+│                       │                              │
+│  How it works         │                              │
+│  Recent & examples    │                              │
+│  FAQ                  │                              │
+│                       │                              │
+└───────────────────────┴──────────────────────────────┘
 ```
+
+Le tableau Community Maps est paginé (20 lignes/page) et trié par `updatedAt` desc par défaut. Colonnes triables : Stars, Mapped%, Countries, Last scan.
 
 ### 5.2 Map Page
 
@@ -207,9 +213,15 @@ Base unit : 4px (Tailwind default).
 
 ---
 
-## 9. Dark Mode
+## 9. Dark / Light Mode
 
-StarMapper est 100% dark — pas de light mode. Le `@theme` dans `globals.css` définit les tokens une seule fois.
+StarMapper supporte les deux modes via un toggle dans le header. Le mode par défaut est **dark**.
+
+Les tokens CSS sont définis en double dans `globals.css` via `@theme inline` :
+- `:root` → valeurs dark (défaut)
+- `[data-theme="light"]` (ou `.light`) → valeurs light overridées
+
+**Règle** : Toujours utiliser les tokens CSS (`bg-background`, `text-foreground`...) — jamais de valeurs hex directes. Les tokens s'adaptent automatiquement au mode actif.
 
 ---
 
@@ -225,4 +237,4 @@ StarMapper est 100% dark — pas de light mode. Le `@theme` dans `globals.css` d
 
 ---
 
-*Dernière mise à jour : 2026-03-24*
+*Dernière mise à jour : 2026-03-27*

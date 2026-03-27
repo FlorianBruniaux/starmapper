@@ -11,10 +11,13 @@ Enter any GitHub repository URL and StarMapper fetches all stargazers, geocodes 
 - Interactive world map with GeoJSON clustering (MapLibre GL)
 - Progressive loading via client-side chunk loop — no serverless timeout limit
 - 3-level geocoding cascade: Jawg (primary), Geoapify (fallback), Nominatim (ultimate fallback)
-- Geocache shared across all repos — locations geocoded once, reused forever
+- Geocache pre-seeded with ~51k GeoNames entries — >99% of locations resolve without any API call
+- Community maps table on the landing page (sortable, paginated)
+- Dark / light mode toggle
 - Embeddable SVG badge showing mapped count and country stats
 - Optional GitHub token input for higher rate limits
 - Stargazer detail cards (bio, followers, company) on click
+- Collapsible sidebar on mobile
 
 ## Quick Start
 
@@ -75,7 +78,7 @@ Open [http://localhost:3000](http://localhost:3000), enter any public GitHub rep
 | `GEOAPIFY_APIKEY` | Recommended | Geocoding fallback when Jawg fails |
 | `NEXT_PUBLIC_APP_URL` | No | App base URL, used for OG metadata |
 
-Without `JAWGMAP_ACCESS_TOKEN` and `GEOAPIFY_APIKEY`, geocoding falls back to Nominatim only, which is rate-limited to 1 request per second and may be slower on large repos.
+Without `JAWGMAP_ACCESS_TOKEN` and `GEOAPIFY_APIKEY`, geocoding falls back to Nominatim only — rate-limited to 1 req/s. Thanks to the GeoNames pre-seeding, this matters far less in practice (most locations already cached).
 
 Without `GITHUB_TOKEN`, GitHub's unauthenticated rate limit applies (60 requests/hour), which will block any repo above roughly 6000 stars.
 
@@ -107,6 +110,10 @@ pnpm typecheck            # tsc --noEmit
 npx prisma db push        # Apply schema changes to Neon
 npx prisma studio         # GUI to browse geocache and badge_cache
 npx prisma generate       # Regenerate Prisma client after schema edits
+
+# Geocache seeding (one-shot, idempotent)
+pnpm seed:geonames:dry    # Preview keys that would be inserted
+pnpm seed:geonames        # Insert ~51k GeoNames entries into geocache
 ```
 
 ## Contributing

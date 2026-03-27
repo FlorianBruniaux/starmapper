@@ -1,7 +1,7 @@
 # StarMapper — Architecture
 
 **Version**: 0.1.0
-**Last updated**: 2026-03-26
+**Last updated**: 2026-03-27
 
 ---
 
@@ -101,7 +101,9 @@ location string (from GitHub profile)
         |
         v
 isGeocodeableLocation() filter
-  [rejects TLDs, phone prefixes, URLs, placeholder values]
+  [rejects: TLDs (.de, .local), phone prefixes (+62), URLs (://),
+   code artifacts (#pnw, $home, [object Object], <html>, {{}}, \f.x, !x),
+   placeholder values (null, internet, online, remote, earth, n/a...)]
         |
         v (passes filter)
   Geocache lookup (Neon DB)
@@ -144,6 +146,8 @@ isGeocodeableLocation() filter
 
 **Geocache**: A shared Neon table stores every resolved (or attempted) location. A null result for `lat`/`lng` is a valid cached entry — it means "this location does not geocode" and prevents repeated API calls for the same garbage string. The cache key is `location.toLowerCase().trim()`.
 
+The geocache was pre-seeded with ~51,000 entries from GeoNames data (cities with population > 15,000 + country names), covering the most common GitHub profile location strings. As a result, >99% of locations resolve from cache with no external API call. The seeding script is at `scripts/seed-geocache-geonames.ts`.
+
 **Circuit breaker**: Implemented in-memory per Vercel instance. After 3 consecutive errors, a provider is skipped for 1 hour. This protects against API outages without hard-coding fallback logic per request.
 
 **DB resilience**: All Prisma calls in `geocoder.ts` are wrapped in `try/catch`. If Neon is down, geocoding still works via direct API calls — results just won't be cached.
@@ -166,7 +170,7 @@ model GeoCache {
 }
 ```
 
-**Purpose**: Cache geocoding results so the same location string is never sent to an external API twice. Shared across all repos — a Paris geocoded for one repo benefits all others.
+**Purpose**: Cache geocoding results so the same location string is never sent to an external API twice. Shared across all repos — a Paris geocoded for one repo benefits all others. Pre-seeded with ~51,000 entries from GeoNames (see `scripts/seed-geocache-geonames.ts`).
 
 ### BadgeCache
 
@@ -356,6 +360,9 @@ Bulk-inserts geocache entries. Used to seed the cache from an external dataset.
 │       └── bookmarks.ts                       # Client-side repo bookmarks (localStorage)
 ├── prisma/
 │   └── schema.prisma                          # GeoCache + BadgeCache models
+├── scripts/
+│   ├── seed-geocache-geonames.ts              # One-shot: pre-seed geocache from GeoNames data
+│   └── clean-geocache-garbage.ts              # One-shot: delete garbage entries (#, $, code artifacts)
 ├── docs/                                      # Project documentation
 └── .env.local                                 # Local environment variables (not committed)
 ```
