@@ -4,6 +4,8 @@ import { useState, useMemo } from "react";
 import Link from "next/link";
 import type { MappedRepo } from "@/app/api/repos/route";
 
+const PAGE_SIZE = 20;
+
 type SortCol = "totalCount" | "mappedPercent" | "countryCount" | "updatedAt";
 type SortDir = "asc" | "desc";
 
@@ -53,6 +55,7 @@ const ColHeader = ({
 export const RepoTable = ({ repos }: { repos: MappedRepo[] }) => {
   const [sortCol, setSortCol] = useState<SortCol>("updatedAt");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const [page, setPage] = useState(0);
 
   const handleSort = (col: SortCol) => {
     if (col === sortCol) {
@@ -61,6 +64,7 @@ export const RepoTable = ({ repos }: { repos: MappedRepo[] }) => {
       setSortCol(col);
       setSortDir("desc");
     }
+    setPage(0);
   };
 
   const sorted = useMemo(() => {
@@ -71,6 +75,9 @@ export const RepoTable = ({ repos }: { repos: MappedRepo[] }) => {
       return sortDir === "desc" ? -cmp : cmp;
     });
   }, [repos, sortCol, sortDir]);
+
+  const totalPages = Math.ceil(sorted.length / PAGE_SIZE);
+  const pageRows = sorted.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
   return (
     <div className="w-full overflow-x-auto">
@@ -87,7 +94,7 @@ export const RepoTable = ({ repos }: { repos: MappedRepo[] }) => {
           </tr>
         </thead>
         <tbody>
-          {sorted.map((r) => (
+          {pageRows.map((r) => (
             <tr
               key={`${r.owner}/${r.repo}`}
               className="border-b border-border-subtle/50 hover:bg-surface transition-colors group"
@@ -135,6 +142,32 @@ export const RepoTable = ({ repos }: { repos: MappedRepo[] }) => {
           ))}
         </tbody>
       </table>
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between mt-3 px-1">
+          <span className="text-xs text-muted-subtle">
+            {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, sorted.length)} of {sorted.length}
+          </span>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setPage((p) => p - 1)}
+              disabled={page === 0}
+              className="px-2.5 py-1 text-xs rounded border border-border text-muted hover:text-foreground hover:border-border disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            >
+              ← Prev
+            </button>
+            <span className="text-xs text-muted-subtle px-2">
+              {page + 1} / {totalPages}
+            </span>
+            <button
+              onClick={() => setPage((p) => p + 1)}
+              disabled={page >= totalPages - 1}
+              className="px-2.5 py-1 text-xs rounded border border-border text-muted hover:text-foreground hover:border-border disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            >
+              Next →
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
