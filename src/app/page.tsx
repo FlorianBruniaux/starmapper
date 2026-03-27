@@ -240,19 +240,22 @@ export default function HomePage() {
               )}
             </div>
 
-            {/* Token nudge — inline, low weight */}
+            {/* Token nudge */}
             {!hasToken && (
-              <p className="text-[11px] text-muted-subtle text-center pt-0.5">
-                <span className="text-accent-orange">No token:</span> 60 req/hr limit.{" "}
-                <button
-                  type="button"
-                  onClick={() => setTokenOpen(true)}
-                  className="text-accent-blue hover:underline"
-                >
-                  Add yours
-                </button>{" "}
-                for 5,000/hr.
-              </p>
+              <div className="flex items-center justify-center gap-1.5 bg-accent-orange/10 border border-accent-orange/25 rounded-lg px-3 py-2 mt-1">
+                <span className="text-accent-orange text-xs">⚠</span>
+                <p className="text-xs text-muted">
+                  <span className="text-accent-orange font-medium">No token:</span> limited to 60 req/hr.{" "}
+                  <button
+                    type="button"
+                    onClick={() => setTokenOpen(true)}
+                    className="text-accent-blue hover:underline font-medium"
+                  >
+                    Add yours
+                  </button>{" "}
+                  for 5,000/hr.
+                </p>
+              </div>
             )}
           </form>
 

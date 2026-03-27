@@ -78,6 +78,8 @@ const clearCache = (owner: string, repo: string) => {
   try { localStorage.removeItem(cacheKey(owner, repo)); } catch { /* ignore */ }
 };
 
+const TOKEN_REQUIRED_STARS = 50_000;
+
 function estimateScan(stars: number): TimeEstimate {
   const locationsToGeocode = Math.round(stars * 0.4 * 0.7);
   const geocodeSeconds = locationsToGeocode * 0.2;
@@ -832,9 +834,36 @@ export default function MapPage({
               </p>
             )}
 
+            {total >= TOKEN_REQUIRED_STARS && !getStoredToken() && (
+              <div className="flex items-start gap-2.5 bg-accent-orange/10 border border-accent-orange/30 rounded-lg px-4 py-3 mb-6">
+                <span className="text-accent-orange mt-0.5 flex-shrink-0 text-sm">⚠</span>
+                <div>
+                  <p className="text-accent-orange text-xs font-medium mb-1">
+                    A GitHub token is required for repos over 50,000 stars
+                  </p>
+                  <p className="text-muted text-xs leading-relaxed mb-2.5">
+                    Without a token, GitHub limits requests to 60/hr — not enough to index this repo.
+                    A free token unlocks 5,000/hr. No special permissions needed.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => { pendingScanRef.current = true; setTokenOpen(true); }}
+                    className="text-xs text-accent-blue hover:underline font-medium"
+                  >
+                    Add your GitHub token →
+                  </button>
+                </div>
+              </div>
+            )}
+
             <button
-              onClick={lastDbScan ? handleStartScan : startScraping}
-              className="w-full bg-accent-green-emphasis hover:bg-accent-green-emphasis text-white font-medium py-3 rounded-lg transition-colors text-sm"
+              onClick={lastDbScan ? handleStartScan : (total >= TOKEN_REQUIRED_STARS ? handleStartScan : startScraping)}
+              disabled={total >= TOKEN_REQUIRED_STARS && !getStoredToken()}
+              className={`w-full bg-accent-green-emphasis text-white font-medium py-3 rounded-lg transition-colors text-sm ${
+                total >= TOKEN_REQUIRED_STARS && !getStoredToken()
+                  ? "opacity-40 cursor-not-allowed"
+                  : "hover:opacity-90"
+              }`}
             >
               {lastDbScan ? `Rescan ${total.toLocaleString()} stars →` : `Start indexing ${total.toLocaleString()} stars →`}
             </button>
