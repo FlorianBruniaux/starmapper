@@ -8,6 +8,9 @@ import { TokenModal, getStoredToken } from "@/components/token-modal";
 import { saveBookmark } from "@/lib/bookmarks";
 import { FilterCombobox } from "@/components/filter-combobox";
 import { isCountry, normalizeCountry } from "@/lib/countries";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { useTheme } from "@/hooks/useTheme";
+import { MAP_STYLE_DARK, MAP_STYLE_LIGHT } from "@/lib/theme";
 
 type AnyStargazer = {
   login: string;
@@ -117,6 +120,10 @@ export default function MapPage({
   params: Promise<{ owner: string; repo: string }>;
 }) {
   const { owner, repo } = use(params);
+  const { theme } = useTheme();
+  const JAWG_TOKEN = process.env.NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN ?? "";
+  const mapStyleUrl = theme === "light" ? MAP_STYLE_LIGHT(JAWG_TOKEN) : MAP_STYLE_DARK(JAWG_TOKEN);
+
   const [points, setPoints] = useState<StargazerPoint[]>([]);
   const [unmapped, setUnmapped] = useState<{ login: string; name: string | null; followers: number; starredAt: string | null }[]>([]);
   const [repoInfo, setRepoInfo] = useState<RepoInfo | null>(null);
@@ -742,25 +749,28 @@ export default function MapPage({
   const displayStats = stats ?? serverStats;
 
   return (
-    <div className="relative w-screen h-screen overflow-hidden bg-[#0d1117]">
+    <div className="relative w-screen h-screen overflow-hidden bg-background">
 
       {tokenOpen && <TokenModal onClose={handleTokenClose} />}
 
-      {/* Top-right token button */}
-      <button
-        onClick={() => setTokenOpen(true)}
-        className={`absolute top-3 right-3 z-20 flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border transition-colors ${
-          getStoredToken()
-            ? "border-[#238636] text-[#3fb950] bg-[#0d1117]/80 hover:bg-[#238636]/10"
-            : "border-[#30363d] text-[#8b949e] bg-[#0d1117]/80 hover:text-[#f0f6fc] hover:border-[#58a6ff]"
-        }`}
-        title="GitHub access token"
-      >
-        <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
-          <path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Zm7-3.25v2.992l2.028.812a.75.75 0 0 1-.557 1.392l-2.5-1A.751.751 0 0 1 7 8.25v-3.5a.75.75 0 0 1 1.5 0Z"/>
-        </svg>
-        {getStoredToken() ? "Token set" : "Add token"}
-      </button>
+      {/* Top-right controls row */}
+      <div className="absolute top-3 right-3 z-20 flex items-center gap-2">
+        <ThemeToggle />
+        <button
+          onClick={() => setTokenOpen(true)}
+          className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border transition-colors ${
+            getStoredToken()
+              ? "border-accent-green-emphasis text-accent-green bg-background/80 hover:bg-accent-green-emphasis/10"
+              : "border-border text-muted bg-background/80 hover:text-foreground hover:border-accent-blue"
+          }`}
+          title="GitHub access token"
+        >
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Zm7-3.25v2.992l2.028.812a.75.75 0 0 1-.557 1.392l-2.5-1A.751.751 0 0 1 7 8.25v-3.5a.75.75 0 0 1 1.5 0Z"/>
+          </svg>
+          {getStoredToken() ? "Token set" : "Add token"}
+        </button>
+      </div>
 
       {/* Map */}
       <StargazerMapDynamic
@@ -769,39 +779,40 @@ export default function MapPage({
         flyTarget={flyTarget}
         onFlyDone={() => setFlyTarget(null)}
         onReady={(fn) => { captureMapRef.current = fn; }}
+        styleUrl={mapStyleUrl}
       />
 
       {/* Pre-scan overlay (no cache) */}
       {status === "idle" && repoInfo && estimate && (
-        <div className="absolute inset-0 z-30 flex items-center justify-center bg-[rgba(13,17,23,0.85)] backdrop-blur-sm">
-          <div className="bg-[#161b22] border border-[#30363d] rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
+        <div className="absolute inset-0 z-30 flex items-center justify-center bg-background/[0.85] backdrop-blur-sm">
+          <div className="bg-surface border border-border rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
             <div className="flex items-center gap-3 mb-6">
               {repoInfo.avatar && (
                 <img src={repoInfo.avatar} alt="" className="w-10 h-10 rounded-full" />
               )}
               <div>
-                <div className="text-[#f0f6fc] font-semibold">{repoInfo.name}</div>
+                <div className="text-foreground font-semibold">{repoInfo.name}</div>
                 {repoInfo.description && (
-                  <div className="text-[#8b949e] text-xs mt-0.5 line-clamp-1">{repoInfo.description}</div>
+                  <div className="text-muted text-xs mt-0.5 line-clamp-1">{repoInfo.description}</div>
                 )}
               </div>
             </div>
 
             <div className="flex gap-4 mb-6">
-              <div className="flex-1 bg-[#0d1117] rounded-lg px-4 py-3 text-center">
-                <div className="text-2xl font-bold text-[#f0f6fc]">{total.toLocaleString()}</div>
-                <div className="text-[10px] text-[#8b949e] uppercase tracking-wide mt-0.5">stars</div>
+              <div className="flex-1 bg-background rounded-lg px-4 py-3 text-center">
+                <div className="text-2xl font-bold text-foreground">{total.toLocaleString()}</div>
+                <div className="text-[10px] text-muted uppercase tracking-wide mt-0.5">stars</div>
               </div>
-              <div className="flex-1 bg-[#0d1117] rounded-lg px-4 py-3 text-center">
-                <div className="text-2xl font-bold text-[#58a6ff]">{formatEstimate(estimate)}</div>
-                <div className="text-[10px] text-[#8b949e] uppercase tracking-wide mt-0.5">estimated</div>
+              <div className="flex-1 bg-background rounded-lg px-4 py-3 text-center">
+                <div className="text-2xl font-bold text-accent-blue">{formatEstimate(estimate)}</div>
+                <div className="text-[10px] text-muted uppercase tracking-wide mt-0.5">estimated</div>
               </div>
             </div>
 
             {estimate.keepOpen && (
-              <div className="flex items-start gap-2.5 bg-[#271d0e] border border-[#ffa657]/30 rounded-lg px-4 py-3 mb-6">
-                <span className="text-[#ffa657] mt-0.5 flex-shrink-0">⚠</span>
-                <p className="text-[#ffa657] text-xs leading-relaxed">
+              <div className="flex items-start gap-2.5 bg-warning-subtle border border-accent-orange/30 rounded-lg px-4 py-3 mb-6">
+                <span className="text-accent-orange mt-0.5 flex-shrink-0">⚠</span>
+                <p className="text-accent-orange text-xs leading-relaxed">
                   Keep this tab open during indexing. Closing it will restart from scratch.
                   {estimate.unit === "h" && " Consider running this overnight."}
                 </p>
@@ -809,13 +820,13 @@ export default function MapPage({
             )}
 
             {lastDbScan ? (
-              <div className="flex items-center gap-2 bg-[#0d1117] border border-[#238636]/40 rounded-lg px-4 py-2.5 mb-6">
-                <span className="text-[#3fb950] text-xs">✓ Last scanned {timeAgo(new Date(lastDbScan).getTime())}</span>
-                <span className="text-[#30363d] text-xs">·</span>
-                <span className="text-[#484f58] text-xs">Results shared with other users</span>
+              <div className="flex items-center gap-2 bg-background border border-accent-green-emphasis/40 rounded-lg px-4 py-2.5 mb-6">
+                <span className="text-accent-green text-xs">✓ Last scanned {timeAgo(new Date(lastDbScan).getTime())}</span>
+                <span className="text-border text-xs">·</span>
+                <span className="text-muted-subtle text-xs">Results shared with other users</span>
               </div>
             ) : (
-              <p className="text-[#8b949e] text-xs mb-6 leading-relaxed">
+              <p className="text-muted text-xs mb-6 leading-relaxed">
                 Stargazers are geocoded via their GitHub location field.
                 Results are cached and shared — subsequent visitors load instantly.
               </p>
@@ -823,7 +834,7 @@ export default function MapPage({
 
             <button
               onClick={lastDbScan ? handleStartScan : startScraping}
-              className="w-full bg-[#238636] hover:bg-[#2ea043] text-white font-medium py-3 rounded-lg transition-colors text-sm"
+              className="w-full bg-accent-green-emphasis hover:bg-accent-green-emphasis text-white font-medium py-3 rounded-lg transition-colors text-sm"
             >
               {lastDbScan ? `Rescan ${total.toLocaleString()} stars →` : `Start indexing ${total.toLocaleString()} stars →`}
             </button>
@@ -833,33 +844,33 @@ export default function MapPage({
 
       {/* Rate limit overlay */}
       {status === "waiting" && (
-        <div className="absolute inset-0 z-30 flex items-center justify-center bg-[rgba(13,17,23,0.75)] backdrop-blur-sm">
-          <div className="bg-[#161b22] border border-[#30363d] rounded-2xl p-8 max-w-sm w-full mx-4 shadow-2xl text-center">
+        <div className="absolute inset-0 z-30 flex items-center justify-center bg-background/[0.75] backdrop-blur-sm">
+          <div className="bg-surface border border-border rounded-2xl p-8 max-w-sm w-full mx-4 shadow-2xl text-center">
             <div className="flex justify-center mb-5">
-              <svg className="animate-spin w-10 h-10 text-[#58a6ff]" viewBox="0 0 24 24" fill="none">
+              <svg className="animate-spin w-10 h-10 text-accent-blue" viewBox="0 0 24 24" fill="none">
                 <circle className="opacity-20" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
                 <path className="opacity-80" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
               </svg>
             </div>
-            <h2 className="text-[#f0f6fc] font-semibold text-base mb-1">Server busy</h2>
-            <p className="text-[#8b949e] text-sm mb-5">
+            <h2 className="text-foreground font-semibold text-base mb-1">Server busy</h2>
+            <p className="text-muted text-sm mb-5">
               Too many scans running at once. Resuming automatically in
             </p>
-            <div className="text-5xl font-bold text-[#58a6ff] tabular-nums mb-5">{retryIn}</div>
-            <div className="w-full bg-[#21262d] rounded-full h-1 overflow-hidden">
+            <div className="text-5xl font-bold text-accent-blue tabular-nums mb-5">{retryIn}</div>
+            <div className="w-full bg-surface-alt rounded-full h-1 overflow-hidden">
               <div
-                className="bg-[#58a6ff] h-full rounded-full transition-all duration-1000"
+                className="bg-accent-blue h-full rounded-full transition-all duration-1000"
                 style={{ width: `${((RETRY_DELAY - retryIn) / RETRY_DELAY) * 100}%` }}
               />
             </div>
-            <p className="text-[#484f58] text-xs mt-4">Your progress is saved — no need to do anything.</p>
+            <p className="text-muted-subtle text-xs mt-4">Your progress is saved — no need to do anything.</p>
           </div>
         </div>
       )}
 
       {/* Top panel */}
       <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10
-        bg-[rgba(13,17,23,0.92)] border border-[#30363d] rounded-xl
+        bg-background/[0.92] border border-border rounded-xl
         px-5 py-3 text-center backdrop-blur-md shadow-2xl min-w-[320px]">
 
         <div className="flex items-center justify-center gap-2 mb-1">
@@ -869,7 +880,7 @@ export default function MapPage({
           <a
             href={`https://github.com/${owner}/${repo}`}
             target="_blank"
-            className="text-[#f0f6fc] text-sm font-semibold hover:underline"
+            className="text-foreground text-sm font-semibold hover:underline"
           >
             {owner}/{repo}
           </a>
@@ -877,12 +888,12 @@ export default function MapPage({
 
         {compareOwner && compareRepo && (
           <div className="mt-1 flex items-center justify-center gap-2 text-[10px]">
-            <span className="inline-block w-2 h-2 rounded-full bg-[#a371f7] flex-shrink-0" />
-            <span className="text-[#8b949e]">
-              vs <span className="text-[#a371f7]">{compareOwner}/{compareRepo}</span>
-              {compareInfo && <span className="text-[#484f58] ml-1">({compareInfo.stars.toLocaleString()} ★)</span>}
-              {compareStatus === "loading" && <span className="text-[#484f58] ml-1">· scanning…</span>}
-              {compareStatus === "done" && <span className="text-[#484f58] ml-1">· {comparePoints.length} mapped</span>}
+            <span className="inline-block w-2 h-2 rounded-full bg-accent-purple flex-shrink-0" />
+            <span className="text-muted">
+              vs <span className="text-accent-purple">{compareOwner}/{compareRepo}</span>
+              {compareInfo && <span className="text-muted-subtle ml-1">({compareInfo.stars.toLocaleString()} ★)</span>}
+              {compareStatus === "loading" && <span className="text-muted-subtle ml-1">· scanning…</span>}
+              {compareStatus === "done" && <span className="text-muted-subtle ml-1">· {comparePoints.length} mapped</span>}
             </span>
           </div>
         )}
@@ -894,29 +905,29 @@ export default function MapPage({
             { val: new Set(points.map((p) => p.location?.split(",").pop()?.trim())).size.toString(), label: "locations" },
           ].map(({ val, label }) => (
             <div key={label} className="text-center">
-              <div className="text-2xl font-bold text-[#f0f6fc]">{val}</div>
-              <div className="text-[10px] text-[#8b949e] uppercase tracking-wide mt-0.5">{label}</div>
+              <div className="text-2xl font-bold text-foreground">{val}</div>
+              <div className="text-[10px] text-muted uppercase tracking-wide mt-0.5">{label}</div>
             </div>
           ))}
           <button
             onClick={() => setDrawerOpen(true)}
             className="text-center cursor-pointer hover:opacity-80 transition-opacity"
           >
-            <div className="text-2xl font-bold text-[#8b949e]">{unmapped.length.toLocaleString()}</div>
-            <div className="text-[10px] text-[#8b949e] uppercase tracking-wide mt-0.5">no location</div>
+            <div className="text-2xl font-bold text-muted">{unmapped.length.toLocaleString()}</div>
+            <div className="text-[10px] text-muted uppercase tracking-wide mt-0.5">no location</div>
           </button>
         </div>
 
         {/* Progress bar */}
         {(status === "loading" || status === "refreshing" || status === "waiting") && (
           <div className="mt-3">
-            <div className="w-full bg-[#21262d] rounded-full h-1.5 overflow-hidden">
+            <div className="w-full bg-surface-alt rounded-full h-1.5 overflow-hidden">
               <div
-                className="bg-[#58a6ff] h-full rounded-full transition-all duration-300"
+                className="bg-accent-blue h-full rounded-full transition-all duration-300"
                 style={{ width: status === "refreshing" ? "100%" : `${pct}%` }}
               />
             </div>
-            <div className="text-[10px] text-[#8b949e] mt-1">
+            <div className="text-[10px] text-muted mt-1">
               {status === "waiting"
                 ? `⏸ Queued — resuming in ${retryIn}s…`
                 : status === "refreshing"
@@ -924,7 +935,7 @@ export default function MapPage({
                 : `Fetching ${processed.toLocaleString()} / ${total.toLocaleString()} — ${pct}%`
               }
               {estimate && status === "loading" && (
-                <span className="ml-1 text-[#484f58]">· est. {formatEstimate(estimate)}</span>
+                <span className="ml-1 text-muted-subtle">· est. {formatEstimate(estimate)}</span>
               )}
             </div>
           </div>
@@ -933,13 +944,13 @@ export default function MapPage({
         {/* Mapping ratio progress bar — always visible when data available */}
         {(status === "cached" || status === "done") && total > 0 && points.length > 0 && (
           <div className="mt-2.5">
-            <div className="w-full bg-[#21262d] rounded-full h-1 overflow-hidden">
+            <div className="w-full bg-surface-alt rounded-full h-1 overflow-hidden">
               <div
-                className="bg-[#58a6ff] h-full rounded-full transition-all duration-500"
+                className="bg-accent-blue h-full rounded-full transition-all duration-500"
                 style={{ width: `${Math.round((points.length / total) * 100)}%` }}
               />
             </div>
-            <div className="text-[10px] text-[#484f58] mt-0.5 text-center">
+            <div className="text-[10px] text-muted-subtle mt-0.5 text-center">
               {points.length.toLocaleString()} / {total.toLocaleString()} mapped ({Math.round((points.length / total) * 100)}%)
             </div>
           </div>
@@ -948,20 +959,20 @@ export default function MapPage({
         {/* Cache status */}
         {(status === "cached" || status === "done") && cachedAt && (
           <div className="mt-2 flex items-center justify-center gap-3">
-            <span className="text-[10px] text-[#3fb950]">
+            <span className="text-[10px] text-accent-green">
               {status === "done" ? "✓ Indexed" : `✓ Cached ${timeAgo(cachedAt)}`}
             </span>
             {status === "cached" && latestStarredAt && (
               <button
                 onClick={startRefresh}
-                className="text-[10px] text-[#58a6ff] hover:underline flex items-center gap-1"
+                className="text-[10px] text-accent-blue hover:underline flex items-center gap-1"
               >
                 ↻ {newStarsCount > 0 ? `${newStarsCount} new stars` : "Refresh"}
               </button>
             )}
             <button
               onClick={handleStartScan}
-              className="text-[10px] text-[#8b949e] hover:text-[#f0f6fc] hover:underline"
+              className="text-[10px] text-muted hover:text-foreground hover:underline"
             >
               Full rescan
             </button>
@@ -969,7 +980,7 @@ export default function MapPage({
         )}
 
         {status === "error" && (
-          <div className="mt-2 text-[#f85149] text-xs">{error}</div>
+          <div className="mt-2 text-accent-red text-xs">{error}</div>
         )}
 
         {/* Find me */}
@@ -980,12 +991,12 @@ export default function MapPage({
               onChange={(e) => { setFindInput(e.target.value); setFindStatus("idle"); }}
               onKeyDown={(e) => { if (e.key === "Enter") findUser(); }}
               placeholder="GitHub username or URL…"
-              className="flex-1 bg-[#21262d] border border-[#30363d] rounded-md px-3 py-1.5 text-xs text-[#e6edf3] placeholder-[#484f58] focus:outline-none focus:border-[#58a6ff]"
+              className="flex-1 bg-surface-alt border border-border rounded-md px-3 py-1.5 text-xs text-foreground placeholder-muted-subtle focus:outline-none focus:border-accent-blue"
             />
             <button
               onClick={findUser}
               disabled={findStatus === "searching"}
-              className="bg-[#21262d] border border-[#30363d] rounded-md px-3 py-1.5 text-xs text-[#8b949e] hover:text-[#f0f6fc] hover:bg-[#30363d] transition-colors disabled:opacity-50 flex items-center gap-1.5"
+              className="bg-surface-alt border border-border rounded-md px-3 py-1.5 text-xs text-muted hover:text-foreground hover:bg-border transition-colors disabled:opacity-50 flex items-center gap-1.5"
             >
               {findStatus === "searching" ? (
                 <>
@@ -999,13 +1010,13 @@ export default function MapPage({
             </button>
           </div>
           {findStatus === "found" && (
-            <p className="text-[10px] text-[#3fb950]">✓ Found — flying to location</p>
+            <p className="text-[10px] text-accent-green">✓ Found — flying to location</p>
           )}
           {findStatus === "no-location" && (
-            <p className="text-[10px] text-[#f0883e]">Starred but has no location set on GitHub</p>
+            <p className="text-[10px] text-accent-orange">Starred but has no location set on GitHub</p>
           )}
           {findStatus === "not-found" && (
-            <p className="text-[10px] text-[#f85149]">Not found in stargazers</p>
+            <p className="text-[10px] text-accent-red">Not found in stargazers</p>
           )}
         </div>
       </div>
@@ -1013,55 +1024,55 @@ export default function MapPage({
       {/* Legend — compare mode indicator only */}
       {compareOwner && compareRepo && (
         <div className="absolute bottom-6 right-4 z-10
-          bg-[rgba(13,17,23,0.88)] border border-[#30363d] rounded-lg px-3 py-2
+          bg-background/[0.88] border border-border rounded-lg px-3 py-2
           text-[11px] backdrop-blur-md select-none flex items-center gap-2">
-          <span className="inline-block w-2 h-2 rounded-full bg-[#a371f7] flex-shrink-0" />
-          <span className="text-[#8b949e] text-[10px] truncate max-w-[120px]">{compareRepo}</span>
+          <span className="inline-block w-2 h-2 rounded-full bg-accent-purple flex-shrink-0" />
+          <span className="text-muted text-[10px] truncate max-w-[120px]">{compareRepo}</span>
         </div>
       )}
 
       {/* Unmapped drawer */}
       {drawerOpen && (
         <div className="absolute bottom-0 left-0 right-0 z-20
-          bg-[rgba(13,17,23,0.97)] border-t border-[#30363d] backdrop-blur-md
+          bg-background/[0.97] border-t border-border backdrop-blur-md
           flex flex-col max-h-[45vh]">
-          <div className="flex items-center justify-between px-5 py-3 border-b border-[#21262d] flex-shrink-0">
+          <div className="flex items-center justify-between px-5 py-3 border-b border-border-subtle flex-shrink-0">
             <div>
-              <span className="text-sm text-[#8b949e]">
-                <strong className="text-[#f0f6fc]">{unmapped.length.toLocaleString()} stargazers</strong> without location
+              <span className="text-sm text-muted">
+                <strong className="text-foreground">{unmapped.length.toLocaleString()} stargazers</strong> without location
               </span>
-              <span className="ml-2 text-[10px] text-[#484f58]">— no location set on their GitHub profile</span>
+              <span className="ml-2 text-[10px] text-muted-subtle">— no location set on their GitHub profile</span>
             </div>
-            <button onClick={() => setDrawerOpen(false)} className="text-[#8b949e] hover:text-[#f0f6fc] text-lg leading-none">✕</button>
+            <button onClick={() => setDrawerOpen(false)} className="text-muted hover:text-foreground text-lg leading-none">✕</button>
           </div>
           <div className="overflow-y-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
             {[...unmapped].sort((a, b) => b.followers - a.followers).map((u) => (
               <div
                 key={u.login}
-                className={`flex items-center gap-2.5 px-4 py-2.5 border-b border-r border-[#161b22] text-xs ${
-                  u.followers >= 1000 ? "ring-inset ring-1 ring-[#ffa657]/20" : ""
+                className={`flex items-center gap-2.5 px-4 py-2.5 border-b border-r border-surface text-xs ${
+                  u.followers >= 1000 ? "ring-inset ring-1 ring-accent-orange/20" : ""
                 }`}
               >
-                <div className="w-7 h-7 rounded-full bg-[#21262d] flex-shrink-0 flex items-center justify-center text-[10px] text-[#484f58] font-medium overflow-hidden">
+                <div className="w-7 h-7 rounded-full bg-surface-alt flex-shrink-0 flex items-center justify-center text-[10px] text-muted-subtle font-medium overflow-hidden">
                   {u.login[0].toUpperCase()}
                 </div>
                 <div className="min-w-0 flex-1">
                   <a
                     href={`https://github.com/${u.login}`}
                     target="_blank"
-                    className="text-[#58a6ff] font-medium hover:underline block truncate"
+                    className="text-accent-blue font-medium hover:underline block truncate"
                   >
                     @{u.login}
                   </a>
                   <div className="flex items-center gap-1.5 mt-0.5">
                     {u.name && (
-                      <span className="text-[#484f58] truncate text-[10px]">{u.name}</span>
+                      <span className="text-muted-subtle truncate text-[10px]">{u.name}</span>
                     )}
                     {u.followers >= 1000 && (
-                      <span className="flex-shrink-0 text-[9px] text-[#ffa657] font-medium">⚡ {(u.followers / 1000).toFixed(1)}k</span>
+                      <span className="flex-shrink-0 text-[9px] text-accent-orange font-medium">⚡ {(u.followers / 1000).toFixed(1)}k</span>
                     )}
                     {u.followers > 0 && u.followers < 1000 && (
-                      <span className="flex-shrink-0 text-[9px] text-[#484f58]">{u.followers.toLocaleString()}</span>
+                      <span className="flex-shrink-0 text-[9px] text-muted-subtle">{u.followers.toLocaleString()}</span>
                     )}
                   </div>
                 </div>
@@ -1074,8 +1085,8 @@ export default function MapPage({
       {/* Back link */}
       <a
         href="/"
-        className="absolute top-4 left-4 z-10 bg-[rgba(13,17,23,0.88)] border border-[#30363d]
-          rounded-lg px-3 py-2 text-xs text-[#8b949e] hover:text-[#f0f6fc] backdrop-blur-md transition-colors"
+        className="absolute top-4 left-4 z-10 bg-background/[0.88] border border-border
+          rounded-lg px-3 py-2 text-xs text-muted hover:text-foreground backdrop-blur-md transition-colors"
       >
         ← Back
       </a>
@@ -1087,7 +1098,7 @@ export default function MapPage({
         {!sidebarOpen && (
           <button
             onClick={() => setSidebarOpen(true)}
-            className="lg:hidden absolute bottom-6 left-4 z-10 bg-[rgba(13,17,23,0.88)] border border-[#30363d] rounded-lg px-3 py-2.5 backdrop-blur-md flex items-center gap-2 text-xs text-[#8b949e] hover:text-[#f0f6fc] hover:border-[#58a6ff]/50 transition-all"
+            className="lg:hidden absolute bottom-6 left-4 z-10 bg-background/[0.88] border border-border rounded-lg px-3 py-2.5 backdrop-blur-md flex items-center gap-2 text-xs text-muted hover:text-foreground hover:border-accent-blue/50 transition-all"
             aria-label="Open controls"
           >
             <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
@@ -1095,7 +1106,7 @@ export default function MapPage({
             </svg>
             Controls
             {followerMapFilter !== "all" && (
-              <span className="size-1.5 rounded-full bg-[#58a6ff] inline-block" />
+              <span className="size-1.5 rounded-full bg-accent-blue inline-block" />
             )}
           </button>
         )}
@@ -1103,12 +1114,12 @@ export default function MapPage({
         <div className={`absolute bottom-6 left-4 z-10 flex-col gap-2 ${sidebarOpen ? "flex" : "hidden"} lg:flex`}>
 
           {/* Follower tier filter */}
-          <div className="bg-[rgba(13,17,23,0.88)] border border-[#30363d] rounded-lg px-3 py-2 backdrop-blur-md flex flex-col gap-1">
+          <div className="bg-background/[0.88] border border-border rounded-lg px-3 py-2 backdrop-blur-md flex flex-col gap-1">
             <div className="flex items-center justify-between mb-0.5">
-              <span className="text-[10px] text-[#484f58] uppercase tracking-widest">Filter map</span>
+              <span className="text-[10px] text-muted-subtle uppercase tracking-widest">Filter map</span>
               <button
                 onClick={() => setSidebarOpen(false)}
-                className="lg:hidden text-[#8b949e] hover:text-[#f0f6fc] transition-colors p-0.5 -mr-0.5 rounded"
+                className="lg:hidden text-muted hover:text-foreground transition-colors p-0.5 -mr-0.5 rounded"
                 aria-label="Close controls"
               >
                 <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
@@ -1118,9 +1129,9 @@ export default function MapPage({
             </div>
             {([
               { key: "all", label: "All", dot: null },
-              { key: "high", label: "500+ followers", dot: "bg-[#f85149]" },
-              { key: "mid", label: "100–500", dot: "bg-[#ffa657]" },
-              { key: "low", label: "<100", dot: "bg-[#58a6ff]" },
+              { key: "high", label: "500+ followers", dot: "bg-accent-red" },
+              { key: "mid", label: "100–500", dot: "bg-accent-orange" },
+              { key: "low", label: "<100", dot: "bg-accent-blue" },
             ] as const).map(({ key, label, dot }) => {
               const active = followerMapFilter === key;
               return (
@@ -1128,7 +1139,7 @@ export default function MapPage({
                   key={key}
                   onClick={() => setFollowerMapFilter(active && key !== "all" ? "all" : key)}
                   className={`flex items-center gap-2 rounded px-1.5 py-0.5 text-xs transition-colors text-left ${
-                    active ? "bg-[#21262d] text-[#f0f6fc]" : "text-[#8b949e] hover:bg-[#161b22] hover:text-[#f0f6fc]"
+                    active ? "bg-surface-alt text-foreground" : "text-muted hover:bg-surface hover:text-foreground"
                   }`}
                 >
                   {dot
@@ -1143,12 +1154,12 @@ export default function MapPage({
           {displayStats && (
             <button
               onClick={() => setStatsOpen(true)}
-              className="bg-[rgba(13,17,23,0.88)] border border-[#30363d] rounded-lg
-                px-3 py-2.5 text-xs text-[#8b949e] hover:text-[#f0f6fc]
-                hover:border-[#58a6ff]/50 backdrop-blur-md transition-all flex items-center gap-2"
+              className="bg-background/[0.88] border border-border rounded-lg
+                px-3 py-2.5 text-xs text-muted hover:text-foreground
+                hover:border-accent-blue/50 backdrop-blur-md transition-all flex items-center gap-2"
               title="Stargazer stats"
             >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" className="text-[#58a6ff] flex-shrink-0" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" className="text-accent-blue flex-shrink-0" aria-hidden="true">
                 <path d="M1.5 1.75a.75.75 0 00-1.5 0v12.5c0 .414.336.75.75.75h14.5a.75.75 0 000-1.5H1.5V1.75zm13.28 4.47a.75.75 0 00-1.06-1.06L10 8.94 7.53 6.47a.75.75 0 00-1.06 0L3.22 9.72a.75.75 0 001.06 1.06L7 8.06l2.47 2.47a.75.75 0 001.06 0l4.25-4.32z"/>
               </svg>
               <span>Stats</span>
@@ -1157,16 +1168,16 @@ export default function MapPage({
           {allStargazers.length > 0 && (
             <button
               onClick={() => setAllOpen(true)}
-              className="bg-[rgba(13,17,23,0.88)] border border-[#30363d] rounded-lg
-                px-3 py-2.5 text-xs text-[#8b949e] hover:text-[#f0f6fc]
-                hover:border-[#a371f7]/50 backdrop-blur-md transition-all flex items-center gap-2"
+              className="bg-background/[0.88] border border-border rounded-lg
+                px-3 py-2.5 text-xs text-muted hover:text-foreground
+                hover:border-accent-purple/50 backdrop-blur-md transition-all flex items-center gap-2"
               title="All stargazers"
             >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" className="text-[#a371f7] flex-shrink-0" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" className="text-accent-purple flex-shrink-0" aria-hidden="true">
                 <path d="M2 5.5a3.5 3.5 0 115.898 2.549 5.508 5.508 0 013.034 4.084.75.75 0 11-1.482.235 4 4 0 00-7.9 0 .75.75 0 01-1.482-.236A5.507 5.507 0 013.102 8.05 3.493 3.493 0 012 5.5zM11 4a3 3 0 102.22 5.018 5.01 5.01 0 012.56 3.012.75.75 0 11-1.45.39 3.504 3.504 0 00-6.66 0 .75.75 0 11-1.45-.39A5.01 5.01 0 018.78 9.018 3 3 0 0111 4z"/>
               </svg>
               <span>Stargazers</span>
-              <span className="bg-[#30363d] text-[#8b949e] text-[10px] px-1.5 py-px rounded-full tabular-nums leading-none ml-auto">
+              <span className="bg-border text-muted text-[10px] px-1.5 py-px rounded-full tabular-nums leading-none ml-auto">
                 {allStargazers.length.toLocaleString()}
               </span>
             </button>
@@ -1174,12 +1185,12 @@ export default function MapPage({
           {growthData.length > 0 && (
             <button
               onClick={() => setGrowthOpen(true)}
-              className="bg-[rgba(13,17,23,0.88)] border border-[#30363d] rounded-lg
-                px-3 py-2.5 text-xs text-[#8b949e] hover:text-[#f0f6fc]
-                hover:border-[#3fb950]/50 backdrop-blur-md transition-all flex items-center gap-2"
+              className="bg-background/[0.88] border border-border rounded-lg
+                px-3 py-2.5 text-xs text-muted hover:text-foreground
+                hover:border-accent-green/50 backdrop-blur-md transition-all flex items-center gap-2"
               title="Star growth chart"
             >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-[#3fb950] flex-shrink-0" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-accent-green flex-shrink-0" aria-hidden="true">
                 <path d="M1.5 12.5 5 8l3 3 3.5-5 3 3"/>
               </svg>
               <span>Growth</span>
@@ -1189,12 +1200,12 @@ export default function MapPage({
             href={`https://star-history.com/#${owner}/${repo}&type=Date`}
             target="_blank"
             rel="noopener noreferrer"
-            className="bg-[rgba(13,17,23,0.88)] border border-[#30363d] rounded-lg
-              px-3 py-2.5 text-xs text-[#8b949e] hover:text-[#f0f6fc]
-              hover:border-[#ffa657]/50 backdrop-blur-md transition-all flex items-center gap-2"
+            className="bg-background/[0.88] border border-border rounded-lg
+              px-3 py-2.5 text-xs text-muted hover:text-foreground
+              hover:border-accent-orange/50 backdrop-blur-md transition-all flex items-center gap-2"
             title="View star history on star-history.com"
           >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" className="text-[#ffa657] flex-shrink-0" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" className="text-accent-orange flex-shrink-0" aria-hidden="true">
               <path d="M8 .25a.75.75 0 01.673.418l1.882 3.815 4.21.612a.75.75 0 01.416 1.279l-3.046 2.97.719 4.192a.75.75 0 01-1.088.791L8 12.347l-3.766 1.98a.75.75 0 01-1.088-.79l.72-4.194L.818 6.374a.75.75 0 01.416-1.28l4.21-.611L7.327.668A.75.75 0 018 .25z"/>
             </svg>
             <span>History</span>
@@ -1203,8 +1214,8 @@ export default function MapPage({
           {/* Share CTA */}
           <button
             onClick={() => setShareOpen(true)}
-            className="bg-[#238636] hover:bg-[#2ea043] active:bg-[#1a7f2e]
-              border border-[#2ea043]/60 hover:border-[#3fb950]/60
+            className="bg-accent-green-emphasis hover:bg-accent-green-emphasis active:bg-accent-green-emphasis
+              border border-accent-green-emphasis/60 hover:border-accent-green/60
               rounded-lg px-3 py-2.5
               text-white text-xs font-semibold
               backdrop-blur-md transition-all duration-150
@@ -1224,42 +1235,42 @@ export default function MapPage({
       {/* Stargazers table modal */}
       {allOpen && (
         <div
-          className="absolute inset-0 z-40 flex items-center justify-center bg-[rgba(13,17,23,0.85)] backdrop-blur-sm"
+          className="absolute inset-0 z-40 flex items-center justify-center bg-background/[0.85] backdrop-blur-sm"
           onClick={() => setAllOpen(false)}
         >
           <div
-            className="bg-[#161b22] border border-[#30363d] rounded-2xl shadow-2xl w-full max-w-5xl mx-4 flex flex-col max-h-[85vh]"
+            className="bg-surface border border-border rounded-2xl shadow-2xl w-full max-w-5xl mx-4 flex flex-col max-h-[85vh]"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-[#21262d] flex-shrink-0">
-              <h2 className="text-[#f0f6fc] font-semibold text-sm">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-border-subtle flex-shrink-0">
+              <h2 className="text-foreground font-semibold text-sm">
                 All Stargazers
-                <span className="text-[#8b949e] font-normal ml-2">
+                <span className="text-muted font-normal ml-2">
                   {filteredStargazers.length !== allStargazers.length
                     ? `${filteredStargazers.length} / ${allStargazers.length.toLocaleString()}`
                     : allStargazers.length.toLocaleString()}
                 </span>
               </h2>
-              <button onClick={() => setAllOpen(false)} className="text-[#8b949e] hover:text-[#f0f6fc] text-lg leading-none">✕</button>
+              <button onClick={() => setAllOpen(false)} className="text-muted hover:text-foreground text-lg leading-none">✕</button>
             </div>
 
             {/* Search */}
-            <div className="px-5 py-3 border-b border-[#21262d] flex-shrink-0">
+            <div className="px-5 py-3 border-b border-border-subtle flex-shrink-0">
               <input
                 autoFocus
                 value={allSearch}
                 onChange={(e) => setAllSearch(e.target.value)}
                 placeholder="Search by username, name or location…"
-                className="w-full bg-[#0d1117] border border-[#30363d] rounded-lg px-3 py-2 text-xs text-[#e6edf3] placeholder-[#484f58] focus:outline-none focus:border-[#58a6ff]"
+                className="w-full bg-background border border-border rounded-lg px-3 py-2 text-xs text-foreground placeholder-muted-subtle focus:outline-none focus:border-accent-blue"
               />
             </div>
 
             {/* Filters */}
-            <div className="px-5 py-2.5 border-b border-[#21262d] flex-shrink-0 flex flex-wrap items-center gap-3">
+            <div className="px-5 py-2.5 border-b border-border-subtle flex-shrink-0 flex flex-wrap items-center gap-3">
               {/* Followers filter */}
               <div className="flex items-center gap-2 min-w-0">
-                <span className="text-[10px] text-[#8b949e] whitespace-nowrap">Min followers</span>
+                <span className="text-[10px] text-muted whitespace-nowrap">Min followers</span>
                 <div className="flex gap-1">
                   {[0, 10, 100, 500, 1000].map((v) => (
                     <button
@@ -1267,8 +1278,8 @@ export default function MapPage({
                       onClick={() => setFilterFollowers(v)}
                       className={`px-2 py-0.5 rounded text-[10px] transition-colors ${
                         filterFollowers === v
-                          ? "bg-[#58a6ff] text-white"
-                          : "bg-[#21262d] text-[#8b949e] hover:text-[#f0f6fc]"
+                          ? "bg-accent-blue text-white"
+                          : "bg-surface-alt text-muted hover:text-foreground"
                       }`}
                     >
                       {v === 0 ? "All" : v >= 1000 ? `${v / 1000}k+` : `${v}+`}
@@ -1277,11 +1288,11 @@ export default function MapPage({
                 </div>
               </div>
 
-              <div className="h-3 w-px bg-[#30363d] hidden sm:block" />
+              <div className="h-3 w-px bg-border hidden sm:block" />
 
               {/* Mapped filter */}
               <div className="flex items-center gap-2">
-                <span className="text-[10px] text-[#8b949e] whitespace-nowrap">Location</span>
+                <span className="text-[10px] text-muted whitespace-nowrap">Location</span>
                 <div className="flex gap-1">
                   {(["all", "mapped", "unmapped"] as const).map((v) => (
                     <button
@@ -1289,8 +1300,8 @@ export default function MapPage({
                       onClick={() => setFilterMapped(v)}
                       className={`px-2 py-0.5 rounded text-[10px] transition-colors ${
                         filterMapped === v
-                          ? "bg-[#58a6ff] text-white"
-                          : "bg-[#21262d] text-[#8b949e] hover:text-[#f0f6fc]"
+                          ? "bg-accent-blue text-white"
+                          : "bg-surface-alt text-muted hover:text-foreground"
                       }`}
                     >
                       {v === "all" ? "All" : v === "mapped" ? "📍 On map" : "No location"}
@@ -1299,18 +1310,18 @@ export default function MapPage({
                 </div>
               </div>
 
-              <div className="h-3 w-px bg-[#30363d] hidden sm:block" />
+              <div className="h-3 w-px bg-border hidden sm:block" />
 
               {/* Date filter */}
               <div className="flex items-center gap-2">
-                <span className="text-[10px] text-[#8b949e] whitespace-nowrap">Starred</span>
+                <span className="text-[10px] text-muted whitespace-nowrap">Starred</span>
                 <div className="flex gap-1">
                   {(["all", "30d", "90d", "1y"] as const).map((v) => (
                     <button
                       key={v}
                       onClick={() => setFilterDate(v)}
                       className={`px-2 py-0.5 rounded text-[10px] transition-colors ${
-                        filterDate === v ? "bg-[#58a6ff] text-white" : "bg-[#21262d] text-[#8b949e] hover:text-[#f0f6fc]"
+                        filterDate === v ? "bg-accent-blue text-white" : "bg-surface-alt text-muted hover:text-foreground"
                       }`}
                     >
                       {v === "all" ? "All time" : v === "30d" ? "30d" : v === "90d" ? "90d" : "1y"}
@@ -1324,7 +1335,7 @@ export default function MapPage({
                 value={filterCompany}
                 onChange={(e) => setFilterCompany(e.target.value)}
                 placeholder="Company…"
-                className="bg-[#0d1117] border border-[#30363d] rounded px-2 py-0.5 text-[10px] text-[#e6edf3] placeholder-[#484f58] focus:outline-none focus:border-[#58a6ff] w-24"
+                className="bg-background border border-border rounded px-2 py-0.5 text-[10px] text-foreground placeholder-muted-subtle focus:outline-none focus:border-accent-blue w-24"
               />
 
               {/* Country filter */}
@@ -1347,7 +1358,7 @@ export default function MapPage({
               {(filterFollowers > 0 || filterMapped !== "all" || filterDate !== "all" || filterCompany || filterCountry || filterCity) && (
                 <button
                   onClick={() => { setFilterFollowers(0); setFilterMapped("all"); setFilterDate("all"); setFilterCompany(""); setFilterCountry(""); setFilterCity(""); }}
-                  className="ml-auto text-[10px] text-[#484f58] hover:text-[#8b949e] transition-colors"
+                  className="ml-auto text-[10px] text-muted-subtle hover:text-muted transition-colors"
                 >
                   ✕ Reset filters
                 </button>
@@ -1361,8 +1372,8 @@ export default function MapPage({
               onScroll={(e) => setTableScrollTop((e.currentTarget).scrollTop)}
             >
               {isSearchPending && (
-                <div className="sticky top-0 left-0 right-0 z-20 flex items-center justify-center py-1 bg-[#161b22]/80 backdrop-blur-sm">
-                  <div className="flex items-center gap-2 text-[10px] text-[#484f58]">
+                <div className="sticky top-0 left-0 right-0 z-20 flex items-center justify-center py-1 bg-surface/80 backdrop-blur-sm">
+                  <div className="flex items-center gap-2 text-[10px] text-muted-subtle">
                     <svg className="animate-spin w-3 h-3" viewBox="0 0 24 24" fill="none">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
@@ -1372,46 +1383,46 @@ export default function MapPage({
                 </div>
               )}
               <table className="w-full text-xs border-collapse">
-                <thead className="sticky top-0 bg-[#161b22] z-10">
-                  <tr className="border-b border-[#21262d]">
+                <thead className="sticky top-0 bg-surface z-10">
+                  <tr className="border-b border-border-subtle">
                     <th className="px-3 py-2.5 w-8">
                       <input
                         type="checkbox"
                         checked={selected.size > 0 && selected.size === filteredStargazers.length}
                         ref={(el) => { if (el) el.indeterminate = selected.size > 0 && selected.size < filteredStargazers.length; }}
                         onChange={toggleAll}
-                        className="accent-[#58a6ff] cursor-pointer"
+                        className="accent-accent-blue cursor-pointer"
                       />
                     </th>
-                    <th className="px-3 py-2.5 text-left text-[#8b949e] font-medium w-6 text-right">#</th>
-                    <th className="px-3 py-2.5 text-left text-[#8b949e] font-medium">
-                      <button onClick={() => toggleSort("login")} className="flex items-center gap-1 hover:text-[#f0f6fc]">
+                    <th className="px-3 py-2.5 text-left text-muted font-medium w-6 text-right">#</th>
+                    <th className="px-3 py-2.5 text-left text-muted font-medium">
+                      <button onClick={() => toggleSort("login")} className="flex items-center gap-1 hover:text-foreground">
                         User {allSort.key === "login" ? (allSort.dir === 1 ? "↑" : "↓") : <span className="opacity-30">↕</span>}
                       </button>
                     </th>
-                    <th className="px-3 py-2.5 text-right text-[#8b949e] font-medium">
-                      <button onClick={() => toggleSort("followers")} className="flex items-center gap-1 hover:text-[#f0f6fc] ml-auto">
+                    <th className="px-3 py-2.5 text-right text-muted font-medium">
+                      <button onClick={() => toggleSort("followers")} className="flex items-center gap-1 hover:text-foreground ml-auto">
                         {allSort.key === "followers" ? (allSort.dir === -1 ? "↑" : "↓") : <span className="opacity-30">↕</span>} Followers
                       </button>
                     </th>
-                    <th className="px-3 py-2.5 text-left text-[#8b949e] font-medium hidden sm:table-cell">
-                      <button onClick={() => toggleSort("location")} className="flex items-center gap-1 hover:text-[#f0f6fc]">
+                    <th className="px-3 py-2.5 text-left text-muted font-medium hidden sm:table-cell">
+                      <button onClick={() => toggleSort("location")} className="flex items-center gap-1 hover:text-foreground">
                         Location {allSort.key === "location" ? (allSort.dir === 1 ? "↑" : "↓") : <span className="opacity-30">↕</span>}
                       </button>
                     </th>
-                    <th className="px-3 py-2.5 text-left text-[#8b949e] font-medium hidden md:table-cell">
-                      <button onClick={() => toggleSort("starredAt")} className="flex items-center gap-1 hover:text-[#f0f6fc]">
+                    <th className="px-3 py-2.5 text-left text-muted font-medium hidden md:table-cell">
+                      <button onClick={() => toggleSort("starredAt")} className="flex items-center gap-1 hover:text-foreground">
                         Starred {allSort.key === "starredAt" ? (allSort.dir === -1 ? "↑" : "↓") : <span className="opacity-30">↕</span>}
                       </button>
                     </th>
-                    <th className="px-3 py-2.5 text-left text-[#8b949e] font-medium hidden lg:table-cell">
-                      <button onClick={() => toggleSort("company")} className="flex items-center gap-1 hover:text-[#f0f6fc]">
+                    <th className="px-3 py-2.5 text-left text-muted font-medium hidden lg:table-cell">
+                      <button onClick={() => toggleSort("company")} className="flex items-center gap-1 hover:text-foreground">
                         Company {allSort.key === "company" ? (allSort.dir === 1 ? "↑" : "↓") : <span className="opacity-30">↕</span>}
                       </button>
                     </th>
-                    <th className="px-3 py-2.5 text-left text-[#8b949e] font-medium hidden xl:table-cell">Links</th>
+                    <th className="px-3 py-2.5 text-left text-muted font-medium hidden xl:table-cell">Links</th>
                     <th className="px-3 py-2.5 w-8"></th>
-                    <th className="px-4 py-2.5 text-center text-[#8b949e] font-medium">Map</th>
+                    <th className="px-4 py-2.5 text-center text-muted font-medium">Map</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1422,8 +1433,8 @@ export default function MapPage({
                     <tr
                       key={u.login}
                       onClick={() => toggleRow(u.login)}
-                      className={`border-b border-[#161b22] cursor-pointer transition-colors ${
-                        selected.has(u.login) ? "bg-[#1c2128]" : "hover:bg-[#0d1117]"
+                      className={`border-b border-surface cursor-pointer transition-colors ${
+                        selected.has(u.login) ? "bg-surface-alt" : "hover:bg-background"
                       }`}
                     >
                       <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
@@ -1431,70 +1442,70 @@ export default function MapPage({
                           type="checkbox"
                           checked={selected.has(u.login)}
                           onChange={() => toggleRow(u.login)}
-                          className="accent-[#58a6ff] cursor-pointer"
+                          className="accent-accent-blue cursor-pointer"
                         />
                       </td>
-                      <td className="px-3 py-2 text-[#484f58] text-right">{i + 1}</td>
+                      <td className="px-3 py-2 text-muted-subtle text-right">{i + 1}</td>
                       <td className="px-3 py-2">
                         <div className="flex items-center gap-2">
                           {u.avatarUrl
                             ? <img src={u.avatarUrl} alt="" className="w-6 h-6 rounded-full flex-shrink-0" />
-                            : <div className="w-6 h-6 rounded-full bg-[#21262d] flex-shrink-0" />
+                            : <div className="w-6 h-6 rounded-full bg-surface-alt flex-shrink-0" />
                           }
                           <div className="min-w-0">
                             <a
                               href={`https://github.com/${u.login}`}
                               target="_blank"
                               onClick={(e) => e.stopPropagation()}
-                              className="text-[#58a6ff] font-medium hover:underline"
+                              className="text-accent-blue font-medium hover:underline"
                             >
                               @{u.login}
                             </a>
                             {u.name && u.name !== u.login && (
-                              <div className="text-[#8b949e] text-[10px] truncate max-w-[140px]">{u.name}</div>
+                              <div className="text-muted text-[10px] truncate max-w-[140px]">{u.name}</div>
                             )}
                             {u.bio && (
-                              <div className="text-[#484f58] text-[10px] truncate max-w-[140px]" title={u.bio}>{u.bio}</div>
+                              <div className="text-muted-subtle text-[10px] truncate max-w-[140px]" title={u.bio}>{u.bio}</div>
                             )}
                           </div>
                         </div>
                       </td>
-                      <td className="px-3 py-2 text-right text-[#8b949e] tabular-nums">
+                      <td className="px-3 py-2 text-right text-muted tabular-nums">
                         {u.followers > 0 ? u.followers.toLocaleString() : "—"}
                       </td>
-                      <td className="px-3 py-2 text-[#8b949e] max-w-[160px] hidden sm:table-cell">
+                      <td className="px-3 py-2 text-muted max-w-[160px] hidden sm:table-cell">
                         <span className="truncate block">{u.location ?? "—"}</span>
                       </td>
-                      <td className="px-3 py-2 text-[#484f58] hidden md:table-cell tabular-nums">
+                      <td className="px-3 py-2 text-muted-subtle hidden md:table-cell tabular-nums">
                         {u.starredAt ? new Date(u.starredAt).toLocaleDateString() : "—"}
                       </td>
-                      <td className="px-3 py-2 text-[#484f58] hidden lg:table-cell">
+                      <td className="px-3 py-2 text-muted-subtle hidden lg:table-cell">
                         <span className="truncate block max-w-[120px]">{u.company ?? "—"}</span>
                       </td>
                       <td className="px-3 py-2 hidden xl:table-cell" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center gap-2">
                           {u.email && (
-                            <a href={`mailto:${u.email}`} title={u.email} className="text-[#8b949e] hover:text-[#58a6ff] transition-colors" target="_blank" rel="noopener noreferrer">
+                            <a href={`mailto:${u.email}`} title={u.email} className="text-muted hover:text-accent-blue transition-colors" target="_blank" rel="noopener noreferrer">
                               <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M1.75 2A1.75 1.75 0 0 0 0 3.75v8.5C0 13.216.784 14 1.75 14h12.5A1.75 1.75 0 0 0 16 12.25v-8.5A1.75 1.75 0 0 0 14.25 2Zm0 1.5h12.5a.25.25 0 0 1 .25.25v.852l-6.36 3.682a.25.25 0 0 1-.254 0L1.5 4.602V3.75a.25.25 0 0 1 .25-.25Zm-.25 2.68 5.86 3.393a1.75 1.75 0 0 0 1.78 0L15 6.18v6.07a.25.25 0 0 1-.25.25H1.75a.25.25 0 0 1-.25-.25Z"/></svg>
                             </a>
                           )}
                           {u.blog && (
-                            <a href={u.blog.startsWith("http") ? u.blog : `https://${u.blog}`} title={u.blog} className="text-[#8b949e] hover:text-[#58a6ff] transition-colors" target="_blank" rel="noopener noreferrer">
+                            <a href={u.blog.startsWith("http") ? u.blog : `https://${u.blog}`} title={u.blog} className="text-muted hover:text-accent-blue transition-colors" target="_blank" rel="noopener noreferrer">
                               <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M7.775 3.275a.75.75 0 0 0 1.06 1.06l1.25-1.25a2 2 0 1 1 2.83 2.83l-2.5 2.5a2 2 0 0 1-2.83 0 .75.75 0 0 0-1.06 1.06 3.5 3.5 0 0 0 4.95 0l2.5-2.5a3.5 3.5 0 0 0-4.95-4.95l-1.25 1.25Zm-4.69 9.64a2 2 0 0 1 0-2.83l2.5-2.5a2 2 0 0 1 2.83 0 .75.75 0 0 0 1.06-1.06 3.5 3.5 0 0 0-4.95 0l-2.5 2.5a3.5 3.5 0 0 0 4.95 4.95l1.25-1.25a.75.75 0 0 0-1.06-1.06l-1.25 1.25a2 2 0 0 1-2.83 0Z"/></svg>
                             </a>
                           )}
                           {u.twitter_username && (
-                            <a href={`https://x.com/${u.twitter_username}`} title={`@${u.twitter_username}`} className="text-[#8b949e] hover:text-[#58a6ff] transition-colors" target="_blank" rel="noopener noreferrer">
+                            <a href={`https://x.com/${u.twitter_username}`} title={`@${u.twitter_username}`} className="text-muted hover:text-accent-blue transition-colors" target="_blank" rel="noopener noreferrer">
                               <svg width="12" height="12" viewBox="0 0 1200 1227" fill="currentColor"><path d="M714.163 519.284 1160.89 0h-105.86L667.137 450.887 357.328 0H0l468.492 681.821L0 1226.37h105.866l409.625-476.152 327.181 476.152H1200L714.137 519.284h.026ZM569.165 687.828l-47.468-67.894-377.686-540.24h162.604l304.797 435.991 47.468 67.894 396.2 566.721H892.476L569.165 687.854v-.026Z"/></svg>
                             </a>
                           )}
                           {!u.email && !u.blog && !u.twitter_username && (
-                            <span className="text-[#30363d] text-xs">—</span>
+                            <span className="text-border text-xs">—</span>
                           )}
                         </div>
                       </td>
                       <td className="px-3 py-2 text-center">
-                        <span className={`inline-block w-1.5 h-1.5 rounded-full ${u.mapped ? "bg-[#3fb950]" : "bg-[#30363d]"}`} />
+                        <span className={`inline-block w-1.5 h-1.5 rounded-full ${u.mapped ? "bg-accent-green" : "bg-border"}`} />
                       </td>
                       <td className="px-2 py-2 text-center">
                         {u.mapped && (
@@ -1505,7 +1516,7 @@ export default function MapPage({
                               if (pt) { setFlyTarget({ lat: pt.lat, lng: pt.lng, login: pt.login }); setAllOpen(false); }
                             }}
                             title="Fly to on map"
-                            className="text-[#484f58] hover:text-[#58a6ff] transition-colors text-xs"
+                            className="text-muted-subtle hover:text-accent-blue transition-colors text-xs"
                           >
                             🗺
                           </button>
@@ -1518,34 +1529,34 @@ export default function MapPage({
                 </tbody>
               </table>
               {filteredStargazers.length === 0 && !isSearchPending && (
-                <div className="text-center text-[#484f58] text-xs py-12">No results for &ldquo;{allSearch}&rdquo;</div>
+                <div className="text-center text-muted-subtle text-xs py-12">No results for &ldquo;{allSearch}&rdquo;</div>
               )}
             </div>
 
             {/* Selection action bar */}
             {selected.size > 0 && (
-              <div className="flex items-center justify-between px-5 py-3 border-t border-[#21262d] bg-[#0d1117] rounded-b-2xl flex-shrink-0">
-                <span className="text-xs text-[#8b949e]">
-                  <strong className="text-[#f0f6fc]">{selected.size}</strong> selected
-                  <button onClick={() => setSelected(new Set())} className="ml-3 text-[#484f58] hover:text-[#8b949e]">✕ Clear</button>
+              <div className="flex items-center justify-between px-5 py-3 border-t border-border-subtle bg-background rounded-b-2xl flex-shrink-0">
+                <span className="text-xs text-muted">
+                  <strong className="text-foreground">{selected.size}</strong> selected
+                  <button onClick={() => setSelected(new Set())} className="ml-3 text-muted-subtle hover:text-muted">✕ Clear</button>
                 </span>
                 <div className="flex gap-2">
                   <button
                     onClick={() => navigator.clipboard.writeText([...selected].join("\n"))}
-                    className="bg-[#21262d] border border-[#30363d] rounded-lg px-3 py-1.5 text-xs text-[#8b949e] hover:text-[#f0f6fc] transition-colors"
+                    className="bg-surface-alt border border-border rounded-lg px-3 py-1.5 text-xs text-muted hover:text-foreground transition-colors"
                   >
                     Copy logins
                   </button>
                   <button
                     onClick={() => exportCsv(allStargazers.filter((u) => selected.has(u.login)))}
-                    className="bg-[#21262d] border border-[#30363d] rounded-lg px-3 py-1.5 text-xs text-[#8b949e] hover:text-[#f0f6fc] transition-colors"
+                    className="bg-surface-alt border border-border rounded-lg px-3 py-1.5 text-xs text-muted hover:text-foreground transition-colors"
                   >
                     ↓ Export CSV
                   </button>
                   <button
                     onClick={fetchAndExport}
                     disabled={fetching}
-                    className="bg-[#238636] hover:bg-[#2ea043] disabled:opacity-50 rounded-lg px-3 py-1.5 text-xs text-white font-medium transition-colors"
+                    className="bg-accent-green-emphasis hover:bg-accent-green-emphasis disabled:opacity-50 rounded-lg px-3 py-1.5 text-xs text-white font-medium transition-colors"
                   >
                     {fetching ? "Fetching…" : `↓ Fetch details + CSV (${selected.size})`}
                   </button>
@@ -1559,19 +1570,19 @@ export default function MapPage({
       {/* Growth chart modal */}
       {growthOpen && growthData.length > 0 && (
         <div
-          className="absolute inset-0 z-40 flex items-center justify-center bg-[rgba(13,17,23,0.85)] backdrop-blur-sm"
+          className="absolute inset-0 z-40 flex items-center justify-center bg-background/[0.85] backdrop-blur-sm"
           onClick={() => setGrowthOpen(false)}
         >
           <div
-            className="bg-[#161b22] border border-[#30363d] rounded-2xl shadow-2xl w-full max-w-2xl mx-4"
+            className="bg-surface border border-border rounded-2xl shadow-2xl w-full max-w-2xl mx-4"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between px-5 py-4 border-b border-[#21262d]">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-border-subtle">
               <div>
-                <h2 className="text-[#f0f6fc] font-semibold text-sm">Star Growth</h2>
-                <p className="text-[#8b949e] text-[10px] mt-0.5">{growthData.length} weeks · {(points.length + unmapped.length).toLocaleString()} total stars</p>
+                <h2 className="text-foreground font-semibold text-sm">Star Growth</h2>
+                <p className="text-muted text-[10px] mt-0.5">{growthData.length} weeks · {(points.length + unmapped.length).toLocaleString()} total stars</p>
               </div>
-              <button onClick={() => setGrowthOpen(false)} className="text-[#8b949e] hover:text-[#f0f6fc] text-lg leading-none">✕</button>
+              <button onClick={() => setGrowthOpen(false)} className="text-muted hover:text-foreground text-lg leading-none">✕</button>
             </div>
             <div className="px-5 py-5">
               <GrowthChart data={growthData} />
@@ -1583,56 +1594,56 @@ export default function MapPage({
       {/* Share modal */}
       {shareOpen && repoInfo && (
         <div
-          className="absolute inset-0 z-50 flex items-center justify-center bg-[rgba(13,17,23,0.85)] backdrop-blur-sm"
+          className="absolute inset-0 z-50 flex items-center justify-center bg-background/[0.85] backdrop-blur-sm"
           onClick={() => setShareOpen(false)}
         >
           <div
-            className="bg-[#161b22] border border-[#30363d] rounded-2xl shadow-2xl w-full max-w-lg mx-4"
+            className="bg-surface border border-border rounded-2xl shadow-2xl w-full max-w-lg mx-4"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between px-5 py-4 border-b border-[#21262d]">
-              <h2 className="text-[#f0f6fc] font-semibold text-sm">Share</h2>
-              <button onClick={() => setShareOpen(false)} className="text-[#8b949e] hover:text-white text-xl leading-none">×</button>
+            <div className="flex items-center justify-between px-5 py-4 border-b border-border-subtle">
+              <h2 className="text-foreground font-semibold text-sm">Share</h2>
+              <button onClick={() => setShareOpen(false)} className="text-muted hover:text-foreground text-xl leading-none">×</button>
             </div>
 
             {/* Preview card */}
-            <div id="share-card" className="mx-5 my-4 bg-[#0d1117] rounded-xl p-6 border border-[#30363d]">
+            <div id="share-card" className="mx-5 my-4 bg-background rounded-xl p-6 border border-border">
               <div className="flex items-center gap-3 mb-4">
-                {repoInfo.avatar && <img src={repoInfo.avatar} className="w-10 h-10 rounded-full border border-[#30363d] flex-shrink-0" alt="" />}
+                {repoInfo.avatar && <img src={repoInfo.avatar} className="w-10 h-10 rounded-full border border-border flex-shrink-0" alt="" />}
                 <div className="min-w-0">
-                  <div className="text-[#8b949e] text-xs leading-tight">{owner}</div>
-                  <div className="text-[#f0f6fc] font-bold text-base leading-tight truncate">{repo}</div>
-                  {repoInfo.description && <div className="text-[#8b949e] text-xs mt-1 line-clamp-1">{repoInfo.description}</div>}
+                  <div className="text-muted text-xs leading-tight">{owner}</div>
+                  <div className="text-foreground font-bold text-base leading-tight truncate">{repo}</div>
+                  {repoInfo.description && <div className="text-muted text-xs mt-1 line-clamp-1">{repoInfo.description}</div>}
                 </div>
               </div>
               <div className="flex gap-4 mb-4">
-                <div className="flex-1 bg-[#161b22] rounded-lg p-3 text-center">
-                  <div className="text-2xl font-bold text-[#ffa657]">{repoInfo.stars >= 1000 ? `${(repoInfo.stars / 1000).toFixed(1)}k` : repoInfo.stars}</div>
-                  <div className="text-[10px] text-[#484f58] uppercase tracking-wide mt-0.5">★ stars</div>
+                <div className="flex-1 bg-surface rounded-lg p-3 text-center">
+                  <div className="text-2xl font-bold text-accent-orange">{repoInfo.stars >= 1000 ? `${(repoInfo.stars / 1000).toFixed(1)}k` : repoInfo.stars}</div>
+                  <div className="text-[10px] text-muted-subtle uppercase tracking-wide mt-0.5">★ stars</div>
                 </div>
-                <div className="flex-1 bg-[#161b22] rounded-lg p-3 text-center">
-                  <div className="text-2xl font-bold text-[#58a6ff]">{points.length.toLocaleString()}</div>
-                  <div className="text-[10px] text-[#484f58] uppercase tracking-wide mt-0.5">mapped</div>
+                <div className="flex-1 bg-surface rounded-lg p-3 text-center">
+                  <div className="text-2xl font-bold text-accent-blue">{points.length.toLocaleString()}</div>
+                  <div className="text-[10px] text-muted-subtle uppercase tracking-wide mt-0.5">mapped</div>
                 </div>
                 {displayStats && (
-                  <div className="flex-1 bg-[#161b22] rounded-lg p-3 text-center">
-                    <div className="text-2xl font-bold text-[#3fb950]">{displayStats.countryCount}</div>
-                    <div className="text-[10px] text-[#484f58] uppercase tracking-wide mt-0.5">countries</div>
+                  <div className="flex-1 bg-surface rounded-lg p-3 text-center">
+                    <div className="text-2xl font-bold text-accent-green">{displayStats.countryCount}</div>
+                    <div className="text-[10px] text-muted-subtle uppercase tracking-wide mt-0.5">countries</div>
                   </div>
                 )}
               </div>
               {displayStats && displayStats.topCountries.slice(0, 3).length > 0 && (
                 <div className="flex gap-2 flex-wrap">
                   {displayStats.topCountries.slice(0, 3).map(([country, count]) => (
-                    <span key={country} className="text-xs bg-[#161b22] border border-[#30363d] rounded px-2 py-1 text-[#8b949e]">
+                    <span key={country} className="text-xs bg-surface border border-border rounded px-2 py-1 text-muted">
                       {country} · {count}
                     </span>
                   ))}
                 </div>
               )}
-              <div className="mt-4 pt-3 border-t border-[#21262d] flex items-center justify-between">
-                <span className="text-[10px] text-[#484f58]">🌍 starmapper.bruniaux.com</span>
-                <span className="text-[10px] text-[#484f58]">+ live map in download</span>
+              <div className="mt-4 pt-3 border-t border-border-subtle flex items-center justify-between">
+                <span className="text-[10px] text-muted-subtle">🌍 starmapper.bruniaux.com</span>
+                <span className="text-[10px] text-muted-subtle">+ live map in download</span>
               </div>
             </div>
 
@@ -1643,7 +1654,7 @@ export default function MapPage({
                   const url = window.location.href;
                   navigator.clipboard.writeText(url).catch(() => {});
                 }}
-                className="flex-1 bg-[#21262d] hover:bg-[#30363d] border border-[#30363d] text-[#8b949e] hover:text-[#f0f6fc] text-sm py-2 rounded-lg transition-colors"
+                className="flex-1 bg-surface-alt hover:bg-border border border-border text-muted hover:text-foreground text-sm py-2 rounded-lg transition-colors"
               >
                 Copy link
               </button>
@@ -1770,7 +1781,7 @@ export default function MapPage({
                     a.click();
                   }, "image/png");
                 }}
-                className="flex-1 bg-[#238636] hover:bg-[#2ea043] text-white text-sm py-2 rounded-lg transition-colors font-medium"
+                className="flex-1 bg-accent-green-emphasis hover:bg-accent-green-emphasis text-white text-sm py-2 rounded-lg transition-colors font-medium"
               >
                 ↓ Download PNG
               </button>
@@ -1781,7 +1792,7 @@ export default function MapPage({
                   href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`🌍 ${repo} just hit ${repoInfo.stars >= 1000 ? `${(repoInfo.stars / 1000).toFixed(1)}k` : repoInfo.stars} ⭐ — with stargazers from ${stats?.countryCount ?? "?"} countries!`)}&url=${encodeURIComponent(window.location.href)}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex-1 flex items-center justify-center gap-2 bg-[#21262d] hover:bg-[#30363d] border border-[#30363d] text-[#8b949e] hover:text-[#f0f6fc] text-xs py-2 rounded-lg transition-colors"
+                  className="flex-1 flex items-center justify-center gap-2 bg-surface-alt hover:bg-border border border-border text-muted hover:text-foreground text-xs py-2 rounded-lg transition-colors"
                 >
                   <svg width="13" height="13" viewBox="0 0 1200 1227" fill="currentColor"><path d="M714.163 519.284 1160.89 0h-105.86L667.137 450.887 357.328 0H0l468.492 681.821L0 1226.37h105.866l409.625-476.152 327.181 476.152H1200L714.137 519.284h.026ZM569.165 687.828l-47.468-67.894-377.686-540.24h162.604l304.797 435.991 47.468 67.894 396.2 566.721H892.476L569.165 687.854v-.026Z"/></svg>
                   Share on X
@@ -1793,7 +1804,7 @@ export default function MapPage({
                     setLiCopied(false);
                     setLiPanelOpen(true);
                   }}
-                  className="flex-1 flex items-center justify-center gap-2 bg-[#21262d] hover:bg-[#30363d] border border-[#30363d] text-[#8b949e] hover:text-[#f0f6fc] text-xs py-2 rounded-lg transition-colors"
+                  className="flex-1 flex items-center justify-center gap-2 bg-surface-alt hover:bg-border border border-border text-muted hover:text-foreground text-xs py-2 rounded-lg transition-colors"
                 >
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
                   Share on LinkedIn
@@ -1801,18 +1812,18 @@ export default function MapPage({
 
                 {/* LinkedIn pre-share panel */}
                 {liPanelOpen && (
-                  <div className="absolute inset-0 z-10 rounded-xl bg-[#0d1117] border border-[#30363d] flex flex-col p-4 gap-3">
+                  <div className="absolute inset-0 z-10 rounded-xl bg-background border border-border flex flex-col p-4 gap-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium text-[#f0f6fc]">Your LinkedIn post</span>
-                      <button onClick={() => setLiPanelOpen(false)} className="text-[#8b949e] hover:text-white text-lg leading-none">×</button>
+                      <span className="text-xs font-medium text-foreground">Your LinkedIn post</span>
+                      <button onClick={() => setLiPanelOpen(false)} className="text-muted hover:text-foreground text-lg leading-none">×</button>
                     </div>
                     <textarea
                       value={liDraft}
                       onChange={(e) => setLiDraft(e.target.value)}
                       rows={5}
-                      className="w-full bg-[#161b22] border border-[#30363d] rounded-lg px-3 py-2 text-xs text-[#e6edf3] resize-none focus:outline-none focus:border-[#58a6ff]"
+                      className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-xs text-foreground resize-none focus:outline-none focus:border-accent-blue"
                     />
-                    <p className="text-[10px] text-[#484f58]">LinkedIn doesn&apos;t allow pre-filled text. Copy this post, then paste it after clicking below.</p>
+                    <p className="text-[10px] text-muted-subtle">LinkedIn doesn&apos;t allow pre-filled text. Copy this post, then paste it after clicking below.</p>
                     <div className="flex gap-2">
                       <button
                         onClick={() => {
@@ -1820,7 +1831,7 @@ export default function MapPage({
                           setLiCopied(true);
                           setTimeout(() => setLiCopied(false), 3000);
                         }}
-                        className="flex-1 bg-[#21262d] border border-[#30363d] text-xs py-2 rounded-lg transition-colors hover:bg-[#30363d]"
+                        className="flex-1 bg-surface-alt border border-border text-xs py-2 rounded-lg transition-colors hover:bg-border"
                         style={{ color: liCopied ? "#3fb950" : "#8b949e" }}
                       >
                         {liCopied ? "✓ Copied!" : "Copy text"}
@@ -1847,7 +1858,7 @@ export default function MapPage({
                   const md = `[![StarMapper](${origin}/api/badge/${owner}/${repo})](${origin}/${owner}/${repo})`;
                   navigator.clipboard.writeText(md).catch(() => {});
                 }}
-                className="w-full flex items-center justify-center gap-2 bg-[#21262d] hover:bg-[#30363d] border border-[#30363d] text-[#8b949e] hover:text-[#f0f6fc] text-xs py-2 rounded-lg transition-colors"
+                className="w-full flex items-center justify-center gap-2 bg-surface-alt hover:bg-border border border-border text-muted hover:text-foreground text-xs py-2 rounded-lg transition-colors"
               >
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
                 Copy README badge
@@ -1860,16 +1871,16 @@ export default function MapPage({
       {/* Stats modal */}
       {statsOpen && displayStats && (
         <div
-          className="absolute inset-0 z-40 flex items-center justify-center bg-[rgba(13,17,23,0.85)] backdrop-blur-sm"
+          className="absolute inset-0 z-40 flex items-center justify-center bg-background/[0.85] backdrop-blur-sm"
           onClick={() => setStatsOpen(false)}
         >
           <div
-            className="bg-[#161b22] border border-[#30363d] rounded-2xl shadow-2xl w-full max-w-lg mx-4 flex flex-col max-h-[80vh]"
+            className="bg-surface border border-border rounded-2xl shadow-2xl w-full max-w-lg mx-4 flex flex-col max-h-[80vh]"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-[#21262d] flex-shrink-0">
-              <h2 className="text-[#f0f6fc] font-semibold text-sm">Stargazer Stats</h2>
+            <div className="flex items-center justify-between px-5 py-4 border-b border-border-subtle flex-shrink-0">
+              <h2 className="text-foreground font-semibold text-sm">Stargazer Stats</h2>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => {
@@ -1896,7 +1907,7 @@ export default function MapPage({
                     ].join("\n");
                     navigator.clipboard.writeText(md).catch(() => {});
                   }}
-                  className="flex items-center gap-1.5 text-[11px] text-[#8b949e] hover:text-[#f0f6fc] bg-[#21262d] hover:bg-[#30363d] border border-[#30363d] rounded-lg px-2.5 py-1 transition-colors"
+                  className="flex items-center gap-1.5 text-[11px] text-muted hover:text-foreground bg-surface-alt hover:bg-border border border-border rounded-lg px-2.5 py-1 transition-colors"
                   title="Copy stats as Markdown"
                 >
                   <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
@@ -1904,42 +1915,42 @@ export default function MapPage({
                   </svg>
                   Copy MD
                 </button>
-                <button onClick={() => setStatsOpen(false)} className="text-[#8b949e] hover:text-[#f0f6fc] text-lg leading-none">✕</button>
+                <button onClick={() => setStatsOpen(false)} className="text-muted hover:text-foreground text-lg leading-none">✕</button>
               </div>
             </div>
 
             {/* Summary cards */}
-            <div className="grid grid-cols-4 gap-2 px-5 py-4 border-b border-[#21262d] flex-shrink-0">
-              <div className="bg-[#0d1117] rounded-lg px-2 py-2 text-center">
-                <div className="text-xl font-bold text-[#3fb950]">{displayStats.mappingRate}%</div>
-                <div className="text-[10px] text-[#8b949e] uppercase tracking-wide mt-0.5">mapped</div>
+            <div className="grid grid-cols-4 gap-2 px-5 py-4 border-b border-border-subtle flex-shrink-0">
+              <div className="bg-background rounded-lg px-2 py-2 text-center">
+                <div className="text-xl font-bold text-accent-green">{displayStats.mappingRate}%</div>
+                <div className="text-[10px] text-muted uppercase tracking-wide mt-0.5">mapped</div>
               </div>
-              <div className="bg-[#0d1117] rounded-lg px-2 py-2 text-center">
-                <div className="text-xl font-bold text-[#f0f6fc]">{displayStats.countryCount}</div>
-                <div className="text-[10px] text-[#8b949e] uppercase tracking-wide mt-0.5">countries</div>
+              <div className="bg-background rounded-lg px-2 py-2 text-center">
+                <div className="text-xl font-bold text-foreground">{displayStats.countryCount}</div>
+                <div className="text-[10px] text-muted uppercase tracking-wide mt-0.5">countries</div>
               </div>
-              <div className="bg-[#0d1117] rounded-lg px-2 py-2 text-center">
-                <div className="text-xl font-bold text-[#f0f6fc]">{displayStats.topCities.length}</div>
-                <div className="text-[10px] text-[#8b949e] uppercase tracking-wide mt-0.5">cities</div>
+              <div className="bg-background rounded-lg px-2 py-2 text-center">
+                <div className="text-xl font-bold text-foreground">{displayStats.topCities.length}</div>
+                <div className="text-[10px] text-muted uppercase tracking-wide mt-0.5">cities</div>
               </div>
-              <div className="bg-[#0d1117] rounded-lg px-2 py-2 text-center">
-                <div className="text-xl font-bold text-[#ffa657]">
+              <div className="bg-background rounded-lg px-2 py-2 text-center">
+                <div className="text-xl font-bold text-accent-orange">
                   {displayStats.avgFollowers >= 1000 ? `${(displayStats.avgFollowers / 1000).toFixed(1)}k` : displayStats.avgFollowers}
                 </div>
-                <div className="text-[10px] text-[#8b949e] uppercase tracking-wide mt-0.5">avg flw</div>
+                <div className="text-[10px] text-muted uppercase tracking-wide mt-0.5">avg flw</div>
               </div>
             </div>
 
             {/* Tabs */}
-            <div className="flex border-b border-[#21262d] flex-shrink-0">
+            <div className="flex border-b border-border-subtle flex-shrink-0">
               {(["top", "countries", "cities", "companies"] as const).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => { setStatsTab(tab); setStatsFilter(""); }}
                   className={`flex-1 py-2.5 text-xs font-medium transition-colors ${
                     statsTab === tab
-                      ? "text-[#58a6ff] border-b-2 border-[#58a6ff] -mb-px"
-                      : "text-[#8b949e] hover:text-[#f0f6fc]"
+                      ? "text-accent-blue border-b-2 border-accent-blue -mb-px"
+                      : "text-muted hover:text-foreground"
                   }`}
                 >
                   {tab === "top" ? "Top Stars" : tab === "countries" ? "Countries" : tab === "cities" ? "Cities" : "🏢 Companies"}
@@ -1954,7 +1965,7 @@ export default function MapPage({
                   value={statsFilter}
                   onChange={(e) => setStatsFilter(e.target.value)}
                   placeholder={`Filter ${statsTab}…`}
-                  className="w-full bg-[#0d1117] border border-[#30363d] rounded-lg px-3 py-1.5 text-xs text-[#e6edf3] placeholder-[#484f58] focus:outline-none focus:border-[#58a6ff]"
+                  className="w-full bg-background border border-border rounded-lg px-3 py-1.5 text-xs text-foreground placeholder-muted-subtle focus:outline-none focus:border-accent-blue"
                 />
               </div>
             )}
@@ -1965,25 +1976,25 @@ export default function MapPage({
                 <div className="space-y-2.5">
                   {displayStats.topUsers.map((u, i) => (
                     <div key={u.login} className="flex items-center gap-3 py-0.5">
-                      <span className="text-[#484f58] text-xs w-5 text-right flex-shrink-0">{i + 1}</span>
+                      <span className="text-muted-subtle text-xs w-5 text-right flex-shrink-0">{i + 1}</span>
                       {u.avatarUrl
-                        ? <img src={u.avatarUrl} alt="" className="w-8 h-8 rounded-full flex-shrink-0 ring-1 ring-[#30363d]" />
-                        : <div className="w-8 h-8 rounded-full bg-[#21262d] flex-shrink-0 ring-1 ring-[#30363d]" />
+                        ? <img src={u.avatarUrl} alt="" className="w-8 h-8 rounded-full flex-shrink-0 ring-1 ring-border" />
+                        : <div className="w-8 h-8 rounded-full bg-surface-alt flex-shrink-0 ring-1 ring-border" />
                       }
                       <div className="flex-1 min-w-0">
                         <a
                           href={`https://github.com/${u.login}`}
                           target="_blank"
-                          className="text-[#58a6ff] text-xs font-medium hover:underline"
+                          className="text-accent-blue text-xs font-medium hover:underline"
                         >
                           @{u.login}
                         </a>
                         {u.location && (
-                          <div className="text-[#484f58] text-[10px] truncate">{u.location}</div>
+                          <div className="text-muted-subtle text-[10px] truncate">{u.location}</div>
                         )}
                       </div>
-                      <span className="text-[#8b949e] text-xs flex-shrink-0 tabular-nums">
-                        <svg width="11" height="11" viewBox="0 0 16 16" fill="#8b949e" className="inline mr-1 mb-0.5"><path d="M3 8a1 1 0 1 1 0-2 1 1 0 0 1 0 2Zm3 0a1 1 0 1 1 0-2 1 1 0 0 1 0 2Zm3 0a1 1 0 1 1 0-2 1 1 0 0 1 0 2ZM1.5 3A1.5 1.5 0 0 0 0 4.5v7A1.5 1.5 0 0 0 1.5 13h13a1.5 1.5 0 0 0 1.5-1.5v-7A1.5 1.5 0 0 0 14.5 3Z"/></svg>
+                      <span className="text-muted text-xs flex-shrink-0 tabular-nums">
+                        <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor" className="inline mr-1 mb-0.5 text-muted"><path d="M3 8a1 1 0 1 1 0-2 1 1 0 0 1 0 2Zm3 0a1 1 0 1 1 0-2 1 1 0 0 1 0 2Zm3 0a1 1 0 1 1 0-2 1 1 0 0 1 0 2ZM1.5 3A1.5 1.5 0 0 0 0 4.5v7A1.5 1.5 0 0 0 1.5 13h13a1.5 1.5 0 0 0 1.5-1.5v-7A1.5 1.5 0 0 0 14.5 3Z"/></svg>
                         {u.followers.toLocaleString()}
                       </span>
                     </div>
@@ -2008,20 +2019,20 @@ export default function MapPage({
                     .filter(([company]) => !statsFilter || company.toLowerCase().includes(statsFilter.toLowerCase()))
                     .map(([company, count], idx) => (
                     <div key={company} className="flex items-center gap-3">
-                      <div className="text-[#484f58] text-xs w-4 text-right flex-shrink-0">{idx + 1}</div>
+                      <div className="text-muted-subtle text-xs w-4 text-right flex-shrink-0">{idx + 1}</div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-1">
-                          <span className="text-[#e6edf3] text-xs truncate">{company}</span>
-                          <span className="text-[#8b949e] text-xs ml-2 flex-shrink-0">{count}</span>
+                          <span className="text-foreground text-xs truncate">{company}</span>
+                          <span className="text-muted text-xs ml-2 flex-shrink-0">{count}</span>
                         </div>
-                        <div className="h-1 bg-[#21262d] rounded-full">
-                          <div className="h-1 bg-[#58a6ff] rounded-full" style={{ width: `${(count / (displayStats.topCompanies[0]?.[1] ?? 1)) * 100}%` }} />
+                        <div className="h-1 bg-surface-alt rounded-full">
+                          <div className="h-1 bg-accent-blue rounded-full" style={{ width: `${(count / (displayStats.topCompanies[0]?.[1] ?? 1)) * 100}%` }} />
                         </div>
                       </div>
                     </div>
                   ))}
                   {displayStats.topCompanies.length === 0 && (
-                    <div className="text-center text-[#484f58] text-xs py-8">No company data available</div>
+                    <div className="text-center text-muted-subtle text-xs py-8">No company data available</div>
                   )}
                 </div>
               )}
@@ -2037,14 +2048,14 @@ const StatsList = ({ items, max }: { items: [string, number][]; max: number }) =
   <div className="space-y-2">
     {items.map(([name, count]) => (
       <div key={name} className="flex items-center gap-3">
-        <div className="text-[#e6edf3] text-xs w-36 truncate flex-shrink-0">{name}</div>
-        <div className="flex-1 bg-[#21262d] rounded-full h-1.5 overflow-hidden">
+        <div className="text-foreground text-xs w-36 truncate flex-shrink-0">{name}</div>
+        <div className="flex-1 bg-surface-alt rounded-full h-1.5 overflow-hidden">
           <div
-            className="bg-[#58a6ff] h-full rounded-full"
+            className="bg-accent-blue h-full rounded-full"
             style={{ width: `${(count / max) * 100}%` }}
           />
         </div>
-        <span className="text-[#8b949e] text-xs w-8 text-right flex-shrink-0">{count}</span>
+        <span className="text-muted text-xs w-8 text-right flex-shrink-0">{count}</span>
       </div>
     ))}
   </div>
@@ -2072,17 +2083,17 @@ const GrowthChart = ({ data }: { data: [string, number][] }) => {
   return (
     <div>
       <div className="flex gap-4 mb-4">
-        <div className="bg-[#0d1117] rounded-lg px-3 py-2 text-center flex-1">
-          <div className="text-lg font-bold text-[#f0f6fc]">{total.toLocaleString()}</div>
-          <div className="text-[10px] text-[#8b949e] uppercase tracking-wide mt-0.5">total stars</div>
+        <div className="bg-background rounded-lg px-3 py-2 text-center flex-1">
+          <div className="text-lg font-bold text-foreground">{total.toLocaleString()}</div>
+          <div className="text-[10px] text-muted uppercase tracking-wide mt-0.5">total stars</div>
         </div>
-        <div className="bg-[#0d1117] rounded-lg px-3 py-2 text-center flex-1">
-          <div className="text-lg font-bold text-[#58a6ff]">{peak[1].toLocaleString()}</div>
-          <div className="text-[10px] text-[#8b949e] uppercase tracking-wide mt-0.5">best week</div>
+        <div className="bg-background rounded-lg px-3 py-2 text-center flex-1">
+          <div className="text-lg font-bold text-accent-blue">{peak[1].toLocaleString()}</div>
+          <div className="text-[10px] text-muted uppercase tracking-wide mt-0.5">best week</div>
         </div>
-        <div className="bg-[#0d1117] rounded-lg px-3 py-2 text-center flex-1">
-          <div className="text-lg font-bold text-[#ffa657]">{avg.toLocaleString()}</div>
-          <div className="text-[10px] text-[#8b949e] uppercase tracking-wide mt-0.5">avg / week</div>
+        <div className="bg-background rounded-lg px-3 py-2 text-center flex-1">
+          <div className="text-lg font-bold text-accent-orange">{avg.toLocaleString()}</div>
+          <div className="text-[10px] text-muted uppercase tracking-wide mt-0.5">avg / week</div>
         </div>
       </div>
       <svg

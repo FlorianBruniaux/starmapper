@@ -71,10 +71,10 @@ export const FilterCombobox = ({ value, onChange, options, placeholder }: Filter
         onClick={() => setOpen((o) => !o)}
         className={[
           "flex items-center gap-1 px-2 py-0.5 rounded text-[10px] border transition-colors",
-          "bg-[#0d1117] border-[#30363d] hover:border-[#58a6ff]/50",
+          "bg-background border-border hover:border-accent-blue/50",
           hasValue
-            ? "text-[#58a6ff] border-[#58a6ff]/40"
-            : "text-[#8b949e] hover:text-[#e6edf3]",
+            ? "text-accent-blue border-accent-blue/40"
+            : "text-muted hover:text-foreground",
         ].join(" ")}
       >
         <span className="max-w-[80px] truncate">{label}</span>
@@ -84,15 +84,15 @@ export const FilterCombobox = ({ value, onChange, options, placeholder }: Filter
       </button>
 
       {open && (
-        <div className="absolute left-0 top-full mt-1 z-50 min-w-[160px] rounded-md border border-[#30363d] bg-[#161b22] shadow-xl overflow-hidden">
+        <div className="absolute left-0 top-full mt-1 z-50 min-w-[160px] rounded-md border border-border bg-surface shadow-xl overflow-hidden">
           {/* Search */}
-          <div className="border-b border-[#30363d] px-2 py-1.5">
+          <div className="border-b border-border px-2 py-1.5">
             <input
               ref={searchRef}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search…"
-              className="w-full bg-transparent text-[11px] text-[#e6edf3] placeholder-[#484f58] outline-none"
+              className="w-full bg-transparent text-[11px] text-foreground placeholder-muted-subtle outline-none"
             />
           </div>
 
@@ -105,15 +105,15 @@ export const FilterCombobox = ({ value, onChange, options, placeholder }: Filter
               className={[
                 "w-full text-left px-3 py-1.5 text-[11px] transition-colors",
                 !hasValue
-                  ? "text-[#58a6ff] bg-[#58a6ff]/10"
-                  : "text-[#8b949e] hover:bg-[#21262d] hover:text-[#e6edf3]",
+                  ? "text-accent-blue bg-accent-blue/10"
+                  : "text-muted hover:bg-surface-alt hover:text-foreground",
               ].join(" ")}
             >
               All
             </button>
 
             {filtered.length === 0 ? (
-              <div className="px-3 py-2 text-[11px] text-[#484f58]">No results</div>
+              <div className="px-3 py-2 text-[11px] text-muted-subtle">No results</div>
             ) : (
               filtered.map((opt) => (
                 <button
@@ -123,14 +123,14 @@ export const FilterCombobox = ({ value, onChange, options, placeholder }: Filter
                   className={[
                     "w-full text-left px-3 py-1.5 text-[11px] transition-colors flex items-center justify-between gap-2",
                     value === opt
-                      ? "text-[#58a6ff] bg-[#58a6ff]/10"
-                      : "text-[#e6edf3] hover:bg-[#21262d]",
+                      ? "text-accent-blue bg-accent-blue/10"
+                      : "text-foreground hover:bg-surface-alt",
                   ].join(" ")}
                 >
                   <span className="truncate">{opt}</span>
                   {value === opt && (
-                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none" className="shrink-0">
-                      <path d="M2 5L4 7L8 3" stroke="#58a6ff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none" className="shrink-0 text-accent-blue">
+                      <path d="M2 5L4 7L8 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   )}
                 </button>

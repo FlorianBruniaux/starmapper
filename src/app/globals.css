@@ -1,32 +1,114 @@
 @import "tailwindcss";
 
-@theme inline {
-  /* Backgrounds */
+/* ─── CSS variables — real values, overridable by theme classes ───────────── */
+/* Dark is the default (no class needed). Light and explicit dark override it. */
+
+:root {
   --color-background: #0d1117;
   --color-surface: #161b22;
   --color-surface-alt: #1c2128;
-
-  /* Foreground */
   --color-foreground: #f0f6fc;
   --color-muted: #8b949e;
   --color-muted-subtle: #484f58;
-
-  /* Borders */
   --color-border: #30363d;
   --color-border-subtle: #21262d;
-
-  /* Accents */
   --color-accent-blue: #58a6ff;
   --color-accent-green: #3fb950;
   --color-accent-green-emphasis: #238636;
   --color-accent-orange: #f0883e;
   --color-accent-red: #f85149;
   --color-accent-purple: #a371f7;
+  --color-warning-subtle: #271d0e;
+}
+
+/* ─── Light mode — system preference ─────────────────────────────────────── */
+
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) {
+    --color-background: #ffffff;
+    --color-surface: #f0f3f6;
+    --color-surface-alt: #e4e8ec;
+    --color-foreground: #24292f;
+    --color-muted: #57606a;
+    --color-muted-subtle: #8c959f;
+    --color-border: #c9d1d9;
+    --color-border-subtle: #d8dee4;
+    --color-accent-blue: #0969da;
+    --color-accent-green: #1a7f37;
+    --color-accent-green-emphasis: #1a7f37;
+    --color-accent-orange: #bc4c00;
+    --color-accent-red: #d1242f;
+    --color-accent-purple: #8250df;
+    --color-warning-subtle: #fff8e1;
+  }
+}
+
+/* ─── Light mode — manual toggle (.light class on <html>) ─────────────────── */
+
+html.light {
+  --color-background: #ffffff;
+  --color-surface: #f0f3f6;
+  --color-surface-alt: #e4e8ec;
+  --color-foreground: #24292f;
+  --color-muted: #57606a;
+  --color-muted-subtle: #8c959f;
+  --color-border: #c9d1d9;
+  --color-border-subtle: #d8dee4;
+  --color-accent-blue: #0969da;
+  --color-accent-green: #1a7f37;
+  --color-accent-green-emphasis: #1a7f37;
+  --color-accent-orange: #bc4c00;
+  --color-accent-red: #d1242f;
+  --color-accent-purple: #8250df;
+  --color-warning-subtle: #fff8e1;
+}
+
+/* ─── Dark mode — manual toggle (.dark class on <html>) ───────────────────── */
+
+html.dark {
+  --color-background: #0d1117;
+  --color-surface: #161b22;
+  --color-surface-alt: #1c2128;
+  --color-foreground: #f0f6fc;
+  --color-muted: #8b949e;
+  --color-muted-subtle: #484f58;
+  --color-border: #30363d;
+  --color-border-subtle: #21262d;
+  --color-accent-blue: #58a6ff;
+  --color-accent-green: #3fb950;
+  --color-accent-green-emphasis: #238636;
+  --color-accent-orange: #f0883e;
+  --color-accent-red: #f85149;
+  --color-accent-purple: #a371f7;
+  --color-warning-subtle: #271d0e;
+}
+
+/* ─── @theme — self-references force Tailwind to emit var() in utilities ──── */
+/* With self-reference, bg-background emits var(--color-background) at runtime */
+
+@theme {
+  --color-background: var(--color-background);
+  --color-surface: var(--color-surface);
+  --color-surface-alt: var(--color-surface-alt);
+  --color-foreground: var(--color-foreground);
+  --color-muted: var(--color-muted);
+  --color-muted-subtle: var(--color-muted-subtle);
+  --color-border: var(--color-border);
+  --color-border-subtle: var(--color-border-subtle);
+  --color-accent-blue: var(--color-accent-blue);
+  --color-accent-green: var(--color-accent-green);
+  --color-accent-green-emphasis: var(--color-accent-green-emphasis);
+  --color-accent-orange: var(--color-accent-orange);
+  --color-accent-red: var(--color-accent-red);
+  --color-accent-purple: var(--color-accent-purple);
+  --color-warning-subtle: var(--color-warning-subtle);
 
   /* Fonts */
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
+
+/* ─── Base ─────────────────────────────────────────────────────────────────── */
 
 body {
   background: var(--color-background);
@@ -38,24 +120,29 @@ button, a {
   cursor: pointer;
 }
 
+/* ─── MapLibre popups — dark (default) ─────────────────────────────────────── */
+
 .starmapper-popup .maplibregl-popup-content {
-  background: #161b22;
-  border: 1px solid #30363d;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: 10px;
-  color: #e6edf3;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+  color: var(--color-foreground);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
   padding: 12px 16px;
 }
+
 .starmapper-popup .maplibregl-popup-tip {
-  border-top-color: #161b22;
-  border-bottom-color: #161b22;
+  border-top-color: var(--color-surface);
+  border-bottom-color: var(--color-surface);
 }
+
 .starmapper-popup .maplibregl-popup-close-button {
-  color: #8b949e;
+  color: var(--color-muted);
   font-size: 16px;
   padding: 4px 8px;
 }
+
 .starmapper-popup .maplibregl-popup-close-button:hover {
-  color: #f0f6fc;
+  color: var(--color-foreground);
   background: none;
 }

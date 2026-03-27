@@ -12,6 +12,8 @@ interface Props {
   flyTarget?: { lat: number; lng: number; login: string } | null;
   onFlyDone?: () => void;
   onReady?: (captureCanvas: () => Promise<string | null>) => void;
+  // Optional: override the map tile style URL (for light/dark switching)
+  styleUrl?: string;
 }
 
 const JAWG_TOKEN = process.env.NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN ?? "";
@@ -158,20 +160,20 @@ function makePopupElement(props: Record<string, unknown>): HTMLElement {
     const img = document.createElement("img");
     img.src = avatarUrl;
     img.alt = "";
-    img.style.cssText = "width:36px;height:36px;border-radius:50%;flex-shrink:0;border:1px solid rgba(255,255,255,0.1)";
+    img.style.cssText = "width:36px;height:36px;border-radius:50%;flex-shrink:0;border:1px solid var(--color-border-subtle)";
     header.appendChild(img);
   }
 
   const nameBlock = document.createElement("div");
   const nameEl = document.createElement("div");
-  nameEl.style.cssText = "font-weight:600;font-size:13px;color:#f0f6fc;line-height:1.3";
+  nameEl.style.cssText = "font-weight:600;font-size:13px;color:var(--color-foreground);line-height:1.3";
   nameEl.textContent = name;
 
   const link = document.createElement("a");
   link.href = `https://github.com/${login}`;
   link.target = "_blank";
   link.rel = "noopener noreferrer";
-  link.style.cssText = "color:#58a6ff;text-decoration:none;font-size:11px";
+  link.style.cssText = "color:var(--color-accent-blue);text-decoration:none;font-size:11px";
   link.textContent = `@${login}`;
 
   nameBlock.appendChild(nameEl);
@@ -181,13 +183,13 @@ function makePopupElement(props: Record<string, unknown>): HTMLElement {
 
   if (bio) {
     const bioEl = document.createElement("div");
-    bioEl.style.cssText = "font-size:11px;color:#c9d1d9;margin-bottom:6px;line-height:1.5;font-style:italic";
+    bioEl.style.cssText = "font-size:11px;color:var(--color-muted);margin-bottom:6px;line-height:1.5;font-style:italic";
     bioEl.textContent = bio;
     el.appendChild(bioEl);
   }
 
   const meta = document.createElement("div");
-  meta.style.cssText = "font-size:11px;color:#8b949e;line-height:1.9";
+  meta.style.cssText = "font-size:11px;color:var(--color-muted);line-height:1.9";
   const lines: string[] = [];
   if (company) lines.push(`🏢 ${company}`);
   if (location) lines.push(`📍 ${location}`);
@@ -198,7 +200,7 @@ function makePopupElement(props: Record<string, unknown>): HTMLElement {
   return el;
 }
 
-export function StargazerMap({ points, comparePoints, flyTarget, onFlyDone, onReady }: Props) {
+export function StargazerMap({ points, comparePoints, flyTarget, onFlyDone, onReady, styleUrl }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const pointsRef = useRef<StargazerPoint[]>(points);
@@ -222,9 +224,10 @@ export function StargazerMap({ points, comparePoints, flyTarget, onFlyDone, onRe
     async function initMap() {
       if (!containerRef.current) return;
 
-      let style: string | StyleSpecification = STYLE_URL;
+      const resolvedStyleUrl = styleUrl ?? STYLE_URL;
+      let style: string | StyleSpecification = resolvedStyleUrl;
       try {
-        const res = await fetch(STYLE_URL);
+        const res = await fetch(resolvedStyleUrl);
         if (res.ok) {
           const json = await res.json() as StyleSpecification;
           if (!json.projection) json.projection = { type: "mercator" };

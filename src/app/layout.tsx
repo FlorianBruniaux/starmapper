@@ -128,16 +128,32 @@ const jsonLd = {
   ],
 };
 
+// Inline script: runs before first paint to apply saved theme and prevent FOUC
+const themeInitScript = `
+(function() {
+  try {
+    var stored = localStorage.getItem('starmapper:theme');
+    var preferLight = window.matchMedia('(prefers-color-scheme: light)').matches;
+    var resolved = stored === 'light' || stored === 'dark' ? stored : (preferLight ? 'light' : 'dark');
+    document.documentElement.classList.add(resolved);
+  } catch(e) {
+    document.documentElement.classList.add('dark');
+  }
+})();
+`.trim();
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
+        {/* Theme init — must run synchronously before first paint */}
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
-      <body className={`${geist.className} bg-[#0d1117]`}>{children}</body>
+      <body className={`${geist.className} bg-background`}>{children}</body>
     </html>
   );
 }

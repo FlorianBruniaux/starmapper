@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { TokenModal, getStoredToken } from "@/components/token-modal";
 import { getBookmarks } from "@/lib/bookmarks";
 import { RepoTable } from "@/components/repo-table";
+import { ThemeToggle } from "@/components/theme-toggle";
 import type { Bookmark } from "@/lib/bookmarks";
 import type { MappedRepo } from "@/app/api/repos/route";
 
@@ -105,30 +106,33 @@ export default function HomePage() {
           <span aria-hidden="true">🌍</span>
           <span>StarMapper</span>
         </div>
-        <button
-          onClick={() => setTokenOpen(true)}
-          className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border transition-colors ${
-            hasToken
-              ? "border-accent-green-emphasis text-accent-green hover:bg-accent-green-emphasis/10"
-              : "border-border text-muted hover:text-foreground hover:border-accent-blue"
-          }`}
-        >
-          {hasToken ? (
-            <>
-              <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-                <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.75.75 0 0 1 1.06-1.06L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z" />
-              </svg>
-              Token set
-            </>
-          ) : (
-            <>
-              <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-                <path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Zm7-3.25v2.992l2.028.812a.75.75 0 0 1-.557 1.392l-2.5-1A.751.751 0 0 1 7 8.25v-3.5a.75.75 0 0 1 1.5 0Z" />
-              </svg>
-              Add token
-            </>
-          )}
-        </button>
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <button
+            onClick={() => setTokenOpen(true)}
+            className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border transition-colors ${
+              hasToken
+                ? "border-accent-green-emphasis text-accent-green hover:bg-accent-green-emphasis/10"
+                : "border-border text-muted hover:text-foreground hover:border-accent-blue"
+            }`}
+          >
+            {hasToken ? (
+              <>
+                <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                  <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.75.75 0 0 1 1.06-1.06L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z" />
+                </svg>
+                Token set
+              </>
+            ) : (
+              <>
+                <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                  <path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Zm7-3.25v2.992l2.028.812a.75.75 0 0 1-.557 1.392l-2.5-1A.751.751 0 0 1 7 8.25v-3.5a.75.75 0 0 1 1.5 0Z" />
+                </svg>
+                Add token
+              </>
+            )}
+          </button>
+        </div>
       </header>
 
       {/* Main */}
@@ -217,7 +221,7 @@ export default function HomePage() {
             <div className="flex gap-2">
               <button
                 type="submit"
-                className="flex-1 bg-accent-green-emphasis hover:bg-[#2ea043] text-white font-medium py-3 px-6 rounded-lg transition-colors text-sm"
+                className="flex-1 bg-accent-green-emphasis hover:opacity-90 text-white font-medium py-3 px-6 rounded-lg transition-opacity text-sm"
               >
                 Map Stargazers
               </button>
@@ -251,6 +255,21 @@ export default function HomePage() {
               </p>
             )}
           </form>
+
+          {/* Not on the map callout — below CTA */}
+          <a
+            href="https://github.com/settings/profile"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-3 flex items-center gap-3 px-4 py-3 bg-surface border border-border-subtle rounded-lg hover:border-accent-blue/40 transition-colors group"
+          >
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" className="shrink-0 text-accent-blue/60 group-hover:text-accent-blue transition-colors" aria-hidden="true">
+              <path d="m12.596 11.596-3.535 3.536a1.5 1.5 0 0 1-2.122 0l-3.535-3.536a6.5 6.5 0 1 1 9.192 0Zm-1.06-1.06a5 5 0 1 0-7.072 0L8 14.07l3.536-3.534ZM8 9a2 2 0 1 1-.001-3.999A2 2 0 0 1 8 9Z" />
+            </svg>
+            <span className="text-xs text-muted-subtle group-hover:text-muted transition-colors">
+              Not on the map? <span className="text-accent-blue">Add a location to your GitHub profile</span>
+            </span>
+          </a>
 
           {/* Suggestions — unified: bookmarks first, then examples to fill */}
           {suggestions.length > 0 && (
@@ -286,16 +305,16 @@ export default function HomePage() {
           <p className="text-muted-subtle text-[10px] uppercase tracking-widest mb-3">How it works</p>
           <div className="flex flex-col gap-2">
             {[
-              { color: "#58a6ff", bg: "rgba(88,166,255,0.08)", label: "Interactive map", desc: "Stargazers geocoded and plotted in real time as they load.", icon: <path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Zm4.94-2.06a.75.75 0 0 1 1.06 0l1.5 1.5 3-3a.75.75 0 1 1 1.06 1.06l-3.5 3.5a.75.75 0 0 1-1.06 0l-2-2a.75.75 0 0 1 0-1.06Z" /> },
-              { color: "#3fb950", bg: "rgba(63,185,80,0.08)", label: "Stats & export", desc: "Top countries, cities, companies, followers. Export image, Markdown or LinkedIn.", icon: <path d="M1.5 1.75V13.5h13.75a.75.75 0 0 1 0 1.5H.75a.75.75 0 0 1-.75-.75V1.75a.75.75 0 0 1 1.5 0Zm14.28 2.53-5.25 5.25a.75.75 0 0 1-1.06 0L7 7.06 4.28 9.78a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042l3.25-3.25a.75.75 0 0 1 1.06 0L9 7.94l4.72-4.72a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042Z" /> },
-              { color: "#ffa657", bg: "rgba(255,166,87,0.08)", label: "Shared cache", desc: "First scan populates a global cache — next visitor loads instantly.", icon: <path d="M11.93 8.5a4.002 4.002 0 0 1-7.86 0H.75a.75.75 0 0 1 0-1.5h3.32a4.002 4.002 0 0 1 7.86 0h3.32a.75.75 0 0 1 0 1.5Zm-1.43-.75a2.5 2.5 0 1 0-5 0 2.5 2.5 0 0 0 5 0Z" /> },
-            ].map(({ color, bg, label, desc, icon }) => (
+              { colorClass: "text-accent-blue", bgClass: "bg-accent-blue/8", label: "Interactive map", desc: "Stargazers geocoded and plotted in real time as they load.", icon: <path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Zm4.94-2.06a.75.75 0 0 1 1.06 0l1.5 1.5 3-3a.75.75 0 1 1 1.06 1.06l-3.5 3.5a.75.75 0 0 1-1.06 0l-2-2a.75.75 0 0 1 0-1.06Z" /> },
+              { colorClass: "text-accent-green", bgClass: "bg-accent-green/8", label: "Stats & export", desc: "Top countries, cities, companies, followers. Export image, Markdown or LinkedIn.", icon: <path d="M1.5 1.75V13.5h13.75a.75.75 0 0 1 0 1.5H.75a.75.75 0 0 1-.75-.75V1.75a.75.75 0 0 1 1.5 0Zm14.28 2.53-5.25 5.25a.75.75 0 0 1-1.06 0L7 7.06 4.28 9.78a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042l3.25-3.25a.75.75 0 0 1 1.06 0L9 7.94l4.72-4.72a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042Z" /> },
+              { colorClass: "text-accent-orange", bgClass: "bg-accent-orange/8", label: "Shared cache", desc: "First scan populates a global cache — next visitor loads instantly.", icon: <path d="M11.93 8.5a4.002 4.002 0 0 1-7.86 0H.75a.75.75 0 0 1 0-1.5h3.32a4.002 4.002 0 0 1 7.86 0h3.32a.75.75 0 0 1 0 1.5Zm-1.43-.75a2.5 2.5 0 1 0-5 0 2.5 2.5 0 0 0 5 0Z" /> },
+            ].map(({ colorClass, bgClass, label, desc, icon }) => (
               <div key={label} className="flex items-start gap-3 bg-surface border border-border-subtle rounded-lg px-4 py-3">
-                <div className="mt-0.5 size-7 shrink-0 flex items-center justify-center rounded-md" style={{ background: bg }}>
-                  <svg width="14" height="14" viewBox="0 0 16 16" fill={color} aria-hidden="true">{icon}</svg>
+                <div className={`mt-0.5 size-7 shrink-0 flex items-center justify-center rounded-md ${bgClass}`}>
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" className={colorClass}>{icon}</svg>
                 </div>
                 <div>
-                  <div className="text-xs font-semibold mb-0.5" style={{ color }}>{label}</div>
+                  <div className={`text-xs font-semibold mb-0.5 ${colorClass}`}>{label}</div>
                   <div className="text-muted text-xs leading-relaxed">{desc}</div>
                 </div>
               </div>
@@ -343,23 +362,6 @@ export default function HomePage() {
               </details>
             ))}
           </div>
-        </div>
-
-        {/* Not on the map callout */}
-        <div className="w-full max-w-sm mx-auto lg:mx-0 mt-6">
-          <a
-            href="https://github.com/settings/profile"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-3 px-4 py-3 bg-surface border border-border-subtle rounded-lg hover:border-accent-blue/40 transition-colors group"
-          >
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" className="shrink-0 text-accent-blue/60 group-hover:text-accent-blue transition-colors" aria-hidden="true">
-              <path d="m12.596 11.596-3.535 3.536a1.5 1.5 0 0 1-2.122 0l-3.535-3.536a6.5 6.5 0 1 1 9.192 0Zm-1.06-1.06a5 5 0 1 0-7.072 0L8 14.07l3.536-3.534ZM8 9a2 2 0 1 1-.001-3.999A2 2 0 0 1 8 9Z" />
-            </svg>
-            <span className="text-xs text-muted-subtle group-hover:text-muted transition-colors">
-              Not on the map? <span className="text-accent-blue">Add a location to your GitHub profile</span>
-            </span>
-          </a>
         </div>
 
         </div>{/* end left column */}
