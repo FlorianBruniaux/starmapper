@@ -19,10 +19,17 @@ const EXAMPLES: Suggestion[] = [
   { owner: "torvalds", repo: "linux" },
 ];
 
+const VALID_GH_NAME = /^[a-zA-Z0-9._-]{1,100}$/;
+
 const parseRepo = (val: string): { owner: string; repo: string } | null => {
   const cleaned = val.trim().replace(/\/$/, "").replace("https://github.com/", "");
   const parts = cleaned.split("/").filter(Boolean);
-  if (parts.length >= 2) return { owner: parts[0], repo: parts[1] };
+  if (parts.length >= 2) {
+    const owner = parts[0];
+    const repo = parts[1];
+    if (!VALID_GH_NAME.test(owner) || !VALID_GH_NAME.test(repo)) return null;
+    return { owner, repo };
+  }
   return null;
 };
 
