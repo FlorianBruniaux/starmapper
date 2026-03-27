@@ -145,9 +145,11 @@ export default function MapPage({
   const [statsTab, setStatsTab] = useState<"countries" | "cities" | "top" | "companies">("top");
   const [statsFilter, setStatsFilter] = useState("");
   const [shareOpen, setShareOpen] = useState(false);
+  const [badgeOpen, setBadgeOpen] = useState(false);
   const [liPanelOpen, setLiPanelOpen] = useState(false);
   const [liDraft, setLiDraft] = useState("");
   const [liCopied, setLiCopied] = useState(false);
+  const [badgeCopied, setBadgeCopied] = useState(false);
   const [allOpen, setAllOpen] = useState(false);
   const [allSearch, setAllSearch] = useState("");
   const deferredSearch = useDeferredValue(allSearch);
@@ -1247,6 +1249,20 @@ export default function MapPage({
             <span>History</span>
           </a>
 
+          {/* Badge button */}
+          <button
+            onClick={() => setBadgeOpen(true)}
+            className="bg-background/90 border border-border rounded-lg
+              px-3 py-2.5 text-xs text-muted hover:text-foreground
+              hover:border-accent-blue/50 backdrop-blur-md transition-all flex items-center gap-2"
+            title="Get README badge"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="text-accent-blue flex-shrink-0" aria-hidden="true">
+              <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+            </svg>
+            <span>Badge</span>
+          </button>
+
           {/* Share CTA */}
           <button
             onClick={() => setShareOpen(true)}
@@ -1887,16 +1903,90 @@ export default function MapPage({
                 )}
               </div>
               {/* README badge */}
+              <div className="border border-border rounded-lg overflow-hidden">
+                <div className="px-3 py-2 border-b border-border-subtle flex items-center justify-between">
+                  <span className="text-foreground text-xs font-medium">README badge</span>
+                  <img
+                    src={`/api/badge/${owner}/${repo}`}
+                    alt="StarMapper badge"
+                    className="h-5"
+                  />
+                </div>
+                <div className="bg-surface-alt px-3 py-2">
+                  <code className="text-muted text-xs break-all select-all leading-relaxed">
+                    {`[![StarMapper](${typeof window !== "undefined" ? window.location.origin : ""}/api/badge/${owner}/${repo})](${typeof window !== "undefined" ? window.location.origin : ""}/${owner}/${repo})`}
+                  </code>
+                </div>
+                <div className="px-3 py-2 border-t border-border-subtle">
+                  <button
+                    onClick={() => {
+                      const origin = window.location.origin;
+                      const md = `[![StarMapper](${origin}/api/badge/${owner}/${repo})](${origin}/${owner}/${repo})`;
+                      navigator.clipboard.writeText(md).catch(() => {});
+                      setBadgeCopied(true);
+                      setTimeout(() => setBadgeCopied(false), 2000);
+                    }}
+                    className="w-full flex items-center justify-center gap-2 bg-surface-alt hover:bg-border border border-border text-muted hover:text-foreground text-xs py-1.5 rounded-md transition-colors"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                    {badgeCopied ? "Copied ✓" : "Copy Markdown"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Badge modal */}
+      {badgeOpen && (
+        <div
+          className="absolute inset-0 z-50 flex items-center justify-center bg-background/85 backdrop-blur-sm"
+          onClick={() => setBadgeOpen(false)}
+        >
+          <div
+            className="bg-surface border border-border rounded-2xl shadow-2xl w-full max-w-sm mx-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-5 py-4 border-b border-border-subtle">
+              <h2 className="text-foreground font-semibold text-sm">README Badge</h2>
+              <button onClick={() => setBadgeOpen(false)} className="text-muted hover:text-foreground text-xl leading-none">×</button>
+            </div>
+            <div className="px-5 py-4 space-y-4">
+              <p className="text-muted text-xs leading-relaxed">
+                Add this badge to your repo&apos;s README to show your stargazer map.
+              </p>
+              {/* Live preview */}
+              <div className="flex items-center justify-center py-3 bg-surface-alt rounded-lg border border-border-subtle">
+                <img
+                  src={`/api/badge/${owner}/${repo}`}
+                  alt="StarMapper badge preview"
+                  className="h-6"
+                />
+              </div>
+              {/* Markdown code */}
+              <div>
+                <label className="block text-foreground text-xs font-medium mb-1.5">Markdown</label>
+                <div className="bg-background border border-border rounded-lg px-3 py-2.5">
+                  <code className="text-muted text-xs break-all select-all leading-relaxed">
+                    {`[![StarMapper](${typeof window !== "undefined" ? window.location.origin : ""}/api/badge/${owner}/${repo})](${typeof window !== "undefined" ? window.location.origin : ""}/${owner}/${repo})`}
+                  </code>
+                </div>
+              </div>
+            </div>
+            <div className="px-5 pb-4">
               <button
                 onClick={() => {
                   const origin = window.location.origin;
                   const md = `[![StarMapper](${origin}/api/badge/${owner}/${repo})](${origin}/${owner}/${repo})`;
                   navigator.clipboard.writeText(md).catch(() => {});
+                  setBadgeCopied(true);
+                  setTimeout(() => setBadgeCopied(false), 2000);
                 }}
-                className="w-full flex items-center justify-center gap-2 bg-surface-alt hover:bg-border border border-border text-muted hover:text-foreground text-xs py-2 rounded-lg transition-colors"
+                className="w-full flex items-center justify-center gap-2 bg-accent-green-emphasis hover:opacity-90 text-white text-xs font-medium py-2.5 rounded-lg transition-opacity"
               >
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
-                Copy README badge
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                {badgeCopied ? "Copied ✓" : "Copy Markdown"}
               </button>
             </div>
           </div>
