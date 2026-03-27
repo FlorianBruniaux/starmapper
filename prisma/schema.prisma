@@ -50,6 +50,7 @@ model GitHubUser {
   dataVersion      Int         @default(0)
   lat              Float?
   lng              Float?
+  linkedinUrl      String?
   fetchedAt        DateTime    @default(now())
   stars            StarEvent[]
 

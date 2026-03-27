@@ -48,6 +48,7 @@ function buildGeoJSON(pts: StargazerPoint[]) {
         location: p.location,
         followers: p.followers,
         avatarUrl: p.avatarUrl,
+        linkedinUrl: p.linkedinUrl,
       },
     })),
   };
@@ -163,6 +164,7 @@ function makePopupElement(props: Record<string, unknown>): HTMLElement {
   const bio = props.bio ? String(props.bio) : "";
   const company = props.company ? String(props.company) : "";
   const avatarUrl = props.avatarUrl ? String(props.avatarUrl) : "";
+  const linkedinUrl = props.linkedinUrl ? String(props.linkedinUrl) : "";
 
   const el = document.createElement("div");
   el.style.cssText = "padding:4px 0;min-width:200px";
@@ -210,6 +212,16 @@ function makePopupElement(props: Record<string, unknown>): HTMLElement {
   if (props.followers) lines.push(`👥 ${Number(props.followers).toLocaleString()} followers`);
   meta.textContent = lines.join(" · ");
   if (lines.length) el.appendChild(meta);
+
+  if (linkedinUrl) {
+    const liLink = document.createElement("a");
+    liLink.href = linkedinUrl;
+    liLink.target = "_blank";
+    liLink.rel = "noopener noreferrer";
+    liLink.style.cssText = "display:inline-flex;align-items:center;gap:4px;margin-top:6px;font-size:11px;color:var(--color-accent-blue);text-decoration:none;font-weight:500";
+    liLink.textContent = "LinkedIn →";
+    el.appendChild(liLink);
+  }
 
   return el;
 }

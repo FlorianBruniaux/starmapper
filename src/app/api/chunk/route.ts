@@ -15,6 +15,7 @@ export interface StargazerPoint {
   lat: number;
   lng: number;
   starredAt: string | null;
+  linkedinUrl: string | null;
 }
 
 export interface ChunkResponse {
@@ -95,7 +96,7 @@ export async function POST(req: NextRequest) {
       }
 
       if (coords) {
-        points.push({ login: sg.login, name: sg.name, bio: sg.bio, company: sg.company, location: sg.location, followers: sg.followers, avatarUrl: sg.avatarUrl, lat: coords[0], lng: coords[1], starredAt: sg.starredAt });
+        points.push({ login: sg.login, name: sg.name, bio: sg.bio, company: sg.company, location: sg.location, followers: sg.followers, avatarUrl: sg.avatarUrl, lat: coords[0], lng: coords[1], starredAt: sg.starredAt, linkedinUrl: sg.linkedinUrl });
       } else {
         unmapped.push({ login: sg.login, name: sg.name, followers: sg.followers, starredAt: sg.starredAt });
       }
@@ -135,6 +136,7 @@ export async function POST(req: NextRequest) {
             accountCreatedAt: sg.accountCreatedAt,
             lat: p.lat,
             lng: p.lng,
+            linkedinUrl: sg.linkedinUrl,
           };
         })
         .filter((u): u is UserWritePayload => u !== null);

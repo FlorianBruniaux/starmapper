@@ -12,6 +12,7 @@ export interface StargazerRaw {
   accountCreatedAt: string | null;
   avatarUrl: string;
   starredAt: string; // ISO 8601
+  linkedinUrl: string | null;
 }
 
 export interface StargazersPage {
@@ -47,6 +48,9 @@ export async function fetchStargazersPage(
               followers { totalCount }
               following { totalCount }
               repositories(first: 0) { totalCount }
+              socialAccounts(first: 5) {
+                nodes { provider url }
+              }
             }
           }
         }
@@ -79,6 +83,9 @@ export async function fetchStargazersPage(
       hasMore = false; // hit stars we already have — stop here
       break;
     }
+    const linkedinNode = (e.node.socialAccounts?.nodes ?? []).find(
+      (n: { provider: string; url: string }) => n.provider === "LINKEDIN",
+    );
     stargazers.push({
       login: e.node.login,
       name: e.node.name ?? null,
@@ -91,6 +98,7 @@ export async function fetchStargazersPage(
       accountCreatedAt: e.node.createdAt ?? null,
       avatarUrl: e.node.avatarUrl,
       starredAt: e.starredAt,
+      linkedinUrl: linkedinNode?.url ?? null,
     });
   }
 

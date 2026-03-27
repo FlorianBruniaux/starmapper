@@ -12,6 +12,7 @@ export type UserWritePayload = {
   accountCreatedAt: string | null;
   lat: number;
   lng: number;
+  linkedinUrl: string | null;
 };
 
 // Run promises with a max concurrency to avoid thundering herd on Neon
@@ -61,6 +62,7 @@ export const bulkUpsertUsers = async (
           dataVersion: 1,
           lat: u.lat,
           lng: u.lng,
+          linkedinUrl: u.linkedinUrl ?? null,
           fetchedAt: new Date(),
         },
         update: {
@@ -74,6 +76,7 @@ export const bulkUpsertUsers = async (
           dataVersion: 1,
           lat: u.lat,
           lng: u.lng,
+          linkedinUrl: u.linkedinUrl ?? null,
           fetchedAt: new Date(),
         },
       }),
