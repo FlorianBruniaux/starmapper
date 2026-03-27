@@ -45,3 +45,6 @@ next-env.d.ts
 
 # Vitals provenance data
 .vitals/
+
+# Seed script output
+scripts/geocache-preview.json
