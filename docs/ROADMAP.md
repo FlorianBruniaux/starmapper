@@ -1,6 +1,6 @@
 # StarMapper — Roadmap
 
-*Dernière mise à jour : 2026-03-28*
+*Dernière mise à jour : 2026-03-28 — Phase 1 Stargazer Intelligence shipped*
 
 ---
 
@@ -11,6 +11,7 @@
 - **Share card** — export PNG carte + stats, partage LinkedIn avec texte pré-rempli.
 - **Compression client-side cache** — Web CompressionStream (gzip+base64) avant écriture `POST /api/stargazer-cache`. Résout les timeouts sur repos 50k+ étoiles.
 - **Geocache pre-seeding** — ~51k entrées GeoNames (villes + pays). >99% hit rate sur scans réels.
+- **Stargazer Intelligence — Phase 1** — Stats panel enrichi : 6 summary cards (total stars), company badges sur Top Stars, sort toggle, nouveau tab ⚡ Power (cross-repo power stargazers via query `groupBy` sur `star_event`).
 
 ---
 
@@ -43,18 +44,10 @@
 
 On accumule des milliers de profils GitHub en base (`github_user` + `star_event`). L'idée : exploiter ces données pour créer de nouveaux points d'entrée vers StarMapper, au-delà du repo.
 
-### Phase 1 : Stats panel enrichi (sur la page map)
+### ~~Phase 1 : Stats panel enrichi~~ ✅ Shipped 2026-03-28
 
-Enrichir le panel stats existant (`/api/stats/[owner]/[repo]`) avec un leaderboard scrollable intégré à la page map.
-
-- **Top stargazers du repo** — classement par followers, publicRepos, ou nombre de repos StarMapper starés. Déjà partiellement en place (topUsers dans `/api/stats`), à rendre plus visible et interactif.
-- **Company breakdown enrichi** — top companies avec count, pas juste les noms. Très parlant B2B.
-- **"Power stargazers"** — ceux qui starent plusieurs repos trackés par StarMapper. Signal d'un dev très actif dans l'écosystème.
-- **Filtres croisés** — filtrer la carte par company, par pays, par tranche de followers. Cliquer sur "Google (12)" dans le panel → la carte zoom sur les 12 Googlers.
-
-**Pas de nouveau endpoint obligatoire** : `/api/stats` retourne déjà topUsers, topCompanies, topCountries. On enrichit la query + le composant client.
-
-**Pourquoi d'abord** : pas de nouvelle page, pas de nouvelle route, juste plus de valeur dans l'UX existante. Validation rapide de l'intérêt avant d'investir sur les pages standalone.
+- Stats panel : 6 summary cards, sort toggle Top Stars, company badges, tab ⚡ Power
+- `/api/stats` : `company` dans `topUsers`, nouveau champ `powerStargazers` (cross-repo `groupBy`)
 
 ### Phase 2 : Page `/explore` (leaderboard global)
 
@@ -99,9 +92,9 @@ Page dédiée par utilisateur GitHub. Le "reverse lookup" : au lieu de "qui star
 
 **Ordre de priorité suggéré** :
 
-1. **Stats panel enrichi** (Phase 1 Stargazer Intelligence) — quick win, pas de nouvelle page
-2. **Heatmap mode** — natif MapLibre, rapide
-3. **Multi-repo** — différenciation forte vs star-history
-4. **Page `/explore`** (Phase 2) — nouveau funnel d'acquisition
-5. **Page `/profile/[login]`** (Phase 3) — SEO massif
+1. ~~**Stats panel enrichi**~~ ✅
+2. **Page `/explore`** (Phase 2) — nouveau funnel d'acquisition
+3. **Page `/profile/[login]`** (Phase 3) — SEO massif
+4. **Heatmap mode** — natif MapLibre, rapide
+5. **Multi-repo** — différenciation forte vs star-history
 6. **Extension Chrome** — multiplicateur de surface
