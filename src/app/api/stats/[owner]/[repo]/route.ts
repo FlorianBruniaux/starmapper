@@ -11,7 +11,8 @@ export type RepoStats = {
   topCountries: [string, number][];
   topCities: [string, number][];
   topCompanies: [string, number][];
-  topUsers: { login: string; name: string | null; followers: number; location: string | null; avatarUrl: string }[];
+  topUsers: { login: string; name: string | null; followers: number; location: string | null; avatarUrl: string; company: string | null }[];
+  powerStargazers: { login: string; name: string | null; followers: number; trackedRepos: number; avatarUrl: string }[];
   botCount: number;
   enrichedUserCount: number;
 };
@@ -89,9 +90,34 @@ export const GET = async (
         followers: u.followers,
         location: u.location,
         avatarUrl: `https://github.com/${u.login}.png`,
+        company: u.company,
       }))
       .sort((a, b) => b.followers - a.followers)
       .slice(0, 20);
+
+    // Power stargazers: users who starred multiple repos tracked by StarMapper
+    const repoLogins = events.map((e) => e.user.login);
+    const crossRepoGroups = await prisma.starEvent.groupBy({
+      by: ["login"],
+      where: { login: { in: repoLogins } },
+      _count: { login: true },
+      orderBy: { _count: { login: "desc" } },
+      take: 50,
+    });
+    const userMap = new Map(events.map((e) => [e.user.login, e.user]));
+    const powerStargazers = crossRepoGroups
+      .filter((d) => (d._count.login ?? 0) > 1)
+      .slice(0, 20)
+      .map((d) => {
+        const u = userMap.get(d.login);
+        return {
+          login: d.login,
+          name: u?.name ?? null,
+          followers: u?.followers ?? 0,
+          trackedRepos: d._count.login ?? 0,
+          avatarUrl: `https://github.com/${d.login}.png`,
+        };
+      });
 
     const stats: RepoStats = {
       totalStars: total,
@@ -103,6 +129,7 @@ export const GET = async (
       topCities: [...cityCount.entries()].sort((a, b) => b[1] - a[1]).slice(0, 30),
       topCompanies: [...companyCount.entries()].sort((a, b) => b[1] - a[1]).slice(0, 30),
       topUsers,
+      powerStargazers,
       botCount,
       enrichedUserCount,
     };

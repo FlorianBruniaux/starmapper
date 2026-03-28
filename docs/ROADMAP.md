@@ -1,6 +1,6 @@
 # StarMapper — Roadmap
 
-*Dernière mise à jour : 2026-03-27*
+*Dernière mise à jour : 2026-03-28*
 
 ---
 
@@ -39,6 +39,57 @@
 
 ---
 
+## Stargazer Intelligence (nouveau axe)
+
+On accumule des milliers de profils GitHub en base (`github_user` + `star_event`). L'idée : exploiter ces données pour créer de nouveaux points d'entrée vers StarMapper, au-delà du repo.
+
+### Phase 1 : Stats panel enrichi (sur la page map)
+
+Enrichir le panel stats existant (`/api/stats/[owner]/[repo]`) avec un leaderboard scrollable intégré à la page map.
+
+- **Top stargazers du repo** — classement par followers, publicRepos, ou nombre de repos StarMapper starés. Déjà partiellement en place (topUsers dans `/api/stats`), à rendre plus visible et interactif.
+- **Company breakdown enrichi** — top companies avec count, pas juste les noms. Très parlant B2B.
+- **"Power stargazers"** — ceux qui starent plusieurs repos trackés par StarMapper. Signal d'un dev très actif dans l'écosystème.
+- **Filtres croisés** — filtrer la carte par company, par pays, par tranche de followers. Cliquer sur "Google (12)" dans le panel → la carte zoom sur les 12 Googlers.
+
+**Pas de nouveau endpoint obligatoire** : `/api/stats` retourne déjà topUsers, topCompanies, topCountries. On enrichit la query + le composant client.
+
+**Pourquoi d'abord** : pas de nouvelle page, pas de nouvelle route, juste plus de valeur dans l'UX existante. Validation rapide de l'intérêt avant d'investir sur les pages standalone.
+
+### Phase 2 : Page `/explore` (leaderboard global)
+
+Page standalone, nouveau point d'entrée vers StarMapper. Exploite toute la base cross-repo.
+
+- **Classements globaux** — top stargazers by followers, by repos starred (cross-repo), by publicRepos
+- **Top companies** — agrégation globale, pas liée à un repo
+- **Top locations / countries** — "les villes qui starent le plus"
+- **Filtrable** — par pays, company, tranche de followers
+- **Lien vers les repos** — chaque user → liste des repos StarMapper où il apparaît
+
+**Endpoint** : `GET /api/explore` (query Prisma `GROUP BY` sur `star_event` + `JOIN github_user`).
+
+**Valeur** : nouveau funnel d'acquisition. Aujourd'hui on entre par un repo. Demain on entre aussi par un dev ou une company.
+
+### Phase 3 : Page `/profile/[login]` (profil stargazer)
+
+Page dédiée par utilisateur GitHub. Le "reverse lookup" : au lieu de "qui stare ce repo ?", c'est "quels repos ce dev stare ?".
+
+- **Repos starés** — tous les repos StarMapper que ce user a staré, avec dates
+- **Position sur la map** — mini-carte si géocodé
+- **Stats** — followers, publicRepos, company, account age
+- **"Repos en commun"** — autres stargazers du même coin géographique ou de la même company
+- **Pages indexables** — chaque login = une page. SEO massif (milliers de pages potentielles)
+
+**Endpoint** : `GET /api/profile/[login]` (lecture `github_user` + `star_event` WHERE login).
+
+**Risques identifiés** :
+- Volume en base : si <1k users, le leaderboard est creux. Valider le volume avant de lancer la Phase 2.
+- Fraîcheur : `followers` date du dernier scan. Un user scanné il y a 3 mois peut avoir évolué. Prévoir un mécanisme de refresh (ou afficher "data from {fetchedAt}").
+- Privacy : tout est public GitHub, mais un classement de personnes mérite au minimum un lien clair vers la source GitHub.
+- Neon 512MB : pas de nouveau stockage, mais les `GROUP BY` sur tables larges nécessitent des index. À benchmarker.
+
+---
+
 ## Si monétisation un jour
 
 - **Trending page** — "Ces repos recrutent des stars à Paris cette semaine." Trafic organique.
@@ -46,6 +97,11 @@
 
 ---
 
-**Ordre de priorité suggéré** : Heatmap → Multi-repo → Extension Chrome → Watch mode.
+**Ordre de priorité suggéré** :
 
-Le heatmap est natif MapLibre (1h de travail max). Multi-repo différencie de star-history. L'extension multiplie la surface de découverte massivement.
+1. **Stats panel enrichi** (Phase 1 Stargazer Intelligence) — quick win, pas de nouvelle page
+2. **Heatmap mode** — natif MapLibre, rapide
+3. **Multi-repo** — différenciation forte vs star-history
+4. **Page `/explore`** (Phase 2) — nouveau funnel d'acquisition
+5. **Page `/profile/[login]`** (Phase 3) — SEO massif
+6. **Extension Chrome** — multiplicateur de surface

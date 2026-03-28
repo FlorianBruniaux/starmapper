@@ -176,8 +176,9 @@ export default function MapPage({
   const [latestStarredAt, setLatestStarredAt] = useState<string | null>(null);
   const [serverStats, setServerStats] = useState<RepoStats | null>(null);
   const [statsOpen, setStatsOpen] = useState(false);
-  const [statsTab, setStatsTab] = useState<"countries" | "cities" | "top" | "companies">("top");
+  const [statsTab, setStatsTab] = useState<"countries" | "cities" | "top" | "companies" | "power">("top");
   const [statsFilter, setStatsFilter] = useState("");
+  const [statsTopSort, setStatsTopSort] = useState<"followers" | "repos">("followers");
   const [shareOpen, setShareOpen] = useState(false);
   const [badgeOpen, setBadgeOpen] = useState(false);
   const [badgeTab, setBadgeTab] = useState<"map" | "shield">("map");
@@ -817,15 +818,15 @@ export default function MapPage({
     const topUsers = [...points]
       .sort((a, b) => b.followers - a.followers)
       .slice(0, 20)
-      .map((u) => ({ login: u.login, name: u.name, followers: u.followers, location: u.location, avatarUrl: u.avatarUrl }));
+      .map((u) => ({ login: u.login, name: u.name, followers: u.followers, location: u.location, avatarUrl: u.avatarUrl, company: u.company }));
     const topCompanies = [...companyCount.entries()].sort((a, b) => b[1] - a[1]).slice(0, 30);
     const mappingRate = Math.round((points.length / (points.length + unmapped.length)) * 100);
     const avgFollowers = points.length > 0
       ? Math.round(points.reduce((s, p) => s + p.followers, 0) / points.length)
       : 0;
     const totalStars = points.length + unmapped.length;
-    // botCount and enrichedUserCount come from server stats only (requires dataVersion field)
-    return { topCountries, topCities, topUsers, topCompanies, mappingRate, countryCount: countryCount.size, avgFollowers, totalStars, botCount: 0, enrichedUserCount: 0 };
+    // botCount, enrichedUserCount, powerStargazers come from server stats only (requires dataVersion + cross-repo query)
+    return { topCountries, topCities, topUsers, topCompanies, mappingRate, countryCount: countryCount.size, avgFollowers, totalStars, botCount: 0, enrichedUserCount: 0, powerStargazers: [] as RepoStats["powerStargazers"] };
   }, [points, unmapped]);
 
   const pct = total > 0 ? Math.round((processed / total) * 100) : 0;
@@ -2222,7 +2223,13 @@ export default function MapPage({
             </div>
 
             {/* Summary cards */}
-            <div className="grid grid-cols-5 gap-2 px-5 py-4 border-b border-border-subtle flex-shrink-0">
+            <div className="grid grid-cols-6 gap-2 px-5 py-4 border-b border-border-subtle flex-shrink-0">
+              <div className="bg-background rounded-lg px-2 py-2 text-center">
+                <div className="text-xl font-bold text-foreground">
+                  {displayStats.totalStars >= 1000 ? `${(displayStats.totalStars / 1000).toFixed(1)}k` : displayStats.totalStars}
+                </div>
+                <div className="text-[10px] text-muted uppercase tracking-wide mt-0.5">stars</div>
+              </div>
               <div className="bg-background rounded-lg px-2 py-2 text-center">
                 <div className="text-xl font-bold text-accent-green">{displayStats.mappingRate}%</div>
                 <div className="text-[10px] text-muted uppercase tracking-wide mt-0.5">mapped</div>
@@ -2259,7 +2266,7 @@ export default function MapPage({
 
             {/* Tabs */}
             <div className="flex border-b border-border-subtle flex-shrink-0">
-              {(["top", "countries", "cities", "companies"] as const).map((tab) => (
+              {(["top", "countries", "cities", "companies", "power"] as const).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => { setStatsTab(tab); setStatsFilter(""); }}
@@ -2269,7 +2276,7 @@ export default function MapPage({
                       : "text-muted hover:text-foreground"
                   }`}
                 >
-                  {tab === "top" ? "Top Stars" : tab === "countries" ? "Countries" : tab === "cities" ? "Cities" : "🏢 Companies"}
+                  {tab === "top" ? "Top Stars" : tab === "countries" ? "Countries" : tab === "cities" ? "Cities" : tab === "companies" ? "Companies" : "⚡ Power"}
                 </button>
               ))}
             </div>
@@ -2289,32 +2296,63 @@ export default function MapPage({
             {/* List */}
             <div className="overflow-y-auto flex-1 px-5 py-3">
               {statsTab === "top" && (
-                <div className="space-y-2.5">
-                  {displayStats.topUsers.map((u, i) => (
-                    <div key={u.login} className="flex items-center gap-3 py-0.5">
-                      <span className="text-muted-subtle text-xs w-5 text-right flex-shrink-0">{i + 1}</span>
-                      {u.avatarUrl
-                        ? <img src={u.avatarUrl} alt="" className="w-8 h-8 rounded-full flex-shrink-0 ring-1 ring-border" />
-                        : <div className="w-8 h-8 rounded-full bg-surface-alt flex-shrink-0 ring-1 ring-border" />
-                      }
-                      <div className="flex-1 min-w-0">
-                        <a
-                          href={`https://github.com/${u.login}`}
-                          target="_blank"
-                          className="text-accent-blue text-xs font-medium hover:underline"
-                        >
-                          @{u.login}
-                        </a>
-                        {u.location && (
-                          <div className="text-muted-subtle text-[10px] truncate">{u.location}</div>
-                        )}
+                <div>
+                  {/* Sort toggle */}
+                  <div className="flex items-center gap-1 mb-3">
+                    <span className="text-muted-subtle text-[10px] uppercase tracking-wide mr-1">Sort:</span>
+                    {(["followers", "repos"] as const).map((s) => (
+                      <button
+                        key={s}
+                        onClick={() => setStatsTopSort(s)}
+                        className={`px-2 py-0.5 rounded text-[10px] font-medium transition-colors ${
+                          statsTopSort === s
+                            ? "bg-accent-blue/20 text-accent-blue"
+                            : "text-muted hover:text-foreground"
+                        }`}
+                      >
+                        {s === "followers" ? "Followers" : "Public repos"}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="space-y-2.5">
+                    {[...displayStats.topUsers]
+                      .sort((a, b) => statsTopSort === "followers" ? b.followers - a.followers : b.followers - a.followers)
+                      .map((u, i) => (
+                      <div key={u.login} className="flex items-center gap-3 py-0.5">
+                        <span className="text-muted-subtle text-xs w-5 text-right flex-shrink-0">{i + 1}</span>
+                        {u.avatarUrl
+                          ? <img src={u.avatarUrl} alt="" className="w-8 h-8 rounded-full flex-shrink-0 ring-1 ring-border" />
+                          : <div className="w-8 h-8 rounded-full bg-surface-alt flex-shrink-0 ring-1 ring-border" />
+                        }
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <a
+                              href={`https://github.com/${u.login}`}
+                              target="_blank"
+                              className="text-accent-blue text-xs font-medium hover:underline"
+                            >
+                              @{u.login}
+                            </a>
+                            {u.company && (
+                              <span className="text-[10px] text-muted bg-surface-alt border border-border-subtle rounded px-1.5 py-px truncate max-w-24">
+                                {u.company.replace(/^@/, "")}
+                              </span>
+                            )}
+                          </div>
+                          {u.name && u.name !== u.login && (
+                            <div className="text-muted-subtle text-[10px] truncate">{u.name}</div>
+                          )}
+                          {!u.name && u.location && (
+                            <div className="text-muted-subtle text-[10px] truncate">{u.location}</div>
+                          )}
+                        </div>
+                        <span className="text-muted text-xs flex-shrink-0 tabular-nums">
+                          <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor" className="inline mr-1 mb-0.5 text-muted"><path d="M3 8a1 1 0 1 1 0-2 1 1 0 0 1 0 2Zm3 0a1 1 0 1 1 0-2 1 1 0 0 1 0 2Zm3 0a1 1 0 1 1 0-2 1 1 0 0 1 0 2ZM1.5 3A1.5 1.5 0 0 0 0 4.5v7A1.5 1.5 0 0 0 1.5 13h13a1.5 1.5 0 0 0 1.5-1.5v-7A1.5 1.5 0 0 0 14.5 3Z"/></svg>
+                          {u.followers.toLocaleString()}
+                        </span>
                       </div>
-                      <span className="text-muted text-xs flex-shrink-0 tabular-nums">
-                        <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor" className="inline mr-1 mb-0.5 text-muted"><path d="M3 8a1 1 0 1 1 0-2 1 1 0 0 1 0 2Zm3 0a1 1 0 1 1 0-2 1 1 0 0 1 0 2Zm3 0a1 1 0 1 1 0-2 1 1 0 0 1 0 2ZM1.5 3A1.5 1.5 0 0 0 0 4.5v7A1.5 1.5 0 0 0 1.5 13h13a1.5 1.5 0 0 0 1.5-1.5v-7A1.5 1.5 0 0 0 14.5 3Z"/></svg>
-                        {u.followers.toLocaleString()}
-                      </span>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               )}
               {statsTab === "countries" && (
@@ -2350,6 +2388,38 @@ export default function MapPage({
                   {displayStats.topCompanies.length === 0 && (
                     <div className="text-center text-muted-subtle text-xs py-8">No company data available</div>
                   )}
+                </div>
+              )}
+              {statsTab === "power" && (
+                <div className="space-y-2.5">
+                  {displayStats.powerStargazers.length === 0 && (
+                    <div className="text-center text-muted-subtle text-xs py-8">
+                      <div className="text-2xl mb-2">⚡</div>
+                      <div>No power stargazers yet.</div>
+                      <div className="mt-1 text-[10px]">Appears after multiple repos are scanned.</div>
+                    </div>
+                  )}
+                  {displayStats.powerStargazers.map((u, i) => (
+                    <div key={u.login} className="flex items-center gap-3 py-0.5">
+                      <span className="text-muted-subtle text-xs w-5 text-right flex-shrink-0">{i + 1}</span>
+                      <img src={u.avatarUrl} alt="" className="w-8 h-8 rounded-full flex-shrink-0 ring-1 ring-border" />
+                      <div className="flex-1 min-w-0">
+                        <a
+                          href={`https://github.com/${u.login}`}
+                          target="_blank"
+                          className="text-accent-blue text-xs font-medium hover:underline"
+                        >
+                          @{u.login}
+                        </a>
+                        {u.name && u.name !== u.login && (
+                          <div className="text-muted-subtle text-[10px] truncate">{u.name}</div>
+                        )}
+                      </div>
+                      <span className="text-accent-orange text-xs flex-shrink-0 tabular-nums font-medium">
+                        {u.trackedRepos} repos
+                      </span>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
