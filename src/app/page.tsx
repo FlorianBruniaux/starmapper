@@ -406,23 +406,42 @@ export default function HomePage() {
         {/* Right column — repos table */}
         {repos.length > 0 && (
           <div className="flex-1 flex flex-col px-8 py-12 lg:py-16 overflow-auto">
-            <div className="flex items-center justify-between mb-5">
-              <div>
-                <p className="text-muted-subtle text-[10px] uppercase tracking-widest mb-1">Community maps</p>
-                <div className="flex items-center gap-2">
-                  <p className="text-foreground text-sm font-semibold">{repos.length} repos already mapped</p>
-                  <kbd
-                    className="hidden lg:inline-flex items-center text-[10px] text-muted-subtle border border-border rounded px-1.5 py-0.5 cursor-pointer hover:border-accent-blue hover:text-accent-blue transition-colors"
-                    title="Search mapped repos (Cmd+K)"
-                  >
-                    ⌘K
-                  </kbd>
-                </div>
+            <div className="mb-5">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-muted-subtle text-[10px] uppercase tracking-widest">Community maps</p>
+                <span className="flex items-center gap-1.5 text-xs text-muted">
+                  <span className="size-1.5 rounded-full bg-accent-blue/70 animate-pulse inline-block" />
+                  Live data
+                </span>
               </div>
-              <span className="flex items-center gap-1.5 text-xs text-muted">
-                <span className="size-1.5 rounded-full bg-accent-blue/70 animate-pulse inline-block" />
-                Live data
-              </span>
+              {/* Fake search bar — clicks trigger Cmd+K CommandSearch */}
+              <button
+                type="button"
+                onClick={() =>
+                  window.dispatchEvent(
+                    new KeyboardEvent("keydown", { metaKey: true, key: "k", bubbles: true }),
+                  )
+                }
+                className="w-full flex items-center gap-3 bg-surface border border-border rounded-lg px-4 py-2.5 text-left hover:border-accent-blue/40 transition-colors group"
+                aria-label="Search mapped repos"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 16 16"
+                  fill="currentColor"
+                  className="shrink-0 text-muted-subtle group-hover:text-accent-blue transition-colors"
+                  aria-hidden="true"
+                >
+                  <path d="M10.68 11.74a6 6 0 0 1-7.922-8.982 6 6 0 0 1 8.982 7.922l3.04 3.04a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215ZM11.5 7a4.499 4.499 0 1 0-8.997 0A4.499 4.499 0 0 0 11.5 7Z" />
+                </svg>
+                <span className="flex-1 text-sm text-muted-subtle">
+                  Search {repos.length} mapped repos...
+                </span>
+                <kbd className="hidden sm:block text-[10px] text-muted-subtle bg-surface-alt border border-border rounded px-1.5 py-0.5">
+                  ⌘K
+                </kbd>
+              </button>
             </div>
             <RepoTable repos={repos} />
           </div>

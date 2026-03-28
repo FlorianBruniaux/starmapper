@@ -29,11 +29,11 @@ export const CommandSearch = ({ repos }: CommandSearchProps) => {
   const router = useRouter();
 
   const filtered = useMemo(() => {
-    if (!query.trim()) return repos.slice(0, 8);
+    if (!query.trim()) return repos.slice(0, 12);
     const q = query.toLowerCase();
     return repos
       .filter((r) => `${r.owner}/${r.repo}`.toLowerCase().includes(q))
-      .slice(0, 8);
+      .slice(0, 12);
   }, [repos, query]);
 
   const openSearch = useCallback(() => {
@@ -104,7 +104,7 @@ export const CommandSearch = ({ repos }: CommandSearchProps) => {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-24 px-4" role="presentation">
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-16 px-4" role="presentation">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
@@ -117,10 +117,10 @@ export const CommandSearch = ({ repos }: CommandSearchProps) => {
         role="dialog"
         aria-modal="true"
         aria-label="Search mapped repositories"
-        className="relative w-full max-w-lg bg-surface border border-border rounded-xl shadow-2xl overflow-hidden"
+        className="relative w-full max-w-2xl bg-surface border border-border rounded-xl shadow-2xl overflow-hidden"
       >
         {/* Search input */}
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-border-subtle">
+        <div className="flex items-center gap-3 px-5 py-4 border-b border-border-subtle">
           <svg
             width="15"
             height="15"
@@ -136,7 +136,7 @@ export const CommandSearch = ({ repos }: CommandSearchProps) => {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search mapped repos..."
-            className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-subtle outline-none"
+            className="flex-1 bg-transparent text-base text-foreground placeholder:text-muted-subtle outline-none"
             aria-label="Search repos"
             aria-controls="cs-list"
             aria-activedescendant={filtered[highlighted] ? `cs-item-${highlighted}` : undefined}
@@ -153,7 +153,7 @@ export const CommandSearch = ({ repos }: CommandSearchProps) => {
             id="cs-list"
             role="listbox"
             aria-label="Repository results"
-            className="max-h-80 overflow-y-auto py-1"
+            className="max-h-[520px] overflow-y-auto py-1"
           >
             {filtered.map((r, i) => (
               <li
@@ -163,7 +163,7 @@ export const CommandSearch = ({ repos }: CommandSearchProps) => {
                 aria-selected={i === highlighted}
                 onClick={() => navigate(r)}
                 onMouseEnter={() => setHighlighted(i)}
-                className={`flex items-center justify-between gap-4 px-4 py-2.5 cursor-pointer transition-colors ${
+                className={`flex items-center justify-between gap-4 px-5 py-3.5 cursor-pointer transition-colors ${
                   i === highlighted ? "bg-accent-blue/10" : "hover:bg-surface-alt"
                 }`}
               >
@@ -210,7 +210,7 @@ export const CommandSearch = ({ repos }: CommandSearchProps) => {
         )}
 
         {/* Footer */}
-        <div className="flex items-center gap-4 px-4 py-2 border-t border-border-subtle text-[10px] text-muted-subtle">
+        <div className="flex items-center gap-4 px-5 py-2.5 border-t border-border-subtle text-[10px] text-muted-subtle">
           <span>↑↓ Navigate</span>
           <span>↵ Open</span>
           <span>Esc Close</span>
