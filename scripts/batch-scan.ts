@@ -45,6 +45,18 @@ const loadEnvLocal = () => {
 
 loadEnvLocal();
 
+// ─── Global error handlers (prevent silent crashes) ───────────────────────────
+
+process.on("uncaughtException", (err) => {
+  console.error("\n[FATAL] uncaughtException:", err);
+  process.exit(1);
+});
+
+process.on("unhandledRejection", (reason) => {
+  console.error("\n[FATAL] unhandledRejection:", reason);
+  process.exit(1);
+});
+
 // ─── CLI args ─────────────────────────────────────────────────────────────────
 
 const argv = process.argv.slice(2);
@@ -198,18 +210,27 @@ const fetchPage = async (
   cursor: string | null,
   attempt = 0,
 ): Promise<GHPage> => {
-  const res = await fetch(GH_GRAPHQL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "User-Agent": "starmapper-batch/1.0",
-      ...(GITHUB_TOKEN ? { Authorization: `Bearer ${GITHUB_TOKEN}` } : {}),
-    },
-    body: JSON.stringify({
-      query: GRAPHQL_QUERY,
-      variables: { owner, repo, ...(cursor ? { cursor } : {}) },
-    }),
-  });
+  let res: Response;
+  try {
+    res = await fetch(GH_GRAPHQL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "User-Agent": "starmapper-batch/1.0",
+        ...(GITHUB_TOKEN ? { Authorization: `Bearer ${GITHUB_TOKEN}` } : {}),
+      },
+      body: JSON.stringify({
+        query: GRAPHQL_QUERY,
+        variables: { owner, repo, ...(cursor ? { cursor } : {}) },
+      }),
+      signal: AbortSignal.timeout(30_000),
+    });
+  } catch (err) {
+    const waitSec = Math.min(30 * 2 ** attempt, 300);
+    console.warn(`    [network] fetch error (attempt ${attempt + 1}): ${(err as Error).message} — retry in ${waitSec}s`);
+    await sleep(waitSec * 1000);
+    return fetchPage(owner, repo, cursor, attempt + 1);
+  }
 
   const rateRemaining = Number(res.headers.get("x-ratelimit-remaining") ?? 5000);
   const rateReset = Number(res.headers.get("x-ratelimit-reset") ?? 0);
@@ -289,7 +310,7 @@ const jawgGeocode = async (loc: string): Promise<Coords | null> => {
   if (!token) return null;
   try {
     const url = `${JAWG_URL}?text=${encodeURIComponent(loc)}&size=1&access-token=${token}`;
-    const r = await fetch(url, { headers: { "User-Agent": "starmapper-batch/1.0" } });
+    const r = await fetch(url, { headers: { "User-Agent": "starmapper-batch/1.0" }, signal: AbortSignal.timeout(3_000) });
     if (!r.ok) return null;
     const f = (await r.json()).features?.[0];
     if (!f) return null;
@@ -305,7 +326,7 @@ const geoapifyGeocode = async (loc: string): Promise<Coords | null> => {
   if (!key) return null;
   try {
     const url = `${GEOAPIFY_URL}?text=${encodeURIComponent(loc)}&limit=1&format=json&apiKey=${key}`;
-    const r = await fetch(url, { headers: { "User-Agent": "starmapper-batch/1.0" } });
+    const r = await fetch(url, { headers: { "User-Agent": "starmapper-batch/1.0" }, signal: AbortSignal.timeout(3_000) });
     if (!r.ok) return null;
     const row = (await r.json()).results?.[0];
     if (!row) return null;
@@ -325,6 +346,7 @@ const nominatimGeocode = async (loc: string): Promise<Coords | null> => {
     const url = `${NOMINATIM_URL}?q=${encodeURIComponent(loc)}&limit=1&format=json`;
     const r = await fetch(url, {
       headers: { "User-Agent": "starmapper-batch/1.0 (https://starmapper.app)" },
+      signal: AbortSignal.timeout(10_000),
     });
     if (!r.ok) return null;
     const row = (await r.json())[0];
@@ -538,7 +560,7 @@ const main = async () => {
 
         const totalPages = Math.ceil(totalCount / 100);
         process.stdout.write(
-          `  page ${page}/${totalPages} — ${allPoints.length + allUnmapped.length}/${totalCount} users — GH: ${globalRateRemaining}/5000 remaining\r`,
+          `  page ${page}/${totalPages} — ${allPoints.length + allUnmapped.length}/${totalCount} users — GH: ${globalRateRemaining}/5000 remaining\n`,
         );
 
         // ── Geocode this page's users ────────────────────────────────────

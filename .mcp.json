@@ -1,5 +1,10 @@
 {
   "mcpServers": {
+    "postgres-starmapper-local": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-postgres", "postgresql://starmapper:starmapper@localhost:5433/starmapper"]
+    },
     "postgres-starmapper": {
       "type": "stdio",
       "command": "/Users/florianbruniaux/.nvm/versions/node/v22.18.0/bin/node",
