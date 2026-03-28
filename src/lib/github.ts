@@ -1,5 +1,13 @@
 const GITHUB_GRAPHQL = "https://api.github.com/graphql";
 
+export class GitHubRateLimitError extends Error {
+  resetAt: number; // ms epoch
+  constructor(resetAt: number) {
+    super("rate_limited");
+    this.resetAt = resetAt;
+  }
+}
+
 export interface StargazerRaw {
   login: string;
   name: string | null;
@@ -67,6 +75,21 @@ export async function fetchStargazersPage(
     body: JSON.stringify({ query, variables: { owner, repo, cursor } }),
   });
 
+  if (!res.ok && (res.status === 403 || res.status === 429)) {
+    // Primary rate limit: x-ratelimit-remaining === "0"
+    // Secondary rate limit: retry-after header present
+    const resetEpoch = res.headers.get("x-ratelimit-reset");
+    const retryAfter = res.headers.get("retry-after");
+    let resetAt: number;
+    if (retryAfter) {
+      resetAt = Date.now() + parseInt(retryAfter, 10) * 1000;
+    } else if (resetEpoch) {
+      resetAt = parseInt(resetEpoch, 10) * 1000;
+    } else {
+      resetAt = Date.now() + 60_000; // fallback: 1 min
+    }
+    throw new GitHubRateLimitError(resetAt);
+  }
   if (!res.ok) throw new Error(`GitHub API error: ${res.status}`);
   const json = await res.json();
   if (json.errors) throw new Error(json.errors[0].message);

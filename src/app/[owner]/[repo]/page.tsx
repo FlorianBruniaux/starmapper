@@ -138,10 +138,14 @@ function timeAgo(ms: number): string {
   return "just now";
 }
 
-const RETRY_DELAY = 8;
-
 class RateLimitedError extends Error {
-  constructor() { super("rate_limited"); }
+  resetAt: number; // ms epoch
+  reason: "github" | "server";
+  constructor(resetAt: number, reason: "github" | "server" = "server") {
+    super("rate_limited");
+    this.resetAt = resetAt;
+    this.reason = reason;
+  }
 }
 
 export default function MapPage({
@@ -162,6 +166,8 @@ export default function MapPage({
   const [total, setTotal] = useState(0);
   const [error, setError] = useState("");
   const [retryIn, setRetryIn] = useState(0);
+  const [retryTotal, setRetryTotal] = useState(0);
+  const [waitReason, setWaitReason] = useState<"github" | "server">("server");
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [findInput, setFindInput] = useState("");
   const [findStatus, setFindStatus] = useState<"idle" | "searching" | "found" | "no-location" | "not-found">("idle");
@@ -341,7 +347,11 @@ export default function MapPage({
       headers: ghHeaders(),
       body: JSON.stringify({ owner, repo, cursor, since }),
     });
-    if (res.status === 429) throw new RateLimitedError();
+    if (res.status === 429) {
+      const body = await res.json().catch(() => ({})) as { resetAt?: number };
+      // resetAt present = GitHub rate limit; absent = server concurrent limit
+      throw new RateLimitedError(body.resetAt ?? Date.now() + 60_000, body.resetAt ? "github" : "server");
+    }
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return (await res.json()) as ChunkResponse;
   }, [owner, repo]);
@@ -369,9 +379,12 @@ export default function MapPage({
             break;
           } catch (e) {
             if (e instanceof RateLimitedError) {
+              const secsLeft = Math.max(1, Math.ceil((e.resetAt - Date.now()) / 1000));
+              setWaitReason(e.reason);
               setStatus("waiting");
-              setRetryIn(RETRY_DELAY);
-              await new Promise((r) => setTimeout(r, RETRY_DELAY * 1000));
+              setRetryIn(secsLeft);
+              setRetryTotal(secsLeft);
+              await new Promise((r) => setTimeout(r, secsLeft * 1000));
               setStatus("loading");
             } else {
               throw e;
@@ -473,9 +486,12 @@ export default function MapPage({
             break;
           } catch (e) {
             if (e instanceof RateLimitedError) {
+              const secsLeft = Math.max(1, Math.ceil((e.resetAt - Date.now()) / 1000));
+              setWaitReason(e.reason);
               setStatus("waiting");
-              setRetryIn(RETRY_DELAY);
-              await new Promise((r) => setTimeout(r, RETRY_DELAY * 1000));
+              setRetryIn(secsLeft);
+              setRetryTotal(secsLeft);
+              await new Promise((r) => setTimeout(r, secsLeft * 1000));
               setStatus("refreshing");
             } else {
               throw e;
@@ -979,15 +995,19 @@ export default function MapPage({
                 <path className="opacity-80" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
               </svg>
             </div>
-            <h2 className="text-foreground font-semibold text-base mb-1">Server busy</h2>
+            <h2 className="text-foreground font-semibold text-base mb-1">
+              {waitReason === "github" ? "GitHub quota reached" : "Server busy"}
+            </h2>
             <p className="text-muted text-sm mb-5">
-              Too many scans running at once. Resuming automatically in
+              {waitReason === "github"
+                ? "GitHub API rate limit hit. Resuming automatically when quota resets in"
+                : "Too many scans running at once. Resuming automatically in"}
             </p>
             <div className="text-5xl font-bold text-accent-blue tabular-nums mb-5">{retryIn}</div>
             <div className="w-full bg-surface-alt rounded-full h-1 overflow-hidden">
               <div
                 className="bg-accent-blue h-full rounded-full transition-all duration-1000"
-                style={{ width: `${((RETRY_DELAY - retryIn) / RETRY_DELAY) * 100}%` }}
+                style={{ width: retryTotal > 0 ? `${((retryTotal - retryIn) / retryTotal) * 100}%` : "0%" }}
               />
             </div>
             <p className="text-muted-subtle text-xs mt-4">Your progress is saved — no need to do anything.</p>

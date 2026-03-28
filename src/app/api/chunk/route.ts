@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { fetchStargazersPage } from "@/lib/github";
+import { fetchStargazersPage, GitHubRateLimitError } from "@/lib/github";
 import { geocodeBatch } from "@/lib/geocoder";
 import { checkDbHealth, DB_WARN_PCT } from "@/lib/db-health";
 import { bulkUpsertUsers, bulkUpsertStarEvents, bulkReadUsers, type UserWritePayload } from "@/lib/user-cache";
@@ -161,7 +161,9 @@ export async function POST(req: NextRequest) {
       latestStarredAt,
     } satisfies ChunkResponse);
   } catch (err: unknown) {
-    // Log internally but never expose raw error messages to the client
+    if (err instanceof GitHubRateLimitError) {
+      return NextResponse.json({ error: "rate_limited", resetAt: err.resetAt }, { status: 429 });
+    }
     console.error("[chunk] Error:", err);
     const msg = err instanceof Error && err.message.startsWith("GitHub API error")
       ? err.message
