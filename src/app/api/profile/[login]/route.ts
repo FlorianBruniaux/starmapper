@@ -8,7 +8,7 @@ export type ProfileResponse = {
   location: string | null;
   followers: number;
   publicRepos: number;
-  trackedRepos: { owner: string; repo: string; starredAt: string | null }[];
+  ownedRepos: { owner: string; repo: string }[];
 };
 
 export const GET = async (
@@ -21,15 +21,15 @@ export const GET = async (
   }
 
   try {
-    const [user, starEvents] = await Promise.all([
+    const [user, ownedReposRaw] = await Promise.all([
       prisma.gitHubUser.findUnique({
         where: { login },
         select: { login: true, name: true, company: true, location: true, followers: true, publicRepos: true },
       }),
-      prisma.starEvent.findMany({
-        where: { login },
-        select: { owner: true, repo: true, starredAt: true },
-        orderBy: { starredAt: "desc" },
+      prisma.badgeCache.findMany({
+        where: { owner: login.toLowerCase() },
+        select: { owner: true, repo: true },
+        orderBy: { updatedAt: "desc" },
       }),
     ]);
 
@@ -39,11 +39,7 @@ export const GET = async (
 
     const profile: ProfileResponse = {
       ...user,
-      trackedRepos: starEvents.map((e) => ({
-        owner: e.owner,
-        repo: e.repo,
-        starredAt: e.starredAt?.toISOString() ?? null,
-      })),
+      ownedRepos: ownedReposRaw.map((r) => ({ owner: r.owner, repo: r.repo })),
     };
 
     return NextResponse.json(profile, {

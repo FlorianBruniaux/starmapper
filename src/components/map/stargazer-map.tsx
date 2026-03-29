@@ -234,8 +234,8 @@ function makePopupElement(props: Record<string, unknown>): HTMLElement {
 
   fetch(`/api/profile/${encodeURIComponent(login)}`)
     .then((r) => r.ok ? r.json() : null)
-    .then((data: { trackedRepos?: { owner: string; repo: string }[] } | null) => {
-      const repos = data?.trackedRepos ?? [];
+    .then((data: { ownedRepos?: { owner: string; repo: string }[] } | null) => {
+      const repos = data?.ownedRepos ?? [];
       reposSection.innerHTML = "";
       if (!repos.length) {
         reposSection.style.display = "none";
@@ -243,7 +243,7 @@ function makePopupElement(props: Record<string, unknown>): HTMLElement {
       }
       const badge = document.createElement("div");
       badge.style.cssText = "font-size:11px;color:var(--color-muted);margin-bottom:5px;font-weight:500";
-      badge.textContent = `⚡ ${repos.length} tracked repo${repos.length > 1 ? "s" : ""}`;
+      badge.textContent = `📦 ${repos.length} repo${repos.length > 1 ? "s" : ""} on StarMapper`;
       reposSection.appendChild(badge);
       for (const r of repos.slice(0, 5)) {
         const link = document.createElement("a");
