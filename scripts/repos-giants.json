@@ -1,0 +1,16 @@
+[
+  "vercel/next.js",
+  "facebook/react",
+  "microsoft/vscode",
+  "vuejs/core",
+  "angular/angular",
+  "tailwindlabs/tailwindcss",
+  "golang/go",
+  "rust-lang/rust",
+  "nodejs/node",
+  "torvalds/linux",
+  "kubernetes/kubernetes",
+  "huggingface/transformers",
+  "langchain-ai/langchain",
+  "neovim/neovim"
+]

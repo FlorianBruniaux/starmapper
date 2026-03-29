@@ -73,8 +73,8 @@ EOF
 
 sync_table "github_user"      "ON CONFLICT (login) DO NOTHING"
 sync_table "star_event"       "ON CONFLICT (login, owner, repo) DO NOTHING"
-sync_table "badge_cache"      "ON CONFLICT (owner, repo) DO UPDATE SET mapped_count=EXCLUDED.mapped_count, country_count=EXCLUDED.country_count, total_count=EXCLUDED.total_count, updated_at=EXCLUDED.updated_at"
-sync_table "stargazer_cache"  "ON CONFLICT (owner, repo) DO UPDATE SET points=EXCLUDED.points, unmapped=EXCLUDED.unmapped, total_count=EXCLUDED.total_count, scanned_at=EXCLUDED.scanned_at"
+sync_table "badge_cache"      'ON CONFLICT (owner, repo) DO UPDATE SET "mappedCount"=EXCLUDED."mappedCount", "countryCount"=EXCLUDED."countryCount", "totalCount"=EXCLUDED."totalCount", "updatedAt"=EXCLUDED."updatedAt"'
+sync_table "stargazer_cache"  'ON CONFLICT (owner, repo) DO UPDATE SET points=EXCLUDED.points, unmapped=EXCLUDED.unmapped, "totalCount"=EXCLUDED."totalCount", "scannedAt"=EXCLUDED."scannedAt"'
 
 echo ""
 echo "Sync complete."
