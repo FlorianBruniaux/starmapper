@@ -167,7 +167,7 @@ function makePopupElement(props: Record<string, unknown>): HTMLElement {
   const linkedinUrl = props.linkedinUrl ? String(props.linkedinUrl) : "";
 
   const el = document.createElement("div");
-  el.style.cssText = "padding:4px 0;min-width:200px";
+  el.style.cssText = "padding:6px 0;min-width:260px";
 
   const header = document.createElement("div");
   header.style.cssText = "display:flex;align-items:center;gap:10px;margin-bottom:8px";
@@ -176,20 +176,20 @@ function makePopupElement(props: Record<string, unknown>): HTMLElement {
     const img = document.createElement("img");
     img.src = avatarUrl;
     img.alt = "";
-    img.style.cssText = "width:36px;height:36px;border-radius:50%;flex-shrink:0;border:1px solid var(--color-border-subtle)";
+    img.style.cssText = "width:44px;height:44px;border-radius:50%;flex-shrink:0;border:1px solid var(--color-border-subtle)";
     header.appendChild(img);
   }
 
   const nameBlock = document.createElement("div");
   const nameEl = document.createElement("div");
-  nameEl.style.cssText = "font-weight:600;font-size:13px;color:var(--color-foreground);line-height:1.3";
+  nameEl.style.cssText = "font-weight:600;font-size:15px;color:var(--color-foreground);line-height:1.3";
   nameEl.textContent = name;
 
   const link = document.createElement("a");
   link.href = `https://github.com/${login}`;
   link.target = "_blank";
   link.rel = "noopener noreferrer";
-  link.style.cssText = "color:var(--color-accent-blue);text-decoration:none;font-size:11px";
+  link.style.cssText = "color:var(--color-accent-blue);text-decoration:none;font-size:13px";
   link.textContent = `@${login}`;
 
   nameBlock.appendChild(nameEl);
@@ -199,13 +199,13 @@ function makePopupElement(props: Record<string, unknown>): HTMLElement {
 
   if (bio) {
     const bioEl = document.createElement("div");
-    bioEl.style.cssText = "font-size:11px;color:var(--color-muted);margin-bottom:6px;line-height:1.5;font-style:italic";
+    bioEl.style.cssText = "font-size:12px;color:var(--color-muted);margin-bottom:6px;line-height:1.5;font-style:italic";
     bioEl.textContent = bio;
     el.appendChild(bioEl);
   }
 
   const meta = document.createElement("div");
-  meta.style.cssText = "font-size:11px;color:var(--color-muted);line-height:1.9";
+  meta.style.cssText = "font-size:12px;color:var(--color-muted);line-height:1.9";
   const lines: string[] = [];
   if (company) lines.push(`🏢 ${company}`);
   if (location) lines.push(`📍 ${location}`);
@@ -218,10 +218,48 @@ function makePopupElement(props: Record<string, unknown>): HTMLElement {
     liLink.href = linkedinUrl;
     liLink.target = "_blank";
     liLink.rel = "noopener noreferrer";
-    liLink.style.cssText = "display:inline-flex;align-items:center;gap:4px;margin-top:6px;font-size:11px;color:var(--color-accent-blue);text-decoration:none;font-weight:500";
+    liLink.style.cssText = "display:inline-flex;align-items:center;gap:4px;margin-top:6px;font-size:12px;color:var(--color-accent-blue);text-decoration:none;font-weight:500";
     liLink.textContent = "LinkedIn →";
     el.appendChild(liLink);
   }
+
+  // Tracked repos — lazy-loaded
+  const reposSection = document.createElement("div");
+  reposSection.style.cssText = "margin-top:8px;border-top:1px solid var(--color-border-subtle);padding-top:8px";
+  const reposLoading = document.createElement("div");
+  reposLoading.style.cssText = "font-size:11px;color:var(--color-muted-subtle)";
+  reposLoading.textContent = "Loading tracked repos…";
+  reposSection.appendChild(reposLoading);
+  el.appendChild(reposSection);
+
+  fetch(`/api/profile/${encodeURIComponent(login)}`)
+    .then((r) => r.ok ? r.json() : null)
+    .then((data: { trackedRepos?: { owner: string; repo: string }[] } | null) => {
+      const repos = data?.trackedRepos ?? [];
+      reposSection.innerHTML = "";
+      if (!repos.length) {
+        reposSection.style.display = "none";
+        return;
+      }
+      const badge = document.createElement("div");
+      badge.style.cssText = "font-size:11px;color:var(--color-muted);margin-bottom:5px;font-weight:500";
+      badge.textContent = `⚡ ${repos.length} tracked repo${repos.length > 1 ? "s" : ""}`;
+      reposSection.appendChild(badge);
+      for (const r of repos.slice(0, 5)) {
+        const link = document.createElement("a");
+        link.href = `/${r.owner}/${r.repo}`;
+        link.style.cssText = "display:block;font-size:12px;color:var(--color-accent-blue);text-decoration:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.8";
+        link.textContent = `${r.owner}/${r.repo}`;
+        reposSection.appendChild(link);
+      }
+      if (repos.length > 5) {
+        const more = document.createElement("div");
+        more.style.cssText = "font-size:11px;color:var(--color-muted-subtle);margin-top:2px";
+        more.textContent = `+${repos.length - 5} more`;
+        reposSection.appendChild(more);
+      }
+    })
+    .catch(() => { reposSection.style.display = "none"; });
 
   return el;
 }
@@ -463,7 +501,7 @@ export function StargazerMap({ points, comparePoints, flyTarget, onFlyDone, onRe
           const props = e.features?.[0]?.properties as Record<string, unknown> | undefined;
           if (!props) return;
           const coords = (e.features![0].geometry as GeoJSON.Point).coordinates as [number, number];
-          new maplibregl.Popup({ className: "starmapper-popup", maxWidth: "260px" })
+          new maplibregl.Popup({ className: "starmapper-popup", maxWidth: "320px" })
             .setLngLat(coords)
             .setDOMContent(makePopupElement(props))
             .addTo(map);
@@ -474,7 +512,7 @@ export function StargazerMap({ points, comparePoints, flyTarget, onFlyDone, onRe
           const props = e.features?.[0]?.properties as Record<string, unknown> | undefined;
           if (!props) return;
           const coords = (e.features![0].geometry as GeoJSON.Point).coordinates as [number, number];
-          new maplibregl.Popup({ className: "starmapper-popup", maxWidth: "260px" })
+          new maplibregl.Popup({ className: "starmapper-popup", maxWidth: "320px" })
             .setLngLat(coords)
             .setDOMContent(makePopupElement(props))
             .addTo(map);

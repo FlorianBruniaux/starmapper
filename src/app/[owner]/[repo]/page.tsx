@@ -8,7 +8,9 @@ import { TokenModal, getStoredToken } from "@/components/token-modal";
 import { saveBookmark } from "@/lib/bookmarks";
 import { FilterCombobox } from "@/components/filter-combobox";
 import { isCountry, normalizeCountry } from "@/lib/countries";
+import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { StatsList } from "@/components/stats-list";
 import { useTheme } from "@/hooks/useTheme";
 import { MAP_STYLE_DARK, MAP_STYLE_LIGHT } from "@/lib/theme";
 
@@ -872,6 +874,15 @@ export default function MapPage({
 
       {/* Top-right controls row */}
       <div className="absolute top-3 right-3 z-20 flex items-center gap-2">
+        <Link
+          href="/explore"
+          className="flex items-center gap-1.5 text-xs text-muted hover:text-foreground border border-border bg-background/80 hover:border-accent-blue px-3 py-1.5 rounded-lg transition-colors"
+        >
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+            <path d="M2.5 2A1.5 1.5 0 0 0 1 3.5V5a5 5 0 0 0 4.797 4.994A4.001 4.001 0 0 0 8 13.277V14H5.5a.75.75 0 0 0 0 1.5h5a.75.75 0 0 0 0-1.5H8v-.723a4.001 4.001 0 0 0 2.203-3.283A5 5 0 0 0 15 5V3.5A1.5 1.5 0 0 0 13.5 2h-11Zm11 1.5V5a3.5 3.5 0 0 1-2.81 3.441A4.005 4.005 0 0 0 11 7V3.5h2.5Zm-10 0H5V7a4.005 4.005 0 0 0 .31 1.441A3.5 3.5 0 0 1 2.5 5V3.5Z" />
+          </svg>
+          Leaderboard
+        </Link>
         <ThemeToggle />
         <button
           onClick={() => setTokenOpen(true)}
@@ -898,6 +909,18 @@ export default function MapPage({
         onReady={(controls) => { mapControlsRef.current = controls; }}
         styleUrl={mapStyleUrl}
       />
+
+      {/* Attribution */}
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 pointer-events-none">
+        <a
+          href="https://florian.bruniaux.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="pointer-events-auto text-[10px] text-accent-orange/80 hover:text-accent-orange transition-colors bg-background/60 backdrop-blur-sm px-2 py-0.5 rounded-full border border-accent-orange/20"
+        >
+          by Florian Bruniaux
+        </a>
+      </div>
 
       {/* Pre-scan overlay (no cache) */}
       {status === "idle" && cacheCheckDone && repoInfo && estimate && (
@@ -2430,22 +2453,6 @@ export default function MapPage({
   );
 }
 
-const StatsList = ({ items, max }: { items: [string, number][]; max: number }) => (
-  <div className="space-y-2">
-    {items.map(([name, count]) => (
-      <div key={name} className="flex items-center gap-3">
-        <div className="text-foreground text-xs w-36 truncate flex-shrink-0">{name}</div>
-        <div className="flex-1 bg-surface-alt rounded-full h-1.5 overflow-hidden">
-          <div
-            className="bg-accent-blue h-full rounded-full"
-            style={{ width: `${(count / max) * 100}%` }}
-          />
-        </div>
-        <span className="text-muted text-xs w-8 text-right flex-shrink-0">{count}</span>
-      </div>
-    ))}
-  </div>
-);
 
 const GrowthChart = ({ data }: { data: [string, number][] }) => {
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
