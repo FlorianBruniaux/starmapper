@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { gzipSync } from "zlib";
 import { prisma } from "@/lib/db";
+import { checkDbHealth, DB_CRITICAL_PCT } from "@/lib/db-health";
 
 const MAX_CACHEABLE_STARS = 100_000;
 
@@ -39,6 +40,10 @@ export const POST = async (req: NextRequest) => {
     } else {
       return NextResponse.json({ error: "invalid_params" }, { status: 400 });
     }
+
+    const health = await checkDbHealth();
+    if (health.ok && health.usagePct >= DB_CRITICAL_PCT)
+      return NextResponse.json({ error: "storage_full" }, { status: 507 });
 
     await prisma.stargazerCache.upsert({
       where: { owner_repo: key },

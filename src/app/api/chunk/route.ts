@@ -69,13 +69,10 @@ export async function POST(req: NextRequest) {
         if (!known) return true; // new user — geocode
         const isStale = Date.now() - known.fetchedAt.getTime() > STALE_MS;
         const locationChanged = known.location !== (sg.location ?? null);
-        return isStale && locationChanged; // stale AND moved — re-geocode
+        return isStale || locationChanged; // stale OR moved — re-geocode
       })
       .map((s) => s.location ?? "")
       .filter(Boolean);
-
-    const cacheHits = logins.length - locationsToGeocode.length;
-    if (cacheHits > 0) console.debug(`[chunk] cache hit: ${cacheHits}/${logins.length}, geocoded: ${locationsToGeocode.length}`);
 
     const geoMap = await geocodeBatch(locationsToGeocode);
 

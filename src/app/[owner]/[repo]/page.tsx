@@ -569,7 +569,12 @@ export default function MapPage({
         if (!chunk.nextCursor) break;
         cursor = chunk.nextCursor;
       }
-    } catch {}
+    } catch (e) {
+      console.error("[compare] scan failed:", e);
+      setCompareStatus("done");
+      compareRunningRef.current = false;
+      return;
+    }
     setCompareStatus("done");
     compareRunningRef.current = false;
   }, [compareOwner, compareRepo, ghHeaders]);

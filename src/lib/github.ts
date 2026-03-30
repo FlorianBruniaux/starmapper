@@ -121,7 +121,7 @@ export async function fetchStargazersPage(
       accountCreatedAt: e.node.createdAt ?? null,
       avatarUrl: e.node.avatarUrl,
       starredAt: e.starredAt,
-      linkedinUrl: linkedinNode?.url ?? null,
+      linkedinUrl: linkedinNode?.url?.startsWith("https://") ? linkedinNode.url : null,
     });
   }
 

@@ -28,7 +28,7 @@ async function fetchUser(login: string, token: string): Promise<UserDetail | nul
       email: u.email ?? null,
       bio: u.bio ?? null,
       company: u.company ? u.company.trim().replace(/^@/, "") : null,
-      blog: u.blog ?? null,
+      blog: typeof u.blog === "string" && u.blog.startsWith("https://") ? u.blog : null,
       location: u.location ?? null,
       twitter_username: u.twitter_username ?? null,
       followers: u.followers ?? 0,
@@ -49,8 +49,12 @@ export async function POST(req: NextRequest) {
     if (logins.length > 200)
       return NextResponse.json({ error: "Max 200 users per request" }, { status: 400 });
 
+    const loginRe = /^[a-zA-Z0-9._-]{1,100}$/;
+    if (!logins.every((l) => typeof l === "string" && loginRe.test(l)))
+      return NextResponse.json({ error: "invalid_login" }, { status: 400 });
+
     const token = req.headers.get("x-gh-token") || process.env.GITHUB_TOKEN;
-    if (!token) return NextResponse.json({ error: "No GitHub token — add your token via the key icon" }, { status: 500 });
+    if (!token) return NextResponse.json({ error: "github_token_required" }, { status: 401 });
 
     // Fetch with concurrency 10
     const CONCURRENCY = 10;

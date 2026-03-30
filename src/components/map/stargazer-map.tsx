@@ -213,9 +213,10 @@ function makePopupElement(props: Record<string, unknown>): HTMLElement {
   meta.textContent = lines.join(" · ");
   if (lines.length) el.appendChild(meta);
 
-  if (linkedinUrl) {
+  const safeLinkedinUrl = typeof linkedinUrl === "string" && linkedinUrl.startsWith("https://") ? linkedinUrl : null;
+  if (safeLinkedinUrl) {
     const liLink = document.createElement("a");
-    liLink.href = linkedinUrl;
+    liLink.href = safeLinkedinUrl;
     liLink.target = "_blank";
     liLink.rel = "noopener noreferrer";
     liLink.style.cssText = "display:inline-flex;align-items:center;gap:4px;margin-top:6px;font-size:12px;color:var(--color-accent-blue);text-decoration:none;font-weight:500";
