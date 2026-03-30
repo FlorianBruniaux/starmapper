@@ -175,3 +175,34 @@ button:disabled, [role="button"][aria-disabled="true"] {
   color: var(--color-foreground);
   background: none;
 }
+
+/* Country choropleth tooltip */
+.choropleth-tooltip .maplibregl-popup-content {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  pointer-events: none;
+}
+
+.choropleth-tooltip .maplibregl-popup-tip {
+  border-top-color: var(--color-surface);
+  border-bottom-color: var(--color-surface);
+}
+
+.choropleth-tip {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.choropleth-tip strong {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-foreground);
+}
+
+.choropleth-tip span {
+  font-size: 12px;
+  color: var(--color-muted);
+}
