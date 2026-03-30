@@ -7,6 +7,7 @@ import { useState } from "react";
 import { Modal } from "@/components/modal";
 
 const TOKEN_KEY = "gh_token";
+const USERNAME_KEY = "gh_username";
 
 export const getStoredToken = (): string => {
   try { return localStorage.getItem(TOKEN_KEY) ?? ""; } catch { return ""; }
@@ -16,6 +17,17 @@ export const setStoredToken = (token: string) => {
   try {
     if (token) localStorage.setItem(TOKEN_KEY, token);
     else localStorage.removeItem(TOKEN_KEY);
+  } catch { /* ignore */ }
+};
+
+export const getStoredUsername = (): string => {
+  try { return localStorage.getItem(USERNAME_KEY) ?? ""; } catch { return ""; }
+};
+
+export const setStoredUsername = (username: string) => {
+  try {
+    if (username) localStorage.setItem(USERNAME_KEY, username);
+    else localStorage.removeItem(USERNAME_KEY);
   } catch { /* ignore */ }
 };
 

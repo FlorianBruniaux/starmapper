@@ -3,6 +3,7 @@
 
 "use client";
 
+import { useState } from "react";
 import type { StargazerPoint } from "@/app/api/chunk/route";
 import type { TimeEstimate } from "@/lib/format";
 import { formatEstimate, timeAgo } from "@/lib/format";
@@ -49,6 +50,9 @@ type Props = {
   newStarsCount: number;
   handleStartScan: () => void;
   hasToken: boolean;
+  storedUsername: string;
+  onSetUsername: (v: string) => void;
+  findMe: () => void;
   error: string | null;
   findInput: string;
   setFindInput: (v: string) => void;
@@ -63,9 +67,12 @@ export const TopPanel = ({
   points, total, unmapped, setDrawerOpen,
   status, pct, retryIn, processed, estimate,
   cachedAt, latestStarredAt, startRefresh, newStarsCount, handleStartScan, hasToken,
+  storedUsername, onSetUsername, findMe,
   error,
   findInput, setFindInput, setFindStatus, findUser, findStatus,
 }: Props) => {
+  const [askingUsername, setAskingUsername] = useState(false);
+  const [usernameInput, setUsernameInput] = useState("");
   const mappingPct = total > 0 ? Math.round((points.length / total) * 100) : 0;
   const locationCount = new Set(
     points.map((p) => p.location?.split(",").pop()?.trim())
@@ -341,6 +348,75 @@ export const TopPanel = ({
             Not found in stargazers
           </p>
         )}
+
+        {/* ── Find me shortcut ──────────────────────────────────────────── */}
+        <div className="mt-2 pt-2 border-t border-border-subtle">
+          {storedUsername && !askingUsername ? (
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={findMe}
+                className="text-2xs text-accent-blue hover:underline flex items-center gap-1 flex-shrink-0"
+              >
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/>
+                </svg>
+                Find me
+              </button>
+              <span className="text-2xs text-muted-subtle truncate">@{storedUsername}</span>
+              <button
+                onClick={() => { onSetUsername(""); setAskingUsername(false); }}
+                className="ml-auto text-muted-subtle hover:text-muted text-xs leading-none flex-shrink-0"
+                title="Clear my username"
+              >
+                ×
+              </button>
+            </div>
+          ) : askingUsername ? (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const v = usernameInput.trim();
+                if (v) { onSetUsername(v); setAskingUsername(false); setUsernameInput(""); }
+              }}
+              className="flex items-center gap-1.5"
+            >
+              <input
+                autoFocus
+                value={usernameInput}
+                onChange={(e) => setUsernameInput(e.target.value)}
+                placeholder="Your GitHub username…"
+                className="flex-1 bg-surface border border-border rounded-md px-2 py-1 text-xs
+                  text-foreground placeholder:text-muted-subtle
+                  focus:outline-none focus:border-accent-blue focus:ring-1 focus:ring-accent-blue/30
+                  min-w-0"
+              />
+              <button
+                type="submit"
+                className="text-2xs px-2 py-1 rounded-md bg-accent-blue/10 text-accent-blue
+                  border border-accent-blue/30 hover:bg-accent-blue/20 transition-colors flex-shrink-0"
+              >
+                Save
+              </button>
+              <button
+                type="button"
+                onClick={() => { setAskingUsername(false); setUsernameInput(""); }}
+                className="text-muted-subtle hover:text-muted text-xs leading-none flex-shrink-0"
+              >
+                ×
+              </button>
+            </form>
+          ) : (
+            <button
+              onClick={() => setAskingUsername(true)}
+              className="text-2xs text-muted-subtle hover:text-muted transition-colors flex items-center gap-1"
+            >
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/>
+              </svg>
+              Set my username for quick Find me
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -7,7 +7,7 @@ import { use, useEffect, useRef, useState, useCallback, useMemo, useDeferredValu
 import { StargazerMapDynamic } from "@/components/map/stargazer-map-dynamic";
 import type { StargazerPoint, ChunkResponse } from "@/app/api/chunk/route";
 import type { RepoStats } from "@/app/api/stats/[owner]/[repo]/route";
-import { TokenModal, getStoredToken } from "@/components/token-modal";
+import { TokenModal, getStoredToken, getStoredUsername, setStoredUsername } from "@/components/token-modal";
 import { Modal } from "@/components/modal";
 import { saveBookmark } from "@/lib/bookmarks";
 import { FilterCombobox } from "@/components/filter-combobox";
@@ -196,6 +196,7 @@ export default function MapPage({
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [tokenOpen, setTokenOpen] = useState(false);
   const [hasToken, setHasToken] = useState(false);
+  const [storedUsername, setStoredUsernameState] = useState("");
   const [repoNotFound, setRepoNotFound] = useState(false);
   const [cacheCheckDone, setCacheCheckDone] = useState(false);
   const mapControlsRef = useRef<{
@@ -234,8 +235,11 @@ export default function MapPage({
     return h;
   }, []);
 
-  // Sync hasToken state client-side (localStorage not available during SSR)
-  useEffect(() => { setHasToken(!!getStoredToken()); }, []);
+  // Sync localStorage state client-side (not available during SSR)
+  useEffect(() => {
+    setHasToken(!!getStoredToken());
+    setStoredUsernameState(getStoredUsername());
+  }, []);
 
   // Load repo info
   useEffect(() => {
@@ -740,8 +744,8 @@ export default function MapPage({
   const tablePadBottom = (filteredStargazers.length - tableVEnd) * TABLE_ROW_H;
   const isSearchPending = allSearch !== deferredSearch;
 
-  const findUser = useCallback(() => {
-    const raw = findInput.trim();
+  const findUser = useCallback((loginOverride?: string) => {
+    const raw = (loginOverride ?? findInput).trim();
     if (!raw) return;
     // Accept: https://github.com/login, github.com/login, or plain login
     const login = raw.replace(/^https?:\/\//i, "").replace(/^github\.com\//i, "").split("/")[0].toLowerCase();
@@ -759,6 +763,18 @@ export default function MapPage({
       setTimeout(() => setFindStatus("idle"), 3500);
     }, 150);
   }, [findInput, points, allStargazers]);
+
+  const handleSetUsername = useCallback((username: string) => {
+    setStoredUsername(username);
+    setStoredUsernameState(username);
+  }, []);
+
+  const findMe = useCallback(() => {
+    const username = storedUsername;
+    if (!username) return;
+    setFindInput(username);
+    findUser(username);
+  }, [storedUsername, findUser]);
 
   const toggleSort = (key: SortKey) =>
     setAllSort((prev) => ({ key, dir: prev.key === key ? (-prev.dir as 1 | -1) : (key === "followers" || key === "starredAt") ? -1 : 1 }));
@@ -1081,6 +1097,9 @@ export default function MapPage({
         newStarsCount={newStarsCount}
         handleStartScan={handleStartScan}
         hasToken={hasToken}
+        storedUsername={storedUsername}
+        onSetUsername={handleSetUsername}
+        findMe={findMe}
         error={error || null}
         findInput={findInput}
         setFindInput={setFindInput}
