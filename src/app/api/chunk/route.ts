@@ -6,6 +6,8 @@ import { fetchStargazersPage, GitHubRateLimitError } from "@/lib/github";
 import { geocodeBatch } from "@/lib/geocoder";
 import { checkDbHealth, DB_WARN_PCT } from "@/lib/db-health";
 import { bulkUpsertUsers, bulkUpsertStarEvents, bulkReadUsers, type UserWritePayload } from "@/lib/user-cache";
+import { validateOwnerRepo } from "@/lib/api-validation";
+import { jsonError, extractGhToken } from "@/lib/api-helpers";
 
 export interface StargazerPoint {
   login: string;
@@ -37,28 +39,21 @@ const MAX_CONCURRENT = 3;
 
 export async function POST(req: NextRequest) {
   if (activeSessions >= MAX_CONCURRENT) {
-    return NextResponse.json(
-      { error: "Server busy — too many concurrent scans. Retry in a few seconds." },
-      { status: 429 }
-    );
+    return jsonError("Server busy — too many concurrent scans. Retry in a few seconds.", 429);
   }
 
   activeSessions++;
   try {
     const { owner, repo, cursor, since } = await req.json();
-    if (!owner || !repo) return NextResponse.json({ error: "Missing owner/repo" }, { status: 400 });
-
-    const repoNameRe = /^[a-zA-Z0-9._-]{1,100}$/;
-    if (!repoNameRe.test(owner) || !repoNameRe.test(repo)) {
-      return NextResponse.json({ error: "Invalid owner/repo format" }, { status: 400 });
-    }
+    const key = validateOwnerRepo(owner, repo);
+    if (!key) return jsonError("Invalid owner/repo format", 400);
 
     if (since !== undefined && (typeof since !== "string" || isNaN(new Date(since).getTime()))) {
-      return NextResponse.json({ error: "Invalid since parameter" }, { status: 400 });
+      return jsonError("Invalid since parameter", 400);
     }
 
-    const clientToken = req.headers.get("x-gh-token") ?? undefined;
-    const page = await fetchStargazersPage(owner, repo, cursor ?? null, since ?? undefined, clientToken);
+    const clientToken = extractGhToken(req);
+    const page = await fetchStargazersPage(key.owner, key.repo, cursor ?? null, since ?? undefined, clientToken);
 
     // Phase 2: check user cache before geocoding — skip Jawg for known users.
     const STALE_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
@@ -107,8 +102,8 @@ export async function POST(req: NextRequest) {
 
     // Fire-and-forget: persist users + star events to DB for cross-repo analytics.
     // Never awaited — does not affect chunk response time.
-    const ownerKey = owner.toLowerCase();
-    const repoKey = repo.toLowerCase();
+    const ownerKey = key.owner;
+    const repoKey = key.repo;
     checkDbHealth().then((health) => {
       const dbWarn = health.ok && health.usagePct >= DB_WARN_PCT;
       if (dbWarn) console.warn(`[chunk] DB storage at ${health.usagePct}%`);
@@ -167,8 +162,8 @@ export async function POST(req: NextRequest) {
     console.error("[chunk] Error:", err);
     const msg = err instanceof Error && err.message.startsWith("GitHub API error")
       ? err.message
-      : "Internal server error";
-    return NextResponse.json({ error: msg }, { status: 500 });
+      : "internal";
+    return jsonError(msg, 500);
   } finally {
     activeSessions--;
   }

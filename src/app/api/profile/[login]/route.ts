@@ -3,6 +3,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { jsonError } from "@/lib/api-helpers";
 
 export type ProfileResponse = {
   login: string;
@@ -20,7 +21,7 @@ export const GET = async (
 ) => {
   const { login } = await params;
   if (!/^[a-zA-Z0-9_-]{1,100}$/.test(login)) {
-    return NextResponse.json({ error: "invalid_params" }, { status: 400 });
+    return jsonError("invalid_params", 400);
   }
 
   try {
@@ -37,7 +38,7 @@ export const GET = async (
     ]);
 
     if (!user) {
-      return NextResponse.json({ error: "not_found" }, { status: 404 });
+      return jsonError("not_found", 404);
     }
 
     const profile: ProfileResponse = {
@@ -50,6 +51,6 @@ export const GET = async (
     });
   } catch (err) {
     console.error("[profile] Error:", err);
-    return NextResponse.json({ error: "internal" }, { status: 500 });
+    return jsonError("internal", 500);
   }
 };

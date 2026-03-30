@@ -2,9 +2,11 @@
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 
 import { NextRequest, NextResponse } from "next/server";
-import { gunzipSync } from "zlib";
 import { prisma } from "@/lib/db";
 import { feature } from "topojson-client";
+import { normalizeOwnerRepo } from "@/lib/api-validation";
+import { decompressGzBase64 } from "@/lib/compression";
+import { fmt } from "@/lib/format";
 import type { Topology, GeometryCollection } from "topojson-specification";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -55,20 +57,11 @@ const buildLandPath = (): string => {
 
 const LAND_PATH = buildLandPath();
 
-const decompress = (value: unknown): Point[] => {
-  if (typeof value === "string") {
-    return JSON.parse(gunzipSync(Buffer.from(value, "base64")).toString("utf8"));
-  }
-  return Array.isArray(value) ? value : [];
-};
-
 // Equirectangular projection (same formula as LAND_PATH)
 const project = (lat: number, lng: number, w: number, h: number) => ({
   x: Math.round(((lng + 180) / 360) * w),
   y: Math.round(((90 - lat) / 180) * h),
 });
-
-const fmt = (n: number) => (n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n));
 
 const truncate = (s: string, max: number) =>
   s.length > max ? s.slice(0, max - 1) + "…" : s;
@@ -154,7 +147,7 @@ export const GET = async (
 ) => {
   const { owner, repo } = await params;
   const theme = req.nextUrl.searchParams.get("theme") === "light" ? "light" : "dark";
-  const key = { owner: owner.toLowerCase(), repo: repo.toLowerCase() };
+  const key = normalizeOwnerRepo(owner, repo);
 
   let points: Point[] = [];
   let mappedCount = 0;
@@ -168,7 +161,7 @@ export const GET = async (
     ]);
 
     if (cached) {
-      points = decompress(cached.points);
+      points = decompressGzBase64<Point>(cached.points);
       totalCount = cached.totalCount;
     }
     if (badge) {

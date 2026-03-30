@@ -5,6 +5,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { gzipSync } from "zlib";
 import { prisma } from "@/lib/db";
 import { checkDbHealth, DB_CRITICAL_PCT } from "@/lib/db-health";
+import { validateOwnerRepo } from "@/lib/api-validation";
+import { jsonError } from "@/lib/api-helpers";
 
 const MAX_CACHEABLE_STARS = 100_000;
 
@@ -13,16 +15,10 @@ export const POST = async (req: NextRequest) => {
     const body = await req.json();
     const { owner, repo, points, unmapped, pointsGz, unmappedGz, totalCount } = body;
 
-    const nameRe = /^[a-zA-Z0-9._-]{1,100}$/;
-    if (
-      typeof owner !== "string" || !nameRe.test(owner) ||
-      typeof repo !== "string" || !nameRe.test(repo) ||
-      typeof totalCount !== "number" || totalCount < 0 || totalCount > MAX_CACHEABLE_STARS
-    ) {
-      return NextResponse.json({ error: "invalid_params" }, { status: 400 });
+    const key = validateOwnerRepo(owner, repo);
+    if (!key || typeof totalCount !== "number" || totalCount < 0 || totalCount > MAX_CACHEABLE_STARS) {
+      return jsonError("invalid_params", 400);
     }
-
-    const key = { owner: owner.toLowerCase(), repo: repo.toLowerCase() };
 
     let finalPointsGz: string;
     let finalUnmappedGz: string;
@@ -31,26 +27,26 @@ export const POST = async (req: NextRequest) => {
       // New format: client compressed client-side to stay under Vercel's 4.5MB body limit
       // 10 MB base64 ≈ 7.5 MB gzip — well above the ~800 KB real-world maximum for 100k stars
       if (pointsGz.length > 10_000_000 || unmappedGz.length > 10_000_000) {
-        return NextResponse.json({ error: "payload_too_large" }, { status: 413 });
+        return jsonError("payload_too_large", 413);
       }
       finalPointsGz = pointsGz;
       finalUnmappedGz = unmappedGz;
     } else if (Array.isArray(points) && Array.isArray(unmapped)) {
       // Legacy format: raw arrays — compress on server
       if (points.length + unmapped.length > MAX_CACHEABLE_STARS) {
-        return NextResponse.json({ error: "too_large" }, { status: 413 });
+        return jsonError("too_large", 413);
       }
       type RawPoint = { bio?: unknown; avatarUrl?: unknown; [k: string]: unknown };
       const slim = (points as RawPoint[]).map(({ bio: _bio, avatarUrl: _av, ...rest }) => rest);
       finalPointsGz = gzipSync(JSON.stringify(slim)).toString("base64");
       finalUnmappedGz = gzipSync(JSON.stringify(unmapped)).toString("base64");
     } else {
-      return NextResponse.json({ error: "invalid_params" }, { status: 400 });
+      return jsonError("invalid_params", 400);
     }
 
     const health = await checkDbHealth();
     if (health.ok && health.usagePct >= DB_CRITICAL_PCT)
-      return NextResponse.json({ error: "storage_full" }, { status: 507 });
+      return jsonError("storage_full", 507);
 
     await prisma.stargazerCache.upsert({
       where: { owner_repo: key },
@@ -60,6 +56,6 @@ export const POST = async (req: NextRequest) => {
 
     return NextResponse.json({ ok: true });
   } catch {
-    return NextResponse.json({ error: "internal" }, { status: 500 });
+    return jsonError("internal", 500);
   }
 };

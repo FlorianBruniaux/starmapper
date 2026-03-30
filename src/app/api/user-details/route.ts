@@ -2,6 +2,8 @@
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 
 import { NextRequest, NextResponse } from "next/server";
+import { LOGIN_RE } from "@/lib/api-validation";
+import { jsonError, extractGhToken } from "@/lib/api-helpers";
 
 export type UserDetail = {
   login: string;
@@ -48,16 +50,15 @@ export async function POST(req: NextRequest) {
   try {
     const { logins } = await req.json() as { logins: string[] };
     if (!Array.isArray(logins) || logins.length === 0)
-      return NextResponse.json({ error: "Missing logins" }, { status: 400 });
+      return jsonError("Missing logins", 400);
     if (logins.length > 200)
-      return NextResponse.json({ error: "Max 200 users per request" }, { status: 400 });
+      return jsonError("Max 200 users per request", 400);
 
-    const loginRe = /^[a-zA-Z0-9._-]{1,100}$/;
-    if (!logins.every((l) => typeof l === "string" && loginRe.test(l)))
-      return NextResponse.json({ error: "invalid_login" }, { status: 400 });
+    if (!logins.every((l) => typeof l === "string" && LOGIN_RE.test(l)))
+      return jsonError("invalid_login", 400);
 
-    const token = req.headers.get("x-gh-token") || process.env.GITHUB_TOKEN;
-    if (!token) return NextResponse.json({ error: "github_token_required" }, { status: 401 });
+    const token = extractGhToken(req);
+    if (!token) return jsonError("github_token_required", 401);
 
     // Fetch with concurrency 10
     const CONCURRENCY = 10;
@@ -71,6 +72,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ users: results });
   } catch (e) {
     console.error("[user-details] Error:", e);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return jsonError("internal", 500);
   }
 }

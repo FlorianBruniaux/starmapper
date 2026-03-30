@@ -2,32 +2,24 @@
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 
 import { NextRequest, NextResponse } from "next/server";
-import { gunzipSync } from "zlib";
 import { prisma } from "@/lib/db";
-
-// Decompress points/unmapped stored as gzip+base64 string, or return as-is if legacy JSON array.
-const decompress = (value: unknown): unknown[] => {
-  if (typeof value === "string") {
-    // New format: gzip+base64 encoded
-    return JSON.parse(gunzipSync(Buffer.from(value, "base64")).toString("utf8"));
-  }
-  // Legacy format: plain JSON array (rows written before this change)
-  return Array.isArray(value) ? value : [];
-};
+import { normalizeOwnerRepo } from "@/lib/api-validation";
+import { jsonError } from "@/lib/api-helpers";
+import { decompressGzBase64 } from "@/lib/compression";
 
 export const GET = async (
   _req: NextRequest,
   { params }: { params: Promise<{ owner: string; repo: string }> },
 ) => {
   const { owner, repo } = await params;
-  const key = { owner: owner.toLowerCase(), repo: repo.toLowerCase() };
+  const key = normalizeOwnerRepo(owner, repo);
 
   try {
     const cached = await prisma.stargazerCache.findUnique({ where: { owner_repo: key } });
 
     if (cached) {
-      const points = decompress(cached.points) as Record<string, unknown>[];
-      const unmapped = decompress(cached.unmapped);
+      const points = decompressGzBase64<Record<string, unknown>>(cached.points);
+      const unmapped = decompressGzBase64(cached.unmapped);
 
       // Reconstruct avatarUrl from login (stripped on write to save space)
       // Legacy rows already have avatarUrl — only add if missing
@@ -50,8 +42,8 @@ export const GET = async (
       return NextResponse.json({ lastScan: badge.updatedAt.toISOString() }, { status: 206 });
     }
 
-    return NextResponse.json({ error: "not_found" }, { status: 404 });
+    return jsonError("not_found", 404);
   } catch {
-    return NextResponse.json({ error: "internal" }, { status: 500 });
+    return jsonError("internal", 500);
   }
 };

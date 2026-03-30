@@ -13,6 +13,9 @@ export const formatEstimate = (e: TimeEstimate): string => {
   return `${e.min}–${e.max} ${e.unit}`;
 };
 
+/** Compact number formatter: 1234 → "1.2k", 999 → "999". */
+export const fmt = (n: number): string => (n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n));
+
 export const timeAgo = (ms: number): string => {
   const diff = Date.now() - ms;
   const m = Math.floor(diff / 60000);

@@ -2,19 +2,16 @@
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 
 import { NextRequest, NextResponse } from "next/server";
+import { validateOwnerRepo } from "@/lib/api-validation";
+import { jsonError, extractGhToken } from "@/lib/api-helpers";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  const owner = searchParams.get("owner");
-  const repo = searchParams.get("repo");
-  if (!owner || !repo) return NextResponse.json({ error: "Missing params" }, { status: 400 });
+  const key = validateOwnerRepo(searchParams.get("owner"), searchParams.get("repo"));
+  if (!key) return jsonError("Invalid owner/repo format", 400);
 
-  const repoNameRe = /^[a-zA-Z0-9._-]{1,100}$/;
-  if (!repoNameRe.test(owner) || !repoNameRe.test(repo)) {
-    return NextResponse.json({ error: "Invalid owner/repo format" }, { status: 400 });
-  }
-
-  const token = req.headers.get("x-gh-token") || process.env.GITHUB_TOKEN;
+  const { owner, repo } = key;
+  const token = extractGhToken(req);
   try {
     const res = await fetch(`https://api.github.com/repos/${owner}/${repo}`, {
       headers: {
@@ -23,7 +20,7 @@ export async function GET(req: NextRequest) {
       },
       next: { revalidate: 300 },
     });
-    if (!res.ok) return NextResponse.json({ error: "Repo not found" }, { status: 404 });
+    if (!res.ok) return jsonError("Repo not found", 404);
     const data = await res.json();
     return NextResponse.json({
       name: data.full_name,
@@ -33,6 +30,6 @@ export async function GET(req: NextRequest) {
       avatar: data.owner?.avatar_url,
     });
   } catch {
-    return NextResponse.json({ error: "Failed to reach GitHub" }, { status: 502 });
+    return jsonError("Failed to reach GitHub", 502);
   }
 }

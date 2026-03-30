@@ -4,6 +4,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { parseLocation } from "@/lib/location-parser";
+import { jsonError } from "@/lib/api-helpers";
 
 export type ExploreData = {
   totalUsers: number;
@@ -137,6 +138,6 @@ export const GET = async () => {
     });
   } catch (err) {
     console.error("[explore] Error:", err);
-    return NextResponse.json({ error: "internal" }, { status: 500 });
+    return jsonError("internal", 500);
   }
 };

@@ -4,6 +4,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { parseLocation } from "@/lib/location-parser";
+import { normalizeOwnerRepo, OWNER_REPO_RE } from "@/lib/api-validation";
+import { jsonError } from "@/lib/api-helpers";
 
 export type RepoStats = {
   totalStars: number;
@@ -26,12 +28,11 @@ export const GET = async (
   { params }: { params: Promise<{ owner: string; repo: string }> },
 ) => {
   const { owner, repo } = await params;
-  const nameRe = /^[a-zA-Z0-9._-]{1,100}$/;
-  if (!nameRe.test(owner) || !nameRe.test(repo)) {
-    return NextResponse.json({ error: "invalid_params" }, { status: 400 });
+  if (!OWNER_REPO_RE.test(owner) || !OWNER_REPO_RE.test(repo)) {
+    return jsonError("invalid_params", 400);
   }
 
-  const key = { owner: owner.toLowerCase(), repo: repo.toLowerCase() };
+  const key = normalizeOwnerRepo(owner, repo);
 
   try {
     const events = await prisma.starEvent.findMany({
@@ -48,7 +49,7 @@ export const GET = async (
     });
 
     if (!events.length) {
-      return NextResponse.json({ error: "no_data" }, { status: 404 });
+      return jsonError("no_data", 404);
     }
 
     const countryCount = new Map<string, number>();
@@ -135,6 +136,6 @@ export const GET = async (
     });
   } catch (err) {
     console.error("[stats] Error:", err);
-    return NextResponse.json({ error: "internal" }, { status: 500 });
+    return jsonError("internal", 500);
   }
 };

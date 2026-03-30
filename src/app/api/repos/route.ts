@@ -3,6 +3,7 @@
 
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { jsonError } from "@/lib/api-helpers";
 
 export type MappedRepo = {
   owner: string;
@@ -33,6 +34,6 @@ export const GET = async () => {
 
     return NextResponse.json({ repos });
   } catch {
-    return NextResponse.json({ error: "internal" }, { status: 500 });
+    return jsonError("internal", 500);
   }
 };

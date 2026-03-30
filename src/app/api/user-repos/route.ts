@@ -2,6 +2,7 @@
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 
 import { NextRequest, NextResponse } from "next/server";
+import { extractGhToken, jsonError } from "@/lib/api-helpers";
 
 export type UserRepo = {
   name: string;
@@ -54,10 +55,10 @@ const parseTotalPages = (link: string): number => {
 export const GET = async (req: NextRequest) => {
   const username = req.nextUrl.searchParams.get("username") ?? "";
   if (!USERNAME_RE.test(username)) {
-    return NextResponse.json({ error: "Invalid username" }, { status: 400 });
+    return jsonError("Invalid username", 400);
   }
 
-  const token = req.headers.get("x-gh-token");
+  const token = extractGhToken(req);
   const ghHeaders: Record<string, string> = {
     "User-Agent": "StarMapper/1.0",
     Accept: "application/vnd.github.v3+json",
@@ -74,11 +75,11 @@ export const GET = async (req: NextRequest) => {
     ]);
 
     if (userRes.status === 404) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+      return jsonError("User not found", 404);
     }
     if (!userRes.ok || !page1Res.ok) {
       const status = userRes.status === 403 || page1Res.status === 403 ? 403 : 502;
-      return NextResponse.json({ error: "GitHub API error" }, { status });
+      return jsonError("GitHub API error", status);
     }
 
     const ghUser = (await userRes.json()) as GhUser;
@@ -108,6 +109,6 @@ export const GET = async (req: NextRequest) => {
 
     return NextResponse.json({ user, repos });
   } catch {
-    return NextResponse.json({ error: "Internal error" }, { status: 500 });
+    return jsonError("internal", 500);
   }
 };

@@ -3,14 +3,11 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { normalizeOwnerRepo } from "@/lib/api-validation";
+import { fmt } from "@/lib/format";
 
 // Cache badge SVG for 6 hours at the CDN level
 export const revalidate = 21600;
-
-const fmt = (n: number): string => {
-  if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
-  return String(n);
-};
 
 // Approximate character width for Verdana 11px (average ~6.5px/char)
 const textWidth = (s: string) => s.length * 6.5;
@@ -51,13 +48,14 @@ export const GET = async (
   { params }: { params: Promise<{ owner: string; repo: string }> },
 ) => {
   const { owner, repo } = await params;
+  const key = normalizeOwnerRepo(owner, repo);
 
   let mappedCount = 0;
   let countryCount = 0;
 
   try {
     const cached = await prisma.badgeCache.findUnique({
-      where: { owner_repo: { owner: owner.toLowerCase(), repo: repo.toLowerCase() } },
+      where: { owner_repo: key },
     });
     if (cached) {
       mappedCount = cached.mappedCount;
