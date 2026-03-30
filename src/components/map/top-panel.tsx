@@ -48,6 +48,7 @@ type Props = {
   startRefresh: () => void;
   newStarsCount: number;
   handleStartScan: () => void;
+  hasToken: boolean;
   error: string | null;
   findInput: string;
   setFindInput: (v: string) => void;
@@ -61,7 +62,7 @@ export const TopPanel = ({
   compareOwner, compareRepo, compareInfo, compareStatus, comparePoints,
   points, total, unmapped, setDrawerOpen,
   status, pct, retryIn, processed, estimate,
-  cachedAt, latestStarredAt, startRefresh, newStarsCount, handleStartScan,
+  cachedAt, latestStarredAt, startRefresh, newStarsCount, handleStartScan, hasToken,
   error,
   findInput, setFindInput, setFindStatus, findUser, findStatus,
 }: Props) => {
@@ -247,13 +248,23 @@ export const TopPanel = ({
                 onClick={startRefresh}
                 className="text-2xs text-accent-blue hover:underline flex items-center gap-1"
               >
+                {!hasToken && (
+                  <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="opacity-60">
+                    <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                  </svg>
+                )}
                 ↻ {newStarsCount > 0 ? `${newStarsCount} new stars` : "Refresh"}
               </button>
             )}
             <button
               onClick={handleStartScan}
-              className="text-2xs text-muted-subtle hover:text-muted transition-colors"
+              className="text-2xs text-muted-subtle hover:text-muted transition-colors flex items-center gap-1"
             >
+              {!hasToken && (
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="opacity-60">
+                  <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+              )}
               Full rescan
             </button>
           </div>

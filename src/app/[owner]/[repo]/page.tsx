@@ -205,6 +205,7 @@ export default function MapPage({
   const [viewMode, setViewMode] = useState<"clusters" | "heatmap">("clusters");
   const runningRef = useRef(false);
   const pendingScanRef = useRef(false);
+  const pendingRefreshRef = useRef(false);
 
   // Compare repo state
   const [compareOwner, setCompareOwner] = useState<string | null>(null);
@@ -543,6 +544,15 @@ export default function MapPage({
     startScraping();
   }, [startScraping]);
 
+  const handleStartRefresh = useCallback(() => {
+    if (!getStoredToken()) {
+      pendingRefreshRef.current = true;
+      setTokenOpen(true);
+      return;
+    }
+    startRefresh();
+  }, [startRefresh]);
+
   const handleTokenClose = useCallback(() => {
     setTokenOpen(false);
     setHasToken(!!getStoredToken());
@@ -550,7 +560,11 @@ export default function MapPage({
       pendingScanRef.current = false;
       if (getStoredToken()) startScraping();
     }
-  }, [startScraping]);
+    if (pendingRefreshRef.current) {
+      pendingRefreshRef.current = false;
+      if (getStoredToken()) startRefresh();
+    }
+  }, [startScraping, startRefresh]);
 
   const startCompareScan = useCallback(async () => {
     if (!compareOwner || !compareRepo || compareRunningRef.current) return;
@@ -1063,9 +1077,10 @@ export default function MapPage({
         estimate={estimate}
         cachedAt={cachedAt}
         latestStarredAt={latestStarredAt}
-        startRefresh={startRefresh}
+        startRefresh={handleStartRefresh}
         newStarsCount={newStarsCount}
         handleStartScan={handleStartScan}
+        hasToken={hasToken}
         error={error || null}
         findInput={findInput}
         setFindInput={setFindInput}
