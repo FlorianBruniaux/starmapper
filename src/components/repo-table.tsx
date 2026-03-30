@@ -46,6 +46,9 @@ const ColHeader = ({
   <th
     className={`py-2.5 px-4 text-xs uppercase tracking-wider text-muted-subtle font-medium cursor-pointer select-none hover:text-muted transition-colors ${align === "right" ? "text-right" : "text-left"}`}
     onClick={() => onSort(col)}
+    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSort(col); } }}
+    tabIndex={0}
+    aria-sort={active ? (dir === "asc" ? "ascending" : "descending") : "none"}
   >
     {label}
     <SortIcon active={active} dir={dir} />
@@ -82,6 +85,7 @@ export const RepoTable = ({ repos }: { repos: MappedRepo[] }) => {
   return (
     <div className="w-full overflow-x-auto">
       <table className="w-full border-collapse text-sm">
+        <caption className="sr-only">Community stargazer maps, sortable by column</caption>
         <thead>
           <tr className="border-b border-border-subtle">
             <th className="py-2.5 px-4 text-xs uppercase tracking-wider text-muted-subtle font-medium text-left">
@@ -102,11 +106,11 @@ export const RepoTable = ({ repos }: { repos: MappedRepo[] }) => {
               <td className="py-3 px-4">
                 <Link
                   href={`/${r.owner}/${r.repo}`}
-                  className="inline-flex items-baseline gap-0.5 group"
+                  className="inline-flex items-baseline gap-0.5 group/link"
                 >
                   <span className="text-xs text-muted-subtle">{r.owner}</span>
                   <span className="text-xs text-muted-subtle">/</span>
-                  <span className="text-sm text-foreground font-medium group-hover:text-accent-blue transition-colors">
+                  <span className="text-sm text-foreground font-medium group-hover/link:text-accent-blue transition-colors">
                     {r.repo}
                   </span>
                 </Link>

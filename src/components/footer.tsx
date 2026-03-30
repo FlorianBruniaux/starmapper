@@ -42,6 +42,7 @@ export const Footer = () => (
                   href={href}
                   target="_blank"
                   rel="noopener noreferrer"
+                  aria-label={`${label} (opens in new tab)`}
                   className="text-muted hover:text-foreground text-xs transition-colors"
                 >
                   {label}
@@ -63,6 +64,7 @@ export const Footer = () => (
                   href={href}
                   target="_blank"
                   rel="noopener noreferrer"
+                  aria-label={`${label} (opens in new tab)`}
                   className="text-muted hover:text-foreground text-xs transition-colors"
                 >
                   {label}
@@ -81,6 +83,7 @@ export const Footer = () => (
             href="https://bruniaux.com/"
             target="_blank"
             rel="noopener noreferrer"
+            aria-label="Florian Bruniaux (opens in new tab)"
             className="text-accent-blue hover:underline"
           >
             Florian Bruniaux
