@@ -129,7 +129,16 @@ export default function HomePage() {
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-10 flex items-center justify-between px-6 py-3 bg-background/80 backdrop-blur-sm border-b border-border-subtle">
         <div className="flex items-center gap-2 text-foreground font-semibold text-sm">
-          <span aria-hidden="true">🌍</span>
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true" className="text-accent-blue">
+            {/* Globe meridians & parallels */}
+            <circle cx="10" cy="10" r="8" stroke="currentColor" strokeWidth="1.5"/>
+            <ellipse cx="10" cy="10" rx="4" ry="8" stroke="currentColor" strokeWidth="1.25"/>
+            <line x1="2" y1="10" x2="18" y2="10" stroke="currentColor" strokeWidth="1.25"/>
+            <path d="M3.5 6.5 Q10 5 16.5 6.5" stroke="currentColor" strokeWidth="1" fill="none"/>
+            <path d="M3.5 13.5 Q10 15 16.5 13.5" stroke="currentColor" strokeWidth="1" fill="none"/>
+            {/* Star overlay */}
+            <path d="M10 5.5 L10.6 7.4 L12.6 7.4 L11.0 8.6 L11.6 10.5 L10 9.3 L8.4 10.5 L9.0 8.6 L7.4 7.4 L9.4 7.4 Z" fill="currentColor"/>
+          </svg>
           <span>StarMapper</span>
         </div>
         <nav className="flex items-center">
@@ -194,7 +203,10 @@ export default function HomePage() {
             </div>
             <h1 className="text-3xl font-bold text-foreground leading-tight mb-3">
               Where in the world does<br />
-              your repo shine?
+              your repo{" "}
+              <span className="bg-gradient-to-r from-accent-blue to-accent-purple bg-clip-text text-transparent">
+                shine?
+              </span>
             </h1>
             <p className="text-muted text-sm leading-relaxed">
               Drop a GitHub repo URL and get an interactive world map of every stargazer,
@@ -267,7 +279,7 @@ export default function HomePage() {
             <div className="flex gap-2">
               <button
                 type="submit"
-                className="flex-1 bg-accent-green-emphasis hover:opacity-90 text-white font-medium py-3 px-6 rounded-lg transition-opacity text-sm"
+                className="flex-1 bg-accent-green-emphasis hover:opacity-90 hover:shadow-[0_0_20px_rgba(35,134,54,0.4)] text-white font-bold py-3 px-6 rounded-lg transition-[opacity,box-shadow] text-base"
               >
                 Map Stargazers
               </button>

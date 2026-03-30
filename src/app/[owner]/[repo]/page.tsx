@@ -1431,7 +1431,7 @@ export default function MapPage({
           {/* Share CTA */}
           <button
             onClick={() => setShareOpen(true)}
-            className="bg-accent-green-emphasis hover:bg-accent-green-emphasis active:bg-accent-green-emphasis
+            className="bg-accent-green-emphasis hover:opacity-90 active:opacity-80
               border border-accent-green-emphasis/60 hover:border-accent-green/60
               rounded-lg px-3 py-2.5
               text-white text-xs font-semibold
@@ -1773,7 +1773,7 @@ export default function MapPage({
                   <button
                     onClick={fetchAndExport}
                     disabled={fetching}
-                    className="bg-accent-green-emphasis hover:bg-accent-green-emphasis disabled:opacity-50 rounded-lg px-3 py-1.5 text-xs text-white font-medium transition-colors"
+                    className="bg-accent-green-emphasis hover:opacity-90 disabled:opacity-50 rounded-lg px-3 py-1.5 text-xs text-white font-medium transition-opacity"
                   >
                     {fetching ? "Fetching…" : `↓ Fetch details + CSV (${selected.size})`}
                   </button>
@@ -1998,7 +1998,7 @@ export default function MapPage({
                     a.click();
                   }, "image/png");
                 }}
-                className="flex-1 bg-accent-green-emphasis hover:bg-accent-green-emphasis text-white text-sm py-2 rounded-lg transition-colors font-medium"
+                className="flex-1 bg-accent-green-emphasis hover:opacity-90 text-white text-sm py-2 rounded-lg transition-opacity font-medium"
               >
                 ↓ Download PNG
               </button>

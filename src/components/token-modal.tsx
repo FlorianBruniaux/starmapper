@@ -99,7 +99,7 @@ export function TokenModal({ onClose }: Props) {
             className={`px-5 py-2 rounded-lg text-sm font-medium transition-colors ${
               saved
                 ? "bg-accent-green-emphasis text-white"
-                : "bg-accent-green-emphasis hover:bg-accent-green-emphasis text-white"
+                : "bg-accent-green-emphasis hover:opacity-90 text-white"
             }`}
           >
             {saved ? "Saved ✓" : "Save"}
