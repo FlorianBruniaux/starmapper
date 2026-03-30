@@ -37,7 +37,7 @@ export default function ExplorePage() {
         </div>
       </header>
 
-      <main className="flex-1 max-w-4xl mx-auto px-4 py-8 w-full">
+      <main id="main" className="flex-1 max-w-4xl mx-auto px-4 py-8 w-full">
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-foreground">Stargazer Intelligence</h1>
           <p className="text-muted text-sm mt-1">Global leaderboards across all tracked repos</p>
@@ -53,7 +53,7 @@ export default function ExplorePage() {
           ].map(({ label, value, accent }) => (
             <div key={label} className="bg-surface border border-border rounded-xl p-4 text-center">
               <div className={`text-2xl font-bold ${accent}`}>{value}</div>
-              <div className="text-[11px] text-muted uppercase tracking-wide mt-1">{label}</div>
+              <div className="text-xs text-muted uppercase tracking-wide mt-1">{label}</div>
             </div>
           ))}
         </div>
@@ -103,13 +103,13 @@ export default function ExplorePage() {
                               @{u.login}
                             </a>
                             {u.company && (
-                              <span className="text-[10px] text-muted bg-surface-alt border border-border-subtle rounded px-1.5 py-px truncate max-w-28">
+                              <span className="text-2xs text-muted bg-surface-alt border border-border-subtle rounded px-1.5 py-px truncate max-w-28">
                                 {u.company.replace(/^@/, "")}
                               </span>
                             )}
                           </div>
                           {u.name && u.name !== u.login && (
-                            <div className="text-muted-subtle text-[11px] truncate">{u.name}</div>
+                            <div className="text-muted-subtle text-xs truncate">{u.name}</div>
                           )}
                         </div>
                         <span className="text-muted text-xs flex-shrink-0 tabular-nums">
@@ -141,7 +141,7 @@ export default function ExplorePage() {
                             @{u.login}
                           </a>
                           {u.name && u.name !== u.login && (
-                            <div className="text-muted-subtle text-[11px] truncate">{u.name}</div>
+                            <div className="text-muted-subtle text-xs truncate">{u.name}</div>
                           )}
                         </div>
                         <span className="text-accent-orange text-xs flex-shrink-0 tabular-nums font-medium">

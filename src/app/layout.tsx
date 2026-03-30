@@ -153,7 +153,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
-      <body className={`${geist.className} bg-background`}>{children}</body>
+      <body className={`${geist.className} bg-background`}>
+        <a
+          href="#main"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100]
+                     focus:bg-surface focus:border focus:border-accent-blue focus:rounded-md
+                     focus:px-4 focus:py-2 focus:text-sm focus:text-accent-blue focus:shadow-lg"
+        >
+          Skip to content
+        </a>
+        {children}
+      </body>
     </html>
   );
 }

@@ -274,7 +274,7 @@ export default function UserPage({ params }: { params: Promise<{ owner: string }
         </div>
       </header>
 
-      <main className="min-h-screen bg-background pt-14">
+      <main id="main" className="min-h-screen bg-background pt-14">
         <div className="max-w-2xl mx-auto px-6 py-10">
 
           {/* Loading */}
@@ -369,10 +369,10 @@ export default function UserPage({ params }: { params: Promise<{ owner: string }
                             <div className="flex items-center gap-2">
                               <span className="text-foreground text-sm font-medium truncate">{r.name}</span>
                               {r.fork && (
-                                <span className="text-[10px] text-muted border border-border rounded px-1.5 py-0.5 shrink-0">Fork</span>
+                                <span className="text-2xs text-muted border border-border rounded px-1.5 py-0.5 shrink-0">Fork</span>
                               )}
                               {isCached && (
-                                <span className="text-[10px] text-accent-green border border-accent-green/30 rounded px-1.5 py-0.5 shrink-0">Cached</span>
+                                <span className="text-2xs text-accent-green border border-accent-green/30 rounded px-1.5 py-0.5 shrink-0">Cached</span>
                               )}
                             </div>
                             {r.description && (
@@ -483,10 +483,10 @@ export default function UserPage({ params }: { params: Promise<{ owner: string }
                           <div className="flex items-center gap-2">
                             <span className="text-foreground text-sm font-medium truncate">{item.name}</span>
                             {item.status === "rate-limited" && (
-                              <span className="text-[10px] text-accent-orange shrink-0">Rate limited — retrying…</span>
+                              <span className="text-2xs text-accent-orange shrink-0">Rate limited — retrying…</span>
                             )}
                             {item.status === "error" && item.err && (
-                              <span className="text-[10px] text-accent-red truncate">{item.err}</span>
+                              <span className="text-2xs text-accent-red truncate">{item.err}</span>
                             )}
                           </div>
                           {(item.status === "scanning" || item.status === "rate-limited") && item.total > 0 && (
@@ -497,7 +497,7 @@ export default function UserPage({ params }: { params: Promise<{ owner: string }
                                   style={{ width: `${pct}%` }}
                                 />
                               </div>
-                              <span className="text-[10px] text-muted-subtle shrink-0">{fmt(item.processed)} / {fmt(item.total)}</span>
+                              <span className="text-2xs text-muted-subtle shrink-0">{fmt(item.processed)} / {fmt(item.total)}</span>
                             </div>
                           )}
                           {item.status === "done" && (

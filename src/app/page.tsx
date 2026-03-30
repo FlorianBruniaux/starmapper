@@ -173,7 +173,7 @@ export default function HomePage() {
       </header>
 
       {/* Main */}
-      <main className="min-h-screen bg-background flex flex-col lg:flex-row pt-14">
+      <main id="main" className="min-h-screen bg-background flex flex-col lg:flex-row pt-14">
 
         {/* Left column — hero + form + how it works */}
         <div className="lg:w-[480px] lg:shrink-0 flex flex-col justify-start px-8 py-12 lg:py-16 lg:border-r lg:border-border-subtle">
@@ -183,7 +183,7 @@ export default function HomePage() {
           <div className="mb-8">
             <div className="flex items-center gap-2 mb-4">
               <span
-                className="inline-flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-widest
+                className="inline-flex items-center gap-1.5 text-2xs font-medium uppercase tracking-widest
                            text-accent-blue bg-accent-blue/10 border border-accent-blue/20 rounded-full px-3 py-1"
               >
                 <svg width="8" height="8" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
@@ -323,7 +323,7 @@ export default function HomePage() {
           {/* Suggestions — unified: bookmarks first, then examples to fill */}
           {suggestions.length > 0 && (
             <div className="mt-6">
-              <p className="text-muted-subtle text-[10px] uppercase tracking-widest mb-2.5">
+              <p className="text-muted-subtle text-2xs uppercase tracking-widest mb-2.5">
                 {bookmarks.length > 0 ? "Recent & examples" : "Try these"}
               </p>
               <div className="flex gap-2 flex-wrap">
@@ -351,7 +351,7 @@ export default function HomePage() {
 
         {/* How it works — vertical list in left column */}
         <div className="w-full max-w-sm mx-auto lg:mx-0 mt-10">
-          <p className="text-muted-subtle text-[10px] uppercase tracking-widest mb-3">How it works</p>
+          <p className="text-muted-subtle text-2xs uppercase tracking-widest mb-3">How it works</p>
           <div className="flex flex-col gap-2">
             {[
               { colorClass: "text-accent-blue", bgClass: "bg-accent-blue/8", label: "Interactive map", desc: "Stargazers geocoded and plotted in real time as they load.", icon: <path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Zm4.94-2.06a.75.75 0 0 1 1.06 0l1.5 1.5 3-3a.75.75 0 1 1 1.06 1.06l-3.5 3.5a.75.75 0 0 1-1.06 0l-2-2a.75.75 0 0 1 0-1.06Z" /> },
@@ -373,7 +373,7 @@ export default function HomePage() {
 
         {/* FAQ — visible for users + indexed by AI crawlers */}
         <div className="w-full max-w-sm mx-auto lg:mx-0 mt-10">
-          <p className="text-muted-subtle text-[10px] uppercase tracking-widest mb-3">FAQ</p>
+          <p className="text-muted-subtle text-2xs uppercase tracking-widest mb-3">FAQ</p>
           <div className="flex flex-col divide-y divide-border-subtle border border-border-subtle rounded-lg overflow-hidden">
             {[
               {
@@ -420,7 +420,7 @@ export default function HomePage() {
           <div className="flex-1 flex flex-col px-8 py-12 lg:py-16 overflow-auto">
             <div className="mb-5">
               <div className="flex items-center justify-between mb-3">
-                <p className="text-muted-subtle text-[10px] uppercase tracking-widest">Community maps</p>
+                <p className="text-muted-subtle text-2xs uppercase tracking-widest">Community maps</p>
                 <span className="flex items-center gap-1.5 text-xs text-muted">
                   <span className="size-1.5 rounded-full bg-accent-blue/70 animate-pulse inline-block" />
                   Live data
@@ -450,7 +450,7 @@ export default function HomePage() {
                 <span className="flex-1 text-sm text-muted-subtle">
                   Search {repos.length} mapped repos...
                 </span>
-                <kbd className="hidden sm:block text-[10px] text-muted-subtle bg-surface-alt border border-border rounded px-1.5 py-0.5">
+                <kbd className="hidden sm:block text-2xs text-muted-subtle bg-surface-alt border border-border rounded px-1.5 py-0.5">
                   ⌘K
                 </kbd>
               </button>

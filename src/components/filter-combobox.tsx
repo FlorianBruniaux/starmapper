@@ -70,7 +70,7 @@ export const FilterCombobox = ({ value, onChange, options, placeholder }: Filter
         type="button"
         onClick={() => setOpen((o) => !o)}
         className={[
-          "flex items-center gap-1 px-2 py-0.5 rounded text-[10px] border transition-colors",
+          "flex items-center gap-1 px-2 py-0.5 rounded text-2xs border transition-colors",
           "bg-background border-border hover:border-accent-blue/50",
           hasValue
             ? "text-accent-blue border-accent-blue/40"
@@ -92,7 +92,7 @@ export const FilterCombobox = ({ value, onChange, options, placeholder }: Filter
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search…"
-              className="w-full bg-transparent text-[11px] text-foreground placeholder-muted-subtle outline-none"
+              className="w-full bg-transparent text-xs text-foreground placeholder-muted-subtle outline-none"
             />
           </div>
 
@@ -103,7 +103,7 @@ export const FilterCombobox = ({ value, onChange, options, placeholder }: Filter
               type="button"
               onClick={handleClear}
               className={[
-                "w-full text-left px-3 py-1.5 text-[11px] transition-colors",
+                "w-full text-left px-3 py-1.5 text-xs transition-colors",
                 !hasValue
                   ? "text-accent-blue bg-accent-blue/10"
                   : "text-muted hover:bg-surface-alt hover:text-foreground",
@@ -113,7 +113,7 @@ export const FilterCombobox = ({ value, onChange, options, placeholder }: Filter
             </button>
 
             {filtered.length === 0 ? (
-              <div className="px-3 py-2 text-[11px] text-muted-subtle">No results</div>
+              <div className="px-3 py-2 text-xs text-muted-subtle">No results</div>
             ) : (
               filtered.map((opt) => (
                 <button
@@ -121,7 +121,7 @@ export const FilterCombobox = ({ value, onChange, options, placeholder }: Filter
                   type="button"
                   onClick={() => handleSelect(opt)}
                   className={[
-                    "w-full text-left px-3 py-1.5 text-[11px] transition-colors flex items-center justify-between gap-2",
+                    "w-full text-left px-3 py-1.5 text-xs transition-colors flex items-center justify-between gap-2",
                     value === opt
                       ? "text-accent-blue bg-accent-blue/10"
                       : "text-foreground hover:bg-surface-alt",

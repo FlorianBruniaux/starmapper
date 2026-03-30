@@ -838,7 +838,7 @@ export default function MapPage({
   const displayStats = stats ?? serverStats;
 
   return (
-    <div className="relative w-screen h-screen overflow-hidden bg-background">
+    <div id="main" className="relative w-screen h-screen overflow-hidden bg-background">
 
       {tokenOpen && <TokenModal onClose={handleTokenClose} />}
 
@@ -916,7 +916,7 @@ export default function MapPage({
           href="https://florian.bruniaux.com"
           target="_blank"
           rel="noopener noreferrer"
-          className="pointer-events-auto text-[10px] text-accent-orange/80 hover:text-accent-orange transition-colors bg-background/60 backdrop-blur-sm px-2 py-0.5 rounded-full border border-accent-orange/20"
+          className="pointer-events-auto text-2xs text-accent-orange/80 hover:text-accent-orange transition-colors bg-background/60 backdrop-blur-sm px-2 py-0.5 rounded-full border border-accent-orange/20"
         >
           by Florian Bruniaux
         </a>
@@ -941,11 +941,11 @@ export default function MapPage({
             <div className="flex gap-4 mb-6">
               <div className="flex-1 bg-background rounded-lg px-4 py-3 text-center">
                 <div className="text-2xl font-bold text-foreground">{total.toLocaleString()}</div>
-                <div className="text-[10px] text-muted uppercase tracking-wide mt-0.5">stars</div>
+                <div className="text-2xs text-muted uppercase tracking-wide mt-0.5">stars</div>
               </div>
               <div className="flex-1 bg-background rounded-lg px-4 py-3 text-center">
                 <div className="text-2xl font-bold text-accent-blue">{formatEstimate(estimate)}</div>
-                <div className="text-[10px] text-muted uppercase tracking-wide mt-0.5">estimated</div>
+                <div className="text-2xs text-muted uppercase tracking-wide mt-0.5">estimated</div>
               </div>
             </div>
 
@@ -1058,7 +1058,7 @@ export default function MapPage({
         </div>
 
         {compareOwner && compareRepo && (
-          <div className="mt-1 flex items-center justify-center gap-2 text-[10px]">
+          <div className="mt-1 flex items-center justify-center gap-2 text-2xs">
             <span className="inline-block w-2 h-2 rounded-full bg-accent-purple flex-shrink-0" />
             <span className="text-muted">
               vs <span className="text-accent-purple">{compareOwner}/{compareRepo}</span>
@@ -1077,7 +1077,7 @@ export default function MapPage({
           ].map(({ val, label }) => (
             <div key={label} className="text-center">
               <div className="text-2xl font-bold text-foreground">{val}</div>
-              <div className="text-[10px] text-muted uppercase tracking-wide mt-0.5">{label}</div>
+              <div className="text-2xs text-muted uppercase tracking-wide mt-0.5">{label}</div>
             </div>
           ))}
           <button
@@ -1085,7 +1085,7 @@ export default function MapPage({
             className="text-center cursor-pointer hover:opacity-80 transition-opacity"
           >
             <div className="text-2xl font-bold text-muted">{unmapped.length.toLocaleString()}</div>
-            <div className="text-[10px] text-muted uppercase tracking-wide mt-0.5">no location</div>
+            <div className="text-2xs text-muted uppercase tracking-wide mt-0.5">no location</div>
           </button>
         </div>
 
@@ -1098,7 +1098,7 @@ export default function MapPage({
                 style={{ width: status === "refreshing" ? "100%" : `${pct}%` }}
               />
             </div>
-            <div className="text-[10px] text-muted mt-1">
+            <div className="text-2xs text-muted mt-1">
               {status === "waiting"
                 ? `⏸ Queued — resuming in ${retryIn}s…`
                 : status === "refreshing"
@@ -1121,7 +1121,7 @@ export default function MapPage({
                 style={{ width: `${Math.round((points.length / total) * 100)}%` }}
               />
             </div>
-            <div className="text-[10px] text-muted-subtle mt-0.5 text-center">
+            <div className="text-2xs text-muted-subtle mt-0.5 text-center">
               {points.length.toLocaleString()} / {total.toLocaleString()} mapped ({Math.round((points.length / total) * 100)}%)
             </div>
           </div>
@@ -1130,20 +1130,20 @@ export default function MapPage({
         {/* Cache status */}
         {(status === "cached" || status === "done") && cachedAt && (
           <div className="mt-2 flex items-center justify-center gap-3">
-            <span className="text-[10px] text-accent-green">
+            <span className="text-2xs text-accent-green">
               {status === "done" ? "✓ Indexed" : `✓ Cached ${timeAgo(cachedAt)}`}
             </span>
             {status === "cached" && latestStarredAt && (
               <button
                 onClick={startRefresh}
-                className="text-[10px] text-accent-blue hover:underline flex items-center gap-1"
+                className="text-2xs text-accent-blue hover:underline flex items-center gap-1"
               >
                 ↻ {newStarsCount > 0 ? `${newStarsCount} new stars` : "Refresh"}
               </button>
             )}
             <button
               onClick={handleStartScan}
-              className="text-[10px] text-muted hover:text-foreground hover:underline"
+              className="text-2xs text-muted hover:text-foreground hover:underline"
             >
               Full rescan
             </button>
@@ -1181,13 +1181,13 @@ export default function MapPage({
             </button>
           </div>
           {findStatus === "found" && (
-            <p className="text-[10px] text-accent-green">✓ Found — flying to location</p>
+            <p className="text-2xs text-accent-green">✓ Found — flying to location</p>
           )}
           {findStatus === "no-location" && (
-            <p className="text-[10px] text-accent-orange">Starred but has no location set on GitHub</p>
+            <p className="text-2xs text-accent-orange">Starred but has no location set on GitHub</p>
           )}
           {findStatus === "not-found" && (
-            <p className="text-[10px] text-accent-red">Not found in stargazers</p>
+            <p className="text-2xs text-accent-red">Not found in stargazers</p>
           )}
         </div>
       </div>
@@ -1196,9 +1196,9 @@ export default function MapPage({
       {compareOwner && compareRepo && (
         <div className="absolute bottom-6 right-4 z-10
           bg-background/90 border border-border rounded-lg px-3 py-2
-          text-[11px] backdrop-blur-md select-none flex items-center gap-2">
+          text-xs backdrop-blur-md select-none flex items-center gap-2">
           <span className="inline-block w-2 h-2 rounded-full bg-accent-purple flex-shrink-0" />
-          <span className="text-muted text-[10px] truncate max-w-[120px]">{compareRepo}</span>
+          <span className="text-muted text-2xs truncate max-w-[120px]">{compareRepo}</span>
         </div>
       )}
 
@@ -1212,7 +1212,7 @@ export default function MapPage({
               <span className="text-sm text-muted">
                 <strong className="text-foreground">{unmapped.length.toLocaleString()} stargazers</strong> without location
               </span>
-              <span className="ml-2 text-[10px] text-muted-subtle">— no location set on their GitHub profile</span>
+              <span className="ml-2 text-2xs text-muted-subtle">— no location set on their GitHub profile</span>
             </div>
             <button onClick={() => setDrawerOpen(false)} className="text-muted hover:text-foreground text-lg leading-none">✕</button>
           </div>
@@ -1224,7 +1224,7 @@ export default function MapPage({
                   u.followers >= 1000 ? "ring-inset ring-1 ring-accent-orange/20" : ""
                 }`}
               >
-                <div className="w-7 h-7 rounded-full bg-surface-alt flex-shrink-0 flex items-center justify-center text-[10px] text-muted-subtle font-medium overflow-hidden">
+                <div className="w-7 h-7 rounded-full bg-surface-alt flex-shrink-0 flex items-center justify-center text-2xs text-muted-subtle font-medium overflow-hidden">
                   {u.login[0].toUpperCase()}
                 </div>
                 <div className="min-w-0 flex-1">
@@ -1237,13 +1237,13 @@ export default function MapPage({
                   </a>
                   <div className="flex items-center gap-1.5 mt-0.5">
                     {u.name && (
-                      <span className="text-muted-subtle truncate text-[10px]">{u.name}</span>
+                      <span className="text-muted-subtle truncate text-2xs">{u.name}</span>
                     )}
                     {u.followers >= 1000 && (
-                      <span className="flex-shrink-0 text-[9px] text-accent-orange font-medium">⚡ {(u.followers / 1000).toFixed(1)}k</span>
+                      <span className="flex-shrink-0 text-2xs text-accent-orange font-medium">⚡ {(u.followers / 1000).toFixed(1)}k</span>
                     )}
                     {u.followers > 0 && u.followers < 1000 && (
-                      <span className="flex-shrink-0 text-[9px] text-muted-subtle">{u.followers.toLocaleString()}</span>
+                      <span className="flex-shrink-0 text-2xs text-muted-subtle">{u.followers.toLocaleString()}</span>
                     )}
                   </div>
                 </div>
@@ -1296,7 +1296,7 @@ export default function MapPage({
                     onClick={() => !isDisabled && setViewMode(mode)}
                     disabled={isDisabled}
                     title={isDisabled ? "Disable compare mode first" : undefined}
-                    className={`flex-1 text-[11px] font-medium py-1 rounded transition-colors capitalize ${
+                    className={`flex-1 text-xs font-medium py-1 rounded transition-colors capitalize ${
                       isDisabled
                         ? "opacity-40 cursor-not-allowed text-muted"
                         : isActive && mode === "clusters"
@@ -1317,7 +1317,7 @@ export default function MapPage({
           {viewMode === "clusters" && (
           <div className="bg-background/90 border border-border rounded-lg px-3 py-2 backdrop-blur-md flex flex-col gap-1">
             <div className="flex items-center justify-between mb-0.5">
-              <span className="text-[10px] text-muted-subtle uppercase tracking-widest">Filter map</span>
+              <span className="text-2xs text-muted-subtle uppercase tracking-widest">Filter map</span>
               <button
                 onClick={() => setSidebarOpen(false)}
                 className="lg:hidden text-muted hover:text-foreground transition-colors p-0.5 -mr-0.5 rounded"
@@ -1380,7 +1380,7 @@ export default function MapPage({
                 <path d="M2 5.5a3.5 3.5 0 115.898 2.549 5.508 5.508 0 013.034 4.084.75.75 0 11-1.482.235 4 4 0 00-7.9 0 .75.75 0 01-1.482-.236A5.507 5.507 0 013.102 8.05 3.493 3.493 0 012 5.5zM11 4a3 3 0 102.22 5.018 5.01 5.01 0 012.56 3.012.75.75 0 11-1.45.39 3.504 3.504 0 00-6.66 0 .75.75 0 11-1.45-.39A5.01 5.01 0 018.78 9.018 3 3 0 0111 4z"/>
               </svg>
               <span>Stargazers</span>
-              <span className="bg-border text-muted text-[10px] px-1.5 py-px rounded-full tabular-nums leading-none ml-auto">
+              <span className="bg-border text-muted text-2xs px-1.5 py-px rounded-full tabular-nums leading-none ml-auto">
                 {allStargazers.length.toLocaleString()}
               </span>
             </button>
@@ -1487,13 +1487,13 @@ export default function MapPage({
             <div className="px-5 py-2.5 border-b border-border-subtle flex-shrink-0 flex flex-wrap items-center gap-3">
               {/* Followers filter */}
               <div className="flex items-center gap-2 min-w-0">
-                <span className="text-[10px] text-muted whitespace-nowrap">Min followers</span>
+                <span className="text-2xs text-muted whitespace-nowrap">Min followers</span>
                 <div className="flex gap-1">
                   {[0, 10, 100, 500, 1000].map((v) => (
                     <button
                       key={v}
                       onClick={() => setFilterFollowers(v)}
-                      className={`px-2 py-0.5 rounded text-[10px] transition-colors ${
+                      className={`px-2 py-0.5 rounded text-2xs transition-colors ${
                         filterFollowers === v
                           ? "bg-accent-blue text-white"
                           : "bg-surface-alt text-muted hover:text-foreground"
@@ -1509,13 +1509,13 @@ export default function MapPage({
 
               {/* Mapped filter */}
               <div className="flex items-center gap-2">
-                <span className="text-[10px] text-muted whitespace-nowrap">Location</span>
+                <span className="text-2xs text-muted whitespace-nowrap">Location</span>
                 <div className="flex gap-1">
                   {(["all", "mapped", "unmapped"] as const).map((v) => (
                     <button
                       key={v}
                       onClick={() => setFilterMapped(v)}
-                      className={`px-2 py-0.5 rounded text-[10px] transition-colors ${
+                      className={`px-2 py-0.5 rounded text-2xs transition-colors ${
                         filterMapped === v
                           ? "bg-accent-blue text-white"
                           : "bg-surface-alt text-muted hover:text-foreground"
@@ -1531,13 +1531,13 @@ export default function MapPage({
 
               {/* Date filter */}
               <div className="flex items-center gap-2">
-                <span className="text-[10px] text-muted whitespace-nowrap">Starred</span>
+                <span className="text-2xs text-muted whitespace-nowrap">Starred</span>
                 <div className="flex gap-1">
                   {(["all", "30d", "90d", "1y"] as const).map((v) => (
                     <button
                       key={v}
                       onClick={() => setFilterDate(v)}
-                      className={`px-2 py-0.5 rounded text-[10px] transition-colors ${
+                      className={`px-2 py-0.5 rounded text-2xs transition-colors ${
                         filterDate === v ? "bg-accent-blue text-white" : "bg-surface-alt text-muted hover:text-foreground"
                       }`}
                     >
@@ -1552,7 +1552,7 @@ export default function MapPage({
                 value={filterCompany}
                 onChange={(e) => setFilterCompany(e.target.value)}
                 placeholder="Company…"
-                className="bg-background border border-border rounded px-2 py-0.5 text-[10px] text-foreground placeholder-muted-subtle focus:outline-none focus:border-accent-blue w-24"
+                className="bg-background border border-border rounded px-2 py-0.5 text-2xs text-foreground placeholder-muted-subtle focus:outline-none focus:border-accent-blue w-24"
               />
 
               {/* Country filter */}
@@ -1575,7 +1575,7 @@ export default function MapPage({
               {(filterFollowers > 0 || filterMapped !== "all" || filterDate !== "all" || filterCompany || filterCountry || filterCity) && (
                 <button
                   onClick={() => { setFilterFollowers(0); setFilterMapped("all"); setFilterDate("all"); setFilterCompany(""); setFilterCountry(""); setFilterCity(""); }}
-                  className="ml-auto text-[10px] text-muted-subtle hover:text-muted transition-colors"
+                  className="ml-auto text-2xs text-muted-subtle hover:text-muted transition-colors"
                 >
                   ✕ Reset filters
                 </button>
@@ -1590,7 +1590,7 @@ export default function MapPage({
             >
               {isSearchPending && (
                 <div className="sticky top-0 left-0 right-0 z-20 flex items-center justify-center py-1 bg-surface/80 backdrop-blur-sm">
-                  <div className="flex items-center gap-2 text-[10px] text-muted-subtle">
+                  <div className="flex items-center gap-2 text-2xs text-muted-subtle">
                     <svg className="animate-spin w-3 h-3" viewBox="0 0 24 24" fill="none">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
@@ -1679,10 +1679,10 @@ export default function MapPage({
                               @{u.login}
                             </a>
                             {u.name && u.name !== u.login && (
-                              <div className="text-muted text-[10px] truncate max-w-[140px]">{u.name}</div>
+                              <div className="text-muted text-2xs truncate max-w-[140px]">{u.name}</div>
                             )}
                             {u.bio && (
-                              <div className="text-muted-subtle text-[10px] truncate max-w-[140px]" title={u.bio}>{u.bio}</div>
+                              <div className="text-muted-subtle text-2xs truncate max-w-[140px]" title={u.bio}>{u.bio}</div>
                             )}
                           </div>
                         </div>
@@ -1797,7 +1797,7 @@ export default function MapPage({
             <div className="flex items-center justify-between px-5 py-4 border-b border-border-subtle">
               <div>
                 <h2 className="text-foreground font-semibold text-sm">Star Growth</h2>
-                <p className="text-muted text-[10px] mt-0.5">{growthData.length} weeks · {(points.length + unmapped.length).toLocaleString()} total stars</p>
+                <p className="text-muted text-2xs mt-0.5">{growthData.length} weeks · {(points.length + unmapped.length).toLocaleString()} total stars</p>
               </div>
               <button onClick={() => setGrowthOpen(false)} className="text-muted hover:text-foreground text-lg leading-none">✕</button>
             </div>
@@ -1836,16 +1836,16 @@ export default function MapPage({
               <div className="flex gap-4 mb-4">
                 <div className="flex-1 bg-surface rounded-lg p-3 text-center">
                   <div className="text-2xl font-bold text-accent-orange">{repoInfo.stars >= 1000 ? `${(repoInfo.stars / 1000).toFixed(1)}k` : repoInfo.stars}</div>
-                  <div className="text-[10px] text-muted-subtle uppercase tracking-wide mt-0.5">★ stars</div>
+                  <div className="text-2xs text-muted-subtle uppercase tracking-wide mt-0.5">★ stars</div>
                 </div>
                 <div className="flex-1 bg-surface rounded-lg p-3 text-center">
                   <div className="text-2xl font-bold text-accent-blue">{points.length.toLocaleString()}</div>
-                  <div className="text-[10px] text-muted-subtle uppercase tracking-wide mt-0.5">mapped</div>
+                  <div className="text-2xs text-muted-subtle uppercase tracking-wide mt-0.5">mapped</div>
                 </div>
                 {displayStats && (
                   <div className="flex-1 bg-surface rounded-lg p-3 text-center">
                     <div className="text-2xl font-bold text-accent-green">{displayStats.countryCount}</div>
-                    <div className="text-[10px] text-muted-subtle uppercase tracking-wide mt-0.5">countries</div>
+                    <div className="text-2xs text-muted-subtle uppercase tracking-wide mt-0.5">countries</div>
                   </div>
                 )}
               </div>
@@ -1859,8 +1859,8 @@ export default function MapPage({
                 </div>
               )}
               <div className="mt-4 pt-3 border-t border-border-subtle flex items-center justify-between">
-                <span className="text-[10px] text-muted-subtle">🌍 starmapper.bruniaux.com</span>
-                <span className="text-[10px] text-muted-subtle">+ live map in download</span>
+                <span className="text-2xs text-muted-subtle">🌍 starmapper.bruniaux.com</span>
+                <span className="text-2xs text-muted-subtle">+ live map in download</span>
               </div>
             </div>
 
@@ -2040,7 +2040,7 @@ export default function MapPage({
                       rows={5}
                       className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-xs text-foreground resize-none focus:outline-none focus:border-accent-blue"
                     />
-                    <p className="text-[10px] text-muted-subtle">LinkedIn doesn&apos;t allow pre-filled text. Copy this post, then paste it after clicking below.</p>
+                    <p className="text-2xs text-muted-subtle">LinkedIn doesn&apos;t allow pre-filled text. Copy this post, then paste it after clicking below.</p>
                     <div className="flex gap-2">
                       <button
                         onClick={() => {
@@ -2233,7 +2233,7 @@ export default function MapPage({
                     ].join("\n");
                     navigator.clipboard.writeText(md).catch(() => {});
                   }}
-                  className="flex items-center gap-1.5 text-[11px] text-muted hover:text-foreground bg-surface-alt hover:bg-border border border-border rounded-lg px-2.5 py-1 transition-colors"
+                  className="flex items-center gap-1.5 text-xs text-muted hover:text-foreground bg-surface-alt hover:bg-border border border-border rounded-lg px-2.5 py-1 transition-colors"
                   title="Copy stats as Markdown"
                 >
                   <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
@@ -2251,25 +2251,25 @@ export default function MapPage({
                 <div className="text-xl font-bold text-foreground">
                   {displayStats.totalStars >= 1000 ? `${(displayStats.totalStars / 1000).toFixed(1)}k` : displayStats.totalStars}
                 </div>
-                <div className="text-[10px] text-muted uppercase tracking-wide mt-0.5">stars</div>
+                <div className="text-2xs text-muted uppercase tracking-wide mt-0.5">stars</div>
               </div>
               <div className="bg-background rounded-lg px-2 py-2 text-center">
                 <div className="text-xl font-bold text-accent-green">{displayStats.mappingRate}%</div>
-                <div className="text-[10px] text-muted uppercase tracking-wide mt-0.5">mapped</div>
+                <div className="text-2xs text-muted uppercase tracking-wide mt-0.5">mapped</div>
               </div>
               <div className="bg-background rounded-lg px-2 py-2 text-center">
                 <div className="text-xl font-bold text-foreground">{displayStats.countryCount}</div>
-                <div className="text-[10px] text-muted uppercase tracking-wide mt-0.5">countries</div>
+                <div className="text-2xs text-muted uppercase tracking-wide mt-0.5">countries</div>
               </div>
               <div className="bg-background rounded-lg px-2 py-2 text-center">
                 <div className="text-xl font-bold text-foreground">{displayStats.topCities.length}</div>
-                <div className="text-[10px] text-muted uppercase tracking-wide mt-0.5">cities</div>
+                <div className="text-2xs text-muted uppercase tracking-wide mt-0.5">cities</div>
               </div>
               <div className="bg-background rounded-lg px-2 py-2 text-center">
                 <div className="text-xl font-bold text-accent-orange">
                   {displayStats.avgFollowers >= 1000 ? `${(displayStats.avgFollowers / 1000).toFixed(1)}k` : displayStats.avgFollowers}
                 </div>
-                <div className="text-[10px] text-muted uppercase tracking-wide mt-0.5">avg flw</div>
+                <div className="text-2xs text-muted uppercase tracking-wide mt-0.5">avg flw</div>
               </div>
               <div className="bg-background rounded-lg px-2 py-2 text-center">
                 {(() => {
@@ -2280,7 +2280,7 @@ export default function MapPage({
                       <div className={`text-xl font-bold ${pct !== null && pct > 20 ? "text-accent-red" : "text-muted"}`}>
                         {pct !== null ? `${pct}%` : "—"}
                       </div>
-                      <div className="text-[10px] text-muted uppercase tracking-wide mt-0.5">suspect</div>
+                      <div className="text-2xs text-muted uppercase tracking-wide mt-0.5">suspect</div>
                     </>
                   );
                 })()}
@@ -2322,12 +2322,12 @@ export default function MapPage({
                 <div>
                   {/* Sort toggle */}
                   <div className="flex items-center gap-1 mb-3">
-                    <span className="text-muted-subtle text-[10px] uppercase tracking-wide mr-1">Sort:</span>
+                    <span className="text-muted-subtle text-2xs uppercase tracking-wide mr-1">Sort:</span>
                     {(["followers", "repos"] as const).map((s) => (
                       <button
                         key={s}
                         onClick={() => setStatsTopSort(s)}
-                        className={`px-2 py-0.5 rounded text-[10px] font-medium transition-colors ${
+                        className={`px-2 py-0.5 rounded text-2xs font-medium transition-colors ${
                           statsTopSort === s
                             ? "bg-accent-blue/20 text-accent-blue"
                             : "text-muted hover:text-foreground"
@@ -2357,16 +2357,16 @@ export default function MapPage({
                               @{u.login}
                             </a>
                             {u.company && (
-                              <span className="text-[10px] text-muted bg-surface-alt border border-border-subtle rounded px-1.5 py-px truncate max-w-24">
+                              <span className="text-2xs text-muted bg-surface-alt border border-border-subtle rounded px-1.5 py-px truncate max-w-24">
                                 {u.company.replace(/^@/, "")}
                               </span>
                             )}
                           </div>
                           {u.name && u.name !== u.login && (
-                            <div className="text-muted-subtle text-[10px] truncate">{u.name}</div>
+                            <div className="text-muted-subtle text-2xs truncate">{u.name}</div>
                           )}
                           {!u.name && u.location && (
-                            <div className="text-muted-subtle text-[10px] truncate">{u.location}</div>
+                            <div className="text-muted-subtle text-2xs truncate">{u.location}</div>
                           )}
                         </div>
                         <span className="text-muted text-xs flex-shrink-0 tabular-nums">
@@ -2419,7 +2419,7 @@ export default function MapPage({
                     <div className="text-center text-muted-subtle text-xs py-8">
                       <div className="text-2xl mb-2">⚡</div>
                       <div>No power stargazers yet.</div>
-                      <div className="mt-1 text-[10px]">Appears after multiple repos are scanned.</div>
+                      <div className="mt-1 text-2xs">Appears after multiple repos are scanned.</div>
                     </div>
                   )}
                   {displayStats.powerStargazers.map((u, i) => (
@@ -2435,7 +2435,7 @@ export default function MapPage({
                           @{u.login}
                         </a>
                         {u.name && u.name !== u.login && (
-                          <div className="text-muted-subtle text-[10px] truncate">{u.name}</div>
+                          <div className="text-muted-subtle text-2xs truncate">{u.name}</div>
                         )}
                       </div>
                       <span className="text-accent-orange text-xs flex-shrink-0 tabular-nums font-medium">
@@ -2478,15 +2478,15 @@ const GrowthChart = ({ data }: { data: [string, number][] }) => {
       <div className="flex gap-4 mb-4">
         <div className="bg-background rounded-lg px-3 py-2 text-center flex-1">
           <div className="text-lg font-bold text-foreground">{total.toLocaleString()}</div>
-          <div className="text-[10px] text-muted uppercase tracking-wide mt-0.5">total stars</div>
+          <div className="text-2xs text-muted uppercase tracking-wide mt-0.5">total stars</div>
         </div>
         <div className="bg-background rounded-lg px-3 py-2 text-center flex-1">
           <div className="text-lg font-bold text-accent-blue">{peak[1].toLocaleString()}</div>
-          <div className="text-[10px] text-muted uppercase tracking-wide mt-0.5">best week</div>
+          <div className="text-2xs text-muted uppercase tracking-wide mt-0.5">best week</div>
         </div>
         <div className="bg-background rounded-lg px-3 py-2 text-center flex-1">
           <div className="text-lg font-bold text-accent-orange">{avg.toLocaleString()}</div>
-          <div className="text-[10px] text-muted uppercase tracking-wide mt-0.5">avg / week</div>
+          <div className="text-2xs text-muted uppercase tracking-wide mt-0.5">avg / week</div>
         </div>
       </div>
       <svg

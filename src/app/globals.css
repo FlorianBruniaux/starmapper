@@ -106,6 +106,9 @@ html.dark {
   /* Fonts */
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* Custom text sizes */
+  --text-2xs: 0.625rem; /* 10px — compact map labels, stat labels */
 }
 
 /* ─── Base ─────────────────────────────────────────────────────────────────── */
@@ -113,11 +116,36 @@ html.dark {
 body {
   background: var(--color-background);
   color: var(--color-foreground);
-  font-family: Arial, Helvetica, sans-serif;
 }
 
-button, a {
+button, a, [role="button"] {
   cursor: pointer;
+}
+
+button:disabled, [role="button"][aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
+/* ─── Accessibility — focus-visible ──────────────────────────────────────── */
+
+*:focus-visible {
+  outline: 2px solid var(--color-accent-blue);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* MapLibre elements get no outline (canvas/controls handle their own focus) */
+.maplibregl-map *:focus-visible {
+  outline: none;
+}
+
+/* ─── Accessibility — reduced motion ─────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 /* ─── MapLibre popups — dark (default) ─────────────────────────────────────── */

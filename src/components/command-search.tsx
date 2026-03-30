@@ -142,7 +142,7 @@ export const CommandSearch = ({ repos }: CommandSearchProps) => {
             aria-activedescendant={filtered[highlighted] ? `cs-item-${highlighted}` : undefined}
             autoComplete="off"
           />
-          <kbd className="hidden sm:block text-[10px] text-muted-subtle border border-border rounded px-1.5 py-0.5">
+          <kbd className="hidden sm:block text-2xs text-muted-subtle border border-border rounded px-1.5 py-0.5">
             esc
           </kbd>
         </div>
@@ -210,7 +210,7 @@ export const CommandSearch = ({ repos }: CommandSearchProps) => {
         )}
 
         {/* Footer */}
-        <div className="flex items-center gap-4 px-5 py-2.5 border-t border-border-subtle text-[10px] text-muted-subtle">
+        <div className="flex items-center gap-4 px-5 py-2.5 border-t border-border-subtle text-2xs text-muted-subtle">
           <span>↑↓ Navigate</span>
           <span>↵ Open</span>
           <span>Esc Close</span>
