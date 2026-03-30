@@ -116,7 +116,7 @@ export const CommandSearch = ({ repos: reposProp }: CommandSearchProps) => {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-modal flex items-start justify-center pt-16 px-4" role="presentation">
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-16 px-4" role="presentation">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"

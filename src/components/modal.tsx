@@ -61,7 +61,7 @@ export const Modal = ({ open, onClose, title, maxWidth = "max-w-md", innerClassN
 
   return (
     <div
-      className="fixed inset-0 z-modal flex items-center justify-center bg-black/60 backdrop-blur-sm p-4
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4
                  animate-in fade-in duration-150"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
       role="dialog"

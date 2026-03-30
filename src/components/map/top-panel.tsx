@@ -63,7 +63,7 @@ export const TopPanel = ({
   findInput, setFindInput, setFindStatus, findUser, findStatus,
 }: Props) => {
   return (
-    <div className="absolute top-4 left-1/2 -translate-x-1/2 z-overlay
+    <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10
       bg-background/90 border border-border rounded-xl
       px-5 py-3 text-center backdrop-blur-md shadow-2xl min-w-[320px]">
 

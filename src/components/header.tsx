@@ -45,7 +45,7 @@ export const Header = ({
   const widthCls = innerMaxWidth ? `${innerMaxWidth} mx-auto` : "";
 
   return (
-    <header className={`${positionCls} z-overlay border-b border-border-subtle backdrop-blur-sm`}>
+    <header className={`${positionCls} z-20 border-b border-border-subtle backdrop-blur-sm`}>
       <div className={`${widthCls} ${px} h-14 flex items-center justify-between`}>
 
         {/* Left: back arrow + logo */}
