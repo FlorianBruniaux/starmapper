@@ -67,6 +67,8 @@ export default function UserPage({ params }: { params: Promise<{ owner: string }
   const [repos, setRepos] = useState<UserRepo[]>([]);
   const [cached, setCached] = useState<Set<string>>(new Set());
   const [minStars, setMinStars] = useState(10);
+  const [repoSearch, setRepoSearch] = useState("");
+  const [repoSort, setRepoSort] = useState<"stars_desc" | "stars_asc" | "name_asc" | "name_desc">("stars_desc");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [tokenOpen, setTokenOpen] = useState(false);
@@ -107,10 +109,17 @@ export default function UserPage({ params }: { params: Promise<{ owner: string }
       .catch(() => {});
   }, [owner]);
 
-  const filtered = useMemo(
-    () => repos.filter((r) => r.stars >= minStars),
-    [repos, minStars],
-  );
+  const filtered = useMemo(() => {
+    const q = repoSearch.trim().toLowerCase();
+    const list = repos.filter((r) =>
+      r.stars >= minStars && (!q || r.name.toLowerCase().includes(q) || r.description?.toLowerCase().includes(q)),
+    );
+    if (repoSort === "stars_desc") list.sort((a, b) => b.stars - a.stars);
+    else if (repoSort === "stars_asc") list.sort((a, b) => a.stars - b.stars);
+    else if (repoSort === "name_asc") list.sort((a, b) => a.name.localeCompare(b.name));
+    else list.sort((a, b) => b.name.localeCompare(a.name));
+    return list;
+  }, [repos, minStars, repoSearch, repoSort]);
 
   const toggleRepo = (name: string) => {
     setSelected((prev) => {
@@ -314,20 +323,50 @@ export default function UserPage({ params }: { params: Promise<{ owner: string }
               )}
 
               {/* Filters */}
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <label className="text-muted text-xs">Min stars</label>
+              <div className="flex flex-col gap-2 mb-4">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <label className="text-muted text-xs shrink-0">Min stars</label>
+                    <input
+                      type="number"
+                      min={0}
+                      value={minStars}
+                      onChange={(e) => { setMinStars(Math.max(0, parseInt(e.target.value) || 0)); setSelected(new Set()); }}
+                      className="w-20 bg-surface border border-border rounded-md px-2 py-1 text-foreground text-xs focus:outline-none focus:border-accent-blue transition-colors"
+                    />
+                  </div>
+                  <div className="flex items-center gap-1">
+                    {(["stars_desc", "stars_asc", "name_asc", "name_desc"] as const).map((s) => (
+                      <button
+                        key={s}
+                        type="button"
+                        onClick={() => setRepoSort(s)}
+                        className={`px-2 py-1 rounded text-2xs transition-colors border ${
+                          repoSort === s
+                            ? "bg-accent-blue/20 text-accent-blue border-accent-blue/40"
+                            : "text-muted border-border hover:text-foreground"
+                        }`}
+                      >
+                        {s === "stars_desc" ? "★ desc" : s === "stars_asc" ? "★ asc" : s === "name_asc" ? "A→Z" : "Z→A"}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-muted-subtle text-xs shrink-0">
+                    {filtered.length} repos match · select up to {MAX_BATCH}
+                  </p>
+                </div>
+                <div className="relative">
+                  <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor" className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted pointer-events-none">
+                    <path d="M10.68 11.74a6 6 0 0 1-7.922-8.982 6 6 0 0 1 8.982 7.922l3.04 3.04a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215ZM11.5 7a4.499 4.499 0 1 0-8.997 0A4.499 4.499 0 0 0 11.5 7Z"/>
+                  </svg>
                   <input
-                    type="number"
-                    min={0}
-                    value={minStars}
-                    onChange={(e) => { setMinStars(Math.max(0, parseInt(e.target.value) || 0)); setSelected(new Set()); }}
-                    className="w-20 bg-surface border border-border rounded-md px-2 py-1 text-foreground text-xs focus:outline-none focus:border-accent-blue transition-colors"
+                    type="text"
+                    placeholder="Search repos…"
+                    value={repoSearch}
+                    onChange={(e) => setRepoSearch(e.target.value)}
+                    className="w-full bg-surface border border-border rounded-md pl-8 pr-3 py-1.5 text-foreground text-xs focus:outline-none focus:border-accent-blue transition-colors placeholder:text-muted-subtle"
                   />
                 </div>
-                <p className="text-muted-subtle text-xs">
-                  {filtered.length} repos match · select up to {MAX_BATCH}
-                </p>
               </div>
 
               {/* Repo list */}
