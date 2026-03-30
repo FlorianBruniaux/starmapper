@@ -117,6 +117,12 @@ export default function ExplorePage() {
 
                 {tab === "power" && (
                   <div className="space-y-3">
+                    <div className="flex items-start gap-2 bg-accent-orange/5 border border-accent-orange/20 rounded-lg px-3 py-2.5 mb-4">
+                      <span className="text-accent-orange text-sm mt-px shrink-0">⚡</span>
+                      <p className="text-xs text-muted leading-relaxed">
+                        Developers who starred the most repos tracked on StarMapper. The count shows how many of the {(data.totalTrackedRepos ?? 0).toLocaleString()} scanned repos they&apos;ve starred.
+                      </p>
+                    </div>
                     {data.powerStargazers.length === 0 && (
                       <div className="text-center text-muted-subtle text-sm py-12">
                         <div className="text-3xl mb-2">⚡</div>
@@ -139,8 +145,8 @@ export default function ExplorePage() {
                             <div className="text-muted-subtle text-xs truncate">{u.name}</div>
                           )}
                         </div>
-                        <span className="text-accent-orange text-xs flex-shrink-0 tabular-nums font-medium">
-                          {u.trackedRepos} repos
+                        <span className="text-accent-orange text-xs flex-shrink-0 tabular-nums font-medium" title={`Starred ${u.trackedRepos} tracked repos`}>
+                          {u.trackedRepos} starred
                         </span>
                       </div>
                     ))}
