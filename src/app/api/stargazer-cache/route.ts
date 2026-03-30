@@ -13,11 +13,29 @@ const MAX_CACHEABLE_STARS = 100_000;
 export const POST = async (req: NextRequest) => {
   try {
     const body = await req.json();
-    const { owner, repo, points, unmapped, pointsGz, unmappedGz, totalCount } = body;
+    const { owner, repo, points, unmapped, pointsGz, unmappedGz, totalCount, ts } = body;
 
     const key = validateOwnerRepo(owner, repo);
     if (!key || typeof totalCount !== "number" || totalCount < 0 || totalCount > MAX_CACHEABLE_STARS) {
       return jsonError("invalid_params", 400);
+    }
+
+    // Freshness check — rejects requests older than 5 minutes (anti-replay)
+    if (typeof ts !== "number" || Math.abs(Date.now() - ts) > 5 * 60_000) {
+      return jsonError("expired_request", 400);
+    }
+
+    // Plausibility check — if badge data exists, totalCount must be within ±20%
+    // Prevents overwriting a 50k-star repo cache with fabricated data
+    const existingBadge = await prisma.badgeCache.findUnique({
+      where: { owner_repo: key },
+      select: { totalCount: true },
+    });
+    if (existingBadge && existingBadge.totalCount > 0) {
+      const ratio = totalCount / existingBadge.totalCount;
+      if (ratio < 0.8 || ratio > 1.2) {
+        return jsonError("totalCount_mismatch", 400);
+      }
     }
 
     let finalPointsGz: string;

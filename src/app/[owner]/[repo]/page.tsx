@@ -445,7 +445,7 @@ export default function MapPage({
             await fetch("/api/stargazer-cache", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ owner, repo, pointsGz, unmappedGz, totalCount: finalTotal }),
+              body: JSON.stringify({ owner, repo, pointsGz, unmappedGz, totalCount: finalTotal, ts: Date.now() }),
             });
           } catch { /* fire-and-forget, non-critical */ }
         })();
