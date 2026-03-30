@@ -1,6 +1,9 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
+
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { isCountry, normalizeCountry } from "@/lib/countries";
+import { parseLocation } from "@/lib/location-parser";
 
 export type ExploreData = {
   totalUsers: number;
@@ -28,15 +31,6 @@ const normalizeCompany = (raw: string): string | null => {
   return stripped.replace(/\b\w/g, (c) => c.toUpperCase());
 };
 
-const parseLocation = (location: string | null): { country: string | null; city: string | null } => {
-  if (!location) return { country: null, city: null };
-  const parts = location.split(",").map((s) => s.trim()).filter(Boolean);
-  if (!parts.length) return { country: null, city: null };
-  const lastSegment = parts[parts.length - 1];
-  const country = isCountry(lastSegment) ? normalizeCountry(lastSegment) : null;
-  const city = parts.length > 1 ? parts[0] : (country ? null : parts[0]);
-  return { country, city };
-};
 
 export const GET = async () => {
   try {
@@ -49,12 +43,15 @@ export const GET = async () => {
         take: 30,
         select: { login: true, name: true, followers: true, company: true },
       }),
-      prisma.starEvent.groupBy({
-        by: ["login"],
-        _count: { login: true },
-        orderBy: { _count: { login: "desc" } },
-        take: 30,
-      }),
+      // $queryRaw avoids passing up to 10k logins as IN params and filters early with HAVING
+      prisma.$queryRaw<{ login: string; cnt: bigint }[]>`
+        SELECT login, COUNT(*) AS cnt
+        FROM star_event
+        GROUP BY login
+        HAVING COUNT(*) > 1
+        ORDER BY cnt DESC
+        LIMIT 30
+      `,
       prisma.gitHubUser.groupBy({
         by: ["company"],
         _count: { company: true },
@@ -62,10 +59,13 @@ export const GET = async () => {
         orderBy: { _count: { company: "desc" } },
         take: 500,
       }),
+      // take: 5000 bounds the worst case (unbounded before — full table scan for locations)
       prisma.gitHubUser.groupBy({
         by: ["location"],
         _count: { location: true },
         where: { location: { not: null } },
+        orderBy: { _count: { location: "desc" } },
+        take: 5000,
       }),
     ]);
 
@@ -74,7 +74,7 @@ export const GET = async () => {
       avatarUrl: `https://github.com/${u.login}.png`,
     }));
 
-    const powerCandidates = crossRepoGroups.filter((d) => (d._count.login ?? 0) > 1).slice(0, 20);
+    const powerCandidates = crossRepoGroups.slice(0, 20);
     const powerLogins = powerCandidates.map((d) => d.login);
     const powerUsersRaw = await prisma.gitHubUser.findMany({
       where: { login: { in: powerLogins } },
@@ -87,7 +87,7 @@ export const GET = async () => {
         login: d.login,
         name: u?.name ?? null,
         followers: u?.followers ?? 0,
-        trackedRepos: d._count.login ?? 0,
+        trackedRepos: Number(d.cnt),
         avatarUrl: `https://github.com/${d.login}.png`,
       };
     });
@@ -133,7 +133,7 @@ export const GET = async () => {
     };
 
     return NextResponse.json(data, {
-      headers: { "Cache-Control": "public, s-maxage=600, stale-while-revalidate=1200" },
+      headers: { "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=7200" },
     });
   } catch (err) {
     console.error("[explore] Error:", err);

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
+
 type StatsListProps = { items: [string, number][]; max: number };
 
 export const StatsList = ({ items, max }: StatsListProps) => (

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
+
 import { prisma } from "@/lib/db";
 
 const JAWG_GEOCODING = "https://api.jawg.io/places/v1/search";

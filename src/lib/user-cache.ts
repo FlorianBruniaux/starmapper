@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
+
 import { prisma } from "@/lib/db";
 import { checkDbHealth, DB_CRITICAL_PCT } from "@/lib/db-health";
 

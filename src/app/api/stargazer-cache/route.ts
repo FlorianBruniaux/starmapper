@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
+
 import { NextRequest, NextResponse } from "next/server";
 import { gzipSync } from "zlib";
 import { prisma } from "@/lib/db";
@@ -26,6 +29,10 @@ export const POST = async (req: NextRequest) => {
 
     if (typeof pointsGz === "string" && typeof unmappedGz === "string") {
       // New format: client compressed client-side to stay under Vercel's 4.5MB body limit
+      // 10 MB base64 ≈ 7.5 MB gzip — well above the ~800 KB real-world maximum for 100k stars
+      if (pointsGz.length > 10_000_000 || unmappedGz.length > 10_000_000) {
+        return NextResponse.json({ error: "payload_too_large" }, { status: 413 });
+      }
       finalPointsGz = pointsGz;
       finalUnmappedGz = unmappedGz;
     } else if (Array.isArray(points) && Array.isArray(unmapped)) {

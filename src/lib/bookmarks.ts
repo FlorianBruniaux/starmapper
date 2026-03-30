@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
+
 const KEY = "starmapper:recent";
 export type Bookmark = { owner: string; repo: string; stars: number; visitedAt: number };
 

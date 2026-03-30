@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
+
 const ECOSYSTEM_LINKS = [
   { href: "https://cc.bruniaux.com/", label: "Claude Code Guide" },
   { href: "https://cowork.bruniaux.com/", label: "Cowork Guide" },

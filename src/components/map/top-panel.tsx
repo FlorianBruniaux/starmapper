@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
+
 "use client";
 
 import type { StargazerPoint } from "@/app/api/chunk/route";
@@ -62,66 +65,140 @@ export const TopPanel = ({
   error,
   findInput, setFindInput, setFindStatus, findUser, findStatus,
 }: Props) => {
+  const mappingPct = total > 0 ? Math.round((points.length / total) * 100) : 0;
+  const locationCount = new Set(
+    points.map((p) => p.location?.split(",").pop()?.trim())
+  ).size;
+
   return (
     <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10
       bg-background/90 border border-border rounded-xl
-      px-5 py-3 text-center backdrop-blur-md shadow-2xl min-w-[320px]">
+      px-4 py-3 backdrop-blur-md shadow-2xl min-w-80 w-max max-w-sm">
 
-      <div className="flex items-center justify-center gap-2 mb-1">
-        {repoInfo?.avatar && (
-          <img src={repoInfo.avatar} alt="" className="w-5 h-5 rounded-full" />
-        )}
+      {/* ── Header ────────────────────────────────────────────────────────── */}
+      <div className="flex items-center gap-3">
+        {/* "Another repo" pill — ghost, discret, à gauche */}
         <a
-          href={`https://github.com/${owner}/${repo}`}
-          target="_blank"
-          className="text-foreground text-sm font-semibold hover:underline"
+          href="/"
+          title="Map another repo"
+          className="flex items-center gap-1 text-2xs text-muted hover:text-foreground
+            border border-border-subtle rounded-full px-2 py-0.5
+            hover:border-border transition-colors flex-shrink-0"
         >
-          {owner}/{repo}
+          <svg
+            width="10" height="10" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" strokeWidth="2.5"
+            strokeLinecap="round" strokeLinejoin="round"
+          >
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          </svg>
+          Search
         </a>
+
+        {/* Repo identity — centré naturellement avec flex-1 */}
+        <div className="flex items-center gap-2 flex-1 justify-center min-w-0">
+          {repoInfo?.avatar && (
+            <img src={repoInfo.avatar} alt="" className="size-5 rounded-full flex-shrink-0" />
+          )}
+          <a
+            href={`https://github.com/${owner}/${repo}`}
+            target="_blank"
+            className="text-foreground text-sm font-semibold hover:text-accent-blue
+              transition-colors truncate"
+          >
+            {owner}/{repo}
+          </a>
+        </div>
+
+        {/* Spacer symétrique pour garder le repo centré */}
+        <div className="w-14 flex-shrink-0" />
       </div>
 
+      {/* ── Compare row ───────────────────────────────────────────────────── */}
       {compareOwner && compareRepo && (
-        <div className="mt-1 flex items-center justify-center gap-2 text-2xs">
-          <span className="inline-block w-2 h-2 rounded-full bg-accent-purple flex-shrink-0" />
+        <div className="mt-1.5 flex items-center justify-center gap-2 text-2xs">
+          <span className="inline-block size-2 rounded-full bg-accent-purple flex-shrink-0" />
           <span className="text-muted">
             vs <span className="text-accent-purple">{compareOwner}/{compareRepo}</span>
-            {compareInfo && <span className="text-muted-subtle ml-1">({compareInfo.stars.toLocaleString()} ★)</span>}
-            {compareStatus === "loading" && <span className="text-muted-subtle ml-1">· scanning…</span>}
-            {compareStatus === "done" && <span className="text-muted-subtle ml-1">· {comparePoints.length} mapped</span>}
+            {compareInfo && (
+              <span className="text-muted-subtle ml-1">
+                ({compareInfo.stars.toLocaleString()} ★)
+              </span>
+            )}
+            {compareStatus === "loading" && (
+              <span className="text-muted-subtle ml-1">· scanning…</span>
+            )}
+            {compareStatus === "done" && (
+              <span className="text-muted-subtle ml-1">· {comparePoints.length} mapped</span>
+            )}
           </span>
         </div>
       )}
 
-      <div className="flex gap-5 justify-center mt-2">
-        {[
-          { val: points.length.toLocaleString(), label: "mapped" },
-          { val: total.toLocaleString() || "—", label: "total stars" },
-          { val: new Set(points.map((p) => p.location?.split(",").pop()?.trim())).size.toString(), label: "locations" },
-        ].map(({ val, label }) => (
-          <div key={label} className="text-center">
-            <div className="text-2xl font-bold text-foreground">{val}</div>
-            <div className="text-2xs text-muted uppercase tracking-wide mt-0.5">{label}</div>
+      {/* ── Stats grid ────────────────────────────────────────────────────── */}
+      <div className="mt-3 border border-border-subtle rounded-lg overflow-hidden">
+        <div className="grid grid-cols-3 divide-x divide-border-subtle">
+          {/* Mapped */}
+          <div className="flex flex-col items-center py-2 px-3">
+            <div className="text-xl font-bold text-foreground tabular-nums leading-tight">
+              {points.length.toLocaleString()}
+            </div>
+            <div className="text-2xs text-muted uppercase tracking-wide mt-0.5">Mapped</div>
           </div>
-        ))}
+
+          {/* Total stars */}
+          <div className="flex flex-col items-center py-2 px-3">
+            <div className="text-xl font-bold text-foreground tabular-nums leading-tight">
+              {total.toLocaleString() || "—"}
+            </div>
+            <div className="text-2xs text-muted uppercase tracking-wide mt-0.5">Stars</div>
+          </div>
+
+          {/* Locations */}
+          <div className="flex flex-col items-center py-2 px-3">
+            <div className="text-xl font-bold text-foreground tabular-nums leading-tight">
+              {locationCount.toString()}
+            </div>
+            <div className="text-2xs text-muted uppercase tracking-wide mt-0.5">Countries</div>
+          </div>
+        </div>
+
+        {/* No location row — séparé, visuellement déprioritisé */}
         <button
           onClick={() => setDrawerOpen(true)}
-          className="text-center cursor-pointer hover:opacity-80 transition-opacity"
+          className="w-full flex items-center justify-between px-3 py-1.5
+            bg-surface-alt/50 hover:bg-surface-alt transition-colors
+            border-t border-border-subtle group"
         >
-          <div className="text-2xl font-bold text-muted">{unmapped.length.toLocaleString()}</div>
-          <div className="text-2xs text-muted uppercase tracking-wide mt-0.5">no location</div>
+          <span className="text-2xs text-muted-subtle uppercase tracking-wide">
+            No location
+          </span>
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs font-medium text-muted-subtle tabular-nums">
+              {unmapped.length.toLocaleString()}
+            </span>
+            <svg
+              width="10" height="10" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" strokeWidth="2.5"
+              strokeLinecap="round" strokeLinejoin="round"
+              className="text-muted-subtle group-hover:text-muted transition-colors"
+            >
+              <path d="m9 18 6-6-6-6"/>
+            </svg>
+          </div>
         </button>
       </div>
 
-      {/* Progress bar — during scan */}
+      {/* ── Progress bar — during scan ────────────────────────────────────── */}
       {(status === "loading" || status === "refreshing" || status === "waiting") && (
-        <div className="mt-3">
-          <div className="w-full bg-surface-alt rounded-full h-1.5 overflow-hidden">
+        <div className="mt-2.5">
+          <div className="w-full bg-surface-alt rounded-full h-1 overflow-hidden">
             <div
               className="bg-accent-blue h-full rounded-full transition-all duration-300"
               style={{ width: status === "refreshing" ? "100%" : `${pct}%` }}
             />
           </div>
-          <div className="text-2xs text-muted mt-1">
+          <div className="text-2xs text-muted mt-1 text-center">
             {status === "waiting"
               ? `⏸ Queued — resuming in ${retryIn}s…`
               : status === "refreshing"
@@ -135,82 +212,123 @@ export const TopPanel = ({
         </div>
       )}
 
-      {/* Mapping ratio bar — after scan */}
+      {/* ── Mapping ratio bar — after scan ───────────────────────────────── */}
       {(status === "cached" || status === "done") && total > 0 && points.length > 0 && (
         <div className="mt-2.5">
           <div className="w-full bg-surface-alt rounded-full h-1 overflow-hidden">
             <div
               className="bg-accent-blue h-full rounded-full transition-all duration-500"
-              style={{ width: `${Math.round((points.length / total) * 100)}%` }}
+              style={{ width: `${mappingPct}%` }}
             />
           </div>
           <div className="text-2xs text-muted-subtle mt-0.5 text-center">
-            {points.length.toLocaleString()} / {total.toLocaleString()} mapped ({Math.round((points.length / total) * 100)}%)
+            {points.length.toLocaleString()} / {total.toLocaleString()} mapped ({mappingPct}%)
           </div>
         </div>
       )}
 
-      {/* Cache status */}
+      {/* ── Cache status ──────────────────────────────────────────────────── */}
       {(status === "cached" || status === "done") && cachedAt && (
-        <div className="mt-2 flex items-center justify-center gap-3">
-          <span className="text-2xs text-accent-green">
-            {status === "done" ? "✓ Indexed" : `✓ Cached ${timeAgo(cachedAt)}`}
-          </span>
-          {status === "cached" && latestStarredAt && (
-            <button
-              onClick={startRefresh}
-              className="text-2xs text-accent-blue hover:underline flex items-center gap-1"
+        <div className="mt-2 pt-2 border-t border-border-subtle
+          flex items-center justify-between gap-2">
+          <span className="text-2xs text-accent-green flex items-center gap-1">
+            <svg
+              width="10" height="10" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" strokeWidth="2.5"
+              strokeLinecap="round" strokeLinejoin="round"
             >
-              ↻ {newStarsCount > 0 ? `${newStarsCount} new stars` : "Refresh"}
+              <path d="M20 6 9 17l-5-5"/>
+            </svg>
+            {status === "done" ? "Indexed" : `Cached ${timeAgo(cachedAt)}`}
+          </span>
+          <div className="flex items-center gap-2">
+            {status === "cached" && latestStarredAt && (
+              <button
+                onClick={startRefresh}
+                className="text-2xs text-accent-blue hover:underline flex items-center gap-1"
+              >
+                ↻ {newStarsCount > 0 ? `${newStarsCount} new stars` : "Refresh"}
+              </button>
+            )}
+            <button
+              onClick={handleStartScan}
+              className="text-2xs text-muted-subtle hover:text-muted transition-colors"
+            >
+              Full rescan
             </button>
-          )}
-          <button
-            onClick={handleStartScan}
-            className="text-2xs text-muted hover:text-foreground hover:underline"
-          >
-            Full rescan
-          </button>
+          </div>
         </div>
       )}
 
+      {/* ── Error state ───────────────────────────────────────────────────── */}
       {status === "error" && error && (
         <div className="mt-2 text-accent-red text-xs">{error}</div>
       )}
 
-      {/* Find me */}
-      <div className="mt-3 flex flex-col gap-1.5">
-        <div className="flex gap-2">
+      {/* ── Find a stargazer ──────────────────────────────────────────────── */}
+      <div className="mt-2.5 pt-2.5 border-t border-border-subtle">
+        <div className="relative flex items-center">
+          {/* Loupe inline dans le field */}
+          <svg
+            width="12" height="12" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" strokeWidth="2.5"
+            strokeLinecap="round" strokeLinejoin="round"
+            className="absolute left-3 text-muted-subtle pointer-events-none"
+          >
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          </svg>
           <input
             value={findInput}
             onChange={(e) => { setFindInput(e.target.value); setFindStatus("idle"); }}
             onKeyDown={(e) => { if (e.key === "Enter") findUser(); }}
-            placeholder="GitHub username or URL…"
-            className="flex-1 bg-surface-alt border border-border rounded-md px-3 py-1.5 text-xs text-foreground placeholder-muted-subtle focus:outline-none focus:border-accent-blue"
+            placeholder="Find a stargazer…"
+            className="flex-1 bg-surface border border-border rounded-lg
+              pl-8 pr-3 py-2 text-xs text-foreground placeholder:text-muted-subtle
+              focus:outline-none focus:border-accent-blue focus:ring-1 focus:ring-accent-blue/30
+              transition-colors"
           />
           <button
             onClick={findUser}
             disabled={findStatus === "searching"}
-            className="bg-surface-alt border border-border rounded-md px-3 py-1.5 text-xs text-muted hover:text-foreground hover:bg-border transition-colors disabled:opacity-50 flex items-center gap-1.5"
+            className="ml-2 flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium
+              bg-surface-alt border border-border text-muted
+              hover:text-foreground hover:border-accent-blue/50
+              disabled:opacity-50 transition-colors flex-shrink-0"
           >
             {findStatus === "searching" ? (
               <>
-                <svg className="animate-spin w-3 h-3" viewBox="0 0 24 24" fill="none">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                <svg className="animate-spin size-3" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10"
+                    stroke="currentColor" strokeWidth="4"/>
+                  <path className="opacity-75" fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
                 </svg>
-                Searching…
+                Searching
               </>
             ) : "Find"}
           </button>
         </div>
+
+        {/* Find feedback */}
         {findStatus === "found" && (
-          <p className="text-2xs text-accent-green">✓ Found — flying to location</p>
+          <p className="mt-1.5 text-2xs text-accent-green flex items-center gap-1">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" strokeWidth="2.5"
+              strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20 6 9 17l-5-5"/>
+            </svg>
+            Found — flying to location
+          </p>
         )}
         {findStatus === "no-location" && (
-          <p className="text-2xs text-accent-orange">Starred but has no location set on GitHub</p>
+          <p className="mt-1.5 text-2xs text-accent-orange">
+            Starred but has no location set on GitHub
+          </p>
         )}
         {findStatus === "not-found" && (
-          <p className="text-2xs text-accent-red">Not found in stargazers</p>
+          <p className="mt-1.5 text-2xs text-accent-red">
+            Not found in stargazers
+          </p>
         )}
       </div>
     </div>

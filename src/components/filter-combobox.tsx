@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
+
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";

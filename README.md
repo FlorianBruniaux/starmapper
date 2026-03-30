@@ -61,13 +61,15 @@ Open [http://localhost:3000](http://localhost:3000), enter any public GitHub rep
 
 | Variable | Required | Description |
 |---|---|---|
-| `DATABASE_URL` | Yes | Neon Postgres connection string |
+| `DATABASE_URL` | Yes | Postgres connection string (Neon, Docker, Railway, Supabase…) |
+| `DATABASE_DRIVER` | No | `neon` (default, Vercel) or `standard` (plain PostgreSQL) |
 | `GITHUB_TOKEN` | Yes | GitHub PAT with `read:user` scope |
 | `JAWGMAP_ACCESS_TOKEN` | Recommended | Geocoding primary provider + server-side tile requests |
 | `NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN` | Yes (client) | Jawg token for client-side MapLibre tile URL |
 | `GEOAPIFY_APIKEY` | Recommended | Geocoding fallback when Jawg fails |
 | `NEXT_PUBLIC_APP_URL` | No | App base URL, used for OG metadata and Nominatim User-Agent |
 | `ADMIN_SECRET` | No | Secret header for `/api/admin/*` routes — if unset, admin routes return 401 |
+| `DB_STORAGE_LIMIT_MB` | No | DB storage cap in MB for health guard (default: 512, Neon Launch: 10240) |
 
 Without `JAWGMAP_ACCESS_TOKEN` and `GEOAPIFY_APIKEY`, geocoding falls back to Nominatim only — rate-limited to 1 req/s. Thanks to the GeoNames pre-seeding, this matters far less in practice (most locations already cached).
 
@@ -114,6 +116,12 @@ pnpm seed:geonames        # Insert ~51k GeoNames entries into geocache
 
 Open an issue before sending a pull request for anything beyond a typo fix. The project is intentionally minimal — see `CLAUDE.md` section X for what is explicitly out of scope.
 
+By submitting a pull request, you certify that your contribution complies with the [Developer Certificate of Origin v1.1](https://developercertificate.org/). Add a `Signed-off-by` line to your commits (`git commit -s`).
+
 ## License
 
-MIT
+[AGPL-3.0-only](./LICENSE) — free to use, fork, and self-host. If you modify StarMapper™ and run it as a public service, you must publish your source changes under the same license.
+
+To report a license violation: florian@bruniaux.com
+
+This project is archived on [Software Heritage](https://www.softwareheritage.org) for provenance and authorship verification.

@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# Check that all staged .ts/.tsx files contain the SPDX license header.
+
+SPDX="SPDX-License-Identifier: AGPL-3.0-only"
+missing=()
+
+while IFS= read -r file; do
+  [[ "$file" == *.ts || "$file" == *.tsx ]] || continue
+  [[ -f "$file" ]] || continue
+  head -1 "$file" | grep -qF "$SPDX" || missing+=("$file")
+done < <(git diff --cached --name-only --diff-filter=ACM)
+
+if [[ ${#missing[@]} -gt 0 ]]; then
+  echo ""
+  echo "  Missing SPDX header in:"
+  for f in "${missing[@]}"; do
+    echo "    $f"
+  done
+  echo ""
+  echo "  Add this at the top of each file:"
+  echo "    // SPDX-License-Identifier: AGPL-3.0-only"
+  echo "    // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>"
+  echo ""
+  exit 1
+fi

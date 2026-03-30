@@ -1,0 +1,16 @@
+StarMapper™
+Copyright (C) 2026 Florian Bruniaux
+
+Original repository: https://github.com/florianbruniaux/starmapper
+Live instance: https://starmapper.bruniaux.com
+
+This software is licensed under the GNU Affero General Public License v3.0 only
+(AGPL-3.0-only). See the LICENSE file for the full license text.
+
+Third-party components used by this project retain their own licenses:
+- MapLibre GL JS (BSD-3-Clause)
+- Next.js (MIT)
+- Prisma (Apache-2.0)
+- Tailwind CSS (MIT)
+
+To report a license violation: florian@bruniaux.com

@@ -1,6 +1,9 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
+
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { isCountry, normalizeCountry } from "@/lib/countries";
+import { parseLocation } from "@/lib/location-parser";
 
 export type RepoStats = {
   totalStars: number;
@@ -15,18 +18,7 @@ export type RepoStats = {
   powerStargazers: { login: string; name: string | null; followers: number; trackedRepos: number; avatarUrl: string }[];
   botCount: number;
   enrichedUserCount: number;
-};
-
-const parseLocation = (location: string | null): { country: string | null; city: string | null } => {
-  if (!location) return { country: null, city: null };
-  const parts = location.split(",").map((s) => s.trim()).filter(Boolean);
-  if (!parts.length) return { country: null, city: null };
-
-  const lastSegment = parts[parts.length - 1];
-  const country = isCountry(lastSegment) ? normalizeCountry(lastSegment) : null;
-  const city = parts.length > 1 ? parts[0] : (country ? null : parts[0]);
-
-  return { country, city };
+  isCapped: boolean;
 };
 
 export const GET = async (
@@ -96,17 +88,20 @@ export const GET = async (
       .slice(0, 20);
 
     // Power stargazers: users who starred multiple repos tracked by StarMapper
-    const repoLogins = events.map((e) => e.user.login);
-    const crossRepoGroups = await prisma.starEvent.groupBy({
-      by: ["login"],
-      where: { login: { in: repoLogins } },
-      _count: { login: true },
-      orderBy: { _count: { login: "desc" } },
-      take: 50,
-    });
+    // Uses a subquery to avoid passing up to 10k logins as IN parameters
+    const crossRepoGroups = await prisma.$queryRaw<{ login: string; cnt: bigint }[]>`
+      SELECT se.login, COUNT(*) AS cnt
+      FROM star_event se
+      WHERE se.login IN (
+        SELECT login FROM star_event WHERE owner = ${key.owner} AND repo = ${key.repo}
+      )
+      GROUP BY se.login
+      HAVING COUNT(*) > 1
+      ORDER BY cnt DESC
+      LIMIT 50
+    `;
     const userMap = new Map(events.map((e) => [e.user.login, e.user]));
     const powerStargazers = crossRepoGroups
-      .filter((d) => (d._count.login ?? 0) > 1)
       .slice(0, 20)
       .map((d) => {
         const u = userMap.get(d.login);
@@ -114,7 +109,7 @@ export const GET = async (
           login: d.login,
           name: u?.name ?? null,
           followers: u?.followers ?? 0,
-          trackedRepos: d._count.login ?? 0,
+          trackedRepos: Number(d.cnt),
           avatarUrl: `https://github.com/${d.login}.png`,
         };
       });
@@ -132,6 +127,7 @@ export const GET = async (
       powerStargazers,
       botCount,
       enrichedUserCount,
+      isCapped: total === 10_000,
     };
 
     return NextResponse.json(stats, {

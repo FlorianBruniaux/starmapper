@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
+
 /**
  * ISO 3166-1 country names (lowercase) + common aliases.
  * Used to filter raw GitHub location strings and identify real country names.
