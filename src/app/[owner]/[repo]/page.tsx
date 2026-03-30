@@ -40,15 +40,14 @@ type AnyStargazer = {
 
 type SortKey = "followers" | "login" | "location" | "starredAt" | "company";
 
-interface RepoInfo {
+type RepoInfo = {
   name: string;
   description: string | null;
   stars: number;
   avatar: string | null;
-}
+};
 
-
-interface LocalCache {
+type LocalCache = {
   version: 1;
   points: StargazerPoint[];
   unmapped: { login: string; name: string | null; followers: number; starredAt: string | null }[];
@@ -112,7 +111,7 @@ const clearCache = (owner: string, repo: string) => {
 
 const TOKEN_REQUIRED_STARS = 50_000;
 
-function estimateScan(stars: number): TimeEstimate {
+const estimateScan = (stars: number): TimeEstimate => {
   const locationsToGeocode = Math.round(stars * 0.4 * 0.7);
   const geocodeSeconds = locationsToGeocode * 0.2;
   const githubSeconds = Math.ceil(stars / 100);
@@ -841,8 +840,8 @@ export default function MapPage({
     const topCities = [...cityCount.entries()].sort((a, b) => b[1] - a[1]).slice(0, 30);
     const topUsers = [...points]
       .sort((a, b) => b.followers - a.followers)
-      .slice(0, 20)
-      .map((u) => ({ login: u.login, name: u.name, followers: u.followers, location: u.location, avatarUrl: u.avatarUrl, company: u.company }));
+      .slice(0, 30)
+      .map((u) => ({ login: u.login, name: u.name, followers: u.followers, publicRepos: 0, location: u.location, avatarUrl: u.avatarUrl, company: u.company }));
     const topCompanies = [...companyCount.entries()].sort((a, b) => b[1] - a[1]).slice(0, 30);
     const mappingRate = Math.round((points.length / (points.length + unmapped.length)) * 100);
     const avgFollowers = points.length > 0
@@ -1510,19 +1509,23 @@ export default function MapPage({
                   >
                     Copy logins
                   </button>
-                  <button
-                    onClick={() => exportCsv(allStargazers.filter((u) => selected.has(u.login)))}
-                    className="bg-surface-alt border border-border rounded-lg px-3 py-1.5 text-xs text-muted hover:text-foreground transition-colors"
-                  >
-                    ↓ Export CSV
-                  </button>
-                  <button
-                    onClick={fetchAndExport}
-                    disabled={fetching}
-                    className="bg-accent-green-emphasis hover:opacity-90 disabled:opacity-50 rounded-lg px-3 py-1.5 text-xs text-white font-medium transition-opacity"
-                  >
-                    {fetching ? "Fetching…" : `↓ Fetch details + CSV (${selected.size})`}
-                  </button>
+                  {process.env.NEXT_PUBLIC_CSV_EXPORT === "true" && (
+                    <>
+                      <button
+                        onClick={() => exportCsv(allStargazers.filter((u) => selected.has(u.login)))}
+                        className="bg-surface-alt border border-border rounded-lg px-3 py-1.5 text-xs text-muted hover:text-foreground transition-colors"
+                      >
+                        ↓ Export CSV
+                      </button>
+                      <button
+                        onClick={fetchAndExport}
+                        disabled={fetching}
+                        className="bg-accent-green-emphasis hover:opacity-90 disabled:opacity-50 rounded-lg px-3 py-1.5 text-xs text-white font-medium transition-opacity"
+                      >
+                        {fetching ? "Fetching…" : `↓ Fetch details + CSV (${selected.size})`}
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             )}
@@ -2041,7 +2044,7 @@ export default function MapPage({
                   </div>
                   <div className="space-y-2.5">
                     {[...displayStats.topUsers]
-                      .sort((a, b) => statsTopSort === "followers" ? b.followers - a.followers : b.followers - a.followers)
+                      .sort((a, b) => statsTopSort === "followers" ? b.followers - a.followers : b.publicRepos - a.publicRepos)
                       .map((u, i) => (
                       <div key={u.login} className="flex items-center gap-3 py-0.5">
                         <span className="text-muted-subtle text-xs w-5 text-right flex-shrink-0">{i + 1}</span>
@@ -2071,10 +2074,23 @@ export default function MapPage({
                             <div className="text-muted-subtle text-2xs truncate">{u.location}</div>
                           )}
                         </div>
-                        <span className="text-muted text-xs flex-shrink-0 tabular-nums">
-                          <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor" className="inline mr-1 mb-0.5 text-muted"><path d="M3 8a1 1 0 1 1 0-2 1 1 0 0 1 0 2Zm3 0a1 1 0 1 1 0-2 1 1 0 0 1 0 2Zm3 0a1 1 0 1 1 0-2 1 1 0 0 1 0 2ZM1.5 3A1.5 1.5 0 0 0 0 4.5v7A1.5 1.5 0 0 0 1.5 13h13a1.5 1.5 0 0 0 1.5-1.5v-7A1.5 1.5 0 0 0 14.5 3Z"/></svg>
-                          {u.followers.toLocaleString()}
-                        </span>
+                        {statsTopSort === "repos" && u.publicRepos > 0 ? (
+                          <a
+                            href={`https://github.com/${u.login}?tab=repositories`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-accent-blue text-xs flex-shrink-0 tabular-nums hover:underline"
+                            title="View public repos"
+                          >
+                            <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor" className="inline mr-1 mb-0.5"><path d="M2 2.5A2.5 2.5 0 0 1 4.5 0h8.75a.75.75 0 0 1 .75.75v12.5a.75.75 0 0 1-.75.75h-2.5a.75.75 0 0 1 0-1.5h1.75v-2h-8a1 1 0 0 0-.714 1.7.75.75 0 1 1-1.072 1.05A2.495 2.495 0 0 1 2 11.5Zm10.5-1h-8a1 1 0 0 0-1 1v6.708A2.486 2.486 0 0 1 4.5 9h8Z"/></svg>
+                            {u.publicRepos.toLocaleString()}
+                          </a>
+                        ) : (
+                          <span className="text-muted text-xs flex-shrink-0 tabular-nums">
+                            <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor" className="inline mr-1 mb-0.5 text-muted"><path d="M3 8a1 1 0 1 1 0-2 1 1 0 0 1 0 2Zm3 0a1 1 0 1 1 0-2 1 1 0 0 1 0 2Zm3 0a1 1 0 1 1 0-2 1 1 0 0 1 0 2ZM1.5 3A1.5 1.5 0 0 0 0 4.5v7A1.5 1.5 0 0 0 1.5 13h13a1.5 1.5 0 0 0 1.5-1.5v-7A1.5 1.5 0 0 0 14.5 3Z"/></svg>
+                            {u.followers.toLocaleString()}
+                          </span>
+                        )}
                       </div>
                     ))}
                   </div>

@@ -9,7 +9,7 @@ import { bulkUpsertUsers, bulkUpsertStarEvents, bulkReadUsers, type UserWritePay
 import { validateOwnerRepo } from "@/lib/api-validation";
 import { jsonError, extractGhToken } from "@/lib/api-helpers";
 
-export interface StargazerPoint {
+export type StargazerPoint = {
   login: string;
   name: string | null;
   bio: string | null;
@@ -21,15 +21,15 @@ export interface StargazerPoint {
   lng: number;
   starredAt: string | null;
   linkedinUrl: string | null;
-}
+};
 
-export interface ChunkResponse {
+export type ChunkResponse = {
   points: StargazerPoint[];
   unmapped: { login: string; name: string | null; followers: number; starredAt: string | null }[];
   nextCursor: string | null;
   totalCount: number;
   latestStarredAt: string | null; // ISO timestamp of most recent star in this chunk
-}
+};
 
 // In-memory rate limiter — max 3 concurrent geocoding sessions across all users.
 // Vercel serverless: each instance has its own counter, so this is a per-instance

@@ -16,7 +16,7 @@ export type RepoStats = {
   topCountries: [string, number][];
   topCities: [string, number][];
   topCompanies: [string, number][];
-  topUsers: { login: string; name: string | null; followers: number; location: string | null; avatarUrl: string; company: string | null }[];
+  topUsers: { login: string; name: string | null; followers: number; publicRepos: number; location: string | null; avatarUrl: string; company: string | null }[];
   powerStargazers: { login: string; name: string | null; followers: number; trackedRepos: number; avatarUrl: string }[];
   botCount: number;
   enrichedUserCount: number;
@@ -76,17 +76,20 @@ export const GET = async (
     }
 
     const total = events.length;
-    const topUsers = events
-      .map(({ user: u }) => ({
-        login: u.login,
-        name: u.name,
-        followers: u.followers,
-        location: u.location,
-        avatarUrl: `https://github.com/${u.login}.png`,
-        company: u.company,
-      }))
-      .sort((a, b) => b.followers - a.followers)
-      .slice(0, 20);
+    const allMapped = events.map(({ user: u }) => ({
+      login: u.login,
+      name: u.name,
+      followers: u.followers,
+      publicRepos: u.publicRepos,
+      location: u.location,
+      avatarUrl: `https://github.com/${u.login}.png`,
+      company: u.company,
+    }));
+    // Keep top 30 by followers + top 30 by publicRepos, deduplicated, max 60 users
+    const byFollowers = [...allMapped].sort((a, b) => b.followers - a.followers).slice(0, 30);
+    const byRepos = [...allMapped].sort((a, b) => b.publicRepos - a.publicRepos).slice(0, 30);
+    const seen = new Set<string>();
+    const topUsers = [...byFollowers, ...byRepos].filter(({ login }) => seen.has(login) ? false : (seen.add(login), true));
 
     // Power stargazers: users who starred multiple repos tracked by StarMapper
     // Uses a subquery to avoid passing up to 10k logins as IN parameters
