@@ -195,29 +195,36 @@ POST /api/admin/import-geocache — admin: bulk-import geocache entries
 
 ### Prisma 7 + Neon Adapter Pattern
 
-StarMapper uses the `@prisma/adapter-neon` driver adapter. This changes the setup compared to the "standard" Prisma docs.
+StarMapper supports two connection modes controlled by `DATABASE_DRIVER`:
 
-**Key difference**: The connection string is passed via the adapter, NOT via `url` in `schema.prisma`.
+| `DATABASE_DRIVER` | Adapter | When to use |
+|---|---|---|
+| `neon` (default) | `@prisma/adapter-neon` | Vercel + Neon Serverless (HTTP) |
+| `standard` | `@prisma/adapter-pg` | Docker, Railway, Supabase, plain Postgres (TCP) |
+
+**Key rule**: `schema.prisma` has no `url` field — Prisma 7 requires this when using driver adapters. The connection string is passed to the adapter in `db.ts`, not via schema. For migrations, `prisma.config.ts` provides the URL.
 
 ```prisma
-# schema.prisma — correct (no url needed with adapter)
+# schema.prisma — correct (no url field with Prisma 7 adapter pattern)
 datasource db {
   provider = "postgresql"
 }
 ```
 
 ```ts
-// db.ts — correct (adapter receives DATABASE_URL)
-import { PrismaNeon } from "@prisma/adapter-neon";
-
+// db.ts — conditional adapter based on DATABASE_DRIVER env var
 const createPrismaClient = () => {
-  const adapter = new PrismaNeon({ connectionString: process.env.DATABASE_URL });
-  return new PrismaClient({ adapter });
+  if (process.env.DATABASE_DRIVER === "standard") {
+    const { Pool } = require("pg");
+    const { PrismaPg } = require("@prisma/adapter-pg");
+    return new PrismaClient({ adapter: new PrismaPg(new Pool({ connectionString: process.env.DATABASE_URL })) });
+  }
+  const { PrismaNeon } = require("@prisma/adapter-neon");
+  return new PrismaClient({ adapter: new PrismaNeon({ connectionString: process.env.DATABASE_URL }) });
 };
-export const prisma = globalForPrisma.prisma ?? createPrismaClient();
 ```
 
-**No `prisma.config.ts`** — deleted, no longer needed with the adapter pattern.
+**`prisma.config.ts`** — provides `DATABASE_URL` to Prisma CLI for `db push` / `db pull` / migrations.
 
 ### MapLibre GL 5.x Breaking Changes
 

@@ -33,6 +33,7 @@ model StargazerCache {
   unmapped   Json
   totalCount Int
   scannedAt  DateTime @default(now())
+  expiresAt  DateTime @default(dbgenerated("NOW() + INTERVAL '90 days'"))
 
   @@id([owner, repo])
   @@map("stargazer_cache")
@@ -54,6 +55,9 @@ model GitHubUser {
   fetchedAt        DateTime    @default(now())
   stars            StarEvent[]
 
+  @@index([followers(sort: Desc)])
+  @@index([company])
+  @@index([location])
   @@map("github_user")
 }
 
