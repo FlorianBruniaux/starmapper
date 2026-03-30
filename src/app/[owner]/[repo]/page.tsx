@@ -5,6 +5,7 @@ import { StargazerMapDynamic } from "@/components/map/stargazer-map-dynamic";
 import type { StargazerPoint, ChunkResponse } from "@/app/api/chunk/route";
 import type { RepoStats } from "@/app/api/stats/[owner]/[repo]/route";
 import { TokenModal, getStoredToken } from "@/components/token-modal";
+import { Modal } from "@/components/modal";
 import { saveBookmark } from "@/lib/bookmarks";
 import { FilterCombobox } from "@/components/filter-combobox";
 import { isCountry, normalizeCountry } from "@/lib/countries";
@@ -2101,19 +2102,7 @@ export default function MapPage({
       )}
 
       {/* Badge modal */}
-      {badgeOpen && (
-        <div
-          className="absolute inset-0 z-50 flex items-center justify-center bg-background/85 backdrop-blur-sm"
-          onClick={() => setBadgeOpen(false)}
-        >
-          <div
-            className="bg-surface border border-border rounded-2xl shadow-2xl w-full max-w-md mx-4"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between px-5 py-4 border-b border-border-subtle">
-              <h2 className="text-foreground font-semibold text-sm">README Badge</h2>
-              <button onClick={() => setBadgeOpen(false)} className="text-muted hover:text-foreground text-xl leading-none">×</button>
-            </div>
+      <Modal open={badgeOpen} onClose={() => setBadgeOpen(false)} title="README Badge">
             <div className="px-5 py-4 space-y-4">
               {/* Map image preview */}
               <div className="rounded-lg border border-border-subtle overflow-hidden bg-[#010409]">
@@ -2190,9 +2179,7 @@ export default function MapPage({
                 {badgeCopied ? "Copied ✓" : badgeTab === "map" ? "Copy HTML" : "Copy Markdown"}
               </button>
             </div>
-          </div>
-        </div>
-      )}
+      </Modal>
 
       {/* Stats modal */}
       {statsOpen && displayStats && (
