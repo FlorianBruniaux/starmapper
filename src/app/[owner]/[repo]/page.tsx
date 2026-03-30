@@ -1151,15 +1151,7 @@ export default function MapPage({
       )}
 
       {/* Stargazers table modal */}
-      {allOpen && (
-        <div
-          className="absolute inset-0 z-40 flex items-center justify-center bg-background/85 backdrop-blur-sm"
-          onClick={() => setAllOpen(false)}
-        >
-          <div
-            className="bg-surface border border-border rounded-2xl shadow-2xl w-full max-w-5xl mx-4 flex flex-col max-h-[85vh]"
-            onClick={(e) => e.stopPropagation()}
-          >
+      <Modal open={allOpen} onClose={() => setAllOpen(false)} maxWidth="max-w-5xl" innerClassName="flex flex-col max-h-[85vh]">
             {/* Header */}
             <div className="flex items-center justify-between px-5 py-4 border-b border-border-subtle flex-shrink-0">
               <h2 className="text-foreground font-semibold text-sm">
@@ -1481,20 +1473,10 @@ export default function MapPage({
                 </div>
               </div>
             )}
-          </div>
-        </div>
-      )}
+      </Modal>
 
       {/* Growth chart modal */}
-      {growthOpen && growthData.length > 0 && (
-        <div
-          className="absolute inset-0 z-40 flex items-center justify-center bg-background/85 backdrop-blur-sm"
-          onClick={() => setGrowthOpen(false)}
-        >
-          <div
-            className="bg-surface border border-border rounded-2xl shadow-2xl w-full max-w-2xl mx-4"
-            onClick={(e) => e.stopPropagation()}
-          >
+      <Modal open={growthOpen && growthData.length > 0} onClose={() => setGrowthOpen(false)} maxWidth="max-w-2xl">
             <div className="flex items-center justify-between px-5 py-4 border-b border-border-subtle">
               <div>
                 <h2 className="text-foreground font-semibold text-sm">Star Growth</h2>
@@ -1505,24 +1487,12 @@ export default function MapPage({
             <div className="px-5 py-5">
               <GrowthChart data={growthData} />
             </div>
-          </div>
-        </div>
-      )}
+      </Modal>
 
       {/* Share modal */}
-      {shareOpen && repoInfo && (
-        <div
-          className="absolute inset-0 z-50 flex items-center justify-center bg-background/85 backdrop-blur-sm"
-          onClick={() => setShareOpen(false)}
-        >
-          <div
-            className="bg-surface border border-border rounded-2xl shadow-2xl w-full max-w-lg mx-4"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between px-5 py-4 border-b border-border-subtle">
-              <h2 className="text-foreground font-semibold text-sm">Share</h2>
-              <button onClick={() => setShareOpen(false)} className="text-muted hover:text-foreground text-xl leading-none">×</button>
-            </div>
+      {repoInfo && (
+      <Modal open={shareOpen} onClose={() => setShareOpen(false)} title="Share" maxWidth="max-w-lg">
+
 
             {/* Preview card */}
             <div id="share-card" className="mx-5 my-4 bg-background rounded-xl p-6 border border-border">
@@ -1797,8 +1767,7 @@ export default function MapPage({
                 </div>
               </div>
             </div>
-          </div>
-        </div>
+      </Modal>
       )}
 
       {/* Badge modal */}
@@ -1882,15 +1851,8 @@ export default function MapPage({
       </Modal>
 
       {/* Stats modal */}
-      {statsOpen && displayStats && (
-        <div
-          className="absolute inset-0 z-40 flex items-center justify-center bg-background/85 backdrop-blur-sm"
-          onClick={() => setStatsOpen(false)}
-        >
-          <div
-            className="bg-surface border border-border rounded-2xl shadow-2xl w-full max-w-lg mx-4 flex flex-col max-h-[80vh]"
-            onClick={(e) => e.stopPropagation()}
-          >
+      {displayStats && (
+      <Modal open={statsOpen} onClose={() => setStatsOpen(false)} maxWidth="max-w-lg" innerClassName="flex flex-col max-h-[80vh]">
             {/* Header */}
             <div className="flex items-center justify-between px-5 py-4 border-b border-border-subtle flex-shrink-0">
               <h2 className="text-foreground font-semibold text-sm">Stargazer Stats</h2>
@@ -2133,8 +2095,7 @@ export default function MapPage({
                 </div>
               )}
             </div>
-          </div>
-        </div>
+      </Modal>
       )}
     </div>
   );

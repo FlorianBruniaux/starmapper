@@ -7,10 +7,11 @@ type Props = {
   onClose: () => void;
   title?: string;
   maxWidth?: string;
+  innerClassName?: string;
   children: React.ReactNode;
 };
 
-export const Modal = ({ open, onClose, title, maxWidth = "max-w-md", children }: Props) => {
+export const Modal = ({ open, onClose, title, maxWidth = "max-w-md", innerClassName = "", children }: Props) => {
   const dialogRef = useRef<HTMLDivElement>(null);
 
   // ESC to close
@@ -69,8 +70,7 @@ export const Modal = ({ open, onClose, title, maxWidth = "max-w-md", children }:
     >
       <div
         ref={dialogRef}
-        className={`bg-surface border border-border rounded-xl w-full ${maxWidth} shadow-2xl
-                    animate-in zoom-in-95 duration-150`}
+        className={`bg-surface border border-border rounded-xl w-full ${maxWidth} shadow-2xl animate-in zoom-in-95 duration-150 ${innerClassName}`}
       >
         {title && (
           <div className="flex items-center justify-between px-6 py-4 border-b border-border-subtle">
