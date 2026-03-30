@@ -11,7 +11,7 @@ export class GitHubRateLimitError extends Error {
   }
 }
 
-export interface StargazerRaw {
+export type StargazerRaw = {
   login: string;
   name: string | null;
   bio: string | null;
@@ -24,21 +24,21 @@ export interface StargazerRaw {
   avatarUrl: string;
   starredAt: string; // ISO 8601
   linkedinUrl: string | null;
-}
+};
 
-export interface StargazersPage {
+export type StargazersPage = {
   stargazers: StargazerRaw[];
   nextCursor: string | null;
   totalCount: number;
-}
+};
 
-export async function fetchStargazersPage(
+export const fetchStargazersPage = async (
   owner: string,
   repo: string,
   cursor: string | null,
   since?: string, // ISO timestamp — stop when we hit stars older than this
   clientToken?: string, // user-provided PAT from localStorage
-): Promise<StargazersPage> {
+): Promise<StargazersPage> => {
   const token = clientToken || process.env.GITHUB_TOKEN;
   const query = `
     query($owner: String!, $repo: String!, $cursor: String) {

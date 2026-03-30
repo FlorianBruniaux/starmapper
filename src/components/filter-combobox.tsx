@@ -19,9 +19,10 @@ export const FilterCombobox = ({ value, onChange, options, placeholder }: Filter
   const searchRef = useRef<HTMLInputElement>(null);
 
   const filtered = useMemo(() => {
-    if (!search) return options;
+    const safe = options ?? [];
+    if (!search) return safe;
     const q = search.toLowerCase();
-    return options.filter((o) => o.toLowerCase().includes(q));
+    return safe.filter((o) => o.toLowerCase().includes(q));
   }, [options, search]);
 
   const handleSelect = useCallback((opt: string) => {

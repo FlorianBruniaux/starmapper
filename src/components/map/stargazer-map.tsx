@@ -9,7 +9,7 @@ import type { StyleSpecification } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import type { StargazerPoint } from "@/app/api/chunk/route";
 
-interface Props {
+type Props = {
   points: StargazerPoint[];
   comparePoints?: StargazerPoint[];
   flyTarget?: { lat: number; lng: number; login: string } | null;
@@ -20,13 +20,13 @@ interface Props {
   }) => void;
   // Optional: override the map tile style URL (for light/dark switching)
   styleUrl?: string;
-}
+};
 
 const JAWG_TOKEN = process.env.NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN ?? "";
 const STYLE_URL = `https://api.jawg.io/styles/jawg-dark.json?access-token=${JAWG_TOKEN}&lang=en`;
 const CLUSTER_MAX_ZOOM = 12;
 
-function buildHeatGeoJSON(pts: StargazerPoint[]) {
+const buildHeatGeoJSON = (pts: StargazerPoint[]) => {
   return {
     type: "FeatureCollection" as const,
     features: pts.map((p) => ({
@@ -37,7 +37,7 @@ function buildHeatGeoJSON(pts: StargazerPoint[]) {
   };
 }
 
-function buildGeoJSON(pts: StargazerPoint[]) {
+const buildGeoJSON = (pts: StargazerPoint[]) => {
   return {
     type: "FeatureCollection" as const,
     features: pts.map((p) => ({
@@ -58,7 +58,7 @@ function buildGeoJSON(pts: StargazerPoint[]) {
 }
 
 // Spider layout: circle for ≤ 8 points, spiral for more
-function spiderPositions(count: number, cx: number, cy: number) {
+const spiderPositions = (count: number, cx: number, cy: number) => {
   const pts: { x: number; y: number }[] = [];
   if (count <= 8) {
     const r = Math.max(44, 16 + count * 7);
@@ -78,7 +78,7 @@ function spiderPositions(count: number, cx: number, cy: number) {
   return pts;
 }
 
-function clearSpider(map: maplibregl.Map, activeRef: { current: boolean }) {
+const clearSpider = (map: maplibregl.Map, activeRef: { current: boolean }) => {
   if (!activeRef.current) return;
   for (const id of ["spider-points", "spider-legs-glow", "spider-legs"]) {
     if (map.getLayer(id)) map.removeLayer(id);
@@ -89,12 +89,12 @@ function clearSpider(map: maplibregl.Map, activeRef: { current: boolean }) {
   activeRef.current = false;
 }
 
-async function showSpider(
+const showSpider = async (
   map: maplibregl.Map,
   activeRef: { current: boolean },
   clusterId: number,
   centerCoords: [number, number],
-) {
+) => {
   clearSpider(map, activeRef);
 
   const source = map.getSource("stargazers") as maplibregl.GeoJSONSource;
@@ -160,12 +160,42 @@ async function showSpider(
   activeRef.current = true;
 }
 
-function makePopupElement(props: Record<string, unknown>): HTMLElement {
+const makeGridCellPopup = (bio: string, login: string): HTMLElement => {
+  // bio format: "__grid__:{count}:{topLogin}"
+  const parts = bio.split(":");
+  const count = parseInt(parts[1] ?? "0", 10);
+  const topLogin = parts[2] ?? login;
+
+  const el = document.createElement("div");
+  el.style.cssText = "padding:6px 0;min-width:200px";
+
+  const heading = document.createElement("div");
+  heading.style.cssText = "font-weight:600;font-size:15px;color:var(--color-foreground);margin-bottom:6px";
+  heading.textContent = `${count.toLocaleString()} developer${count !== 1 ? "s" : ""}`;
+  el.appendChild(heading);
+
+  const sub = document.createElement("div");
+  sub.style.cssText = "font-size:12px;color:var(--color-muted)";
+  sub.textContent = "in this area";
+  el.appendChild(sub);
+
+  const topRow = document.createElement("div");
+  topRow.style.cssText = "margin-top:8px;font-size:12px;color:var(--color-muted)";
+  topRow.innerHTML = `Top: <a href="https://github.com/${topLogin}" target="_blank" rel="noopener noreferrer" style="color:var(--color-accent-blue);text-decoration:none">@${topLogin}</a>`;
+  el.appendChild(topRow);
+
+  return el;
+};
+
+const makePopupElement = (props: Record<string, unknown>): HTMLElement => {
   const login = String(props.login ?? "");
   const name = props.name ? String(props.name) : login;
   const location = props.location ? String(props.location) : "";
   const bio = props.bio ? String(props.bio) : "";
   const company = props.company ? String(props.company) : "";
+
+  // Synthetic grid cell point — render compact cluster popup
+  if (bio.startsWith("__grid__:")) return makeGridCellPopup(bio, login);
   const avatarUrl = props.avatarUrl ? String(props.avatarUrl) : "";
   const linkedinUrl = props.linkedinUrl ? String(props.linkedinUrl) : "";
 
@@ -268,7 +298,7 @@ function makePopupElement(props: Record<string, unknown>): HTMLElement {
   return el;
 }
 
-export function StargazerMap({ points, comparePoints, flyTarget, onFlyDone, onReady, styleUrl }: Props) {
+export const StargazerMap = ({ points, comparePoints, flyTarget, onFlyDone, onReady, styleUrl }: Props) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const pointsRef = useRef<StargazerPoint[]>(points);
@@ -289,7 +319,7 @@ export function StargazerMap({ points, comparePoints, flyTarget, onFlyDone, onRe
 
     let cancelled = false;
 
-    async function initMap() {
+    const initMap = async () => {
       if (!containerRef.current) return;
 
       const resolvedStyleUrl = styleUrl ?? STYLE_URL;

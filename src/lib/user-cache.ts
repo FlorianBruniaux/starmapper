@@ -18,20 +18,6 @@ export type UserWritePayload = {
   linkedinUrl: string | null;
 };
 
-// Run promises with a max concurrency to avoid thundering herd on Neon
-async function concurrentMap<T, R>(
-  items: T[],
-  fn: (item: T) => Promise<R>,
-  limit = 10,
-): Promise<R[]> {
-  const results: R[] = [];
-  for (let i = 0; i < items.length; i += limit) {
-    const batch = items.slice(i, i + limit);
-    results.push(...(await Promise.all(batch.map(fn))));
-  }
-  return results;
-}
-
 type StarEventInput = {
   login: string;
   owner: string;
@@ -39,52 +25,66 @@ type StarEventInput = {
   starredAt: string;
 };
 
+// Single-query bulk upsert via UNNEST — 1 round-trip instead of N individual upserts.
+// Prisma serializes each JS array as a typed PG array parameter ($1::text[], etc.).
+// NULL elements are preserved by PostgreSQL array semantics.
 export const bulkUpsertUsers = async (
   users: UserWritePayload[],
   health?: Awaited<ReturnType<typeof checkDbHealth>>,
 ): Promise<boolean> => {
+  if (!users.length) return true;
   const h = health ?? (await checkDbHealth());
   if (!h.ok || (h.ok && h.usagePct >= DB_CRITICAL_PCT)) {
     if (h.ok) console.warn(`[user-cache] DB critical (${h.usagePct}%) — skipping user upserts`);
     return false;
   }
 
-
   try {
-    await concurrentMap(users, (u) =>
-      prisma.gitHubUser.upsert({
-        where: { login: u.login },
-        create: {
-          login: u.login,
-          name: u.name ?? null,
-          company: u.company ?? null,
-          location: u.location ?? null,
-          followers: u.followers,
-          following: u.following,
-          publicRepos: u.publicRepos,
-          accountCreatedAt: u.accountCreatedAt ? new Date(u.accountCreatedAt) : null,
-          dataVersion: 1,
-          lat: u.lat,
-          lng: u.lng,
-          linkedinUrl: u.linkedinUrl ?? null,
-          fetchedAt: new Date(),
-        },
-        update: {
-          name: u.name ?? null,
-          company: u.company ?? null,
-          location: u.location ?? null,
-          followers: u.followers,
-          following: u.following,
-          publicRepos: u.publicRepos,
-          accountCreatedAt: u.accountCreatedAt ? new Date(u.accountCreatedAt) : null,
-          dataVersion: 1,
-          lat: u.lat,
-          lng: u.lng,
-          linkedinUrl: u.linkedinUrl ?? null,
-          fetchedAt: new Date(),
-        },
-      }),
-    );
+    const logins       = users.map((u) => u.login);
+    const names        = users.map((u) => u.name);
+    const companies    = users.map((u) => u.company);
+    const locations    = users.map((u) => u.location);
+    const followers    = users.map((u) => u.followers);
+    const followings   = users.map((u) => u.following);
+    const publicRepos  = users.map((u) => u.publicRepos);
+    const createdAts   = users.map((u) => u.accountCreatedAt); // ISO string | null
+    const lats         = users.map((u) => u.lat);
+    const lngs         = users.map((u) => u.lng);
+    const linkedinUrls = users.map((u) => u.linkedinUrl);
+    const now          = new Date();
+
+    await prisma.$queryRaw`
+      INSERT INTO github_user
+        (login, name, company, location, followers, following,
+         "publicRepos", "accountCreatedAt", "dataVersion", lat, lng, "linkedinUrl", "fetchedAt")
+      SELECT
+        unnest(${logins}::text[]),
+        unnest(${names}::text[]),
+        unnest(${companies}::text[]),
+        unnest(${locations}::text[]),
+        unnest(${followers}::int4[]),
+        unnest(${followings}::int4[]),
+        unnest(${publicRepos}::int4[]),
+        unnest(${createdAts}::text[])::timestamp,
+        1,
+        unnest(${lats}::float8[]),
+        unnest(${lngs}::float8[]),
+        unnest(${linkedinUrls}::text[]),
+        ${now}
+      ON CONFLICT (login) DO UPDATE SET
+        name               = EXCLUDED.name,
+        company            = EXCLUDED.company,
+        location           = EXCLUDED.location,
+        followers          = EXCLUDED.followers,
+        following          = EXCLUDED.following,
+        "publicRepos"      = EXCLUDED."publicRepos",
+        "accountCreatedAt" = EXCLUDED."accountCreatedAt",
+        "dataVersion"      = 1,
+        lat                = EXCLUDED.lat,
+        lng                = EXCLUDED.lng,
+        "linkedinUrl"      = EXCLUDED."linkedinUrl",
+        "fetchedAt"        = EXCLUDED."fetchedAt"
+    `;
     return true;
   } catch (err) {
     console.error("[user-cache] bulkUpsertUsers failed:", err);
@@ -92,28 +92,27 @@ export const bulkUpsertUsers = async (
   }
 };
 
+// createMany + skipDuplicates → single INSERT … ON CONFLICT DO NOTHING.
+// Star events are immutable (a user starred a repo at a fixed point in time),
+// so skipping duplicates is semantically correct and far simpler than UPSERT.
 export const bulkUpsertStarEvents = async (
   events: StarEventInput[],
   health?: Awaited<ReturnType<typeof checkDbHealth>>,
 ): Promise<void> => {
+  if (!events.length) return;
   const h = health ?? (await checkDbHealth());
   if (!h.ok || (h.ok && h.usagePct >= DB_CRITICAL_PCT)) return;
 
   try {
-    await concurrentMap(events, (e) =>
-      prisma.starEvent.upsert({
-        where: { login_owner_repo: { login: e.login, owner: e.owner, repo: e.repo } },
-        create: {
-          login: e.login,
-          owner: e.owner,
-          repo: e.repo,
-          starredAt: new Date(e.starredAt),
-        },
-        update: {
-          starredAt: new Date(e.starredAt),
-        },
-      }),
-    );
+    await prisma.starEvent.createMany({
+      data: events.map((e) => ({
+        login: e.login,
+        owner: e.owner,
+        repo: e.repo,
+        starredAt: new Date(e.starredAt),
+      })),
+      skipDuplicates: true,
+    });
   } catch (err) {
     console.error("[user-cache] bulkUpsertStarEvents failed:", err);
   }
@@ -131,6 +130,6 @@ export const bulkReadUsers = async (
     });
     return new Map(rows.map((r) => [r.login, { lat: r.lat, lng: r.lng, location: r.location, fetchedAt: r.fetchedAt, dataVersion: r.dataVersion }]));
   } catch {
-    return new Map(); // DB unavailable — fallback to full geocoding
+    return new Map();
   }
 };

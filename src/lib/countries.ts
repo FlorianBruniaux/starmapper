@@ -127,6 +127,6 @@ export const isCountry = (s: string): boolean => COUNTRY_SET.has(s.toLowerCase()
 export const normalizeCountry = (s: string): string => {
   const lower = s.toLowerCase().trim();
   if (ALIAS_MAP[lower]) return ALIAS_MAP[lower];
-  // Title-case the raw value
-  return s.trim().replace(/\b\w/g, (c) => c.toUpperCase());
+  // Lowercase first, then title-case — handles "FRANCE" → "France", not just "france" → "France"
+  return s.trim().toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
 };
