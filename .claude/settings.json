@@ -67,6 +67,11 @@
             "type": "command",
             "command": ".claude/hooks/typecheck-feedback.sh",
             "timeout": 30
+          },
+          {
+            "type": "command",
+            "command": ".claude/hooks/ts-lint-feedback.sh",
+            "timeout": 15
           }
         ]
       }
@@ -90,6 +95,11 @@
           {
             "type": "command",
             "command": ".claude/hooks/git-context.sh",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": ".claude/hooks/smart-suggest.sh",
             "timeout": 5
           }
         ]

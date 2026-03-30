@@ -49,3 +49,6 @@ next-env.d.ts
 
 # Seed script output
 scripts/geocache-preview.json
+
+# ESLint cache
+.eslintcache
