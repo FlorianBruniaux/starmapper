@@ -2,11 +2,10 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { TokenModal, getStoredToken } from "@/components/token-modal";
 import { getBookmarks } from "@/lib/bookmarks";
 import { RepoTable } from "@/components/repo-table";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { CommandSearch } from "@/components/command-search";
 import type { Bookmark } from "@/lib/bookmarks";
@@ -127,59 +126,12 @@ export default function HomePage() {
       )}
 
       {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-overlay flex items-center justify-between px-6 py-3 bg-background/80 backdrop-blur-sm border-b border-border-subtle">
-        <div className="flex items-center gap-2 text-foreground font-semibold text-sm">
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true" className="text-accent-blue">
-            {/* Globe meridians & parallels */}
-            <circle cx="10" cy="10" r="8" stroke="currentColor" strokeWidth="1.5"/>
-            <ellipse cx="10" cy="10" rx="4" ry="8" stroke="currentColor" strokeWidth="1.25"/>
-            <line x1="2" y1="10" x2="18" y2="10" stroke="currentColor" strokeWidth="1.25"/>
-            <path d="M3.5 6.5 Q10 5 16.5 6.5" stroke="currentColor" strokeWidth="1" fill="none"/>
-            <path d="M3.5 13.5 Q10 15 16.5 13.5" stroke="currentColor" strokeWidth="1" fill="none"/>
-            {/* Star overlay */}
-            <path d="M10 5.5 L10.6 7.4 L12.6 7.4 L11.0 8.6 L11.6 10.5 L10 9.3 L8.4 10.5 L9.0 8.6 L7.4 7.4 L9.4 7.4 Z" fill="currentColor"/>
-          </svg>
-          <span>StarMapper</span>
-        </div>
-        <nav className="flex items-center">
-          <Link
-            href="/explore"
-            className="flex items-center gap-1.5 text-sm text-muted hover:text-foreground border border-border hover:border-accent-blue px-3 py-1.5 rounded-lg transition-colors"
-          >
-            <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-              <path d="M2.5 2A1.5 1.5 0 0 0 1 3.5V5a5 5 0 0 0 4.797 4.994A4.001 4.001 0 0 0 8 13.277V14H5.5a.75.75 0 0 0 0 1.5h5a.75.75 0 0 0 0-1.5H8v-.723a4.001 4.001 0 0 0 2.203-3.283A5 5 0 0 0 15 5V3.5A1.5 1.5 0 0 0 13.5 2h-11Zm11 1.5V5a3.5 3.5 0 0 1-2.81 3.441A4.005 4.005 0 0 0 11 7V3.5h2.5Zm-10 0H5V7a4.005 4.005 0 0 0 .31 1.441A3.5 3.5 0 0 1 2.5 5V3.5Z" />
-            </svg>
-            Leaderboard
-          </Link>
-        </nav>
-        <div className="flex items-center gap-2">
-          <ThemeToggle />
-          <button
-            onClick={() => setTokenOpen(true)}
-            className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border transition-colors ${
-              hasToken
-                ? "border-accent-green-emphasis text-accent-green hover:bg-accent-green-emphasis/10"
-                : "border-border text-muted hover:text-foreground hover:border-accent-blue"
-            }`}
-          >
-            {hasToken ? (
-              <>
-                <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-                  <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.75.75 0 0 1 1.06-1.06L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z" />
-                </svg>
-                Token set
-              </>
-            ) : (
-              <>
-                <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-                  <path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Zm7-3.25v2.992l2.028.812a.75.75 0 0 1-.557 1.392l-2.5-1A.751.751 0 0 1 7 8.25v-3.5a.75.75 0 0 1 1.5 0Z" />
-                </svg>
-                Add token
-              </>
-            )}
-          </button>
-        </div>
-      </header>
+      <Header
+        showNav
+        showToken
+        hasToken={hasToken}
+        onTokenClick={() => setTokenOpen(true)}
+      />
 
       {/* Main */}
       <main id="main" className="min-h-screen bg-background flex flex-col lg:flex-row pt-14">

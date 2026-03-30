@@ -18,11 +18,23 @@ const timeAgo = (iso: string): string => {
 };
 
 type CommandSearchProps = {
-  repos: MappedRepo[];
+  repos?: MappedRepo[];
 };
 
-export const CommandSearch = ({ repos }: CommandSearchProps) => {
+export const CommandSearch = ({ repos: reposProp }: CommandSearchProps) => {
   const [open, setOpen] = useState(false);
+  const [fetchedRepos, setFetchedRepos] = useState<MappedRepo[]>([]);
+
+  // Self-fetch when repos are not provided by the parent
+  useEffect(() => {
+    if (reposProp) return;
+    fetch("/api/repos")
+      .then((r) => r.ok ? r.json() : null)
+      .then((d: { repos: MappedRepo[] } | null) => { if (d?.repos) setFetchedRepos(d.repos); })
+      .catch(() => {});
+  }, [reposProp]);
+
+  const repos = reposProp ?? fetchedRepos;
   const [query, setQuery] = useState("");
   const [highlighted, setHighlighted] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);

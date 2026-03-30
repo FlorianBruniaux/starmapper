@@ -3,7 +3,9 @@
 import { use, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { TokenModal, getStoredToken } from "@/components/token-modal";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { Header } from "@/components/header";
+import { CommandSearch } from "@/components/command-search";
+import { Footer } from "@/components/footer";
 import { isCountry, normalizeCountry } from "@/lib/countries";
 import type { UserInfo, UserRepo } from "@/app/api/user-repos/route";
 import type { StargazerPoint, ChunkResponse } from "@/app/api/chunk/route";
@@ -242,45 +244,21 @@ export default function UserPage({ params }: { params: Promise<{ owner: string }
 
   return (
     <>
+      <CommandSearch />
       {tokenOpen && (
         <TokenModal onClose={() => { setTokenOpen(false); setHasToken(!!getStoredToken()); }} />
       )}
 
       {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-overlay flex items-center justify-between px-6 py-3 bg-background/80 backdrop-blur-sm border-b border-border-subtle">
-        <div className="flex items-center gap-3">
-          <Link href="/" className="text-muted hover:text-foreground transition-colors">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-              <path d="M7.78 12.53a.75.75 0 0 1-1.06 0L2.47 8.28a.75.75 0 0 1 0-1.06l4.25-4.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042L4.56 7.25h8.69a.75.75 0 0 1 0 1.5H4.56l3.22 3.22a.75.75 0 0 1 0 1.06Z" />
-            </svg>
-          </Link>
-          <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true" className="text-accent-blue flex-shrink-0">
-              <circle cx="10" cy="10" r="8" stroke="currentColor" strokeWidth="1.5"/>
-              <ellipse cx="10" cy="10" rx="4" ry="8" stroke="currentColor" strokeWidth="1.25"/>
-              <line x1="2" y1="10" x2="18" y2="10" stroke="currentColor" strokeWidth="1.25"/>
-              <path d="M3.5 6.5 Q10 5 16.5 6.5" stroke="currentColor" strokeWidth="1" fill="none"/>
-              <path d="M3.5 13.5 Q10 15 16.5 13.5" stroke="currentColor" strokeWidth="1" fill="none"/>
-              <path d="M10 5.5 L10.6 7.4 L12.6 7.4 L11.0 8.6 L11.6 10.5 L10 9.3 L8.4 10.5 L9.0 8.6 L7.4 7.4 L9.4 7.4 Z" fill="currentColor"/>
-            </svg>
-          <span className="text-foreground font-semibold text-sm">StarMapper</span>
-          {step !== "loading" && step !== "load-error" && (
-            <span className="text-muted text-sm">/ {owner}</span>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          <ThemeToggle />
-          <button
-            onClick={() => setTokenOpen(true)}
-            className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border transition-colors ${
-              hasToken
-                ? "border-accent-green-emphasis text-accent-green hover:bg-accent-green-emphasis/10"
-                : "border-border text-muted hover:text-foreground hover:border-accent-blue"
-            }`}
-          >
-            {hasToken ? "Token set" : "Add token"}
-          </button>
-        </div>
-      </header>
+      <Header
+        backLink="/"
+        afterLogo={step !== "loading" && step !== "load-error" ? (
+          <span className="text-muted text-sm">/ {owner}</span>
+        ) : null}
+        showToken
+        hasToken={hasToken}
+        onTokenClick={() => setTokenOpen(true)}
+      />
 
       <main id="main" className="min-h-screen bg-background pt-14">
         <div className="max-w-2xl mx-auto px-6 py-10">
@@ -551,6 +529,7 @@ export default function UserPage({ params }: { params: Promise<{ owner: string }
 
         </div>
       </main>
+      <Footer />
     </>
   );
 }
