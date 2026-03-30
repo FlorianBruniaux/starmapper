@@ -3,7 +3,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { jsonError } from "@/lib/api-helpers";
+import { jsonError, logError } from "@/lib/api-helpers";
 
 export type CompaniesResponse = {
   items: [string, number][];
@@ -72,7 +72,7 @@ export const GET = async (req: NextRequest) => {
       },
     );
   } catch (err) {
-    console.error("[explore/companies] Error:", err);
+    logError("explore/companies", err);
     return jsonError("internal", 500);
   }
 };

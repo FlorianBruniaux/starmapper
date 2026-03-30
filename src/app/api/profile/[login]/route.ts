@@ -3,7 +3,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { jsonError } from "@/lib/api-helpers";
+import { jsonError, logError } from "@/lib/api-helpers";
 
 export type ProfileResponse = {
   login: string;
@@ -50,7 +50,7 @@ export const GET = async (
       headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600" },
     });
   } catch (err) {
-    console.error("[profile] Error:", err);
+    logError("profile", err);
     return jsonError("internal", 500);
   }
 };

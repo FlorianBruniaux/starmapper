@@ -3,6 +3,7 @@
 
 import { prisma } from "@/lib/db";
 import { checkDbHealth, DB_CRITICAL_PCT } from "@/lib/db-health";
+import { logError } from "@/lib/api-helpers";
 
 export type UserWritePayload = {
   login: string;
@@ -87,7 +88,7 @@ export const bulkUpsertUsers = async (
     `;
     return true;
   } catch (err) {
-    console.error("[user-cache] bulkUpsertUsers failed:", err);
+    logError("user-cache/bulkUpsertUsers", err);
     return false;
   }
 };
@@ -114,7 +115,7 @@ export const bulkUpsertStarEvents = async (
       skipDuplicates: true,
     });
   } catch (err) {
-    console.error("[user-cache] bulkUpsertStarEvents failed:", err);
+    logError("user-cache/bulkUpsertStarEvents", err);
   }
 };
 

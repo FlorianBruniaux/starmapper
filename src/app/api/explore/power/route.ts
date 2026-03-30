@@ -3,7 +3,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { jsonError } from "@/lib/api-helpers";
+import { jsonError, logError } from "@/lib/api-helpers";
 
 export type PowerResponse = {
   items: { login: string; name: string | null; followers: number; trackedRepos: number; avatarUrl: string }[];
@@ -61,7 +61,7 @@ export const GET = async (req: NextRequest) => {
       { headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600" } },
     );
   } catch (err) {
-    console.error("[explore/power] Error:", err);
+    logError("explore/power", err);
     return jsonError("internal", 500);
   }
 };

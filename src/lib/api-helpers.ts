@@ -28,3 +28,19 @@ export const requireAdminAuth = (req: NextRequest): NextResponse | null => {
  */
 export const extractGhToken = (req: NextRequest): string | undefined =>
   req.headers.get("x-gh-token") || process.env.GITHUB_TOKEN || undefined;
+
+/** Strip credentials from error messages before logging. */
+export const sanitizeError = (err: unknown): string => {
+  const raw = err instanceof Error ? err.message : String(err);
+  return raw
+    .replace(/postgres(ql)?:\/\/[^\s]*/gi, "[db-url-redacted]")
+    .replace(/Bearer\s+[A-Za-z0-9_\-.]+/g, "Bearer [redacted]")
+    .replace(/token=[A-Za-z0-9_\-.]+/gi, "token=[redacted]")
+    .replace(/ghp_[A-Za-z0-9]+/g, "[gh-token-redacted]");
+};
+
+/** Safe server-side error logger that never leaks secrets. */
+export const logError = (tag: string, err: unknown): void => {
+  const name = err instanceof Error ? err.constructor.name : "Error";
+  console.error(`[${tag}] ${name}: ${sanitizeError(err)}`);
+};

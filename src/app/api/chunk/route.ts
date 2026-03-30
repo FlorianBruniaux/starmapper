@@ -7,7 +7,7 @@ import { geocodeBatch } from "@/lib/geocoder";
 import { checkDbHealth, DB_WARN_PCT } from "@/lib/db-health";
 import { bulkUpsertUsers, bulkUpsertStarEvents, bulkReadUsers, type UserWritePayload } from "@/lib/user-cache";
 import { validateOwnerRepo } from "@/lib/api-validation";
-import { jsonError, extractGhToken } from "@/lib/api-helpers";
+import { jsonError, extractGhToken, logError, sanitizeError } from "@/lib/api-helpers";
 
 export type StargazerPoint = {
   login: string;
@@ -159,9 +159,9 @@ export async function POST(req: NextRequest) {
     if (err instanceof GitHubRateLimitError) {
       return NextResponse.json({ error: "rate_limited", resetAt: err.resetAt }, { status: 429 });
     }
-    console.error("[chunk] Error:", err);
+    logError("chunk", err);
     const msg = err instanceof Error && err.message.startsWith("GitHub API error")
-      ? err.message
+      ? sanitizeError(err)
       : "internal";
     return jsonError(msg, 500);
   } finally {

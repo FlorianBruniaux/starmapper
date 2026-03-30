@@ -9,6 +9,9 @@ export async function POST(req: NextRequest) {
   const authError = requireAdminAuth(req);
   if (authError) return authError;
 
+  const contentLength = parseInt(req.headers.get("content-length") ?? "0", 10);
+  if (contentLength > 5 * 1024 * 1024) return jsonError("payload_too_large", 413);
+
   try {
     const entries = await req.json() as Record<string, [number, number] | null>;
     const rows = Object.entries(entries).map(([key, val]) => ({

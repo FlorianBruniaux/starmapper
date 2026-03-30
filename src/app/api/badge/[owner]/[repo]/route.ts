@@ -3,7 +3,8 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { normalizeOwnerRepo } from "@/lib/api-validation";
+import { validateOwnerRepo } from "@/lib/api-validation";
+import { jsonError } from "@/lib/api-helpers";
 import { fmt } from "@/lib/format";
 
 // Cache badge SVG for 6 hours at the CDN level
@@ -48,7 +49,8 @@ export const GET = async (
   { params }: { params: Promise<{ owner: string; repo: string }> },
 ) => {
   const { owner, repo } = await params;
-  const key = normalizeOwnerRepo(owner, repo);
+  const key = validateOwnerRepo(owner, repo);
+  if (!key) return jsonError("invalid_params", 400);
 
   let mappedCount = 0;
   let countryCount = 0;

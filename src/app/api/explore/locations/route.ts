@@ -4,7 +4,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { parseLocation } from "@/lib/location-parser";
-import { jsonError } from "@/lib/api-helpers";
+import { jsonError, logError } from "@/lib/api-helpers";
 
 export type LocationsResponse = {
   items: [string, number][];
@@ -55,7 +55,7 @@ export const GET = async (req: NextRequest) => {
       },
     );
   } catch (err) {
-    console.error("[explore/locations] Error:", err);
+    logError("explore/locations", err);
     return jsonError("internal", 500);
   }
 };

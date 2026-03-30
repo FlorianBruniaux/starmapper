@@ -4,7 +4,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { parseLocation } from "@/lib/location-parser";
-import { jsonError } from "@/lib/api-helpers";
+import { jsonError, logError } from "@/lib/api-helpers";
 
 export type ExploreSummary = {
   totalUsers: number;
@@ -49,7 +49,7 @@ export const GET = async () => {
       headers: { "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=7200" },
     });
   } catch (err) {
-    console.error("[explore] Error:", err);
+    logError("explore", err);
     return jsonError("internal", 500);
   }
 };

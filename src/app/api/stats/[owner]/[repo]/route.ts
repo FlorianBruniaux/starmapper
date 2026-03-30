@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { parseLocation } from "@/lib/location-parser";
 import { normalizeOwnerRepo, OWNER_REPO_RE } from "@/lib/api-validation";
-import { jsonError } from "@/lib/api-helpers";
+import { jsonError, logError } from "@/lib/api-helpers";
 
 export type RepoStats = {
   totalStars: number;
@@ -138,7 +138,7 @@ export const GET = async (
       headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600" },
     });
   } catch (err) {
-    console.error("[stats] Error:", err);
+    logError("stats", err);
     return jsonError("internal", 500);
   }
 };

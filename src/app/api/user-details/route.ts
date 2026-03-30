@@ -3,7 +3,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { LOGIN_RE } from "@/lib/api-validation";
-import { jsonError, extractGhToken } from "@/lib/api-helpers";
+import { jsonError, extractGhToken, logError } from "@/lib/api-helpers";
 
 export type UserDetail = {
   login: string;
@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ users: results });
   } catch (e) {
-    console.error("[user-details] Error:", e);
+    logError("user-details", e);
     return jsonError("internal", 500);
   }
 }

@@ -47,6 +47,9 @@ next-env.d.ts
 # Vitals provenance data
 .vitals/
 
+# Local Claude docs (non-versioned)
+claudedocs/
+
 # Seed script output
 scripts/geocache-preview.json
 

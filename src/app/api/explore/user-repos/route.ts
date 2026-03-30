@@ -3,7 +3,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { jsonError } from "@/lib/api-helpers";
+import { jsonError, logError } from "@/lib/api-helpers";
 
 export type UserRepo = {
   name: string;
@@ -83,7 +83,7 @@ export const GET = async (req: NextRequest) => {
       { headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600" } },
     );
   } catch (err) {
-    console.error("[explore/user-repos] Error:", err);
+    logError("explore/user-repos", err);
     return jsonError("internal", 500);
   }
 };

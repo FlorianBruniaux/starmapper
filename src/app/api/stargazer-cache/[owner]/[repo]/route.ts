@@ -3,7 +3,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { normalizeOwnerRepo } from "@/lib/api-validation";
+import { validateOwnerRepo } from "@/lib/api-validation";
 import { jsonError } from "@/lib/api-helpers";
 import { decompressGzBase64 } from "@/lib/compression";
 
@@ -12,7 +12,8 @@ export const GET = async (
   { params }: { params: Promise<{ owner: string; repo: string }> },
 ) => {
   const { owner, repo } = await params;
-  const key = normalizeOwnerRepo(owner, repo);
+  const key = validateOwnerRepo(owner, repo);
+  if (!key) return jsonError("invalid_params", 400);
 
   try {
     const cached = await prisma.stargazerCache.findUnique({ where: { owner_repo: key } });
