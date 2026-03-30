@@ -21,6 +21,33 @@ type Props = {
 const JAWG_TOKEN = process.env.NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN ?? "";
 const STYLE_URL = `https://api.jawg.io/styles/jawg-dark.json?access-token=${JAWG_TOKEN}&lang=en`;
 
+/**
+ * Normalize a polygon ring so no two adjacent vertices differ by >180° in longitude.
+ * This prevents MapLibre from drawing straight lines across the antimeridian (Russia, Fiji…).
+ */
+const normalizeRing = (ring: number[][]): number[][] => {
+  if (ring.length === 0) return ring;
+  const out: number[][] = [ring[0]];
+  for (let i = 1; i < ring.length; i++) {
+    let lng = ring[i][0];
+    const prevLng = out[i - 1][0];
+    while (lng - prevLng > 180) lng -= 360;
+    while (prevLng - lng > 180) lng += 360;
+    out.push([lng, ring[i][1]]);
+  }
+  return out;
+};
+
+const normalizeGeometry = (geom: GeoJSON.Geometry): GeoJSON.Geometry => {
+  if (geom.type === "Polygon") {
+    return { ...geom, coordinates: geom.coordinates.map(normalizeRing) };
+  }
+  if (geom.type === "MultiPolygon") {
+    return { ...geom, coordinates: geom.coordinates.map((poly) => poly.map(normalizeRing)) };
+  }
+  return geom;
+};
+
 /** Build a GeoJSON FeatureCollection from world-atlas, annotated with dev counts. */
 const buildChoroplethGeoJSON = (countryData: [string, number][]) => {
   const countMap = new Map(countryData.map(([name, n]) => [toGeoName(name), n]));
@@ -37,6 +64,7 @@ const buildChoroplethGeoJSON = (countryData: [string, number][]) => {
       const count = countMap.get((f.properties as { name: string } | null)?.name ?? "") ?? 0;
       return {
         ...f,
+        geometry: normalizeGeometry(f.geometry),
         properties: {
           ...f.properties,
           count,
