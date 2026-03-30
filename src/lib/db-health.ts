@@ -3,7 +3,8 @@ import { prisma } from "@/lib/db";
 type DbHealth = { ok: true; usagePct: number } | { ok: false };
 
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
-const NEON_FREE_BYTES = 512 * 1024 * 1024; // 512 MB
+// Configurable via DB_STORAGE_LIMIT_MB env var (default 512 for free tier, set 10240 for Launch plan)
+const DB_MAX_BYTES = (parseInt(process.env.DB_STORAGE_LIMIT_MB ?? "512") || 512) * 1024 * 1024;
 
 let cached: { health: DbHealth; ts: number } | null = null;
 
@@ -15,7 +16,7 @@ export const checkDbHealth = async (): Promise<DbHealth> => {
       SELECT pg_database_size(current_database()) AS size
     `;
     const bytes = Number(result[0].size);
-    const usagePct = Math.round((bytes / NEON_FREE_BYTES) * 100);
+    const usagePct = Math.round((bytes / DB_MAX_BYTES) * 100);
     const health: DbHealth = { ok: true, usagePct };
     cached = { health, ts: Date.now() };
     return health;

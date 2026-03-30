@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { checkDbHealth, DB_CRITICAL_PCT } from "@/lib/db-health";
 
 export const POST = async (req: NextRequest) => {
   try {
@@ -17,10 +16,6 @@ export const POST = async (req: NextRequest) => {
     ) {
       return NextResponse.json({ error: "invalid_params" }, { status: 400 });
     }
-
-    const health = await checkDbHealth();
-    if (health.ok && health.usagePct >= DB_CRITICAL_PCT)
-      return NextResponse.json({ error: "storage_full" }, { status: 507 });
 
     await prisma.badgeCache.upsert({
       where: { owner_repo: { owner: owner.toLowerCase(), repo: repo.toLowerCase() } },
