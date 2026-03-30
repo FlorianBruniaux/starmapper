@@ -67,9 +67,10 @@ export const middleware = (req: NextRequest): NextResponse => {
   const origin = req.headers.get("origin");
   if (origin) {
     const allowed = appOrigin();
-    // In dev, also allow localhost origins
     const isLocalhost = origin.startsWith("http://localhost") || origin.startsWith("http://127.0.0.1");
-    if (allowed && origin !== allowed && !isLocalhost) {
+    // Block if origin is not localhost AND doesn't match the configured app origin.
+    // When NEXT_PUBLIC_APP_URL is unset (e.g. CI), only localhost passes — safe default.
+    if (!isLocalhost && (!allowed || origin !== allowed)) {
       return NextResponse.json({ error: "forbidden" }, { status: 403 });
     }
   }
