@@ -127,7 +127,7 @@ const callNominatim = async (location: string): Promise<[number, number] | null>
   try {
     const url = `${NOMINATIM_GEOCODING}?q=${encodeURIComponent(location)}&format=json&limit=1`;
     const res = await fetch(url, {
-      headers: { "User-Agent": "StarMapper/1.0 (starmapper.bruniaux.com)" },
+      headers: { "User-Agent": `StarMapper/1.0 (${process.env.NEXT_PUBLIC_APP_URL ?? "starmapper.bruniaux.com"})` },
     });
     if (!res.ok) return null;
     const data = await res.json();

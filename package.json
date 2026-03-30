@@ -13,7 +13,10 @@
     "seed:geonames": "tsx scripts/seed-geocache-geonames.ts",
     "seed:geonames:dry": "tsx scripts/seed-geocache-geonames.ts --dry-run",
     "batch:scan": "tsx scripts/batch-scan.ts",
-    "batch:scan:dry": "tsx scripts/batch-scan.ts --dry-run"
+    "batch:scan:dry": "tsx scripts/batch-scan.ts --dry-run",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.2",
@@ -36,9 +39,11 @@
     "@types/react-dom": "^19",
     "@types/topojson-client": "^3.1.5",
     "@types/topojson-specification": "^1.0.5",
+    "@vitest/coverage-v8": "^4.1.2",
     "pg": "^8.20.0",
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.2"
   }
 }

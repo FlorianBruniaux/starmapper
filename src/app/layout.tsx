@@ -4,7 +4,7 @@ import "./globals.css";
 
 const geist = Geist({ subsets: ["latin"] });
 
-const APP_URL = "https://starmapper.bruniaux.com";
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://starmapper.bruniaux.com";
 
 export const metadata: Metadata = {
   title: "StarMapper — Map your GitHub stargazers",

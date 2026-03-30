@@ -35,23 +35,11 @@ pnpm install
 
 ### 2. Configure environment variables
 
-Copy the example below into `.env.local` at the project root and fill in your values:
-
 ```bash
-# Required
-DATABASE_URL=postgresql://...          # Neon connection string
-GITHUB_TOKEN=ghp_...                   # PAT with read:user scope
-
-# Map tiles + geocoding (primary)
-JAWGMAP_ACCESS_TOKEN=...               # Jawg access token (server-side)
-NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN=...   # Jawg access token (client-side map tiles)
-
-# Geocoding fallback
-GEOAPIFY_APIKEY=...                    # Geoapify API key
-
-# Optional
-NEXT_PUBLIC_APP_URL=http://localhost:3000
+cp .env.example .env.local
 ```
+
+Then fill in your values in `.env.local`. See [Environment Variables](#environment-variables) for descriptions of each.
 
 ### 3. Initialize the database
 
@@ -78,7 +66,8 @@ Open [http://localhost:3000](http://localhost:3000), enter any public GitHub rep
 | `JAWGMAP_ACCESS_TOKEN` | Recommended | Geocoding primary provider + server-side tile requests |
 | `NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN` | Yes (client) | Jawg token for client-side MapLibre tile URL |
 | `GEOAPIFY_APIKEY` | Recommended | Geocoding fallback when Jawg fails |
-| `NEXT_PUBLIC_APP_URL` | No | App base URL, used for OG metadata |
+| `NEXT_PUBLIC_APP_URL` | No | App base URL, used for OG metadata and Nominatim User-Agent |
+| `ADMIN_SECRET` | No | Secret header for `/api/admin/*` routes — if unset, admin routes return 401 |
 
 Without `JAWGMAP_ACCESS_TOKEN` and `GEOAPIFY_APIKEY`, geocoding falls back to Nominatim only — rate-limited to 1 req/s. Thanks to the GeoNames pre-seeding, this matters far less in practice (most locations already cached).
 
@@ -108,6 +97,9 @@ Full architecture documentation: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
 pnpm dev                  # Dev server with Turbopack
 pnpm build                # Production build
 pnpm typecheck            # tsc --noEmit
+pnpm test                 # Run unit tests (vitest)
+pnpm test:watch           # Watch mode
+pnpm test:coverage        # Coverage report
 
 npx prisma db push        # Apply schema changes to Neon
 npx prisma studio         # GUI to browse geocache and badge_cache
