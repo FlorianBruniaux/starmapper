@@ -7,7 +7,7 @@ const ECOSYSTEM_LINKS = [
 ];
 
 const SOCIAL_LINKS = [
-  { href: "https://bruniaux.com/", label: "Blog & Portfolio" },
+  { href: "https://florian.bruniaux.com/", label: "Blog & Portfolio" },
   { href: "https://www.devw.ai/", label: "Dev With AI (FR)" },
   { href: "https://github.com/FlorianBruniaux", label: "GitHub" },
 ];
@@ -80,7 +80,7 @@ export const Footer = () => (
         <p className="text-xs text-muted">
           Made by{" "}
           <a
-            href="https://bruniaux.com/"
+            href="https://florian.bruniaux.com/"
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Florian Bruniaux (opens in new tab)"
