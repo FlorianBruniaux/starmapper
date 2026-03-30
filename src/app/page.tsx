@@ -127,7 +127,7 @@ export default function HomePage() {
       )}
 
       {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-10 flex items-center justify-between px-6 py-3 bg-background/80 backdrop-blur-sm border-b border-border-subtle">
+      <header className="fixed top-0 left-0 right-0 z-overlay flex items-center justify-between px-6 py-3 bg-background/80 backdrop-blur-sm border-b border-border-subtle">
         <div className="flex items-center gap-2 text-foreground font-semibold text-sm">
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true" className="text-accent-blue">
             {/* Globe meridians & parallels */}

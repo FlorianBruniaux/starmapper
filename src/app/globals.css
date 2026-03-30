@@ -109,6 +109,13 @@ html.dark {
 
   /* Custom text sizes */
   --text-2xs: 0.625rem; /* 10px — compact map labels, stat labels */
+
+  /* Z-index scale */
+  --z-overlay: 10;   /* map overlays, panels on top of the map */
+  --z-panel: 20;     /* floating UI panels (drawer, compare controls) */
+  --z-drawer: 30;    /* slide-in drawers, full-screen overlays */
+  --z-modal: 50;     /* modals, dropdowns */
+  --z-critical: 100; /* skip-to-content, top-priority layers */
 }
 
 /* ─── Base ─────────────────────────────────────────────────────────────────── */

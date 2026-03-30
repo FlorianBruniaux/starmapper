@@ -247,7 +247,7 @@ export default function UserPage({ params }: { params: Promise<{ owner: string }
       )}
 
       {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-10 flex items-center justify-between px-6 py-3 bg-background/80 backdrop-blur-sm border-b border-border-subtle">
+      <header className="fixed top-0 left-0 right-0 z-overlay flex items-center justify-between px-6 py-3 bg-background/80 backdrop-blur-sm border-b border-border-subtle">
         <div className="flex items-center gap-3">
           <Link href="/" className="text-muted hover:text-foreground transition-colors">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">

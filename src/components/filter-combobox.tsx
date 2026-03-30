@@ -84,7 +84,7 @@ export const FilterCombobox = ({ value, onChange, options, placeholder }: Filter
       </button>
 
       {open && (
-        <div className="absolute left-0 top-full mt-1 z-50 min-w-[160px] rounded-md border border-border bg-surface shadow-xl overflow-hidden">
+        <div className="absolute left-0 top-full mt-1 z-modal min-w-[160px] rounded-md border border-border bg-surface shadow-xl overflow-hidden">
           {/* Search */}
           <div className="border-b border-border px-2 py-1.5">
             <input

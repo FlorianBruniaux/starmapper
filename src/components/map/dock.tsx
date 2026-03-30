@@ -46,7 +46,7 @@ export const Dock = ({
       {!sidebarOpen && (
         <button
           onClick={() => setSidebarOpen(true)}
-          className="lg:hidden absolute bottom-6 left-4 z-10 bg-background/90 border border-border rounded-lg px-3 py-2.5 backdrop-blur-md flex items-center gap-2 text-xs text-muted hover:text-foreground hover:border-accent-blue/50 transition-all"
+          className="lg:hidden absolute bottom-6 left-4 z-overlay bg-background/90 border border-border rounded-lg px-3 py-2.5 backdrop-blur-md flex items-center gap-2 text-xs text-muted hover:text-foreground hover:border-accent-blue/50 transition-all"
           aria-label="Open controls"
         >
           <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
@@ -59,7 +59,7 @@ export const Dock = ({
         </button>
       )}
 
-      <div className={`absolute bottom-6 left-4 z-10 flex-col gap-2 ${sidebarOpen ? "flex" : "hidden"} lg:flex`}>
+      <div className={`absolute bottom-6 left-4 z-overlay flex-col gap-2 ${sidebarOpen ? "flex" : "hidden"} lg:flex`}>
 
         {/* View mode toggle — Clusters / Heatmap */}
         {hasPoints && (

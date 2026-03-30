@@ -24,7 +24,7 @@ export default function ExplorePage() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <header className="border-b border-border-subtle bg-surface/80 backdrop-blur-sm sticky top-0 z-10">
+      <header className="border-b border-border-subtle bg-surface/80 backdrop-blur-sm sticky top-0 z-overlay">
         <div className="max-w-4xl mx-auto px-4 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2 text-foreground font-semibold text-sm">
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true" className="text-accent-blue flex-shrink-0">

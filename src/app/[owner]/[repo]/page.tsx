@@ -828,7 +828,7 @@ export default function MapPage({
 
       {/* Repo not found modal */}
       {repoNotFound && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+        <div className="fixed inset-0 z-modal flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="bg-surface border border-border rounded-xl p-6 w-full max-w-sm mx-4 shadow-xl">
             <div className="flex items-start gap-3 mb-4">
               <div className="size-9 shrink-0 flex items-center justify-center rounded-lg bg-accent-red/10">
@@ -857,7 +857,7 @@ export default function MapPage({
       )}
 
       {/* Top-right controls row */}
-      <div className="absolute top-3 right-3 z-20 flex items-center gap-2">
+      <div className="absolute top-3 right-3 z-panel flex items-center gap-2">
         <Link
           href="/explore"
           className="flex items-center gap-1.5 text-xs text-muted hover:text-foreground border border-border bg-background/80 hover:border-accent-blue px-3 py-1.5 rounded-lg transition-colors"
@@ -895,7 +895,7 @@ export default function MapPage({
       />
 
       {/* Attribution */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 pointer-events-none">
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-overlay pointer-events-none">
         <a
           href="https://florian.bruniaux.com"
           target="_blank"
@@ -908,7 +908,7 @@ export default function MapPage({
 
       {/* Pre-scan overlay (no cache) */}
       {status === "idle" && cacheCheckDone && repoInfo && estimate && (
-        <div className="absolute inset-0 z-30 flex items-center justify-center bg-background/85 backdrop-blur-sm">
+        <div className="absolute inset-0 z-drawer flex items-center justify-center bg-background/85 backdrop-blur-sm">
           <div className="bg-surface border border-border rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
             <div className="flex items-center gap-3 mb-6">
               {repoInfo.avatar && (
@@ -995,7 +995,7 @@ export default function MapPage({
 
       {/* Rate limit overlay */}
       {status === "waiting" && (
-        <div className="absolute inset-0 z-30 flex items-center justify-center bg-background/75 backdrop-blur-sm">
+        <div className="absolute inset-0 z-drawer flex items-center justify-center bg-background/75 backdrop-blur-sm">
           <div className="bg-surface border border-border rounded-2xl p-8 max-w-sm w-full mx-4 shadow-2xl text-center">
             <div className="flex justify-center mb-5">
               <svg className="animate-spin w-10 h-10 text-accent-blue" viewBox="0 0 24 24" fill="none">
@@ -1057,7 +1057,7 @@ export default function MapPage({
 
       {/* Legend — compare mode indicator only */}
       {compareOwner && compareRepo && (
-        <div className="absolute bottom-6 right-4 z-10
+        <div className="absolute bottom-6 right-4 z-overlay
           bg-background/90 border border-border rounded-lg px-3 py-2
           text-xs backdrop-blur-md select-none flex items-center gap-2">
           <span className="inline-block w-2 h-2 rounded-full bg-accent-purple flex-shrink-0" />
@@ -1067,7 +1067,7 @@ export default function MapPage({
 
       {/* Unmapped drawer */}
       {drawerOpen && (
-        <div className="absolute bottom-0 left-0 right-0 z-20
+        <div className="absolute bottom-0 left-0 right-0 z-panel
           bg-background/95 border-t border-border backdrop-blur-md
           flex flex-col max-h-[45vh]">
           <div className="flex items-center justify-between px-5 py-3 border-b border-border-subtle flex-shrink-0">
@@ -1119,7 +1119,7 @@ export default function MapPage({
       {/* Back link */}
       <a
         href="/"
-        className="absolute top-4 left-4 z-10 bg-background/90 border border-border
+        className="absolute top-4 left-4 z-overlay bg-background/90 border border-border
           rounded-lg px-3 py-2 text-xs text-muted hover:text-foreground backdrop-blur-md transition-colors"
       >
         ← Back
@@ -1282,7 +1282,7 @@ export default function MapPage({
               onScroll={(e) => setTableScrollTop((e.currentTarget).scrollTop)}
             >
               {isSearchPending && (
-                <div className="sticky top-0 left-0 right-0 z-20 flex items-center justify-center py-1 bg-surface/80 backdrop-blur-sm">
+                <div className="sticky top-0 left-0 right-0 z-panel flex items-center justify-center py-1 bg-surface/80 backdrop-blur-sm">
                   <div className="flex items-center gap-2 text-2xs text-muted-subtle">
                     <svg className="animate-spin w-3 h-3" viewBox="0 0 24 24" fill="none">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
@@ -1293,7 +1293,7 @@ export default function MapPage({
                 </div>
               )}
               <table className="w-full text-xs border-collapse">
-                <thead className="sticky top-0 bg-surface z-10">
+                <thead className="sticky top-0 bg-surface z-overlay">
                   <tr className="border-b border-border-subtle">
                     <th className="px-3 py-2.5 w-8">
                       <input
@@ -1700,7 +1700,7 @@ export default function MapPage({
 
                 {/* LinkedIn pre-share panel */}
                 {liPanelOpen && (
-                  <div className="absolute inset-0 z-10 rounded-xl bg-background border border-border flex flex-col p-4 gap-3">
+                  <div className="absolute inset-0 z-overlay rounded-xl bg-background border border-border flex flex-col p-4 gap-3">
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-medium text-foreground">Your LinkedIn post</span>
                       <button onClick={() => setLiPanelOpen(false)} className="text-muted hover:text-foreground text-lg leading-none">×</button>
