@@ -44,7 +44,7 @@ sync_table() {
   echo "[$TABLE]"
 
   # Export from local
-  psql "$LOCAL_URL" -c "\copy $TABLE TO '$TMPDIR/$TABLE.csv' CSV HEADER" >/dev/null 2>&1
+  psql "$LOCAL_URL" -c "\copy $TABLE TO '$TMPDIR/$TABLE.csv' CSV HEADER"
   local ROWS
   ROWS=$(( $(wc -l < "$TMPDIR/$TABLE.csv") - 1 ))
   echo "  exported $ROWS rows"
@@ -55,9 +55,10 @@ sync_table() {
   fi
 
   # Build import script (psql file — \copy metacommand can't be in heredoc SQL)
+  # DROP + recreate _sync each time — avoids stale schema from a previous run
   cat > "$TMPDIR/import_$TABLE.sql" <<EOF
-CREATE TABLE IF NOT EXISTS _sync (LIKE $TABLE INCLUDING ALL);
-TRUNCATE _sync;
+DROP TABLE IF EXISTS _sync;
+CREATE TABLE _sync (LIKE $TABLE INCLUDING ALL);
 EOF
   echo "\copy _sync FROM '$TMPDIR/$TABLE.csv' CSV HEADER" >> "$TMPDIR/import_$TABLE.sql"
   cat >> "$TMPDIR/import_$TABLE.sql" <<EOF
@@ -65,7 +66,7 @@ INSERT INTO $TABLE SELECT * FROM _sync $ON_CONFLICT;
 DROP TABLE _sync;
 EOF
 
-  psql "$NEON_URL" -f "$TMPDIR/import_$TABLE.sql" >/dev/null 2>&1
+  psql "$NEON_URL" -f "$TMPDIR/import_$TABLE.sql"
   echo "  synced OK"
 }
 
