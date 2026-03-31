@@ -37,7 +37,7 @@ export type ChunkResponse = {
 let activeSessions = 0;
 const MAX_CONCURRENT = 3;
 
-export async function POST(req: NextRequest) {
+export const POST = async (req: NextRequest) => {
   if (activeSessions >= MAX_CONCURRENT) {
     return jsonError("Server busy — too many concurrent scans. Retry in a few seconds.", 429);
   }

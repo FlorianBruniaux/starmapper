@@ -46,7 +46,7 @@ async function fetchUser(login: string, token: string): Promise<UserDetail | nul
   }
 }
 
-export async function POST(req: NextRequest) {
+export const POST = async (req: NextRequest) => {
   try {
     const { logins } = await req.json() as { logins: string[] };
     if (!Array.isArray(logins) || logins.length === 0)

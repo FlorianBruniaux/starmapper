@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAdminAuth, jsonError } from "@/lib/api-helpers";
 
-export async function POST(req: NextRequest) {
+export const POST = async (req: NextRequest) => {
   const authError = requireAdminAuth(req);
   if (authError) return authError;
 

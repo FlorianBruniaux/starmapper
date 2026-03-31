@@ -17,6 +17,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { StatsList } from "@/components/stats-list";
 import { useTheme } from "@/hooks/useTheme";
 import { MAP_STYLE_DARK, MAP_STYLE_LIGHT } from "@/lib/theme";
+import { compressToBase64 } from "@/lib/compress-client";
 import { TopPanel } from "@/components/map/top-panel";
 import { Dock } from "@/components/map/dock";
 import { formatEstimate, timeAgo } from "@/lib/format";
@@ -57,34 +58,6 @@ type LocalCache = {
 }
 
 const cacheKey = (owner: string, repo: string) => `starmapper:${owner}/${repo}`;
-
-// Compress an array client-side (gzip+base64) to keep POST body under Vercel's 4.5MB limit.
-// CompressionStream is available in all modern browsers (Chrome 80+, Firefox 113+, Safari 16.4+).
-const compressToBase64 = async (data: unknown[]): Promise<string> => {
-  const encoded = new TextEncoder().encode(JSON.stringify(data));
-  const cs = new CompressionStream("gzip");
-  const writer = cs.writable.getWriter();
-  writer.write(encoded);
-  writer.close();
-  const chunks: Uint8Array[] = [];
-  const reader = cs.readable.getReader();
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    chunks.push(value);
-  }
-  const total = chunks.reduce((s, c) => s + c.length, 0);
-  const merged = new Uint8Array(total);
-  let off = 0;
-  for (const c of chunks) { merged.set(c, off); off += c.length; }
-  // Base64 in chunks to avoid stack overflow on large arrays
-  let binary = "";
-  const CHUNK = 8192;
-  for (let i = 0; i < merged.length; i += CHUNK) {
-    binary += String.fromCharCode(...merged.subarray(i, i + CHUNK));
-  }
-  return btoa(binary);
-};
 
 const loadCache = (owner: string, repo: string): LocalCache | null => {
   try {

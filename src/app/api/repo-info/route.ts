@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { validateOwnerRepo } from "@/lib/api-validation";
 import { jsonError, extractGhToken } from "@/lib/api-helpers";
 
-export async function GET(req: NextRequest) {
+export const GET = async (req: NextRequest) => {
   const { searchParams } = new URL(req.url);
   const key = validateOwnerRepo(searchParams.get("owner"), searchParams.get("repo"));
   if (!key) return jsonError("Invalid owner/repo format", 400);

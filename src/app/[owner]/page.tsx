@@ -13,6 +13,7 @@ import { isCountry, normalizeCountry } from "@/lib/countries";
 import type { UserInfo, UserRepo } from "@/app/api/user-repos/route";
 import type { StargazerPoint, ChunkResponse } from "@/app/api/chunk/route";
 import type { MappedRepo } from "@/app/api/repos/route";
+import { compressToBase64 } from "@/lib/compress-client";
 
 const MAX_BATCH = 3;
 const RETRY_DELAY = 8_000;
@@ -32,29 +33,6 @@ type QueueItem = {
 
 class RateLimitError extends Error {}
 
-// Client-side gzip+base64 (mirrors map page)
-const compress = async (data: unknown[]): Promise<string> => {
-  const enc = new TextEncoder().encode(JSON.stringify(data));
-  const cs = new CompressionStream("gzip");
-  const w = cs.writable.getWriter();
-  w.write(enc);
-  w.close();
-  const chunks: Uint8Array[] = [];
-  const reader = cs.readable.getReader();
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    chunks.push(value);
-  }
-  const total = chunks.reduce((s, c) => s + c.length, 0);
-  const buf = new Uint8Array(total);
-  let off = 0;
-  for (const c of chunks) { buf.set(c, off); off += c.length; }
-  let bin = "";
-  const SZ = 8192;
-  for (let i = 0; i < buf.length; i += SZ) bin += String.fromCharCode(...buf.subarray(i, i + SZ));
-  return btoa(bin);
-};
 
 const fmt = (n: number) => n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n);
 
@@ -221,7 +199,7 @@ export default function UserPage({ params }: { params: Promise<{ owner: string }
             try {
               type SlimPoint = Omit<StargazerPoint, "bio" | "avatarUrl">;
               const slim: SlimPoint[] = allPoints.map(({ bio: _b, avatarUrl: _av, ...rest }) => rest);
-              const [pointsGz, unmappedGz] = await Promise.all([compress(slim), compress(allUnmapped)]);
+              const [pointsGz, unmappedGz] = await Promise.all([compressToBase64(slim), compressToBase64(allUnmapped)]);
               await fetch("/api/stargazer-cache", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
