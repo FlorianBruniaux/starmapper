@@ -24,17 +24,24 @@ export const GET = async (
 
       // Reconstruct avatarUrl from login (stripped on write to save space)
       // Legacy rows already have avatarUrl — only add if missing
+      // Reduce lat/lng precision to ~1.1 km (2 decimals) to prevent individual geolocation
       const pointsWithAvatar = points.map((p) => ({
         ...p,
         avatarUrl: p.avatarUrl ?? `https://github.com/${p.login}.png`,
+        ...(typeof p.lat === "number" && typeof p.lng === "number"
+          ? { lat: Math.round(p.lat * 100) / 100, lng: Math.round(p.lng * 100) / 100 }
+          : {}),
       }));
 
-      return NextResponse.json({
-        points: pointsWithAvatar,
-        unmapped,
-        totalCount: cached.totalCount,
-        scannedAt: cached.scannedAt.toISOString(),
-      });
+      return NextResponse.json(
+        {
+          points: pointsWithAvatar,
+          unmapped,
+          totalCount: cached.totalCount,
+          scannedAt: cached.scannedAt.toISOString(),
+        },
+        { headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300" } },
+      );
     }
 
     // No stargazer cache — check badge_cache for last scan metadata

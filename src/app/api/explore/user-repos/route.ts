@@ -2,7 +2,6 @@
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
 import { jsonError, logError } from "@/lib/api-helpers";
 
 export type UserRepo = {
@@ -69,14 +68,6 @@ export const GET = async (req: NextRequest) => {
         language: r.language,
         url: r.html_url,
       }));
-
-    // Persist publicRepos back to DB (fire and forget — don't block the response)
-    if (totalRepos > 0) {
-      prisma.gitHubUser.updateMany({
-        where: { login },
-        data: { publicRepos: totalRepos },
-      }).catch(() => {});
-    }
 
     return NextResponse.json(
       { repos, totalRepos } satisfies UserReposResponse,

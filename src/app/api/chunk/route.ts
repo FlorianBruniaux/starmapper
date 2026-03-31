@@ -91,7 +91,9 @@ export const POST = async (req: NextRequest) => {
       }
 
       if (coords) {
-        points.push({ login: sg.login, name: sg.name, bio: sg.bio, company: sg.company, location: sg.location, followers: sg.followers, avatarUrl: sg.avatarUrl, lat: coords[0], lng: coords[1], starredAt: sg.starredAt, linkedinUrl: sg.linkedinUrl });
+        // Reduce lat/lng precision to ~1.1 km (2 decimals) in response to prevent individual geolocation
+        // Full precision is persisted in DB via fire-and-forget writes below
+        points.push({ login: sg.login, name: sg.name, bio: sg.bio, company: sg.company, location: sg.location, followers: sg.followers, avatarUrl: sg.avatarUrl, lat: Math.round(coords[0] * 100) / 100, lng: Math.round(coords[1] * 100) / 100, starredAt: sg.starredAt, linkedinUrl: sg.linkedinUrl });
       } else {
         unmapped.push({ login: sg.login, name: sg.name, followers: sg.followers, starredAt: sg.starredAt });
       }

@@ -21,6 +21,16 @@ export const POST = async (req: NextRequest) => {
       return jsonError("invalid_params", 400);
     }
 
+    // Plausibility check: reject updates that deviate >50% from existing badge data.
+    // Prevents arbitrary overwrites with fabricated star counts.
+    const existing = await prisma.badgeCache.findUnique({ where: { owner_repo: key } });
+    if (existing && existing.totalCount > 0) {
+      const ratio = totalCount / existing.totalCount;
+      if (ratio > 1.5 || ratio < 0.5) {
+        return jsonError("invalid_params", 400);
+      }
+    }
+
     await prisma.badgeCache.upsert({
       where: { owner_repo: key },
       create: { ...key, mappedCount, countryCount, totalCount },
