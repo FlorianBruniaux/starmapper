@@ -213,7 +213,7 @@ const makePopupElement = (props: Record<string, unknown>): HTMLElement => {
   const header = document.createElement("div");
   header.style.cssText = "display:flex;align-items:center;gap:10px;margin-bottom:8px";
 
-  if (avatarUrl) {
+  if (avatarUrl && avatarUrl.startsWith("https://")) {
     const img = document.createElement("img");
     img.src = avatarUrl;
     img.alt = "";
