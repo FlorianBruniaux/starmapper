@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
+
 /**
  * batch-scan.ts
  *
@@ -6,15 +9,17 @@
  * After scanning, sync to Neon with: ./scripts/db-sync-to-neon.sh
  *
  * Usage:
- *   DATABASE_URL=postgresql://starmapper:starmapper@localhost:5433/starmapper \
- *   pnpm batch:scan --input scripts/repos-popular.json [--dry-run] [--force] [--skip-geocoding]
+ *   pnpm batch:scan:local --input scripts/repos-all.json [--dry-run] [--force] [--skip-geocoding]
  *
  * Flags:
- *   --input <path>      JSON array of "owner/repo" strings (required)
- *   --dry-run           Preview only — no DB writes, shows geocoding budget estimate
- *   --force             Rescan repos already in stargazer_cache
- *   --skip-geocoding    Fetch GitHub data only, skip geocoding (faster, geocode on first web visit)
- *   --token <PAT>       GitHub PAT override (otherwise uses GITHUB_TOKEN from env)
+ *   --input <path>       JSON array of "owner/repo" strings (required)
+ *   --local              Use DATABASE_URL_LOCAL from .env.local (Docker Postgres)
+ *   --dry-run            Preview only — no DB writes, shows geocoding budget estimate
+ *   --force              Rescan repos already in stargazer_cache
+ *   --allow-neon         Explicitly allow writing to Neon production DB
+ *   --skip-geocoding     Fetch GitHub data only, skip geocoding
+ *   --token <PAT>        GitHub PAT override (otherwise uses GITHUB_TOKEN from env)
+ *   --flush-every <N>    Flush github_user + star_event every N users (default: 2000)
  */
 
 import { readFileSync } from "fs";
@@ -45,7 +50,7 @@ const loadEnvLocal = () => {
 
 loadEnvLocal();
 
-// ─── Global error handlers (prevent silent crashes) ───────────────────────────
+// ─── Global error handlers ────────────────────────────────────────────────────
 
 process.on("uncaughtException", (err) => {
   console.error("\n[FATAL] uncaughtException:", err);
@@ -60,40 +65,59 @@ process.on("unhandledRejection", (reason) => {
 // ─── CLI args ─────────────────────────────────────────────────────────────────
 
 const argv = process.argv.slice(2);
-const DRY_RUN = argv.includes("--dry-run");
-const FORCE = argv.includes("--force");
+const DRY_RUN        = argv.includes("--dry-run");
+const FORCE          = argv.includes("--force");
 const SKIP_GEOCODING = argv.includes("--skip-geocoding");
+// --local  Use DATABASE_URL_LOCAL from .env.local (Docker Postgres).
+const USE_LOCAL      = argv.includes("--local");
+// --allow-neon  Explicitly allow writing to Neon production. Separate from --force
+// (which means "rescan even if cached") to prevent accidental Neon writes.
+const ALLOW_NEON     = argv.includes("--allow-neon");
 
 const get = (flag: string) => {
   const i = argv.indexOf(flag);
-  return i !== -1 ? argv[i + 1] : null;
+  return i !== -1 ? argv[i + 1] ?? null : null;
 };
 
-const INPUT_FILE = get("--input");
+const INPUT_FILE     = get("--input");
 const TOKEN_OVERRIDE = get("--token");
+// --flush-every <N>  Flush github_user + star_event to DB every N users (default: 2000).
+//                    Prevents losing hours of work if the process is interrupted.
+const FLUSH_EVERY_RAW = parseInt(get("--flush-every") ?? "2000", 10);
+if (isNaN(FLUSH_EVERY_RAW) || FLUSH_EVERY_RAW < 1) {
+  console.error("Error: --flush-every must be a positive integer (got: " + get("--flush-every") + ")");
+  process.exit(1);
+}
+const FLUSH_EVERY = FLUSH_EVERY_RAW;
 
 if (!INPUT_FILE) {
   console.error("Error: --input <repos.json> is required");
-  console.error("  Example: pnpm batch:scan --input scripts/repos-popular.json");
+  console.error("  Example: pnpm batch:scan:local --input scripts/repos-all.json");
   process.exit(1);
 }
 
 // ─── Env validation ──────────────────────────────────────────────────────────
 
-const DATABASE_URL = process.env.DATABASE_URL ?? "";
+const DATABASE_URL = (USE_LOCAL ? process.env.DATABASE_URL_LOCAL : null) ?? process.env.DATABASE_URL ?? "";
 const GITHUB_TOKEN = TOKEN_OVERRIDE ?? process.env.GITHUB_TOKEN ?? "";
 
 if (!DATABASE_URL) {
-  console.error("Error: DATABASE_URL is not set.");
-  console.error("  Set it in .env.local or prepend it:");
-  console.error('  DATABASE_URL="postgresql://starmapper:starmapper@localhost:5433/starmapper" pnpm batch:scan ...');
+  if (USE_LOCAL) {
+    console.error("Error: DATABASE_URL_LOCAL is not set in .env.local.");
+    console.error("  Add: DATABASE_URL_LOCAL=postgresql://starmapper:starmapper@localhost:5433/starmapper");
+  } else {
+    console.error("Error: DATABASE_URL is not set.");
+    console.error("  Tip: use --local to target Docker Postgres via DATABASE_URL_LOCAL in .env.local");
+  }
   process.exit(1);
 }
 
-if (DATABASE_URL.includes("neon.tech") && !FORCE) {
+// Neon production guard — --force only means "rescan if already cached", not "write to Neon".
+// Use --allow-neon explicitly if you really want to target Neon.
+if (DATABASE_URL.includes("neon.tech") && !ALLOW_NEON && !USE_LOCAL) {
   console.error("Warning: DATABASE_URL points to Neon production.");
   console.error("  Run against a local Docker Postgres to avoid Neon costs.");
-  console.error("  Add --force to skip this check.");
+  console.error("  Use --local (reads DATABASE_URL_LOCAL from .env.local) or --allow-neon to explicitly target Neon.");
   process.exit(1);
 }
 
@@ -102,11 +126,21 @@ if (!GITHUB_TOKEN) {
 }
 
 // ─── Prisma (standard TCP via pg adapter — works with local Docker Postgres) ──
-// Prisma 7 requires an adapter for non-Neon connections.
-// PrismaPg uses standard TCP pg Pool — works with local Postgres and Neon alike.
 
 const pool = new pg.Pool({ connectionString: DATABASE_URL });
 const prisma = new PrismaClient({ adapter: new PrismaPg(pool) });
+
+// ─── Graceful shutdown on SIGINT / SIGTERM ────────────────────────────────────
+
+const gracefulShutdown = async (signal: string) => {
+  console.log(`\n[${signal}] Shutting down gracefully...`);
+  await prisma.$disconnect().catch(() => {});
+  await pool.end().catch(() => {});
+  process.exit(0);
+};
+
+process.on("SIGINT",  () => { void gracefulShutdown("SIGINT");  });
+process.on("SIGTERM", () => { void gracefulShutdown("SIGTERM"); });
 
 // ─── Input ───────────────────────────────────────────────────────────────────
 
@@ -119,7 +153,6 @@ const repos = reposRaw.map((r) => {
 
 // ─── Country extraction (inline to keep script isolated) ─────────────────────
 
-// Country aliases (abbreviated, covers the most common cases)
 const COUNTRY_ALIASES: Record<string, string> = {
   usa: "United States", us: "United States", "u.s.": "United States",
   "u.s.a.": "United States", america: "United States",
@@ -133,24 +166,32 @@ const COUNTRY_ALIASES: Record<string, string> = {
   "czech republic": "Czechia",
 };
 
+// Deduplicated set — was previously duplicated across two blocks
 const COUNTRY_INDICATORS = new Set([
-  "afghanistan","albania","algeria","argentina","armenia","australia","austria","azerbaijan",
-  "bangladesh","belgium","brazil","canada","chile","china","colombia","croatia","czechia",
-  "denmark","egypt","ethiopia","finland","france","germany","ghana","greece","hungary",
-  "india","indonesia","iran","iraq","ireland","israel","italy","japan","jordan","kenya",
-  "malaysia","mexico","morocco","netherlands","new zealand","nigeria","norway","pakistan",
-  "peru","philippines","poland","portugal","romania","russia","saudi arabia","south africa",
-  "south korea","spain","sweden","switzerland","taiwan","thailand","turkey","ukraine",
-  "united kingdom","united states","vietnam","united arab emirates","singapore","hong kong",
-  "belgium","czech republic","slovakia","hungary","serbia","croatia","bulgaria","greece",
-  "finland","norway","denmark","sweden","iceland","estonia","latvia","lithuania",
-  "luxembourg","malta","cyprus","moldova","belarus","ukraine","georgia","armenia","azerbaijan",
+  "afghanistan", "albania", "algeria", "argentina", "armenia", "australia", "austria", "azerbaijan",
+  "bangladesh", "belarus", "belgium", "brazil", "bulgaria",
+  "canada", "chile", "china", "colombia", "croatia", "cyprus", "czechia",
+  "denmark", "egypt", "estonia", "ethiopia",
+  "finland", "france",
+  "georgia", "germany", "ghana", "greece",
+  "hong kong", "hungary",
+  "iceland", "india", "indonesia", "iran", "iraq", "ireland", "israel", "italy",
+  "japan", "jordan",
+  "kenya",
+  "latvia", "lithuania", "luxembourg",
+  "malaysia", "malta", "mexico", "moldova", "morocco",
+  "netherlands", "new zealand", "nigeria", "north korea", "norway",
+  "pakistan", "peru", "philippines", "poland", "portugal",
+  "romania", "russia",
+  "saudi arabia", "serbia", "singapore", "slovakia", "south africa", "south korea", "spain", "sweden", "switzerland",
+  "taiwan", "thailand", "turkey",
+  "ukraine", "united arab emirates", "united kingdom", "united states",
+  "vietnam",
 ]);
 
 const extractCountry = (location: string | null): string | null => {
   if (!location) return null;
   const parts = location.split(",").map((p) => p.trim());
-  // Try each part from the end (country usually last)
   for (let i = parts.length - 1; i >= 0; i--) {
     const lower = parts[i].toLowerCase();
     if (COUNTRY_ALIASES[lower]) return COUNTRY_ALIASES[lower];
@@ -165,9 +206,10 @@ const extractCountry = (location: string | null): string | null => {
 
 const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
-// ─── GitHub GraphQL (inline — needs raw headers for rate limit tracking) ─────
+// ─── GitHub GraphQL ───────────────────────────────────────────────────────────
 
 const GH_GRAPHQL = "https://api.github.com/graphql";
+const MAX_FETCH_ATTEMPTS = 8;
 
 type StargazerRaw = {
   login: string;
@@ -183,7 +225,7 @@ type GHPage = {
   nextCursor: string | null;
   totalCount: number;
   rateRemaining: number;
-  rateReset: number; // unix seconds
+  rateReset: number;
 };
 
 const GRAPHQL_QUERY = `
@@ -204,104 +246,127 @@ const GRAPHQL_QUERY = `
   }
 `;
 
+// Iterative retry loop — no recursion, bounded by MAX_FETCH_ATTEMPTS.
 const fetchPage = async (
   owner: string,
   repo: string,
   cursor: string | null,
-  attempt = 0,
 ): Promise<GHPage> => {
-  let res: Response;
-  try {
-    res = await fetch(GH_GRAPHQL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "User-Agent": "starmapper-batch/1.0",
-        ...(GITHUB_TOKEN ? { Authorization: `Bearer ${GITHUB_TOKEN}` } : {}),
-      },
-      body: JSON.stringify({
-        query: GRAPHQL_QUERY,
-        variables: { owner, repo, ...(cursor ? { cursor } : {}) },
-      }),
-      signal: AbortSignal.timeout(30_000),
-    });
-  } catch (err) {
-    const waitSec = Math.min(30 * 2 ** attempt, 300);
-    console.warn(`    [network] fetch error (attempt ${attempt + 1}): ${(err as Error).message} — retry in ${waitSec}s`);
-    await sleep(waitSec * 1000);
-    return fetchPage(owner, repo, cursor, attempt + 1);
-  }
+  for (let attempt = 0; attempt < MAX_FETCH_ATTEMPTS; attempt++) {
+    let res: Response;
+    try {
+      res = await fetch(GH_GRAPHQL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "User-Agent": "starmapper-batch/1.0",
+          ...(GITHUB_TOKEN ? { Authorization: `Bearer ${GITHUB_TOKEN}` } : {}),
+        },
+        body: JSON.stringify({
+          query: GRAPHQL_QUERY,
+          variables: { owner, repo, ...(cursor ? { cursor } : {}) },
+        }),
+        signal: AbortSignal.timeout(30_000),
+      });
+    } catch (err) {
+      if (attempt >= MAX_FETCH_ATTEMPTS - 1) {
+        throw new Error(`Network error after ${MAX_FETCH_ATTEMPTS} attempts: ${(err as Error).message}`);
+      }
+      const waitSec = Math.min(30 * 2 ** attempt, 300);
+      console.warn(`    [network] fetch error (attempt ${attempt + 1}/${MAX_FETCH_ATTEMPTS}): ${(err as Error).message} — retry in ${waitSec}s`);
+      await sleep(waitSec * 1000);
+      continue;
+    }
 
-  const rateRemaining = Number(res.headers.get("x-ratelimit-remaining") ?? 5000);
-  const rateReset = Number(res.headers.get("x-ratelimit-reset") ?? 0);
+    const rateRemaining = Number(res.headers.get("x-ratelimit-remaining") ?? 5000);
+    const rateReset     = Number(res.headers.get("x-ratelimit-reset")     ?? 0);
 
-  if (res.status === 403 || res.status === 429) {
-    const waitMs =
-      rateReset > 0
-        ? Math.max(0, rateReset * 1000 - Date.now()) + 5_000
-        : Math.min(60_000 * 2 ** attempt, 15 * 60 * 1000);
-    const waitSec = Math.round(waitMs / 1000);
-    console.warn(`    [rate-limit] ${res.status} — pausing ${waitSec}s (attempt ${attempt + 1})...`);
-    await sleep(waitMs);
-    return fetchPage(owner, repo, cursor, attempt + 1);
-  }
+    if (res.status === 403 || res.status === 429) {
+      if (attempt >= MAX_FETCH_ATTEMPTS - 1) {
+        throw new Error(`Rate-limited after ${MAX_FETCH_ATTEMPTS} attempts`);
+      }
+      const waitMs =
+        rateReset > 0
+          ? Math.max(0, rateReset * 1000 - Date.now()) + 5_000
+          : Math.min(60_000 * 2 ** attempt, 15 * 60 * 1000);
+      const waitSec = Math.round(waitMs / 1000);
+      console.warn(`    [rate-limit] ${res.status} — pausing ${waitSec}s (attempt ${attempt + 1}/${MAX_FETCH_ATTEMPTS})...`);
+      await sleep(waitMs);
+      continue;
+    }
 
-  if (res.status === 404) {
-    throw Object.assign(new Error("not_found"), { code: "NOT_FOUND" });
-  }
-  if (res.status === 403 && attempt === 0) {
-    throw Object.assign(new Error("forbidden"), { code: "FORBIDDEN" });
-  }
-  if (!res.ok) {
-    throw new Error(`GitHub error ${res.status}`);
-  }
+    if (res.status === 404) {
+      throw Object.assign(new Error("not_found"), { code: "NOT_FOUND" });
+    }
 
-  const json = await res.json();
-  if (json.errors) throw new Error(json.errors[0]?.message ?? "GraphQL error");
+    if (!res.ok) {
+      if (attempt >= MAX_FETCH_ATTEMPTS - 1) {
+        throw new Error(`GitHub HTTP ${res.status} after ${MAX_FETCH_ATTEMPTS} attempts`);
+      }
+      console.warn(`    [http] status ${res.status} — retry ${attempt + 1}/${MAX_FETCH_ATTEMPTS}`);
+      await sleep(5000 * (attempt + 1));
+      continue;
+    }
 
-  const data = json.data?.repository;
-  if (!data) throw Object.assign(new Error("not_found"), { code: "NOT_FOUND" });
+    const json = await res.json() as { errors?: { message?: string }[]; data?: { repository?: unknown } };
+    if (json.errors?.length) throw new Error(json.errors[0]?.message ?? "GraphQL error");
 
-  const page = data.stargazers;
-  const stargazers: StargazerRaw[] = page.edges.map(
-    (e: {
-      starredAt: string;
-      node: {
-        login: string;
-        name: string | null;
-        company: string | null;
-        location: string | null;
-        followers: { totalCount: number };
+    const data = json.data?.repository as {
+      stargazerCount: number;
+      stargazers: {
+        pageInfo: { hasNextPage: boolean; endCursor: string };
+        edges: {
+          starredAt: string;
+          node: {
+            login: string;
+            name: string | null;
+            company: string | null;
+            location: string | null;
+            followers: { totalCount: number };
+          };
+        }[];
       };
-    }) => ({
-      login: e.node.login,
-      name: e.node.name ?? null,
-      company: e.node.company ? e.node.company.trim().replace(/^@/, "") : null,
-      location: e.node.location ?? null,
+    } | null | undefined;
+
+    if (!data) throw Object.assign(new Error("not_found"), { code: "NOT_FOUND" });
+
+    const page = data.stargazers;
+    const stargazers: StargazerRaw[] = page.edges.map((e) => ({
+      login:     e.node.login,
+      name:      e.node.name ?? null,
+      company:   e.node.company ? e.node.company.trim().replace(/^@/, "") : null,
+      location:  e.node.location ?? null,
       followers: e.node.followers.totalCount,
       starredAt: e.starredAt,
-    }),
-  );
+    }));
 
-  return {
-    totalCount: data.stargazerCount,
-    nextCursor: page.pageInfo.hasNextPage ? page.pageInfo.endCursor : null,
-    stargazers,
-    rateRemaining,
-    rateReset,
-  };
+    return {
+      totalCount:    data.stargazerCount,
+      nextCursor:    page.pageInfo.hasNextPage ? page.pageInfo.endCursor : null,
+      stargazers,
+      rateRemaining,
+      rateReset,
+    };
+  }
+
+  throw new Error(`fetchPage: exhausted ${MAX_FETCH_ATTEMPTS} attempts`);
 };
 
-// ─── Geocoding cascade (inline — uses local prisma, no circuit breakers needed) ──
+// ─── Geocoding cascade ────────────────────────────────────────────────────────
 
-const JAWG_URL = "https://api.jawg.io/places/v1/search";
-const GEOAPIFY_URL = "https://api.geoapify.com/v1/geocode/search";
-const NOMINATIM_URL = "https://nominatim.openstreetmap.org/search";
+const JAWG_URL       = "https://api.jawg.io/places/v1/search";
+const GEOAPIFY_URL   = "https://api.geoapify.com/v1/geocode/search";
+const NOMINATIM_URL  = "https://nominatim.openstreetmap.org/search";
 
-// Patterns that are not geocodeable locations
-const NOT_GEOCODEABLE = /^(remote|earth|internet|worldwide|global|anywhere|virtual|online|distributed|nomad|moon|space|mars|[\d\s+().-]{5,}|.*@.*|.*\.(com|io|org|net|dev))/i;
+// Patterns that are not geocodeable locations.
+// Note: alternatives with `.*` are not anchored — they match anywhere in the string.
+const NOT_GEOCODEABLE_ANCHOR = /^(remote|earth|internet|worldwide|global|anywhere|virtual|online|distributed|nomad|moon|space|mars)$/i;
+const NOT_GEOCODEABLE_ANYWHERE = /[@]|[.](com|io|org|net|dev)\b|^[\d\s+().\-]{5,}$/i;
 
-const isGeocodeable = (loc: string) => loc.trim().length >= 2 && !NOT_GEOCODEABLE.test(loc.trim());
+const isGeocodeable = (loc: string) => {
+  const t = loc.trim();
+  return t.length >= 2 && !NOT_GEOCODEABLE_ANCHOR.test(t) && !NOT_GEOCODEABLE_ANYWHERE.test(t);
+};
 
 type Coords = [number, number]; // [lat, lng]
 
@@ -312,7 +377,7 @@ const jawgGeocode = async (loc: string): Promise<Coords | null> => {
     const url = `${JAWG_URL}?text=${encodeURIComponent(loc)}&size=1&access-token=${token}`;
     const r = await fetch(url, { headers: { "User-Agent": "starmapper-batch/1.0" }, signal: AbortSignal.timeout(3_000) });
     if (!r.ok) return null;
-    const f = (await r.json()).features?.[0];
+    const f = (await r.json() as { features?: { geometry: { coordinates: [number, number] } }[] }).features?.[0];
     if (!f) return null;
     const [lng, lat] = f.geometry.coordinates;
     return [lat, lng];
@@ -328,7 +393,7 @@ const geoapifyGeocode = async (loc: string): Promise<Coords | null> => {
     const url = `${GEOAPIFY_URL}?text=${encodeURIComponent(loc)}&limit=1&format=json&apiKey=${key}`;
     const r = await fetch(url, { headers: { "User-Agent": "starmapper-batch/1.0" }, signal: AbortSignal.timeout(3_000) });
     if (!r.ok) return null;
-    const row = (await r.json()).results?.[0];
+    const row = (await r.json() as { results?: { lat: number; lon: number }[] }).results?.[0];
     if (!row) return null;
     return [row.lat, row.lon];
   } catch {
@@ -345,17 +410,21 @@ const nominatimGeocode = async (loc: string): Promise<Coords | null> => {
   try {
     const url = `${NOMINATIM_URL}?q=${encodeURIComponent(loc)}&limit=1&format=json`;
     const r = await fetch(url, {
-      headers: { "User-Agent": "starmapper-batch/1.0 (https://starmapper.app)" },
+      headers: { "User-Agent": "starmapper-batch/1.0 (https://starmapper.bruniaux.com)" },
       signal: AbortSignal.timeout(10_000),
     });
     if (!r.ok) return null;
-    const row = (await r.json())[0];
+    const row = (await r.json() as { lat?: string; lon?: string }[])[0];
     if (!row) return null;
-    return [parseFloat(row.lat), parseFloat(row.lon)];
+    return [parseFloat(row.lat!), parseFloat(row.lon!)];
   } catch {
     return null;
   }
 };
+
+// Session-level in-memory cache — avoids re-querying DB for the same location key across pages.
+// Across a 1000-page scan, ~90% of location lookups are cache hits after the first few pages.
+const geoSessionCache = new Map<string, Coords | null>();
 
 const geocodeBulk = async (
   locations: string[],
@@ -364,12 +433,25 @@ const geocodeBulk = async (
   const todo = locations.filter(isGeocodeable).map((l) => l.toLowerCase().trim());
   const unique = [...new Set(todo)];
 
-  // 1. Bulk cache read
-  if (unique.length > 0) {
+  if (unique.length === 0) return result;
+
+  // 1. Session cache (zero DB round-trip)
+  const sessionMisses = unique.filter((k) => {
+    if (geoSessionCache.has(k)) {
+      result.set(k, geoSessionCache.get(k)!);
+      return false;
+    }
+    return true;
+  });
+
+  // 2. Bulk DB geocache read for session misses
+  if (sessionMisses.length > 0) {
     try {
-      const rows = await prisma.geoCache.findMany({ where: { key: { in: unique } } });
+      const rows = await prisma.geoCache.findMany({ where: { key: { in: sessionMisses } } });
       for (const row of rows) {
-        result.set(row.key, row.lat !== null && row.lng !== null ? [row.lat, row.lng] : null);
+        const coords: Coords | null = row.lat !== null && row.lng !== null ? [row.lat, row.lng] : null;
+        result.set(row.key, coords);
+        geoSessionCache.set(row.key, coords);
       }
     } catch {
       // Cache unavailable — proceed to API calls
@@ -380,13 +462,14 @@ const geocodeBulk = async (
 
   const misses = unique.filter((k) => !result.has(k));
 
-  // 2. Cascade for misses
+  // 3. Cascade for misses: Jawg → Geoapify → Nominatim
   for (const key of misses) {
     let coords: Coords | null = await jawgGeocode(key);
     if (!coords) coords = await geoapifyGeocode(key);
     if (!coords) coords = await nominatimGeocode(key);
 
     result.set(key, coords);
+    geoSessionCache.set(key, coords);
 
     if (!DRY_RUN) {
       try {
@@ -396,7 +479,7 @@ const geocodeBulk = async (
           update: { lat: coords?.[0] ?? null, lng: coords?.[1] ?? null },
         });
       } catch {
-        // Non-critical — cache write failure is fine
+        // Non-critical — geocache write failure is fine
       }
     }
   }
@@ -404,7 +487,7 @@ const geocodeBulk = async (
   return result;
 };
 
-// ─── DB writes (batched, concurrency 20 for local Postgres) ──────────────────
+// ─── DB writes ────────────────────────────────────────────────────────────────
 
 const concurrentMap = async <T, R>(items: T[], fn: (x: T) => Promise<R>, limit = 20) => {
   const results: R[] = [];
@@ -425,14 +508,26 @@ type SlimPoint = {
   starredAt: string | null;
 };
 
+// Error handler for Prisma upserts: ignores unique constraint violations (P2002, expected in
+// concurrent upserts on re-runs), logs everything else so data loss is visible.
+const onUpsertError = (context: string) => (err: unknown): null => {
+  const code = (err as { code?: string }).code;
+  if (code !== "P2002") {
+    console.warn(`  [db-warn] ${context}: ${(err as Error).message ?? String(err)} (code: ${code ?? "?"})`);
+  }
+  return null;
+};
+
+type UnmappedUser = { login: string; name: string | null; location: string | null; followers: number; starredAt: string | null };
+
 const writeRepoCache = async (
   owner: string,
   repo: string,
   points: SlimPoint[],
-  unmapped: { login: string; name: string | null; followers: number; starredAt: string | null }[],
+  unmapped: UnmappedUser[],
   totalCount: number,
 ) => {
-  const pointsGz = gzipSync(JSON.stringify(points)).toString("base64");
+  const pointsGz   = gzipSync(JSON.stringify(points)).toString("base64");
   const unmappedGz = gzipSync(JSON.stringify(unmapped)).toString("base64");
   const key = { owner: owner.toLowerCase(), repo: repo.toLowerCase() };
   const now = new Date();
@@ -460,10 +555,25 @@ const writeUsers = async (
   owner: string,
   repo: string,
   points: SlimPoint[],
-  unmapped: { login: string; name: string | null; followers: number; starredAt: string | null }[],
+  unmapped: UnmappedUser[],
 ) => {
-  // Upsert github_user for mapped users
-  await concurrentMap(points, (p) =>
+  // Deduplicate by login — GitHub pagination edge cases can return the same user on two adjacent
+  // pages. Duplicates in the same concurrentMap batch race on INSERT and one fails P2002
+  // (silently swallowed), leaving the user absent from github_user and breaking the FK.
+  const seenLogins = new Set<string>();
+  const uniquePoints = points.filter((p) => {
+    if (seenLogins.has(p.login)) return false;
+    seenLogins.add(p.login);
+    return true;
+  });
+  const uniqueUnmapped = unmapped.filter((u) => {
+    if (seenLogins.has(u.login)) return false;
+    seenLogins.add(u.login);
+    return true;
+  });
+
+  // 1. Upsert github_user for mapped users (with coordinates)
+  await concurrentMap(uniquePoints, (p) =>
     prisma.gitHubUser
       .upsert({
         where: { login: p.login },
@@ -487,34 +597,60 @@ const writeUsers = async (
           fetchedAt: new Date(),
         },
       })
-      .catch(() => null),
+      .catch(onUpsertError(`github_user mapped ${p.login}`)),
   );
 
-  // Upsert star_event for all users
-  const all = [
-    ...points.map((p) => ({ login: p.login, starredAt: p.starredAt })),
-    ...unmapped.map((u) => ({ login: u.login, starredAt: u.starredAt })),
-  ];
-
-  await concurrentMap(all, ({ login, starredAt }) =>
-    prisma.starEvent
+  // 2. Upsert github_user for unmapped users — MUST happen before star_event (FK constraint).
+  // Explicitly clears lat/lng so a user whose location changed or failed geocoding
+  // no longer shows stale coordinates on the map.
+  await concurrentMap(uniqueUnmapped, (u) =>
+    prisma.gitHubUser
       .upsert({
-        where: { login_owner_repo: { login, owner: owner.toLowerCase(), repo: repo.toLowerCase() } },
-        create: { login, owner: owner.toLowerCase(), repo: repo.toLowerCase(), starredAt: new Date(starredAt ?? Date.now()) },
-        update: { starredAt: new Date(starredAt ?? Date.now()) },
+        where: { login: u.login },
+        create: { login: u.login, name: u.name, location: u.location, followers: u.followers, fetchedAt: new Date() },
+        update: { name: u.name, location: u.location, followers: u.followers, lat: null, lng: null, fetchedAt: new Date() },
       })
-      .catch(() => null),
+      .catch(onUpsertError(`github_user unmapped ${u.login}`)),
   );
+
+  // 3. Insert star_event atomically — single SQL statement that ensures the user exists first.
+  // Using a CTE avoids any FK race condition: the user INSERT and star_event INSERT happen in
+  // the same statement, on the same connection, within the same implicit transaction.
+  // No amount of connection pool timing can break this.
+  const ownerLc = owner.toLowerCase();
+  const repoLc  = repo.toLowerCase();
+  const all = [
+    ...uniquePoints.map((p) => ({ login: p.login, starredAt: p.starredAt })),
+    ...uniqueUnmapped.map((u) => ({ login: u.login, starredAt: u.starredAt })),
+  ].filter((r): r is { login: string; starredAt: string } => r.starredAt !== null);
+
+  await concurrentMap(all, async ({ login, starredAt }) => {
+    try {
+      await prisma.$executeRaw`
+        WITH ensure_user AS (
+          INSERT INTO github_user (login, followers, "fetchedAt")
+          VALUES (${login}, 0, NOW())
+          ON CONFLICT (login) DO NOTHING
+        )
+        INSERT INTO star_event (login, owner, repo, "starredAt", "createdAt")
+        VALUES (${login}, ${ownerLc}, ${repoLc}, ${new Date(starredAt)}, NOW())
+        ON CONFLICT (login, owner, repo) DO UPDATE SET "starredAt" = ${new Date(starredAt)}
+      `;
+    } catch (err) {
+      console.warn(`  [db-warn] star_event ${login}: ${(err as Error).message}`);
+    }
+  });
 };
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 const main = async () => {
   console.log(`\nBatch scan${DRY_RUN ? " (DRY RUN — no writes)" : ""}`);
-  console.log(`  Repos:      ${repos.length}`);
-  console.log(`  Geocoding:  ${SKIP_GEOCODING ? "skipped" : "enabled"}`);
-  console.log(`  GitHub:     ${GITHUB_TOKEN ? "authenticated" : "unauthenticated (60 req/hr)"}`);
-  console.log(`  DB:         ${DATABASE_URL.split("@")[1] ?? DATABASE_URL}`);
+  console.log(`  Repos:       ${repos.length}`);
+  console.log(`  Geocoding:   ${SKIP_GEOCODING ? "skipped" : "enabled"}`);
+  console.log(`  Flush every: ${FLUSH_EVERY} users`);
+  console.log(`  GitHub:      ${GITHUB_TOKEN ? "authenticated" : "unauthenticated (60 req/hr)"}`);
+  console.log(`  DB:          ${DATABASE_URL.split("@")[1] ?? DATABASE_URL}`);
   console.log("");
 
   let globalRateRemaining = 5000;
@@ -538,8 +674,22 @@ const main = async () => {
 
     console.log(`${prefix} — starting...`);
 
-    const allPoints: SlimPoint[] = [];
-    const allUnmapped: { login: string; name: string | null; followers: number; starredAt: string | null }[] = [];
+    // On --force, purge existing star_events for this repo before scanning so unstarred users
+    // don't leave orphaned records. Safe because --force means "rescan from scratch".
+    if (FORCE && !DRY_RUN) {
+      const repoKey = { owner: owner.toLowerCase(), repo: repo.toLowerCase() };
+      const deleted = await prisma.starEvent.deleteMany({ where: repoKey });
+      if (deleted.count > 0) {
+        console.log(`  [force] deleted ${deleted.count} stale star_events`);
+      }
+    }
+
+    const allPoints:   SlimPoint[] = [];
+    const allUnmapped: UnmappedUser[] = [];
+    // Pending batch: accumulates since last flush, cleared on each flush.
+    let pendingPoints:   SlimPoint[] = [];
+    let pendingUnmapped: typeof allUnmapped = [];
+    let flushedCount = 0;
     let cursor: string | null = null;
     let totalCount = 0;
     let page = 0;
@@ -547,7 +697,6 @@ const main = async () => {
     try {
       // ── Fetch all pages ──────────────────────────────────────────────────
       while (true) {
-        // Proactive rate limit pause
         if (globalRateRemaining < 200) {
           console.warn("  [rate-limit] Remaining < 200, pausing 60s...");
           await sleep(60_000);
@@ -564,15 +713,11 @@ const main = async () => {
         );
 
         // ── Geocode this page's users ────────────────────────────────────
-        const locations = result.stargazers
-          .map((s) => s.location ?? "")
-          .filter(Boolean);
-        const geoMap = await geocodeBulk(locations);
+        const locations = result.stargazers.map((s) => s.location ?? "").filter(Boolean);
+        const geoMap    = await geocodeBulk(locations);
 
         const uniqueLocs = new Set(locations.map((l) => l.toLowerCase().trim()));
-        const misses = [...uniqueLocs].filter(
-          (k) => isGeocodeable(k) && !geoMap.has(k),
-        ).length;
+        const misses = [...uniqueLocs].filter((k) => isGeocodeable(k) && !geoMap.has(k)).length;
         totalGeocacheMisses += misses;
 
         for (const sg of result.stargazers) {
@@ -582,24 +727,34 @@ const main = async () => {
           const coords = locKey ? (geoMap.get(locKey) ?? null) : null;
 
           if (coords) {
-            allPoints.push({
-              login: sg.login,
-              name: sg.name,
-              company: sg.company,
-              location: sg.location,
+            const pt: SlimPoint = {
+              login:     sg.login,
+              name:      sg.name,
+              company:   sg.company,
+              location:  sg.location,
               followers: sg.followers,
-              lat: coords[0],
-              lng: coords[1],
+              lat:       coords[0],
+              lng:       coords[1],
               starredAt: sg.starredAt,
-            });
+            };
+            allPoints.push(pt);
+            pendingPoints.push(pt);
           } else {
-            allUnmapped.push({
-              login: sg.login,
-              name: sg.name,
-              followers: sg.followers,
-              starredAt: sg.starredAt,
-            });
+            const un = { login: sg.login, name: sg.name, location: sg.location, followers: sg.followers, starredAt: sg.starredAt };
+            allUnmapped.push(un);
+            pendingUnmapped.push(un);
           }
+        }
+
+        // ── Incremental flush every FLUSH_EVERY users ────────────────────
+        const pendingTotal = pendingPoints.length + pendingUnmapped.length;
+        if (!DRY_RUN && pendingTotal >= FLUSH_EVERY) {
+          process.stdout.write(`  [flush] ${flushedCount + pendingTotal} users written so far...`);
+          await writeUsers(owner, repo, pendingPoints, pendingUnmapped);
+          process.stdout.write(` OK\n`);
+          flushedCount += pendingTotal;
+          pendingPoints   = [];
+          pendingUnmapped = [];
         }
 
         if (!result.nextCursor) break;
@@ -610,8 +765,7 @@ const main = async () => {
         cursor = result.nextCursor;
       }
 
-      const mappedPct =
-        totalCount > 0 ? Math.round((allPoints.length / totalCount) * 100) : 0;
+      const mappedPct = totalCount > 0 ? Math.round((allPoints.length / totalCount) * 100) : 0;
       const countries = new Set(allPoints.map((p) => extractCountry(p.location)).filter(Boolean));
       console.log(
         `\n  Done: ${allPoints.length} mapped (${mappedPct}%) + ${allUnmapped.length} unmapped — ${countries.size} countries`,
@@ -619,11 +773,14 @@ const main = async () => {
 
       // ── Write to DB ──────────────────────────────────────────────────────
       if (!DRY_RUN) {
+        if (pendingPoints.length + pendingUnmapped.length > 0) {
+          process.stdout.write("  Writing users (final batch)...");
+          await writeUsers(owner, repo, pendingPoints, pendingUnmapped);
+          process.stdout.write(" OK\n");
+        }
         process.stdout.write("  Writing cache...");
         await writeRepoCache(owner, repo, allPoints, allUnmapped, totalCount);
-        process.stdout.write(" cache OK,");
-        await writeUsers(owner, repo, allPoints, allUnmapped);
-        process.stdout.write(" users OK\n");
+        process.stdout.write(" cache OK\n");
       } else {
         console.log("  (dry-run: skipping DB writes)");
       }
@@ -651,9 +808,12 @@ const main = async () => {
   console.log("");
 
   await prisma.$disconnect();
+  await pool.end();
 };
 
 main().catch((err) => {
   console.error("Fatal error:", err);
-  prisma.$disconnect().finally(() => process.exit(1));
+  prisma.$disconnect()
+    .finally(() => pool.end())
+    .finally(() => process.exit(1));
 });
