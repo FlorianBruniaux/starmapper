@@ -181,7 +181,15 @@ const makeGridCellPopup = (bio: string, login: string): HTMLElement => {
 
   const topRow = document.createElement("div");
   topRow.style.cssText = "margin-top:8px;font-size:12px;color:var(--color-muted)";
-  topRow.innerHTML = `Top: <a href="https://github.com/${topLogin}" target="_blank" rel="noopener noreferrer" style="color:var(--color-accent-blue);text-decoration:none">@${topLogin}</a>`;
+  const topLabel = document.createTextNode("Top: ");
+  const topLink = document.createElement("a");
+  topLink.href = `https://github.com/${encodeURIComponent(topLogin)}`;
+  topLink.target = "_blank";
+  topLink.rel = "noopener noreferrer";
+  topLink.style.cssText = "color:var(--color-accent-blue);text-decoration:none";
+  topLink.textContent = `@${topLogin}`;
+  topRow.appendChild(topLabel);
+  topRow.appendChild(topLink);
   el.appendChild(topRow);
 
   return el;

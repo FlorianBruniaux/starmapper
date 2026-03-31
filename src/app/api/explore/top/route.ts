@@ -16,8 +16,8 @@ export const GET = async (req: NextRequest) => {
   const { searchParams } = new URL(req.url);
   const page    = Math.max(1, parseInt(searchParams.get("page")  ?? "1",  10));
   const size    = Math.min(50, Math.max(1, parseInt(searchParams.get("size") ?? "30", 10)));
-  const country = (searchParams.get("country") ?? "").substring(0, 100);
-  const search  = (searchParams.get("search")  ?? "").substring(0, 100);
+  const country = (searchParams.get("country") ?? "").substring(0, 100).replace(/[^\p{L}\p{N}\s'.,()-]/gu, "");
+  const search  = (searchParams.get("search")  ?? "").substring(0, 100).replace(/[^\p{L}\p{N}\s'.,()-]/gu, "");
 
   const isFiltered = Boolean(country || search);
   const skip = (page - 1) * size;
