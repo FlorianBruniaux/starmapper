@@ -2,42 +2,30 @@
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 
 import { NextRequest, NextResponse } from "next/server";
+import { Ratelimit } from "@upstash/ratelimit";
+import { Redis } from "@upstash/redis";
 
 // ---------------------------------------------------------------------------
 // Types & config
 // ---------------------------------------------------------------------------
 
-type WindowEntry = { count: number; windowStart: number };
 type Tier = "strict-get" | "moderate-get" | "admin" | "post" | "public" | "exempt";
 
-const ipWindows = new Map<string, WindowEntry>();
+const redis = Redis.fromEnv();
 
-// POST route limits (unchanged from original)
-const POST_LIMITS: Record<string, { max: number; windowMs: number }> = {
-  "/api/chunk":           { max: 100, windowMs: 60_000 }, // sequential loop, 1 req at a time
-  "/api/badge-update":    { max: 20,  windowMs: 60_000 },
-  "/api/stargazer-cache": { max: 10,  windowMs: 60_000 },
-  "/api/user-details":    { max: 30,  windowMs: 60_000 },
+// POST route limiters — one instance per route, prefix avoids key collisions
+const POST_LIMITERS: Record<string, Ratelimit> = {
+  "/api/chunk":           new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(100, "60 s"), prefix: "rl:chunk" }),
+  "/api/badge-update":    new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(20,  "60 s"), prefix: "rl:badge-update" }),
+  "/api/stargazer-cache": new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(10,  "60 s"), prefix: "rl:stargazer-cache" }),
+  "/api/user-details":    new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(30,  "60 s"), prefix: "rl:user-details" }),
 };
 
-// Tier limits for GET routes
-const TIER_LIMITS: Record<"strict-get" | "moderate-get" | "admin", { max: number; windowMs: number }> = {
-  "strict-get":   { max: 30, windowMs: 60_000 }, // data-rich PII endpoints
-  "moderate-get": { max: 60, windowMs: 60_000 }, // aggregate / low-PII endpoints
-  "admin":        { max: 10, windowMs: 60_000 }, // anti-brute-force on ADMIN_SECRET
-};
-
-// Cleanup stale entries every 5 minutes to avoid unbounded Map growth
-let lastCleanup = Date.now();
-const CLEANUP_INTERVAL_MS = 5 * 60_000;
-
-const cleanup = () => {
-  const now = Date.now();
-  if (now - lastCleanup < CLEANUP_INTERVAL_MS) return;
-  lastCleanup = now;
-  for (const [key, entry] of ipWindows.entries()) {
-    if (now - entry.windowStart > CLEANUP_INTERVAL_MS) ipWindows.delete(key);
-  }
+// Tier limiters for GET routes
+const TIER_LIMITERS: Record<"strict-get" | "moderate-get" | "admin", Ratelimit> = {
+  "strict-get":   new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(30, "60 s"), prefix: "rl:strict-get" }),
+  "moderate-get": new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(60, "60 s"), prefix: "rl:moderate-get" }),
+  "admin":        new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(10, "60 s"), prefix: "rl:admin" }),
 };
 
 // ---------------------------------------------------------------------------
@@ -79,7 +67,7 @@ const classifyRoute = (method: string, pathname: string): Tier => {
 
   // POST/mutating methods
   if (method !== "GET" && method !== "HEAD") {
-    if (POST_LIMITS[pathname]) return "post";
+    if (POST_LIMITERS[pathname]) return "post";
     return "exempt";
   }
 
@@ -99,30 +87,33 @@ const classifyRoute = (method: string, pathname: string): Tier => {
   return "moderate-get";
 };
 
-/** Sliding-window rate limiter — returns 429 response or null if allowed. */
-const rateLimit = (
+/**
+ * Distributed sliding-window rate limiter via Upstash Redis.
+ * Fails open on Redis errors — never blocks legitimate traffic due to infra issues.
+ */
+const rateLimit = async (
+  limiter: Ratelimit,
   ip: string,
-  key: string,
-  limit: { max: number; windowMs: number },
-): NextResponse | null => {
-  cleanup();
-  const now = Date.now();
-  const entry = ipWindows.get(key);
-
-  if (!entry || now - entry.windowStart > limit.windowMs) {
-    ipWindows.set(key, { count: 1, windowStart: now });
-    return null;
+): Promise<NextResponse | null> => {
+  try {
+    const { success, limit, remaining, reset } = await limiter.limit(ip);
+    if (!success) {
+      const retryAfter = Math.ceil((reset - Date.now()) / 1000);
+      return NextResponse.json(
+        { error: "rate_limit" },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(retryAfter),
+            "X-RateLimit-Limit": String(limit),
+            "X-RateLimit-Remaining": String(remaining),
+          },
+        },
+      );
+    }
+  } catch {
+    // Redis unavailable — fail open, never block legitimate traffic
   }
-
-  if (entry.count >= limit.max) {
-    const retryAfter = Math.ceil((limit.windowMs - (now - entry.windowStart)) / 1000);
-    return NextResponse.json(
-      { error: "rate_limit" },
-      { status: 429, headers: { "Retry-After": String(retryAfter) } },
-    );
-  }
-
-  entry.count++;
   return null;
 };
 
@@ -149,10 +140,11 @@ const checkReferer = (req: NextRequest): boolean => {
 // Middleware
 // ---------------------------------------------------------------------------
 
-export const middleware = (req: NextRequest): NextResponse => {
+export const middleware = async (req: NextRequest): Promise<NextResponse> => {
   const { pathname } = req.nextUrl;
   const method = req.method;
   const tier = classifyRoute(method, pathname);
+
   // ── Public / exempt ───────────────────────────────────────────────────────
   if (tier === "public" || tier === "exempt") return NextResponse.next();
 
@@ -169,9 +161,9 @@ export const middleware = (req: NextRequest): NextResponse => {
         return NextResponse.json({ error: "forbidden" }, { status: 403 });
       }
     }
-    const limit = POST_LIMITS[pathname];
-    if (limit) {
-      const blocked = rateLimit(ip, `${pathname}:${ip}`, limit);
+    const limiter = POST_LIMITERS[pathname];
+    if (limiter) {
+      const blocked = await rateLimit(limiter, ip);
       if (blocked) return blocked;
     }
     return NextResponse.next();
@@ -179,7 +171,7 @@ export const middleware = (req: NextRequest): NextResponse => {
 
   // ── Admin routes: rate limit only ─────────────────────────────────────────
   if (tier === "admin") {
-    const blocked = rateLimit(ip, `${pathname}:${ip}`, TIER_LIMITS["admin"]);
+    const blocked = await rateLimit(TIER_LIMITERS["admin"], ip);
     if (blocked) return blocked;
     return NextResponse.next();
   }
@@ -189,13 +181,13 @@ export const middleware = (req: NextRequest): NextResponse => {
     if (!checkReferer(req)) {
       return NextResponse.json({ error: "forbidden" }, { status: 403 });
     }
-    const blocked = rateLimit(ip, `${pathname}:${ip}`, TIER_LIMITS["strict-get"]);
+    const blocked = await rateLimit(TIER_LIMITERS["strict-get"], ip);
     if (blocked) return blocked;
     return NextResponse.next();
   }
 
   // ── Moderate GET: rate limit only ─────────────────────────────────────────
-  const blocked = rateLimit(ip, `${pathname}:${ip}`, TIER_LIMITS["moderate-get"]);
+  const blocked = await rateLimit(TIER_LIMITERS["moderate-get"], ip);
   if (blocked) return blocked;
   return NextResponse.next();
 };
