@@ -4,6 +4,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
+import { generateToken, verifyToken, COOKIE_NAME, TOKEN_TTL_MS } from "@/lib/api-token";
 
 // ---------------------------------------------------------------------------
 // Types & config
@@ -27,6 +28,10 @@ const TIER_LIMITERS: Record<"strict-get" | "moderate-get" | "admin", Ratelimit> 
   "moderate-get": new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(60, "60 s"), prefix: "rl:moderate-get" }),
   "admin":        new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(10, "60 s"), prefix: "rl:admin" }),
 };
+
+// SM_TOKEN_SECRET: when set, enables HMAC token validation on strict-get endpoints.
+// When unset (local dev without env), falls back to Referer check + rate limit only.
+const SM_SECRET = process.env.SM_TOKEN_SECRET ?? "";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -143,6 +148,29 @@ const checkReferer = (req: NextRequest): boolean => {
 export const middleware = async (req: NextRequest): Promise<NextResponse> => {
   const { pathname } = req.nextUrl;
   const method = req.method;
+
+  // ── Non-API page requests: issue / refresh HMAC session cookie ────────────
+  // The cookie is HttpOnly + SameSite=Strict — auto-sent with all same-origin
+  // fetch() calls from the browser. Enables token validation on strict-get routes.
+  if (!pathname.startsWith("/api/")) {
+    if (SM_SECRET) {
+      const existing = req.cookies.get(COOKIE_NAME)?.value;
+      const valid = existing ? await verifyToken(existing, SM_SECRET) : false;
+      if (!valid) {
+        const res = NextResponse.next();
+        res.cookies.set(COOKIE_NAME, await generateToken(SM_SECRET), {
+          httpOnly: true,
+          sameSite: "strict",
+          secure: process.env.NODE_ENV === "production",
+          maxAge: TOKEN_TTL_MS / 1000,
+          path: "/",
+        });
+        return res;
+      }
+    }
+    return NextResponse.next();
+  }
+
   const tier = classifyRoute(method, pathname);
 
   // ── Public / exempt ───────────────────────────────────────────────────────
@@ -176,8 +204,18 @@ export const middleware = async (req: NextRequest): Promise<NextResponse> => {
     return NextResponse.next();
   }
 
-  // ── Strict GET: referer check + rate limit ────────────────────────────────
+  // ── Strict GET: token check + referer check + rate limit ─────────────────
   if (tier === "strict-get") {
+    // HMAC token — only enforced when SM_TOKEN_SECRET is configured.
+    // Token is set as HttpOnly cookie on every page load, auto-sent by the browser.
+    // An attacker without a server-issued token gets 403 even with a forged Referer.
+    if (SM_SECRET) {
+      const token = req.cookies.get(COOKIE_NAME)?.value;
+      if (!await verifyToken(token, SM_SECRET)) {
+        return NextResponse.json({ error: "forbidden" }, { status: 403 });
+      }
+    }
+    // Referer check — defense-in-depth even when token is valid
     if (!checkReferer(req)) {
       return NextResponse.json({ error: "forbidden" }, { status: 403 });
     }
@@ -193,5 +231,8 @@ export const middleware = async (req: NextRequest): Promise<NextResponse> => {
 };
 
 export const config = {
-  matcher: ["/api/:path*"],
+  matcher: [
+    // All routes except Next.js internals and static files
+    "/((?!_next/static|_next/image|favicon\\.ico).*)",
+  ],
 };
