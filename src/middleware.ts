@@ -38,7 +38,9 @@ const SM_SECRET = process.env.SM_TOKEN_SECRET ?? "";
 // ---------------------------------------------------------------------------
 
 const getIP = (req: NextRequest): string =>
-  req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+  req.headers.get("cf-connecting-ip") ??
+  req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+  "unknown";
 
 const appOrigin = (): string => {
   const url = process.env.NEXT_PUBLIC_APP_URL ?? "";
