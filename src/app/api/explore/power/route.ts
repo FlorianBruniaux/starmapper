@@ -18,6 +18,10 @@ export const GET = async (req: NextRequest) => {
   const size = Math.min(50, Math.max(1, parseInt(searchParams.get("size") ?? "30", 10)));
   const skip = (page - 1) * size;
 
+  // Hard skip cap — prevents full table enumeration
+  const MAX_SKIP = 500;
+  if (skip > MAX_SKIP) return jsonError("invalid_params", 400);
+
   try {
     const [groups, countRows] = await Promise.all([
       prisma.$queryRaw<{ login: string; cnt: bigint }[]>`

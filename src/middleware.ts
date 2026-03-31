@@ -10,7 +10,7 @@ import { generateToken, verifyToken, COOKIE_NAME, TOKEN_TTL_MS } from "@/lib/api
 // Types & config
 // ---------------------------------------------------------------------------
 
-type Tier = "strict-get" | "moderate-get" | "admin" | "post" | "public" | "exempt";
+type Tier = "strict-get" | "stargazer-cache-get" | "moderate-get" | "admin" | "post" | "public" | "exempt";
 
 const redis = Redis.fromEnv();
 
@@ -23,10 +23,11 @@ const POST_LIMITERS: Record<string, Ratelimit> = {
 };
 
 // Tier limiters for GET routes
-const TIER_LIMITERS: Record<"strict-get" | "moderate-get" | "admin", Ratelimit> = {
-  "strict-get":   new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(30, "60 s"), prefix: "rl:strict-get" }),
-  "moderate-get": new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(60, "60 s"), prefix: "rl:moderate-get" }),
-  "admin":        new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(10, "60 s"), prefix: "rl:admin" }),
+const TIER_LIMITERS: Record<"strict-get" | "stargazer-cache-get" | "moderate-get" | "admin", Ratelimit> = {
+  "strict-get":          new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(30, "60 s"), prefix: "rl:strict-get" }),
+  "stargazer-cache-get": new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(3,  "60 s"), prefix: "rl:stargazer-cache-get" }),
+  "moderate-get":        new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(60, "60 s"), prefix: "rl:moderate-get" }),
+  "admin":               new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(10, "60 s"), prefix: "rl:admin" }),
 };
 
 // SM_TOKEN_SECRET: when set, enables HMAC token validation on strict-get endpoints.
@@ -78,13 +79,17 @@ const classifyRoute = (method: string, pathname: string): Tier => {
     return "exempt";
   }
 
+  // Stargazer-cache GET — returns up to 50k users in one shot, dedicated tight limiter
+  if (pathname.startsWith("/api/stargazer-cache/")) return "stargazer-cache-get";
+
   // Strict GET — data-rich endpoints with per-user PII (logins, locations, coordinates)
   if (
-    pathname.startsWith("/api/stargazer-cache/") ||
     pathname.startsWith("/api/stats/") ||
     pathname === "/api/explore/top" ||
     pathname === "/api/explore/power" ||
     pathname === "/api/explore/user-repos" ||
+    pathname === "/api/explore/global-map" ||
+    pathname === "/api/repos" ||
     pathname.startsWith("/api/profile/")
   ) {
     return "strict-get";
@@ -202,6 +207,22 @@ export const middleware = async (req: NextRequest): Promise<NextResponse> => {
   // ── Admin routes: rate limit only ─────────────────────────────────────────
   if (tier === "admin") {
     const blocked = await rateLimit(TIER_LIMITERS["admin"], ip);
+    if (blocked) return blocked;
+    return NextResponse.next();
+  }
+
+  // ── Stargazer-cache GET: same checks as strict-get, tighter rate limit ───
+  if (tier === "stargazer-cache-get") {
+    if (SM_SECRET) {
+      const token = req.cookies.get(COOKIE_NAME)?.value;
+      if (!await verifyToken(token, SM_SECRET)) {
+        return NextResponse.json({ error: "forbidden" }, { status: 403 });
+      }
+    }
+    if (!checkReferer(req)) {
+      return NextResponse.json({ error: "forbidden" }, { status: 403 });
+    }
+    const blocked = await rateLimit(TIER_LIMITERS["stargazer-cache-get"], ip);
     if (blocked) return blocked;
     return NextResponse.next();
   }

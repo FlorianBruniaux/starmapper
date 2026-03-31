@@ -19,8 +19,16 @@ export const GET = async (req: NextRequest) => {
   const country = (searchParams.get("country") ?? "").substring(0, 100).replace(/[^\p{L}\p{N}\s'.,()-]/gu, "");
   const search  = (searchParams.get("search")  ?? "").substring(0, 100).replace(/[^\p{L}\p{N}\s'.,()-]/gu, "");
 
+  // Minimum filter length — single-char filters enumerate the whole table cross-product
+  if (country && country.trim().length < 2) return jsonError("invalid_params", 400);
+  if (search  && search.trim().length  < 2) return jsonError("invalid_params", 400);
+
   const isFiltered = Boolean(country || search);
   const skip = (page - 1) * size;
+
+  // Hard skip cap — prevents full table enumeration even with page cycling
+  const MAX_SKIP = 500;
+  if (skip > MAX_SKIP) return jsonError("invalid_params", 400);
 
   const where = {
     ...(country ? { location: { contains: country, mode: "insensitive" as const } } : {}),
