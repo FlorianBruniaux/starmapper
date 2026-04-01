@@ -420,7 +420,7 @@ const StargazerMapInner = ({ points, comparePoints, flyTarget, onFlyDone, onRead
           data: buildGeoJSON(pointsRef.current),
           cluster: true,
           clusterMaxZoom: CLUSTER_MAX_ZOOM,
-          clusterRadius: 50,
+          clusterRadius: 40,
         });
 
         // Cluster circles
@@ -490,7 +490,7 @@ const StargazerMapInner = ({ points, comparePoints, flyTarget, onFlyDone, onRead
           data: buildGeoJSON(comparePointsRef.current),
           cluster: true,
           clusterMaxZoom: CLUSTER_MAX_ZOOM,
-          clusterRadius: 50,
+          clusterRadius: 40,
         });
         map.addLayer({
           id: "clusters-compare",
@@ -601,8 +601,9 @@ const StargazerMapInner = ({ points, comparePoints, flyTarget, onFlyDone, onRead
     return () => {
       cancelled = true;
       if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; }
+      setMapReady(false);
     };
-  }, []);
+  }, [styleUrl]);
 
   useEffect(() => {
     const map = mapRef.current;

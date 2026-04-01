@@ -55,4 +55,4 @@ export const MAP_STYLE_DARK = (token: string) =>
   `https://api.jawg.io/styles/jawg-dark.json?access-token=${token}&lang=en`;
 
 export const MAP_STYLE_LIGHT = (token: string) =>
-  `https://api.jawg.io/styles/jawg-sunny.json?access-token=${token}&lang=en`;
+  `https://api.jawg.io/styles/jawg-light.json?access-token=${token}&lang=en`;

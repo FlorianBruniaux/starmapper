@@ -22,10 +22,17 @@ type UseThemeResult = {
 };
 
 export const useTheme = (): UseThemeResult => {
-  const [preference, setPreference] = useState<Theme | null>(null);
-  const [theme, setThemeState] = useState<Theme>("dark");
+  const [preference, setPreference] = useState<Theme | null>(() => {
+    if (typeof window === "undefined") return null;
+    return getStoredTheme();
+  });
+  const [theme, setThemeState] = useState<Theme>(() => {
+    if (typeof window === "undefined") return "dark";
+    const stored = getStoredTheme();
+    return stored ?? getSystemTheme();
+  });
 
-  // Initialize from localStorage + apply immediately
+  // Apply class to <html> + watch system preference changes
   useEffect(() => {
     const stored = getStoredTheme();
     const resolved = applyTheme(stored);
