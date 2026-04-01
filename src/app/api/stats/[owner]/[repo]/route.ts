@@ -35,64 +35,91 @@ export const GET = async (
   const key = normalizeOwnerRepo(owner, repo);
 
   try {
-    const events = await prisma.starEvent.findMany({
-      where: key,
-      take: 10_000, // cap in-memory aggregation; repos > 10k stars get approximate stats
-      select: {
-        user: {
-          select: {
-            login: true, name: true, location: true, company: true, followers: true,
-            following: true, publicRepos: true, dataVersion: true, lat: true, lng: true,
-          },
-        },
-      },
-    });
+    // 1. Aggregate totals in SQL — replaces findMany(10k) that generated IN($1…$10000)
+    const [totals] = await prisma.$queryRaw<{
+      total: bigint;
+      mapped: bigint;
+      avg_followers: number;
+      enriched: bigint;
+      bots: bigint;
+    }[]>`
+      SELECT
+        COUNT(*)                                                                                             AS total,
+        COUNT(*) FILTER (WHERE u.lat IS NOT NULL AND u.lng IS NOT NULL)                                     AS mapped,
+        COALESCE(AVG(u.followers)::int, 0)                                                                  AS avg_followers,
+        COUNT(*) FILTER (WHERE u."dataVersion" >= 1)                                                        AS enriched,
+        COUNT(*) FILTER (WHERE u."dataVersion" >= 1 AND u.followers < 5 AND u.following < 5 AND u."publicRepos" < 2) AS bots
+      FROM star_event se
+      JOIN github_user u USING (login)
+      WHERE se.owner = ${key.owner} AND se.repo = ${key.repo}
+    `;
 
-    if (!events.length) {
+    if (!totals || Number(totals.total) === 0) {
       return jsonError("no_data", 404);
     }
 
+    const total = Number(totals.total);
+    const mappedCount = Number(totals.mapped);
+    const enrichedUserCount = Number(totals.enriched);
+    const botCount = Number(totals.bots);
+    const avgFollowers = Math.round(totals.avg_followers ?? 0);
+
+    // 2. Top locations (raw strings) — parseLocation in Node on max 200 rows
+    const locationRows = await prisma.$queryRaw<{ location: string; cnt: bigint }[]>`
+      SELECT u.location, COUNT(*) AS cnt
+      FROM star_event se
+      JOIN github_user u USING (login)
+      WHERE se.owner = ${key.owner} AND se.repo = ${key.repo}
+        AND u.location IS NOT NULL
+      GROUP BY u.location
+      ORDER BY cnt DESC
+      LIMIT 200
+    `;
+
     const countryCount = new Map<string, number>();
     const cityCount = new Map<string, number>();
-    const companyCount = new Map<string, number>();
-    let followerSum = 0;
-    let mappedCount = 0;
-    let botCount = 0;
-    let enrichedUserCount = 0;
-
-    for (const { user: u } of events) {
-      if (u.lat !== null && u.lng !== null) mappedCount++;
-
-      const { country, city } = parseLocation(u.location);
-      if (country) countryCount.set(country, (countryCount.get(country) ?? 0) + 1);
-      if (city) cityCount.set(city, (cityCount.get(city) ?? 0) + 1);
-      if (u.company) companyCount.set(u.company, (companyCount.get(u.company) ?? 0) + 1);
-      followerSum += u.followers;
-
-      if (u.dataVersion >= 1) {
-        enrichedUserCount++;
-        if (u.followers < 5 && u.following < 5 && u.publicRepos < 2) botCount++;
-      }
+    for (const { location, cnt } of locationRows) {
+      const n = Number(cnt);
+      const { country, city } = parseLocation(location);
+      if (country) countryCount.set(country, (countryCount.get(country) ?? 0) + n);
+      if (city) cityCount.set(city, (cityCount.get(city) ?? 0) + n);
     }
 
-    const total = events.length;
-    const allMapped = events.map(({ user: u }) => ({
-      login: u.login,
-      name: u.name,
-      followers: u.followers,
-      publicRepos: u.publicRepos,
-      location: u.location,
-      avatarUrl: `https://github.com/${u.login}.png`,
-      company: u.company,
-    }));
-    // Keep top 30 by followers + top 30 by publicRepos, deduplicated, max 60 users
-    const byFollowers = [...allMapped].sort((a, b) => b.followers - a.followers).slice(0, 30);
-    const byRepos = [...allMapped].sort((a, b) => b.publicRepos - a.publicRepos).slice(0, 30);
-    const seen = new Set<string>();
-    const topUsers = [...byFollowers, ...byRepos].filter(({ login }) => seen.has(login) ? false : (seen.add(login), true));
+    // 3. Top companies
+    const companyRows = await prisma.$queryRaw<{ company: string; cnt: bigint }[]>`
+      SELECT u.company, COUNT(*) AS cnt
+      FROM star_event se
+      JOIN github_user u USING (login)
+      WHERE se.owner = ${key.owner} AND se.repo = ${key.repo}
+        AND u.company IS NOT NULL
+      GROUP BY u.company
+      ORDER BY cnt DESC
+      LIMIT 50
+    `;
+    const companyCount = new Map(companyRows.map(({ company, cnt }) => [company, Number(cnt)] as [string, number]));
 
-    // Power stargazers: users who starred multiple repos tracked by StarMapper
-    // CTE + INNER JOIN avoids nested loop O(n²) from correlated subquery
+    // 4. Top users (by followers, max 60 deduplicated)
+    const topUsersRaw = await prisma.$queryRaw<{
+      login: string;
+      name: string | null;
+      followers: number;
+      publicRepos: number;
+      location: string | null;
+      company: string | null;
+    }[]>`
+      SELECT u.login, u.name, u.followers, u."publicRepos", u.location, u.company
+      FROM star_event se
+      JOIN github_user u USING (login)
+      WHERE se.owner = ${key.owner} AND se.repo = ${key.repo}
+      ORDER BY u.followers DESC
+      LIMIT 60
+    `;
+    const topUsers = topUsersRaw.map((u) => ({
+      ...u,
+      avatarUrl: `https://github.com/${u.login}.png`,
+    }));
+
+    // 5. Power stargazers — CTE + INNER JOIN (avoids correlated subquery O(n²))
     const crossRepoGroups = await prisma.$queryRaw<{ login: string; cnt: bigint }[]>`
       WITH repo_logins AS (
         SELECT DISTINCT login FROM star_event WHERE owner = ${key.owner} AND repo = ${key.repo}
@@ -103,27 +130,34 @@ export const GET = async (
       GROUP BY se.login
       HAVING COUNT(*) > 1
       ORDER BY cnt DESC
-      LIMIT 50
+      LIMIT 20
     `;
-    const userMap = new Map(events.map((e) => [e.user.login, e.user]));
-    const powerStargazers = crossRepoGroups
-      .slice(0, 20)
-      .map((d) => {
-        const u = userMap.get(d.login);
-        return {
-          login: d.login,
-          name: u?.name ?? null,
-          followers: u?.followers ?? 0,
-          trackedRepos: Number(d.cnt),
-          avatarUrl: `https://github.com/${d.login}.png`,
-        };
-      });
+
+    // Fetch user details for power stargazers (logins list is small — max 20)
+    const powerLogins = crossRepoGroups.map((g) => g.login);
+    const powerUsers = powerLogins.length > 0
+      ? await prisma.gitHubUser.findMany({
+          where: { login: { in: powerLogins } },
+          select: { login: true, name: true, followers: true },
+        })
+      : [];
+    const powerUserMap = new Map(powerUsers.map((u) => [u.login, u]));
+    const powerStargazers = crossRepoGroups.map((g) => {
+      const u = powerUserMap.get(g.login);
+      return {
+        login: g.login,
+        name: u?.name ?? null,
+        followers: u?.followers ?? 0,
+        trackedRepos: Number(g.cnt),
+        avatarUrl: `https://github.com/${g.login}.png`,
+      };
+    });
 
     const stats: RepoStats = {
       totalStars: total,
       mappedCount,
       mappingRate: total > 0 ? Math.round((mappedCount / total) * 100) : 0,
-      avgFollowers: total > 0 ? Math.round(followerSum / total) : 0,
+      avgFollowers,
       countryCount: countryCount.size,
       topCountries: [...countryCount.entries()].sort((a, b) => b[1] - a[1]).slice(0, 30),
       topCities: [...cityCount.entries()].sort((a, b) => b[1] - a[1]).slice(0, 30),
@@ -132,7 +166,7 @@ export const GET = async (
       powerStargazers,
       botCount,
       enrichedUserCount,
-      isCapped: total === 10_000,
+      isCapped: false, // no longer capped — aggregation done in SQL
     };
 
     return NextResponse.json(stats, {

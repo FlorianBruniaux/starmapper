@@ -13,6 +13,21 @@ export type PowerResponse = {
   nextCursor: string | null;
 };
 
+// Module-level cache for the expensive COUNT(*) total — 5min TTL
+// Avoids full table scan on every paginated request (944ms → ~0ms on cache hit)
+let _powerTotal: { value: number; ts: number } | null = null;
+const getCachedPowerTotal = async (): Promise<number> => {
+  const now = Date.now();
+  if (_powerTotal && now - _powerTotal.ts < 5 * 60 * 1000) return _powerTotal.value;
+  const [row] = await prisma.$queryRaw<{ total: bigint }[]>`
+    SELECT COUNT(*) AS total
+    FROM (SELECT 1 FROM star_event GROUP BY login HAVING COUNT(*) > 1) subq
+  `;
+  const value = Number(row?.total ?? 0);
+  _powerTotal = { value, ts: now };
+  return value;
+};
+
 export const GET = async (req: NextRequest) => {
   const { searchParams } = new URL(req.url);
   const page = Math.min(20, Math.max(1, parseInt(searchParams.get("page") ?? "1",  10)));
@@ -53,15 +68,10 @@ export const GET = async (req: NextRequest) => {
       `;
     }
 
-    const [groups, countRows] = await Promise.all([
+    const [groups, total] = await Promise.all([
       groupsQuery,
-      prisma.$queryRaw<{ total: bigint }[]>`
-        SELECT COUNT(*) AS total
-        FROM (SELECT 1 FROM star_event GROUP BY login HAVING COUNT(*) > 1) subq
-      `,
+      getCachedPowerTotal(),
     ]);
-
-    const total = Number(countRows[0]?.total ?? 0);
 
     const logins = groups.map((g) => g.login);
     const users = logins.length > 0

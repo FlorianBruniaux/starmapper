@@ -26,7 +26,7 @@ export const GET = async (req: NextRequest) => {
       _count: { location: true },
       where: { location: { not: null } },
       orderBy: { _count: { location: "desc" } },
-      take: 5000,
+      take: 300,
     });
 
     const aggregated = new Map<string, number>();

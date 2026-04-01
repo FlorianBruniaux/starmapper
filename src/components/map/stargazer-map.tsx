@@ -23,7 +23,7 @@ type Props = {
 
 const JAWG_TOKEN = process.env.NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN ?? "";
 const STYLE_URL = `https://api.jawg.io/styles/jawg-dark.json?access-token=${JAWG_TOKEN}&lang=en`;
-const CLUSTER_MAX_ZOOM = 12;
+const CLUSTER_MAX_ZOOM = 20;
 
 const buildHeatGeoJSON = (pts: StargazerPoint[]) => {
   return {
