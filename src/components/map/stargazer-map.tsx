@@ -78,6 +78,7 @@ const setupClusteredSourcesAndLayers = (
     cluster: true,
     clusterMaxZoom: CLUSTER_MAX_ZOOM,
     clusterRadius: radius,
+    maxzoom: 22,
   });
 
   map.addLayer({
@@ -143,6 +144,7 @@ const setupClusteredSourcesAndLayers = (
     cluster: true,
     clusterMaxZoom: CLUSTER_MAX_ZOOM,
     clusterRadius: radius,
+    maxzoom: 22,
   });
 
   map.addLayer({
@@ -680,8 +682,8 @@ const StargazerMapInner = ({ points, comparePoints, flyTarget, onFlyDone, onRead
   }, [flyTarget, onFlyDone, mapReady]);
 
   // Live style swap — swap Jawg base tiles when theme changes.
-  // Direct setStyle(url) — MapLibre fetches and applies the new style,
-  // preserving user-added sources via diff. Re-adds sources if diff removed them.
+  // diff:false avoids a MapLibre crash when diffing incompatible style specs.
+  // setTimeout(100) gives MapLibre time to flush before re-adding sources.
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !mapReady) return;
@@ -689,8 +691,9 @@ const StargazerMapInner = ({ points, comparePoints, flyTarget, onFlyDone, onRead
     if (newUrl === appliedStyleUrlRef.current) return;
     appliedStyleUrlRef.current = newUrl;
 
-    map.once("styledata", () => {
-      if (!map.getSource("stargazers")) {
+    const onStyleData = () => {
+      map.off("styledata", onStyleData);
+      setTimeout(() => {
         setupClusteredSourcesAndLayers(
           map,
           clusterRadiusRef.current,
@@ -699,9 +702,10 @@ const StargazerMapInner = ({ points, comparePoints, flyTarget, onFlyDone, onRead
           buildGeoJSON(comparePointsRef.current),
           false,
         );
-      }
-    });
-    map.setStyle(newUrl);
+      }, 100);
+    };
+    map.on("styledata", onStyleData);
+    map.setStyle(newUrl, { diff: false });
   }, [styleUrl, mapReady]);
 
   return <div ref={containerRef} className="w-full h-full" />;
