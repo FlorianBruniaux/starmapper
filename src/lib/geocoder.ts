@@ -262,7 +262,7 @@ export async function geocodeBatch(
       const loc = misses[i];
       const result = await _resolveAndCache(loc, loc.trim().toLowerCase());
       missResults.push(result);
-      if (i < misses.length - 1) await sleep(1100);
+      if (i < misses.length - 1) await sleep(300);
     }
   }
 

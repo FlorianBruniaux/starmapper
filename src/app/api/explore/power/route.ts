@@ -10,28 +10,51 @@ export type PowerResponse = {
   total: number;
   page: number;
   pageSize: number;
+  nextCursor: string | null;
 };
 
 export const GET = async (req: NextRequest) => {
   const { searchParams } = new URL(req.url);
   const page = Math.min(20, Math.max(1, parseInt(searchParams.get("page") ?? "1",  10)));
   const size = Math.min(50, Math.max(1, parseInt(searchParams.get("size") ?? "30", 10)));
-  const skip = (page - 1) * size;
+  const cursor = searchParams.get("cursor"); // keyset cursor: "${cnt}|${login}"
 
-  // Hard skip cap — prevents full table enumeration
+  // Hard offset cap (OFFSET-based) — prevents full table scan on deep pages
   const MAX_SKIP = 500;
-  if (skip > MAX_SKIP) return jsonError("invalid_params", 400);
+  const skip = (page - 1) * size;
+  if (!cursor && skip > MAX_SKIP) return jsonError("invalid_params", 400);
 
   try {
-    const [groups, countRows] = await Promise.all([
-      prisma.$queryRaw<{ login: string; cnt: bigint }[]>`
+    // Keyset pagination when cursor provided — O(1) regardless of page depth
+    // Fallback to OFFSET when no cursor (first page or legacy page param)
+    let groupsQuery: Promise<{ login: string; cnt: bigint }[]>;
+    if (cursor) {
+      const [cntStr, cursorLogin] = cursor.split("|");
+      const cursorCnt = parseInt(cntStr, 10);
+      if (!cursorLogin || isNaN(cursorCnt)) return jsonError("invalid_params", 400);
+      groupsQuery = prisma.$queryRaw<{ login: string; cnt: bigint }[]>`
         SELECT login, COUNT(*) AS cnt
         FROM star_event
         GROUP BY login
         HAVING COUNT(*) > 1
-        ORDER BY cnt DESC
+          AND (COUNT(*) < ${cursorCnt}::bigint
+            OR (COUNT(*) = ${cursorCnt}::bigint AND login > ${cursorLogin}))
+        ORDER BY cnt DESC, login ASC
+        LIMIT ${size}::int
+      `;
+    } else {
+      groupsQuery = prisma.$queryRaw<{ login: string; cnt: bigint }[]>`
+        SELECT login, COUNT(*) AS cnt
+        FROM star_event
+        GROUP BY login
+        HAVING COUNT(*) > 1
+        ORDER BY cnt DESC, login ASC
         LIMIT ${size}::int OFFSET ${skip}::int
-      `,
+      `;
+    }
+
+    const [groups, countRows] = await Promise.all([
+      groupsQuery,
       prisma.$queryRaw<{ total: bigint }[]>`
         SELECT COUNT(*) AS total
         FROM (SELECT 1 FROM star_event GROUP BY login HAVING COUNT(*) > 1) subq
@@ -60,8 +83,13 @@ export const GET = async (req: NextRequest) => {
       };
     });
 
+    const lastGroup = groups[groups.length - 1];
+    const nextCursor = groups.length === size && lastGroup
+      ? `${Number(lastGroup.cnt)}|${lastGroup.login}`
+      : null;
+
     return NextResponse.json(
-      { items, total, page, pageSize: size } satisfies PowerResponse,
+      { items, total, page, pageSize: size, nextCursor } satisfies PowerResponse,
       { headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600" } },
     );
   } catch (err) {

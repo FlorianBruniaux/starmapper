@@ -55,12 +55,23 @@ sync_table() {
   fi
 
   # Build import script (psql file — \copy metacommand can't be in heredoc SQL)
-  # DROP + recreate _sync each time — avoids stale schema from a previous run
+  # _sync created WITHOUT constraints (AS SELECT ... LIMIT 0) so \copy never fails
+  # on NOT NULL / CHECK violations in transit data.
   cat > "$TMPDIR/import_$TABLE.sql" <<EOF
 DROP TABLE IF EXISTS _sync;
-CREATE TABLE _sync (LIKE $TABLE INCLUDING ALL);
+CREATE TABLE _sync AS SELECT * FROM $TABLE LIMIT 0;
 EOF
   echo "\copy _sync FROM '$TMPDIR/$TABLE.csv' CSV HEADER" >> "$TMPDIR/import_$TABLE.sql"
+  # github_user: coalesce integer columns that are NOT NULL in prod but may be NULL in local
+  if [[ "$TABLE" == "github_user" ]]; then
+    cat >> "$TMPDIR/import_$TABLE.sql" <<EOF
+UPDATE _sync SET
+  followers    = COALESCE(followers, 0),
+  following    = COALESCE(following, 0),
+  "publicRepos"  = COALESCE("publicRepos", 0),
+  "dataVersion"  = COALESCE("dataVersion", 0);
+EOF
+  fi
   cat >> "$TMPDIR/import_$TABLE.sql" <<EOF
 INSERT INTO $TABLE SELECT * FROM _sync $ON_CONFLICT;
 DROP TABLE _sync;
@@ -71,11 +82,16 @@ EOF
 }
 
 # ── Sync order respects FK constraints (github_user before star_event) ────────
+# badge_cache + stargazer_cache have no FK deps → run in parallel
+# star_event references github_user → must run after github_user completes
 
-sync_table "github_user"      "ON CONFLICT (login) DO NOTHING"
-sync_table "star_event"       "ON CONFLICT (login, owner, repo) DO NOTHING"
-sync_table "badge_cache"      'ON CONFLICT (owner, repo) DO UPDATE SET "mappedCount"=EXCLUDED."mappedCount", "countryCount"=EXCLUDED."countryCount", "totalCount"=EXCLUDED."totalCount", "updatedAt"=EXCLUDED."updatedAt"'
-sync_table "stargazer_cache"  'ON CONFLICT (owner, repo) DO UPDATE SET points=EXCLUDED.points, unmapped=EXCLUDED.unmapped, "totalCount"=EXCLUDED."totalCount", "scannedAt"=EXCLUDED."scannedAt"'
+sync_table "github_user" "ON CONFLICT (login) DO NOTHING"
+
+sync_table "badge_cache"     'ON CONFLICT (owner, repo) DO UPDATE SET "mappedCount"=EXCLUDED."mappedCount", "countryCount"=EXCLUDED."countryCount", "totalCount"=EXCLUDED."totalCount", "updatedAt"=EXCLUDED."updatedAt"' &
+sync_table "stargazer_cache" 'ON CONFLICT (owner, repo) DO UPDATE SET points=EXCLUDED.points, unmapped=EXCLUDED.unmapped, "totalCount"=EXCLUDED."totalCount", "scannedAt"=EXCLUDED."scannedAt"' &
+wait
+
+sync_table "star_event" "WHERE login IN (SELECT login FROM github_user) ON CONFLICT (login, owner, repo) DO NOTHING"
 
 echo ""
 echo "Sync complete."

@@ -3,10 +3,9 @@
 
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo, memo } from "react";
 import maplibregl from "maplibre-gl";
 import type { StyleSpecification } from "maplibre-gl";
-import "maplibre-gl/dist/maplibre-gl.css";
 import type { StargazerPoint } from "@/app/api/chunk/route";
 
 type Props = {
@@ -195,6 +194,9 @@ const makeGridCellPopup = (bio: string, login: string): HTMLElement => {
   return el;
 };
 
+// Profile fetch dedup — same login = same Promise, avoids duplicate network calls on repeated clicks
+const profileFetchCache = new Map<string, Promise<{ ownedRepos?: { owner: string; repo: string }[] } | null>>();
+
 const makePopupElement = (props: Record<string, unknown>): HTMLElement => {
   const login = String(props.login ?? "");
   const name = props.name ? String(props.name) : login;
@@ -274,8 +276,12 @@ const makePopupElement = (props: Record<string, unknown>): HTMLElement => {
   reposSection.appendChild(reposLoading);
   el.appendChild(reposSection);
 
-  fetch(`/api/profile/${encodeURIComponent(login)}`)
-    .then((r) => r.ok ? r.json() : null)
+  if (!profileFetchCache.has(login)) {
+    profileFetchCache.set(login, fetch(`/api/profile/${encodeURIComponent(login)}`)
+      .then((r) => r.ok ? r.json() : null)
+      .catch(() => null));
+  }
+  profileFetchCache.get(login)!
     .then((data: { ownedRepos?: { owner: string; repo: string }[] } | null) => {
       const repos = data?.ownedRepos ?? [];
       reposSection.innerHTML = "";
@@ -306,13 +312,15 @@ const makePopupElement = (props: Record<string, unknown>): HTMLElement => {
   return el;
 }
 
-export const StargazerMap = ({ points, comparePoints, flyTarget, onFlyDone, onReady, styleUrl }: Props) => {
+const StargazerMapInner = ({ points, comparePoints, flyTarget, onFlyDone, onReady, styleUrl }: Props) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const pointsRef = useRef<StargazerPoint[]>(points);
   const comparePointsRef = useRef<StargazerPoint[]>(comparePoints ?? []);
   const spiderActiveRef = useRef(false);
   const [mapReady, setMapReady] = useState(false);
+  const geoJSON = useMemo(() => buildGeoJSON(points), [points]);
+  const heatGeoJSON = useMemo(() => buildHeatGeoJSON(points), [points]);
 
   useEffect(() => {
     pointsRef.current = points;
@@ -600,10 +608,10 @@ export const StargazerMap = ({ points, comparePoints, flyTarget, onFlyDone, onRe
     const map = mapRef.current;
     if (!map || !mapReady) return;
     const source = map.getSource("stargazers") as maplibregl.GeoJSONSource | undefined;
-    if (source) source.setData(buildGeoJSON(points));
+    if (source) source.setData(geoJSON);
     const heatSrc = map.getSource("stargazers-heat") as maplibregl.GeoJSONSource | undefined;
-    if (heatSrc) heatSrc.setData(buildHeatGeoJSON(points));
-  }, [points, mapReady]);
+    if (heatSrc) heatSrc.setData(heatGeoJSON);
+  }, [geoJSON, heatGeoJSON, mapReady]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -619,4 +627,6 @@ export const StargazerMap = ({ points, comparePoints, flyTarget, onFlyDone, onRe
   }, [flyTarget, onFlyDone, mapReady]);
 
   return <div ref={containerRef} className="w-full h-full" />;
-}
+};
+
+export const StargazerMap = memo(StargazerMapInner);

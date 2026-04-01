@@ -5,7 +5,6 @@
 
 import { useEffect, useRef, memo } from "react";
 import maplibregl from "maplibre-gl";
-import "maplibre-gl/dist/maplibre-gl.css";
 import { feature } from "topojson-client";
 import type { Topology, GeometryCollection } from "topojson-specification";
 import { toGeoName } from "@/lib/country-geo-names";

@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "maplibre-gl/dist/maplibre-gl.css";
 
 /* ─── CSS variables — real values, overridable by theme classes ───────────── */
 /* Dark is the default (no class needed). Light and explicit dark override it. */

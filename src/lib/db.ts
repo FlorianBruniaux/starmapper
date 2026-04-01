@@ -2,6 +2,7 @@
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 
 import { PrismaClient } from "@prisma/client";
+import { PrismaNeon } from "@prisma/adapter-neon";
 
 /**
  * DATABASE_DRIVER controls the Prisma connection mode:
@@ -10,6 +11,9 @@ import { PrismaClient } from "@prisma/client";
  *
  * Self-hosters on standard PostgreSQL: set DATABASE_DRIVER=standard in .env.
  * Both modes read DATABASE_URL for the connection string.
+ *
+ * @prisma/adapter-neon is a static import — loaded at module init time to reduce cold start latency.
+ * @prisma/adapter-pg stays as require() — only used when DATABASE_DRIVER=standard (never on Vercel).
  */
 const createPrismaClient = () => {
   if (process.env.DATABASE_DRIVER === "standard") {
@@ -26,12 +30,20 @@ const createPrismaClient = () => {
   }
 
   // Default: Neon serverless adapter (HTTP-based, no persistent TCP connection)
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { PrismaNeon } = require("@prisma/adapter-neon") as typeof import("@prisma/adapter-neon");
   const adapter = new PrismaNeon({ connectionString: process.env.DATABASE_URL });
   return new PrismaClient({ adapter });
 };
 
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };
-export const prisma = globalForPrisma.prisma ?? createPrismaClient();
+
+const _createAndConfigurePrisma = () => {
+  const client = createPrismaClient();
+  // P3.B — slow query logging: warn on any query > 1000ms in Vercel logs
+  client.$on("query" as never, (e: { duration: number; query: string }) => {
+    if (e.duration > 1000) console.warn(`[SLOW] ${e.duration}ms — ${e.query.slice(0, 200)}`);
+  });
+  return client;
+};
+
+export const prisma = globalForPrisma.prisma ?? _createAndConfigurePrisma();
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;

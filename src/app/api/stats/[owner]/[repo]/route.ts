@@ -92,13 +92,14 @@ export const GET = async (
     const topUsers = [...byFollowers, ...byRepos].filter(({ login }) => seen.has(login) ? false : (seen.add(login), true));
 
     // Power stargazers: users who starred multiple repos tracked by StarMapper
-    // Uses a subquery to avoid passing up to 10k logins as IN parameters
+    // CTE + INNER JOIN avoids nested loop O(n²) from correlated subquery
     const crossRepoGroups = await prisma.$queryRaw<{ login: string; cnt: bigint }[]>`
+      WITH repo_logins AS (
+        SELECT DISTINCT login FROM star_event WHERE owner = ${key.owner} AND repo = ${key.repo}
+      )
       SELECT se.login, COUNT(*) AS cnt
       FROM star_event se
-      WHERE se.login IN (
-        SELECT login FROM star_event WHERE owner = ${key.owner} AND repo = ${key.repo}
-      )
+      INNER JOIN repo_logins USING (login)
       GROUP BY se.login
       HAVING COUNT(*) > 1
       ORDER BY cnt DESC

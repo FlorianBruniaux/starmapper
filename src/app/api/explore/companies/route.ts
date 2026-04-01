@@ -45,18 +45,17 @@ export const GET = async (req: NextRequest) => {
     });
 
     // Normalize and aggregate in JS (handles @-prefix stripping, title-casing, dedup)
+    // O(n) lookup via inverse map: lowercase → canonical name
     const companyCount = new Map<string, number>();
+    const lowerToCanonical = new Map<string, string>();
     for (const { company, _count } of raw) {
       if (!company) continue;
       const normalized = normalizeCompany(company);
       if (!normalized) continue;
       const keyLower = normalized.toLowerCase();
-      const existing = [...companyCount.entries()].find(([k]) => k.toLowerCase() === keyLower);
-      if (existing) {
-        companyCount.set(existing[0], existing[1] + _count.company);
-      } else {
-        companyCount.set(normalized, _count.company);
-      }
+      const canonical = lowerToCanonical.get(keyLower) ?? normalized;
+      lowerToCanonical.set(keyLower, canonical);
+      companyCount.set(canonical, (companyCount.get(canonical) ?? 0) + _count.company);
     }
 
     const sorted: [string, number][] = [...companyCount.entries()].sort((a, b) => b[1] - a[1]);
