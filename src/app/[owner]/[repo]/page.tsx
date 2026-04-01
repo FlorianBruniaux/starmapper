@@ -3,7 +3,7 @@
 
 "use client";
 
-import { use, useEffect, useRef, useState, useCallback, useMemo, useDeferredValue } from "react";
+import { use, useEffect, useRef, useState, useCallback, useMemo, useDeferredValue, useReducer } from "react";
 import { StargazerMapDynamic } from "@/components/map/stargazer-map-dynamic";
 import type { StargazerPoint, ChunkResponse } from "@/app/api/chunk/route";
 import type { RepoStats } from "@/app/api/stats/[owner]/[repo]/route";
@@ -109,6 +109,32 @@ class RateLimitedError extends Error {
   }
 }
 
+type UnmappedEntry = { login: string; name: string | null; followers: number; starredAt: string | null };
+
+type ScanState = {
+  points: StargazerPoint[];
+  unmapped: UnmappedEntry[];
+  processed: number;
+};
+
+type ScanAction =
+  | { type: "reset" }
+  | { type: "set"; points: StargazerPoint[]; unmapped: UnmappedEntry[] }
+  | { type: "chunk"; points: StargazerPoint[]; unmapped: UnmappedEntry[] };
+
+const scanReducer = (state: ScanState, action: ScanAction): ScanState => {
+  switch (action.type) {
+    case "reset":
+      return { points: [], unmapped: [], processed: 0 };
+    case "set":
+      return { points: action.points, unmapped: action.unmapped, processed: action.points.length + action.unmapped.length };
+    case "chunk":
+      return { points: action.points, unmapped: action.unmapped, processed: action.points.length + action.unmapped.length };
+    default:
+      return state;
+  }
+};
+
 export default function MapPage({
   params,
 }: {
@@ -119,11 +145,13 @@ export default function MapPage({
   const JAWG_TOKEN = process.env.NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN ?? "";
   const mapStyleUrl = theme === "light" ? MAP_STYLE_LIGHT(JAWG_TOKEN) : MAP_STYLE_DARK(JAWG_TOKEN);
 
-  const [points, setPoints] = useState<StargazerPoint[]>([]);
-  const [unmapped, setUnmapped] = useState<{ login: string; name: string | null; followers: number; starredAt: string | null }[]>([]);
+  const [scan, dispatch] = useReducer(scanReducer, { points: [], unmapped: [], processed: 0 });
+  const { points, unmapped, processed } = scan;
+  const scanRef = useRef(scan);
+  scanRef.current = scan;
   const [repoInfo, setRepoInfo] = useState<RepoInfo | null>(null);
   const [status, setStatus] = useState<"idle" | "loading" | "waiting" | "done" | "cached" | "refreshing" | "error">("idle");
-  const [processed, setProcessed] = useState(0);
+
   const [total, setTotal] = useState(0);
   const [error, setError] = useState("");
   const [retryIn, setRetryIn] = useState(0);
@@ -232,10 +260,8 @@ export default function MapPage({
   useEffect(() => {
     const cache = loadCache(owner, repo);
     if (!cache) return;
-    setPoints(cache.points);
-    setUnmapped(cache.unmapped);
+    dispatch({ type: "set", points: cache.points, unmapped: cache.unmapped });
     setTotal(cache.totalCount);
-    setProcessed(cache.totalCount);
     setCachedAt(cache.scannedAt);
     setLatestStarredAt(cache.latestStarredAt);
     setStatus("cached");
@@ -274,11 +300,10 @@ export default function MapPage({
         const data = await r.json();
         if (!data.points) return;
         const scannedMs = new Date(data.scannedAt).getTime();
-        setPoints(data.points);
-        setUnmapped(data.unmapped);
+        dispatch({ type: "set", points: data.points, unmapped: data.unmapped });
         setTotal(data.totalCount);
-        setProcessed(data.totalCount);
         setCachedAt(scannedMs);
+        setLatestStarredAt(data.latestStarredAt ?? null);
         setStatus("cached");
         saveBookmark(owner, repo, data.totalCount);
         saveCache(owner, repo, {
@@ -286,7 +311,7 @@ export default function MapPage({
           unmapped: data.unmapped,
           totalCount: data.totalCount,
           scannedAt: scannedMs,
-          latestStarredAt: null,
+          latestStarredAt: data.latestStarredAt ?? null,
         });
       })
       .catch(() => {})
@@ -328,9 +353,7 @@ export default function MapPage({
     if (runningRef.current) return;
     runningRef.current = true;
     clearCache(owner, repo);
-    setPoints([]);
-    setUnmapped([]);
-    setProcessed(0);
+    dispatch({ type: "reset" });
     setStatus("loading");
     let cursor: string | null = null;
     let allPoints: StargazerPoint[] = [];
@@ -365,9 +388,7 @@ export default function MapPage({
         const newUnmapped = chunk!.unmapped;
         allPoints = [...allPoints, ...newPts];
         allUnmapped = [...allUnmapped, ...newUnmapped];
-        setPoints(allPoints);
-        setUnmapped(allUnmapped);
-        setProcessed(allPoints.length + allUnmapped.length);
+        dispatch({ type: "chunk", points: allPoints, unmapped: allUnmapped });
         if (!chunk!.nextCursor) break;
         cursor = chunk!.nextCursor;
       }
@@ -418,7 +439,7 @@ export default function MapPage({
             await fetch("/api/stargazer-cache", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ owner, repo, pointsGz, unmappedGz, totalCount: finalTotal, ts: Date.now() }),
+              body: JSON.stringify({ owner, repo, pointsGz, unmappedGz, totalCount: finalTotal, latestStarredAt: newestStarredAt, ts: Date.now() }),
             });
           } catch { /* fire-and-forget, non-critical */ }
         })();
@@ -476,30 +497,23 @@ export default function MapPage({
       }
 
       const now = Date.now();
-      // Merge new data (prepend — newest first in display doesn't matter, just no dupes)
-      setPoints((prev) => {
-        const existing = new Set(prev.map((p) => p.login));
-        return [...newPoints.filter((p) => !existing.has(p.login)), ...prev];
-      });
-      setUnmapped((prev) => [...newUnmapped, ...prev]);
+      // Merge new data using ref to get latest state (avoids stale closure)
+      const current = scanRef.current;
+      const existing = new Set(current.points.map((p) => p.login));
+      const mergedPoints = [...newPoints.filter((p) => !existing.has(p.login)), ...current.points];
+      const mergedUnmapped = [...newUnmapped, ...current.unmapped];
+      dispatch({ type: "set", points: mergedPoints, unmapped: mergedUnmapped });
       setCachedAt(now);
 
       const updatedLatest = newestStarredAt ?? latestStarredAt;
       setLatestStarredAt(updatedLatest);
 
-      // Save updated cache — use latestTotalCount (local var) to avoid stale closure on `total`
-      setPoints((pts) => {
-        setUnmapped((unm) => {
-          saveCache(owner, repo, {
-            points: pts,
-            unmapped: unm,
-            totalCount: latestTotalCount,
-            scannedAt: now,
-            latestStarredAt: updatedLatest,
-          });
-          return unm;
-        });
-        return pts;
+      saveCache(owner, repo, {
+        points: mergedPoints,
+        unmapped: mergedUnmapped,
+        totalCount: latestTotalCount,
+        scannedAt: now,
+        latestStarredAt: updatedLatest,
       });
       setStatus("cached");
     } catch (e: unknown) {

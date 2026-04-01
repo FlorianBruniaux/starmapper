@@ -13,7 +13,7 @@ const MAX_CACHEABLE_STARS = 100_000;
 export const POST = async (req: NextRequest) => {
   try {
     const body = await req.json();
-    const { owner, repo, points, unmapped, pointsGz, unmappedGz, totalCount, ts } = body;
+    const { owner, repo, points, unmapped, pointsGz, unmappedGz, totalCount, latestStarredAt, ts } = body;
 
     const key = validateOwnerRepo(owner, repo);
     if (!key || typeof totalCount !== "number" || totalCount < 0 || totalCount > MAX_CACHEABLE_STARS) {
@@ -66,10 +66,11 @@ export const POST = async (req: NextRequest) => {
     if (health.ok && health.usagePct >= DB_CRITICAL_PCT)
       return jsonError("storage_full", 507);
 
+    const latestStarredAtDate = typeof latestStarredAt === "string" ? new Date(latestStarredAt) : null;
     await prisma.stargazerCache.upsert({
       where: { owner_repo: key },
-      create: { ...key, points: finalPointsGz, unmapped: finalUnmappedGz, totalCount, scannedAt: new Date() },
-      update: { points: finalPointsGz, unmapped: finalUnmappedGz, totalCount, scannedAt: new Date() },
+      create: { ...key, points: finalPointsGz, unmapped: finalUnmappedGz, totalCount, scannedAt: new Date(), latestStarredAt: latestStarredAtDate },
+      update: { points: finalPointsGz, unmapped: finalUnmappedGz, totalCount, scannedAt: new Date(), latestStarredAt: latestStarredAtDate },
     });
 
     return NextResponse.json({ ok: true });

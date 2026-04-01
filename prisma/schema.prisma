@@ -28,15 +28,17 @@ model BadgeCache {
 }
 
 model StargazerCache {
-  owner      String
-  repo       String
-  points     Json
-  unmapped   Json
-  totalCount Int
-  scannedAt  DateTime @default(now())
-  expiresAt  DateTime @default(dbgenerated("NOW() + INTERVAL '90 days'"))
+  owner           String
+  repo            String
+  points          Json
+  unmapped        Json
+  totalCount      Int
+  scannedAt       DateTime  @default(now())
+  latestStarredAt DateTime?
+  expiresAt       DateTime  @default(dbgenerated("NOW() + INTERVAL '90 days'"))
 
   @@id([owner, repo])
+  @@index([expiresAt])
   @@map("stargazer_cache")
 }
 

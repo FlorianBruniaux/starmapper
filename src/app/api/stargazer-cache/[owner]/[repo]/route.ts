@@ -39,6 +39,7 @@ export const GET = async (
           unmapped,
           totalCount: cached.totalCount,
           scannedAt: cached.scannedAt.toISOString(),
+          latestStarredAt: cached.latestStarredAt?.toISOString() ?? null,
         },
         { headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300" } },
       );
