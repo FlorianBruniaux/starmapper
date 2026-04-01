@@ -21,6 +21,15 @@ type UseThemeResult = {
   setTheme: (t: Theme | null) => void;
 };
 
+// Module-level pub/sub — syncs all useTheme instances in the same page.
+// Necessary because each hook call has its own React state. Without this,
+// ThemeToggle.toggle() updates only its own state, not the map page's state.
+const themeListeners = new Set<(theme: Theme, preference: Theme | null) => void>();
+
+const notifyThemeListeners = (theme: Theme, preference: Theme | null) => {
+  themeListeners.forEach((fn) => fn(theme, preference));
+};
+
 export const useTheme = (): UseThemeResult => {
   const [preference, setPreference] = useState<Theme | null>(() => {
     if (typeof window === "undefined") return null;
@@ -32,24 +41,36 @@ export const useTheme = (): UseThemeResult => {
     return stored ?? getSystemTheme();
   });
 
-  // Apply class to <html> + watch system preference changes
+  // Apply class to <html> + subscribe to cross-instance theme changes
   useEffect(() => {
     const stored = getStoredTheme();
     const resolved = applyTheme(stored);
     setPreference(stored);
     setThemeState(resolved);
 
+    // Receive updates from other useTheme instances (e.g. ThemeToggle → map page)
+    const listener = (newTheme: Theme, newPreference: Theme | null) => {
+      setThemeState(newTheme);
+      setPreference(newPreference);
+    };
+    themeListeners.add(listener);
+
     // Watch system preference changes (only affects users with no manual override)
     const mq = window.matchMedia("(prefers-color-scheme: light)");
-    const handler = () => {
+    const mqHandler = () => {
       const current = getStoredTheme();
       if (current === null) {
         const resolved = applyTheme(null);
         setThemeState(resolved);
+        notifyThemeListeners(resolved, null);
       }
     };
-    mq.addEventListener("change", handler);
-    return () => mq.removeEventListener("change", handler);
+    mq.addEventListener("change", mqHandler);
+
+    return () => {
+      themeListeners.delete(listener);
+      mq.removeEventListener("change", mqHandler);
+    };
   }, []);
 
   const setTheme = useCallback((t: Theme | null) => {
@@ -57,6 +78,7 @@ export const useTheme = (): UseThemeResult => {
     const resolved = applyTheme(t);
     setPreference(t);
     setThemeState(resolved);
+    notifyThemeListeners(resolved, t);
   }, []);
 
   const toggle = useCallback(() => {
