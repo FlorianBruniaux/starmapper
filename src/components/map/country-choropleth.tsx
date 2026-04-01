@@ -5,6 +5,7 @@
 
 import { useEffect, useRef, memo } from "react";
 import maplibregl from "maplibre-gl";
+import { MAP_STYLE_DARK } from "@/lib/theme";
 import { feature } from "topojson-client";
 import type { Topology, GeometryCollection } from "topojson-specification";
 import { toGeoName } from "@/lib/country-geo-names";
@@ -15,10 +16,11 @@ const topoData = require("world-atlas/countries-110m.json") as Topology;
 type Props = {
   countryData: [string, number][];
   onCountryClick?: (country: string) => void;
+  styleUrl?: string;
 };
 
 const JAWG_TOKEN = process.env.NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN ?? "";
-const STYLE_URL = `https://api.jawg.io/styles/jawg-dark.json?access-token=${JAWG_TOKEN}&lang=en`;
+const STYLE_URL = MAP_STYLE_DARK(JAWG_TOKEN);
 
 /**
  * Normalize a polygon ring so no two adjacent vertices differ by >180° in longitude.
@@ -74,17 +76,20 @@ const buildChoroplethGeoJSON = (countryData: [string, number][]) => {
   };
 };
 
-export const CountryChoropleth = memo(({ countryData, onCountryClick }: Props) => {
+export const CountryChoropleth = memo(({ countryData, onCountryClick, styleUrl }: Props) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const tooltipRef = useRef<maplibregl.Popup | null>(null);
+  const appliedStyleUrlRef = useRef<string>("");
 
   useEffect(() => {
     if (!containerRef.current) return;
 
+    const initUrl = styleUrl ?? STYLE_URL;
+    appliedStyleUrlRef.current = initUrl;
     const map = new maplibregl.Map({
       container: containerRef.current,
-      style: STYLE_URL,
+      style: initUrl,
       center: [15, 20],
       zoom: 1.4,
       attributionControl: false,
@@ -200,6 +205,58 @@ export const CountryChoropleth = memo(({ countryData, onCountryClick }: Props) =
   // countryData + onCountryClick are stable across renders — rebuild map if they change
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Live style swap — diff:false + setTimeout(100) to avoid MapLibre crash
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    const newUrl = styleUrl ?? STYLE_URL;
+    if (newUrl === appliedStyleUrlRef.current) return;
+    appliedStyleUrlRef.current = newUrl;
+
+    const geoJson = buildChoroplethGeoJSON(countryData);
+    const onStyleData = () => {
+      map.off("styledata", onStyleData);
+      setTimeout(() => {
+        if (!map.getSource("countries")) {
+          map.addSource("countries", { type: "geojson", data: geoJson });
+          map.addLayer({
+            id: "countries-fill",
+            type: "fill",
+            source: "countries",
+            paint: {
+              "fill-color": [
+                "interpolate", ["linear"], ["get", "intensity"],
+                0,    "rgba(88, 166, 255, 0.08)",
+                0.05, "rgba(88, 166, 255, 0.35)",
+                0.2,  "rgba(255, 166, 87, 0.65)",
+                0.5,  "rgba(255, 100, 50, 0.80)",
+                1.0,  "rgba(248, 81, 73, 0.95)",
+              ],
+              "fill-opacity": ["case", [">", ["get", "count"], 0], 1, 0.15],
+            },
+          });
+          map.addLayer({
+            id: "countries-border",
+            type: "line",
+            source: "countries",
+            paint: { "line-color": "rgba(255, 255, 255, 0.12)", "line-width": 0.5 },
+          });
+          map.addLayer({
+            id: "countries-hover",
+            type: "fill",
+            source: "countries",
+            paint: { "fill-color": "rgba(255, 255, 255, 0.08)", "fill-opacity": 0 },
+            filter: ["==", ["get", "name"], ""],
+          });
+        }
+      }, 100);
+    };
+    map.on("styledata", onStyleData);
+    map.setStyle(newUrl, { diff: false });
+  // countryData is needed to rebuild source after style swap
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [styleUrl]);
 
   // Update source data when countryData changes (without rebuilding the map)
   useEffect(() => {

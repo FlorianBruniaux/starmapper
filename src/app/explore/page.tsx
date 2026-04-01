@@ -12,6 +12,8 @@ import { FilterCombobox } from "@/components/filter-combobox";
 import { CountryChoroplethDynamic } from "@/components/map/country-choropleth-dynamic";
 import { StargazerMapDynamic } from "@/components/map/stargazer-map-dynamic";
 import { useFetch } from "@/hooks/use-fetch";
+import { useTheme } from "@/hooks/useTheme";
+import { MAP_STYLE_DARK, MAP_STYLE_LIGHT } from "@/lib/theme";
 import { gridToPoints } from "@/lib/grid-to-points";
 import type { ExploreSummary } from "@/app/api/explore/route";
 import type { TopUsersResponse } from "@/app/api/explore/top/route";
@@ -169,7 +171,12 @@ const ReposBadge = ({ login, count }: { login: string; count: number }) => {
 };
 
 // ---------- Main Page ----------
+const JAWG_TOKEN = process.env.NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN ?? "";
+
 export default function ExplorePage() {
+  const { theme } = useTheme();
+  const mapStyleUrl = theme === "light" ? MAP_STYLE_LIGHT(JAWG_TOKEN) : MAP_STYLE_DARK(JAWG_TOKEN);
+
   const [tab, setTab]                     = useState<Tab>("top");
   const [selectedCountry, setCountry]     = useState("");
   const [searchInput, setSearchInput]     = useState("");
@@ -628,6 +635,7 @@ export default function ExplorePage() {
                     <CountryChoroplethDynamic
                       countryData={mapCountriesData.items}
                       onCountryClick={handleChoroplethCountryClick}
+                      styleUrl={mapStyleUrl}
                     />
                   ) : (
                     <div className="flex items-center justify-center h-full text-muted-subtle text-sm bg-surface-alt">
@@ -637,7 +645,7 @@ export default function ExplorePage() {
                 )}
                 {mapMode === "heatmap" && (
                   heatmapPoints.length > 0 ? (
-                    <StargazerMapDynamic points={heatmapPoints} />
+                    <StargazerMapDynamic points={heatmapPoints} styleUrl={mapStyleUrl} />
                   ) : (
                     <div className="flex items-center justify-center h-full text-muted-subtle text-sm bg-surface-alt">
                       {globalMapLoading ? "Loading heatmap…" : "No data"}
