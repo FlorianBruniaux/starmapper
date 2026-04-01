@@ -5,6 +5,7 @@
 
 import { use, useEffect, useRef, useState, useCallback, useMemo, useDeferredValue, useReducer } from "react";
 import { StargazerMapDynamic } from "@/components/map/stargazer-map-dynamic";
+import { CLUSTER_RADIUS } from "@/components/map/stargazer-map";
 import type { StargazerPoint, ChunkResponse } from "@/app/api/chunk/route";
 import type { RepoStats } from "@/app/api/stats/[owner]/[repo]/route";
 import { TokenModal, getStoredToken, getStoredUsername, setStoredUsername } from "@/components/token-modal";
@@ -187,6 +188,8 @@ export default function MapPage({
   const [filterFollowers, setFilterFollowers] = useState(0);
   const [filterMapped, setFilterMapped] = useState<"all" | "mapped" | "unmapped">("all");
   const [followerMapFilter, setFollowerMapFilter] = useState<"all" | "high" | "mid" | "low">("all");
+  const [clusterRadius, setClusterRadius] = useState<number>(CLUSTER_RADIUS.default);
+  const [debouncedClusterRadius, setDebouncedClusterRadius] = useState<number>(CLUSTER_RADIUS.default);
   const [filterDate, setFilterDate] = useState<"all" | "30d" | "90d" | "1y">("all");
   const [filterCompany, setFilterCompany] = useState("");
   const [filterCountry, setFilterCountry] = useState("");
@@ -215,6 +218,12 @@ export default function MapPage({
   const [compareStatus, setCompareStatus] = useState<"idle" | "loading" | "done">("idle");
   const [compareInfo, setCompareInfo] = useState<RepoInfo | null>(null);
   const compareRunningRef = useRef(false);
+
+  // Debounce clusterRadius changes — map rebuild fires 150ms after slider stops
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedClusterRadius(clusterRadius), 150);
+    return () => clearTimeout(t);
+  }, [clusterRadius]);
 
   // Read compare param from URL on mount
   useEffect(() => {
@@ -916,6 +925,7 @@ export default function MapPage({
         onFlyDone={() => setFlyTarget(null)}
         onReady={(controls) => { mapControlsRef.current = controls; }}
         styleUrl={mapStyleUrl}
+        clusterRadius={debouncedClusterRadius}
       />
 
       {/* Attribution */}
@@ -1179,6 +1189,8 @@ export default function MapPage({
           setViewMode={setViewMode}
           followerMapFilter={followerMapFilter}
           setFollowerMapFilter={setFollowerMapFilter}
+          clusterRadius={clusterRadius}
+          setClusterRadius={setClusterRadius}
           sidebarOpen={sidebarOpen}
           setSidebarOpen={setSidebarOpen}
           setStatsOpen={setStatsOpen}

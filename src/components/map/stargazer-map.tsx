@@ -26,7 +26,7 @@ const JAWG_TOKEN = process.env.NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN ?? "";
 const STYLE_URL = `https://api.jawg.io/styles/jawg-dark.json?access-token=${JAWG_TOKEN}&lang=en`;
 const CLUSTER_MAX_ZOOM = 20;
 
-export const CLUSTER_RADIUS = { min: 20, max: 80, default: 40, step: 10 } as const;
+export const CLUSTER_RADIUS = { min: 20, max: 150, default: 40, step: 10 } as const;
 
 // Fetch a Jawg style URL and apply StarMapper-specific patches (font names, lang, water labels)
 const fetchAndPatchStyle = async (url: string): Promise<string | StyleSpecification> => {

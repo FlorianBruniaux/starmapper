@@ -3,6 +3,8 @@
 
 "use client";
 
+import { CLUSTER_RADIUS } from "@/components/map/stargazer-map";
+
 type ViewMode = "clusters" | "heatmap";
 type FollowerFilter = "all" | "high" | "mid" | "low";
 
@@ -23,6 +25,9 @@ type Props = {
   // Filter
   followerMapFilter: FollowerFilter;
   setFollowerMapFilter: (v: FollowerFilter) => void;
+  // Cluster density slider
+  clusterRadius: number;
+  setClusterRadius: (v: number) => void;
   // Mobile sidebar
   sidebarOpen: boolean;
   setSidebarOpen: (v: boolean) => void;
@@ -40,6 +45,7 @@ export const Dock = ({
   compareOwner, compareRepo,
   hasPoints, viewMode, setViewMode,
   followerMapFilter, setFollowerMapFilter,
+  clusterRadius, setClusterRadius,
   sidebarOpen, setSidebarOpen,
   setStatsOpen, setAllOpen, setGrowthOpen, setBadgeOpen, setShareOpen,
 }: Props) => {
@@ -93,11 +99,11 @@ export const Dock = ({
           </div>
         )}
 
-        {/* Follower tier filter */}
+        {/* Map controls (density + follower filter) */}
         {viewMode === "clusters" && (
           <div className="bg-background/90 border border-border rounded-lg px-3 py-2 backdrop-blur-md flex flex-col gap-1">
             <div className="flex items-center justify-between mb-0.5">
-              <span className="text-2xs text-muted-subtle uppercase tracking-widest">Filter map</span>
+              <span className="text-2xs text-muted-subtle uppercase tracking-widest">Map controls</span>
               <button
                 onClick={() => setSidebarOpen(false)}
                 className="lg:hidden text-muted hover:text-foreground transition-colors p-0.5 -mr-0.5 rounded"
@@ -108,6 +114,33 @@ export const Dock = ({
                 </svg>
               </button>
             </div>
+
+            {/* Cluster density slider */}
+            <div className="flex flex-col gap-1 pb-1">
+              <div className="flex items-center gap-1">
+                <span className="text-2xs text-muted-subtle uppercase tracking-widest">Density</span>
+                {clusterRadius !== CLUSTER_RADIUS.default && (
+                  <span className="size-1.5 rounded-full bg-accent-blue inline-block" />
+                )}
+              </div>
+              <input
+                type="range"
+                min={CLUSTER_RADIUS.min}
+                max={CLUSTER_RADIUS.max}
+                step={CLUSTER_RADIUS.step}
+                value={clusterRadius}
+                onChange={(e) => setClusterRadius(Number(e.target.value))}
+                className="sm-slider"
+                aria-label="Cluster density"
+              />
+              <div className="flex justify-between">
+                <span className="text-2xs text-muted-subtle">fine</span>
+                <span className="text-2xs text-muted-subtle">broad</span>
+              </div>
+            </div>
+
+            <div className="border-t border-border-subtle" />
+
             {([
               { key: "all", label: "All", dot: null },
               { key: "high", label: "500+ followers", dot: "bg-accent-red" },
