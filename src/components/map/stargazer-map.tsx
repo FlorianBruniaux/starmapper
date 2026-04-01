@@ -3,7 +3,7 @@
 
 "use client";
 
-import { useEffect, useRef, useState, useMemo, memo } from "react";
+import { useCallback, useEffect, useRef, useState, useMemo, memo } from "react";
 import maplibregl from "maplibre-gl";
 import type { StyleSpecification } from "maplibre-gl";
 import type { StargazerPoint } from "@/app/api/chunk/route";
@@ -17,6 +17,7 @@ type Props = {
     captureCanvas: () => Promise<string | null>;
     setViewMode: (mode: "clusters" | "heatmap") => void;
   }) => void;
+  clusterRadius?: number;
   // Optional: override the map tile style URL (for light/dark switching)
   styleUrl?: string;
 };
@@ -24,6 +25,161 @@ type Props = {
 const JAWG_TOKEN = process.env.NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN ?? "";
 const STYLE_URL = `https://api.jawg.io/styles/jawg-dark.json?access-token=${JAWG_TOKEN}&lang=en`;
 const CLUSTER_MAX_ZOOM = 20;
+
+export const CLUSTER_RADIUS = { min: 20, max: 80, default: 40, step: 10 } as const;
+
+// Fetch a Jawg style URL and apply StarMapper-specific patches (font names, lang, water labels)
+const fetchAndPatchStyle = async (url: string): Promise<string | StyleSpecification> => {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return url;
+    const json = await res.json() as StyleSpecification;
+    if (!json.projection) json.projection = { type: "mercator" };
+    if (json.glyphs && JAWG_TOKEN) {
+      json.glyphs = json.glyphs.includes("access-token")
+        ? json.glyphs
+        : `${json.glyphs}${json.glyphs.includes("?") ? "&" : "?"}access-token=${JAWG_TOKEN}`;
+    }
+    for (const layer of json.layers ?? []) {
+      const fonts = (layer as { layout?: { "text-font"?: string[] } }).layout?.["text-font"];
+      if (fonts) {
+        for (let i = 0; i < fonts.length; i++) {
+          if (fonts[i].includes("Noto Sans")) fonts[i] = fonts[i].replace("Noto Sans", "Open Sans");
+        }
+      }
+    }
+    json.layers = (json.layers ?? []).filter((layer) => {
+      const sl = (layer as { "source-layer"?: string })["source-layer"];
+      if (sl === "water_name" || sl === "marine") return false;
+      const id = layer.id ?? "";
+      if (/^(ocean|marine|water.?name)/i.test(id)) return false;
+      return true;
+    });
+    const fixed = JSON.parse(JSON.stringify(json).replace(/"name:fr"/g, '"name:en"')) as StyleSpecification;
+    Object.assign(json, fixed);
+    return json;
+  } catch {
+    return url;
+  }
+};
+
+// Adds all clustered sources + layers — called at init and on radius rebuild
+const setupClusteredSourcesAndLayers = (
+  map: maplibregl.Map,
+  radius: number,
+  mainData: GeoJSON.FeatureCollection,
+  heatData: GeoJSON.FeatureCollection,
+  compareData: GeoJSON.FeatureCollection,
+  heatVisible: boolean,
+) => {
+  map.addSource("stargazers", {
+    type: "geojson",
+    data: mainData,
+    cluster: true,
+    clusterMaxZoom: CLUSTER_MAX_ZOOM,
+    clusterRadius: radius,
+  });
+
+  map.addLayer({
+    id: "clusters",
+    type: "circle",
+    source: "stargazers",
+    filter: ["has", "point_count"],
+    paint: {
+      "circle-color": ["step", ["get", "point_count"], "#58a6ff", 10, "#388bfd", 50, "#f85149"],
+      "circle-radius": ["step", ["get", "point_count"], 18, 10, 24, 50, 32],
+      "circle-opacity": 0.85,
+    },
+  });
+
+  map.addLayer({
+    id: "cluster-count",
+    type: "symbol",
+    source: "stargazers",
+    filter: ["has", "point_count"],
+    layout: { "text-field": "{point_count_abbreviated}", "text-size": 12, "text-font": ["Open Sans Bold", "Arial Unicode MS Bold"] },
+    paint: { "text-color": "#ffffff" },
+  });
+
+  map.addLayer({
+    id: "unclustered-point",
+    type: "circle",
+    source: "stargazers",
+    filter: ["!", ["has", "point_count"]],
+    paint: {
+      "circle-color": ["step", ["get", "followers"], "#58a6ff", 100, "#ffa657", 500, "#f85149"],
+      "circle-radius": ["step", ["get", "followers"], 5, 100, 7, 500, 10],
+      "circle-opacity": 0.85,
+      "circle-stroke-width": 1,
+      "circle-stroke-color": "rgba(255,255,255,0.15)",
+    },
+  });
+
+  map.addSource("stargazers-heat", {
+    type: "geojson",
+    data: heatData,
+  });
+
+  map.addLayer({
+    id: "heatmap",
+    type: "heatmap",
+    source: "stargazers-heat",
+    paint: {
+      "heatmap-weight": ["interpolate", ["linear"], ["get", "followers"], 0, 0.4, 100, 0.7, 500, 1, 5000, 2],
+      "heatmap-intensity": ["interpolate", ["linear"], ["zoom"], 0, 0.6, 6, 1.2, 12, 2],
+      "heatmap-color": ["interpolate", ["linear"], ["heatmap-density"],
+        0, "rgba(0,0,0,0)", 0.1, "#313695", 0.3, "#4575b4", 0.5, "#74add1",
+        0.6, "#abd9e9", 0.7, "#fee090", 0.85, "#f46d43", 1, "#d73027",
+      ],
+      "heatmap-radius": ["interpolate", ["linear"], ["zoom"], 0, 4, 4, 12, 8, 24, 12, 40],
+      "heatmap-opacity": ["interpolate", ["linear"], ["zoom"], 0, 0.85, 9, 0.7, 14, 0.3, 16, 0],
+    },
+    layout: { visibility: heatVisible ? "visible" : "none" },
+  }, "clusters");
+
+  map.addSource("stargazers-compare", {
+    type: "geojson",
+    data: compareData,
+    cluster: true,
+    clusterMaxZoom: CLUSTER_MAX_ZOOM,
+    clusterRadius: radius,
+  });
+
+  map.addLayer({
+    id: "clusters-compare",
+    type: "circle",
+    source: "stargazers-compare",
+    filter: ["has", "point_count"],
+    paint: {
+      "circle-color": "#a371f7",
+      "circle-radius": ["step", ["get", "point_count"], 18, 10, 24, 50, 32],
+      "circle-opacity": 0.85,
+    },
+  });
+
+  map.addLayer({
+    id: "cluster-count-compare",
+    type: "symbol",
+    source: "stargazers-compare",
+    filter: ["has", "point_count"],
+    layout: { "text-field": "{point_count_abbreviated}", "text-size": 12, "text-font": ["Open Sans Bold", "Arial Unicode MS Bold"] },
+    paint: { "text-color": "#ffffff" },
+  });
+
+  map.addLayer({
+    id: "unclustered-point-compare",
+    type: "circle",
+    source: "stargazers-compare",
+    filter: ["!", ["has", "point_count"]],
+    paint: {
+      "circle-color": "#a371f7",
+      "circle-radius": 5,
+      "circle-opacity": 0.85,
+      "circle-stroke-width": 1,
+      "circle-stroke-color": "rgba(255,255,255,0.15)",
+    },
+  });
+};
 
 const buildHeatGeoJSON = (pts: StargazerPoint[]) => {
   return {
@@ -312,12 +468,15 @@ const makePopupElement = (props: Record<string, unknown>): HTMLElement => {
   return el;
 }
 
-const StargazerMapInner = ({ points, comparePoints, flyTarget, onFlyDone, onReady, styleUrl }: Props) => {
+const StargazerMapInner = ({ points, comparePoints, flyTarget, onFlyDone, onReady, styleUrl, clusterRadius }: Props) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const pointsRef = useRef<StargazerPoint[]>(points);
   const comparePointsRef = useRef<StargazerPoint[]>(comparePoints ?? []);
   const spiderActiveRef = useRef(false);
+  const clusterRadiusRef = useRef(clusterRadius ?? CLUSTER_RADIUS.default);
+  const hasInitializedRef = useRef(false);
+  const appliedStyleUrlRef = useRef<string>("");
   const [mapReady, setMapReady] = useState(false);
   const geoJSON = useMemo(() => buildGeoJSON(points), [points]);
   const heatGeoJSON = useMemo(() => buildHeatGeoJSON(points), [points]);
@@ -331,6 +490,36 @@ const StargazerMapInner = ({ points, comparePoints, flyTarget, onFlyDone, onRead
   }, [comparePoints]);
 
   useEffect(() => {
+    clusterRadiusRef.current = clusterRadius ?? CLUSTER_RADIUS.default;
+  }, [clusterRadius]);
+
+  const rebuildClusteredSources = useCallback((radius: number) => {
+    const map = mapRef.current;
+    if (!map || !hasInitializedRef.current) return;
+    clearSpider(map, spiderActiveRef);
+    const heatVisible = map.getLayoutProperty("heatmap", "visibility") === "visible";
+    for (const id of ["unclustered-point-compare", "cluster-count-compare", "clusters-compare",
+                       "unclustered-point", "cluster-count", "clusters", "heatmap"]) {
+      if (map.getLayer(id)) map.removeLayer(id);
+    }
+    for (const id of ["stargazers", "stargazers-heat", "stargazers-compare"]) {
+      if (map.getSource(id)) map.removeSource(id);
+    }
+    setupClusteredSourcesAndLayers(
+      map, radius,
+      buildGeoJSON(pointsRef.current),
+      buildHeatGeoJSON(pointsRef.current),
+      buildGeoJSON(comparePointsRef.current),
+      heatVisible,
+    );
+  }, []);
+
+  useEffect(() => {
+    if (!hasInitializedRef.current) return;
+    rebuildClusteredSources(clusterRadius ?? CLUSTER_RADIUS.default);
+  }, [clusterRadius, rebuildClusteredSources]);
+
+  useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
 
     let cancelled = false;
@@ -339,47 +528,10 @@ const StargazerMapInner = ({ points, comparePoints, flyTarget, onFlyDone, onRead
       if (!containerRef.current) return;
 
       const resolvedStyleUrl = styleUrl ?? STYLE_URL;
-      let style: string | StyleSpecification = resolvedStyleUrl;
-      try {
-        const res = await fetch(resolvedStyleUrl);
-        if (res.ok) {
-          const json = await res.json() as StyleSpecification;
-          if (!json.projection) json.projection = { type: "mercator" };
-          if (json.glyphs && JAWG_TOKEN) {
-            json.glyphs = json.glyphs.includes("access-token")
-              ? json.glyphs
-              : `${json.glyphs}${json.glyphs.includes("?") ? "&" : "?"}access-token=${JAWG_TOKEN}`;
-          }
-          // Jawg doesn't serve "Noto Sans Bold" — replace with Open Sans Bold in all layers
-          for (const layer of json.layers ?? []) {
-            const fonts = (layer as { layout?: { "text-font"?: string[] } }).layout?.["text-font"];
-            if (fonts) {
-              for (let i = 0; i < fonts.length; i++) {
-                if (fonts[i].includes("Noto Sans")) fonts[i] = fonts[i].replace("Noto Sans", "Open Sans");
-              }
-            }
-          }
-
-          // Remove ocean / marine / water-body label layers (noisy, not useful)
-          json.layers = (json.layers ?? []).filter((layer) => {
-            const sl = (layer as { "source-layer"?: string })["source-layer"];
-            if (sl === "water_name" || sl === "marine") return false;
-            const id = layer.id ?? "";
-            if (/^(ocean|marine|water.?name)/i.test(id)) return false;
-            return true;
-          });
-
-          // Force English label names if Jawg lang param isn't enough
-          const fixed = JSON.parse(
-            JSON.stringify(json).replace(/"name:fr"/g, '"name:en"'),
-          ) as StyleSpecification;
-          Object.assign(json, fixed);
-
-          style = json;
-        }
-      } catch { /* fall back to URL */ }
+      const style = await fetchAndPatchStyle(resolvedStyleUrl);
 
       if (cancelled || !containerRef.current || mapRef.current) return;
+      appliedStyleUrlRef.current = resolvedStyleUrl;
 
       const map = new maplibregl.Map({
         container: containerRef.current,
@@ -415,115 +567,14 @@ const StargazerMapInner = ({ points, comparePoints, flyTarget, onFlyDone, onRead
       map.addControl(new maplibregl.NavigationControl(), "bottom-right");
 
       map.on("load", () => {
-        map.addSource("stargazers", {
-          type: "geojson",
-          data: buildGeoJSON(pointsRef.current),
-          cluster: true,
-          clusterMaxZoom: CLUSTER_MAX_ZOOM,
-          clusterRadius: 40,
-        });
-
-        // Cluster circles
-        map.addLayer({
-          id: "clusters",
-          type: "circle",
-          source: "stargazers",
-          filter: ["has", "point_count"],
-          paint: {
-            "circle-color": ["step", ["get", "point_count"], "#58a6ff", 10, "#388bfd", 50, "#f85149"],
-            "circle-radius": ["step", ["get", "point_count"], 18, 10, 24, 50, 32],
-            "circle-opacity": 0.85,
-          },
-        });
-
-        // Cluster count labels
-        map.addLayer({
-          id: "cluster-count",
-          type: "symbol",
-          source: "stargazers",
-          filter: ["has", "point_count"],
-          layout: { "text-field": "{point_count_abbreviated}", "text-size": 12, "text-font": ["Open Sans Bold", "Arial Unicode MS Bold"] },
-          paint: { "text-color": "#ffffff" },
-        });
-
-        // Individual points
-        map.addLayer({
-          id: "unclustered-point",
-          type: "circle",
-          source: "stargazers",
-          filter: ["!", ["has", "point_count"]],
-          paint: {
-            "circle-color": ["step", ["get", "followers"], "#58a6ff", 100, "#ffa657", 500, "#f85149"],
-            "circle-radius": ["step", ["get", "followers"], 5, 100, 7, 500, 10],
-            "circle-opacity": 0.85,
-            "circle-stroke-width": 1,
-            "circle-stroke-color": "rgba(255,255,255,0.15)",
-          },
-        });
-
-        // Heatmap source (non-clustered, stripped properties for memory efficiency)
-        map.addSource("stargazers-heat", {
-          type: "geojson",
-          data: buildHeatGeoJSON(pointsRef.current),
-        });
-
-        map.addLayer({
-          id: "heatmap",
-          type: "heatmap",
-          source: "stargazers-heat",
-          paint: {
-            "heatmap-weight": ["interpolate", ["linear"], ["get", "followers"], 0, 0.4, 100, 0.7, 500, 1, 5000, 2],
-            "heatmap-intensity": ["interpolate", ["linear"], ["zoom"], 0, 0.6, 6, 1.2, 12, 2],
-            "heatmap-color": ["interpolate", ["linear"], ["heatmap-density"],
-              0, "rgba(0,0,0,0)", 0.1, "#313695", 0.3, "#4575b4", 0.5, "#74add1",
-              0.6, "#abd9e9", 0.7, "#fee090", 0.85, "#f46d43", 1, "#d73027",
-            ],
-            "heatmap-radius": ["interpolate", ["linear"], ["zoom"], 0, 4, 4, 12, 8, 24, 12, 40],
-            "heatmap-opacity": ["interpolate", ["linear"], ["zoom"], 0, 0.85, 9, 0.7, 14, 0.3, 16, 0],
-          },
-          layout: { visibility: "none" },
-        }, "clusters");
-
-        // Compare repo overlay (purple)
-        map.addSource("stargazers-compare", {
-          type: "geojson",
-          data: buildGeoJSON(comparePointsRef.current),
-          cluster: true,
-          clusterMaxZoom: CLUSTER_MAX_ZOOM,
-          clusterRadius: 40,
-        });
-        map.addLayer({
-          id: "clusters-compare",
-          type: "circle",
-          source: "stargazers-compare",
-          filter: ["has", "point_count"],
-          paint: {
-            "circle-color": "#a371f7",
-            "circle-radius": ["step", ["get", "point_count"], 18, 10, 24, 50, 32],
-            "circle-opacity": 0.85,
-          },
-        });
-        map.addLayer({
-          id: "cluster-count-compare",
-          type: "symbol",
-          source: "stargazers-compare",
-          filter: ["has", "point_count"],
-          layout: { "text-field": "{point_count_abbreviated}", "text-size": 12, "text-font": ["Open Sans Bold", "Arial Unicode MS Bold"] },
-          paint: { "text-color": "#ffffff" },
-        });
-        map.addLayer({
-          id: "unclustered-point-compare",
-          type: "circle",
-          source: "stargazers-compare",
-          filter: ["!", ["has", "point_count"]],
-          paint: {
-            "circle-color": "#a371f7",
-            "circle-radius": 5,
-            "circle-opacity": 0.85,
-            "circle-stroke-width": 1,
-            "circle-stroke-color": "rgba(255,255,255,0.15)",
-          },
-        });
+        setupClusteredSourcesAndLayers(
+          map,
+          clusterRadiusRef.current,
+          buildGeoJSON(pointsRef.current),
+          buildHeatGeoJSON(pointsRef.current),
+          buildGeoJSON(comparePointsRef.current),
+          false,
+        );
 
         // Click cluster → zoom or spiderify
         map.on("click", "clusters", (e) => {
@@ -583,6 +634,7 @@ const StargazerMapInner = ({ points, comparePoints, flyTarget, onFlyDone, onRead
 
         // Signal that the map and all sources/layers are ready
         setMapReady(true);
+        hasInitializedRef.current = true;
 
         // Cursor pointers
         for (const layer of ["clusters", "unclustered-point"] as const) {
@@ -600,10 +652,10 @@ const StargazerMapInner = ({ points, comparePoints, flyTarget, onFlyDone, onRead
 
     return () => {
       cancelled = true;
+      hasInitializedRef.current = false;
       if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; }
-      setMapReady(false);
     };
-  }, [styleUrl]);
+  }, []);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -626,6 +678,34 @@ const StargazerMapInner = ({ points, comparePoints, flyTarget, onFlyDone, onRead
     mapRef.current.flyTo({ center: [flyTarget.lng, flyTarget.lat], zoom: 12, duration: 1200 });
     onFlyDone?.();
   }, [flyTarget, onFlyDone, mapReady]);
+
+  // Live style swap — when theme changes, update map tiles without destroying the map.
+  // MapLibre's setStyle with diff:true preserves user-added sources (stargazers, heat, compare).
+  // If sources were not preserved (diff failed), re-add them via setupClusteredSourcesAndLayers.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapReady) return;
+    const newUrl = styleUrl ?? STYLE_URL;
+    if (newUrl === appliedStyleUrlRef.current) return;
+    appliedStyleUrlRef.current = newUrl;
+
+    fetchAndPatchStyle(newUrl).then((patchedStyle) => {
+      map.once("style.load", () => {
+        // Re-add sources if MapLibre's diff removed them (style too different for diff)
+        if (!map.getSource("stargazers")) {
+          setupClusteredSourcesAndLayers(
+            map,
+            clusterRadiusRef.current,
+            buildGeoJSON(pointsRef.current),
+            buildHeatGeoJSON(pointsRef.current),
+            buildGeoJSON(comparePointsRef.current),
+            false,
+          );
+        }
+      });
+      map.setStyle(patchedStyle);
+    }).catch(() => {});
+  }, [styleUrl, mapReady]);
 
   return <div ref={containerRef} className="w-full h-full" />;
 };
