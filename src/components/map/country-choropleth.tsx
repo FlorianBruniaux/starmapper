@@ -80,13 +80,11 @@ export const CountryChoropleth = memo(({ countryData, onCountryClick, styleUrl }
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const tooltipRef = useRef<maplibregl.Popup | null>(null);
-  const appliedStyleUrlRef = useRef<string>("");
 
   useEffect(() => {
     if (!containerRef.current) return;
 
     const initUrl = styleUrl ?? STYLE_URL;
-    appliedStyleUrlRef.current = initUrl;
     const map = new maplibregl.Map({
       container: containerRef.current,
       style: initUrl,
@@ -202,59 +200,8 @@ export const CountryChoropleth = memo(({ countryData, onCountryClick, styleUrl }
       map.remove();
       mapRef.current = null;
     };
-  // countryData + onCountryClick are stable across renders — rebuild map if they change
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Live style swap — diff:false + setTimeout(100) to avoid MapLibre crash
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map) return;
-    const newUrl = styleUrl ?? STYLE_URL;
-    if (newUrl === appliedStyleUrlRef.current) return;
-    appliedStyleUrlRef.current = newUrl;
-
-    const geoJson = buildChoroplethGeoJSON(countryData);
-    const onStyleData = () => {
-      map.off("styledata", onStyleData);
-      setTimeout(() => {
-        if (!map.getSource("countries")) {
-          map.addSource("countries", { type: "geojson", data: geoJson });
-          map.addLayer({
-            id: "countries-fill",
-            type: "fill",
-            source: "countries",
-            paint: {
-              "fill-color": [
-                "interpolate", ["linear"], ["get", "intensity"],
-                0,    "rgba(88, 166, 255, 0.08)",
-                0.05, "rgba(88, 166, 255, 0.35)",
-                0.2,  "rgba(255, 166, 87, 0.65)",
-                0.5,  "rgba(255, 100, 50, 0.80)",
-                1.0,  "rgba(248, 81, 73, 0.95)",
-              ],
-              "fill-opacity": ["case", [">", ["get", "count"], 0], 1, 0.15],
-            },
-          });
-          map.addLayer({
-            id: "countries-border",
-            type: "line",
-            source: "countries",
-            paint: { "line-color": "rgba(255, 255, 255, 0.12)", "line-width": 0.5 },
-          });
-          map.addLayer({
-            id: "countries-hover",
-            type: "fill",
-            source: "countries",
-            paint: { "fill-color": "rgba(255, 255, 255, 0.08)", "fill-opacity": 0 },
-            filter: ["==", ["get", "name"], ""],
-          });
-        }
-      }, 100);
-    };
-    map.on("styledata", onStyleData);
-    map.setStyle(newUrl, { diff: false });
-  // countryData is needed to rebuild source after style swap
+  // styleUrl triggers a full map rebuild (simplest + most reliable approach for theme swap)
+  // countryData + onCountryClick are stable refs — not needed in deps
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [styleUrl]);
 
