@@ -6,6 +6,7 @@ import { fetchStargazersPage, GitHubRateLimitError } from "@/lib/github";
 import { geocodeBatch } from "@/lib/geocoder";
 import { checkDbHealth, DB_WARN_PCT } from "@/lib/db-health";
 import { bulkUpsertUsers, bulkUpsertStarEvents, bulkReadUsers, type UserWritePayload } from "@/lib/user-cache";
+import { parseLocation } from "@/lib/location-parser";
 import { validateOwnerRepo } from "@/lib/api-validation";
 import { jsonError, extractGhToken, logError, sanitizeError } from "@/lib/api-helpers";
 
@@ -122,6 +123,7 @@ export const POST = async (req: NextRequest) => {
         .map((p) => {
           const sg = sgByLogin.get(p.login);
           if (!sg) return null;
+          const { country, city } = parseLocation(p.location);
           return {
             login: p.login,
             name: p.name,
@@ -134,6 +136,8 @@ export const POST = async (req: NextRequest) => {
             lat: p.lat,
             lng: p.lng,
             linkedinUrl: sg.linkedinUrl,
+            countryNormalized: country,
+            cityNormalized: city,
           };
         })
         .filter((u): u is UserWritePayload => u !== null);

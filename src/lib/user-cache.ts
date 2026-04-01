@@ -17,6 +17,8 @@ export type UserWritePayload = {
   lat: number;
   lng: number;
   linkedinUrl: string | null;
+  countryNormalized: string | null;
+  cityNormalized: string | null;
 };
 
 type StarEventInput = {
@@ -41,23 +43,26 @@ export const bulkUpsertUsers = async (
   }
 
   try {
-    const logins       = users.map((u) => u.login);
-    const names        = users.map((u) => u.name);
-    const companies    = users.map((u) => u.company);
-    const locations    = users.map((u) => u.location);
-    const followers    = users.map((u) => u.followers);
-    const followings   = users.map((u) => u.following);
-    const publicRepos  = users.map((u) => u.publicRepos);
-    const createdAts   = users.map((u) => u.accountCreatedAt); // ISO string | null
-    const lats         = users.map((u) => u.lat);
-    const lngs         = users.map((u) => u.lng);
-    const linkedinUrls = users.map((u) => u.linkedinUrl);
-    const now          = new Date();
+    const logins              = users.map((u) => u.login);
+    const names               = users.map((u) => u.name);
+    const companies           = users.map((u) => u.company);
+    const locations           = users.map((u) => u.location);
+    const followers           = users.map((u) => u.followers);
+    const followings          = users.map((u) => u.following);
+    const publicRepos         = users.map((u) => u.publicRepos);
+    const createdAts          = users.map((u) => u.accountCreatedAt); // ISO string | null
+    const lats                = users.map((u) => u.lat);
+    const lngs                = users.map((u) => u.lng);
+    const linkedinUrls        = users.map((u) => u.linkedinUrl);
+    const countryNormalizeds  = users.map((u) => u.countryNormalized);
+    const cityNormalizeds     = users.map((u) => u.cityNormalized);
+    const now                 = new Date();
 
     await prisma.$queryRaw`
       INSERT INTO github_user
         (login, name, company, location, followers, following,
-         "publicRepos", "accountCreatedAt", "dataVersion", lat, lng, "linkedinUrl", "fetchedAt")
+         "publicRepos", "accountCreatedAt", "dataVersion", lat, lng, "linkedinUrl",
+         "countryNormalized", "cityNormalized", "fetchedAt")
       SELECT
         unnest(${logins}::text[]),
         unnest(${names}::text[]),
@@ -71,20 +76,24 @@ export const bulkUpsertUsers = async (
         unnest(${lats}::float8[]),
         unnest(${lngs}::float8[]),
         unnest(${linkedinUrls}::text[]),
+        unnest(${countryNormalizeds}::text[]),
+        unnest(${cityNormalizeds}::text[]),
         ${now}
       ON CONFLICT (login) DO UPDATE SET
-        name               = EXCLUDED.name,
-        company            = EXCLUDED.company,
-        location           = EXCLUDED.location,
-        followers          = EXCLUDED.followers,
-        following          = EXCLUDED.following,
-        "publicRepos"      = EXCLUDED."publicRepos",
-        "accountCreatedAt" = EXCLUDED."accountCreatedAt",
-        "dataVersion"      = 1,
-        lat                = EXCLUDED.lat,
-        lng                = EXCLUDED.lng,
-        "linkedinUrl"      = EXCLUDED."linkedinUrl",
-        "fetchedAt"        = EXCLUDED."fetchedAt"
+        name                  = EXCLUDED.name,
+        company               = EXCLUDED.company,
+        location              = EXCLUDED.location,
+        followers             = EXCLUDED.followers,
+        following             = EXCLUDED.following,
+        "publicRepos"         = EXCLUDED."publicRepos",
+        "accountCreatedAt"    = EXCLUDED."accountCreatedAt",
+        "dataVersion"         = 1,
+        lat                   = EXCLUDED.lat,
+        lng                   = EXCLUDED.lng,
+        "linkedinUrl"         = EXCLUDED."linkedinUrl",
+        "countryNormalized"   = EXCLUDED."countryNormalized",
+        "cityNormalized"      = EXCLUDED."cityNormalized",
+        "fetchedAt"           = EXCLUDED."fetchedAt"
     `;
     return true;
   } catch (err) {

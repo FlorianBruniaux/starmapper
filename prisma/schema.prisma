@@ -54,14 +54,18 @@ model GitHubUser {
   dataVersion      Int         @default(0)
   lat              Float?
   lng              Float?
-  linkedinUrl      String?
-  fetchedAt        DateTime    @default(now())
-  stars            StarEvent[]
+  linkedinUrl          String?
+  countryNormalized    String?
+  cityNormalized       String?
+  fetchedAt            DateTime    @default(now())
+  stars                StarEvent[]
 
   @@index([followers(sort: Desc)])
   @@index([company])
   @@index([location])
   @@index([lat, lng])
+  @@index([countryNormalized])
+  @@index([cityNormalized])
   @@map("github_user")
 }
 

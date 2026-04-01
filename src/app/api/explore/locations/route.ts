@@ -3,7 +3,6 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { parseLocation } from "@/lib/location-parser";
 import { jsonError, logError } from "@/lib/api-helpers";
 
 export type LocationsResponse = {
@@ -21,28 +20,39 @@ export const GET = async (req: NextRequest) => {
   const country = searchParams.get("country") ?? "";
 
   try {
-    const locationGroups = await prisma.gitHubUser.groupBy({
-      by: ["location"],
-      _count: { location: true },
-      where: { location: { not: null } },
-      orderBy: { _count: { location: "desc" } },
-      take: 300,
-    });
+    let rows: { label: string; cnt: bigint }[];
 
-    const aggregated = new Map<string, number>();
-    for (const { location, _count } of locationGroups) {
-      const n = _count.location;
-      const parsed = parseLocation(location);
-      if (type === "country") {
-        if (parsed.country) aggregated.set(parsed.country, (aggregated.get(parsed.country) ?? 0) + n);
-      } else {
-        // city: optionally filter by country
-        if (country && parsed.country?.toLowerCase() !== country.toLowerCase()) continue;
-        if (parsed.city) aggregated.set(parsed.city, (aggregated.get(parsed.city) ?? 0) + n);
-      }
+    if (type === "country") {
+      rows = await prisma.$queryRaw<{ label: string; cnt: bigint }[]>`
+        SELECT "countryNormalized" AS label, COUNT(*) AS cnt
+        FROM github_user
+        WHERE "countryNormalized" IS NOT NULL
+        GROUP BY "countryNormalized"
+        ORDER BY cnt DESC
+        LIMIT 500
+      `;
+    } else if (country) {
+      rows = await prisma.$queryRaw<{ label: string; cnt: bigint }[]>`
+        SELECT "cityNormalized" AS label, COUNT(*) AS cnt
+        FROM github_user
+        WHERE "cityNormalized" IS NOT NULL
+          AND "countryNormalized" ILIKE ${country}
+        GROUP BY "cityNormalized"
+        ORDER BY cnt DESC
+        LIMIT 500
+      `;
+    } else {
+      rows = await prisma.$queryRaw<{ label: string; cnt: bigint }[]>`
+        SELECT "cityNormalized" AS label, COUNT(*) AS cnt
+        FROM github_user
+        WHERE "cityNormalized" IS NOT NULL
+        GROUP BY "cityNormalized"
+        ORDER BY cnt DESC
+        LIMIT 500
+      `;
     }
 
-    const sorted: [string, number][] = [...aggregated.entries()].sort((a, b) => b[1] - a[1]);
+    const sorted: [string, number][] = rows.map((r) => [r.label, Number(r.cnt)]);
     const total = sorted.length;
     const items = sorted.slice((page - 1) * size, page * size);
 

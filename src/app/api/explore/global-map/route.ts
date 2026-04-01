@@ -18,25 +18,32 @@ export type GlobalMapData = {
   totalMapped: number;
 };
 
+// Refresh the materialized view at most once every 30 minutes (fire-and-forget).
+// CONCURRENTLY does not block reads — the old data stays visible until refresh completes.
+let _lastGridRefresh = 0;
+const GRID_REFRESH_TTL_MS = 30 * 60 * 1000;
+const maybeRefreshGridMv = () => {
+  const now = Date.now();
+  if (now - _lastGridRefresh < GRID_REFRESH_TTL_MS) return;
+  _lastGridRefresh = now;
+  prisma.$executeRaw`REFRESH MATERIALIZED VIEW CONCURRENTLY github_user_grid_mv`
+    .catch((err) => logError("global-map/refresh-mv", err));
+};
+
 export const GET = async () => {
+  void maybeRefreshGridMv();
   try {
     const rows = await prisma.$queryRaw<
-      { grid_lat: number; grid_lng: number; count: number; total_followers: number; top_login: string }[]
+      { lat: number; lng: number; count: number; total_followers: number; top_login: string }[]
     >`
-      SELECT
-        ROUND(lat::numeric, 0)::float8                               AS grid_lat,
-        ROUND(lng::numeric, 0)::float8                               AS grid_lng,
-        COUNT(*)::int                                                 AS count,
-        COALESCE(SUM(followers), 0)::int                             AS total_followers,
-        (ARRAY_AGG(login ORDER BY followers DESC NULLS LAST))[1]     AS top_login
-      FROM github_user
-      WHERE lat IS NOT NULL AND lng IS NOT NULL
-      GROUP BY ROUND(lat::numeric, 0), ROUND(lng::numeric, 0)
+      SELECT lat, lng, count, total_followers, top_login
+      FROM github_user_grid_mv
+      ORDER BY count DESC
     `;
 
     const cells: GlobalMapCell[] = rows.map((r) => ({
-      lat: r.grid_lat,
-      lng: r.grid_lng,
+      lat: r.lat,
+      lng: r.lng,
       count: r.count,
       totalFollowers: r.total_followers,
       topLogin: r.top_login,
