@@ -20,7 +20,10 @@ export const GET = async (req: NextRequest) => {
       },
       next: { revalidate: 300 },
     });
-    if (!res.ok) return jsonError("Repo not found", 404);
+    if (res.status === 404) return jsonError("Repo not found", 404);
+    if (res.status === 403 || res.status === 429) return jsonError("GitHub rate limit exceeded", 429);
+    if (res.status === 401) return jsonError("GitHub token invalid or missing", 401);
+    if (!res.ok) return jsonError("GitHub error", 502);
     const data = await res.json();
     return NextResponse.json({
       name: data.full_name,
