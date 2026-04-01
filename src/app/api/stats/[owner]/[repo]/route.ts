@@ -64,17 +64,56 @@ export const GET = async (
     const botCount = Number(totals.bots);
     const avgFollowers = Math.round(totals.avg_followers ?? 0);
 
-    // 2. Top locations (raw strings) — parseLocation in Node on max 200 rows
-    const locationRows = await prisma.$queryRaw<{ location: string; cnt: bigint }[]>`
-      SELECT u.location, COUNT(*) AS cnt
-      FROM star_event se
-      JOIN github_user u USING (login)
-      WHERE se.owner = ${key.owner} AND se.repo = ${key.repo}
-        AND u.location IS NOT NULL
-      GROUP BY u.location
-      ORDER BY cnt DESC
-      LIMIT 200
-    `;
+    // Queries 2-5 are independent — run in parallel to save ~3 × Neon round-trip latency
+    const [locationRows, companyRows, topUsersRaw, crossRepoGroups] = await Promise.all([
+      // 2. Top locations (raw strings) — parseLocation in Node on max 200 rows
+      prisma.$queryRaw<{ location: string; cnt: bigint }[]>`
+        SELECT u.location, COUNT(*) AS cnt
+        FROM star_event se
+        JOIN github_user u USING (login)
+        WHERE se.owner = ${key.owner} AND se.repo = ${key.repo}
+          AND u.location IS NOT NULL
+        GROUP BY u.location
+        ORDER BY cnt DESC
+        LIMIT 200
+      `,
+      // 3. Top companies
+      prisma.$queryRaw<{ company: string; cnt: bigint }[]>`
+        SELECT u.company, COUNT(*) AS cnt
+        FROM star_event se
+        JOIN github_user u USING (login)
+        WHERE se.owner = ${key.owner} AND se.repo = ${key.repo}
+          AND u.company IS NOT NULL
+        GROUP BY u.company
+        ORDER BY cnt DESC
+        LIMIT 50
+      `,
+      // 4. Top users (by followers, max 60)
+      prisma.$queryRaw<{
+        login: string; name: string | null; followers: number;
+        publicRepos: number; location: string | null; company: string | null;
+      }[]>`
+        SELECT u.login, u.name, u.followers, u."publicRepos", u.location, u.company
+        FROM star_event se
+        JOIN github_user u USING (login)
+        WHERE se.owner = ${key.owner} AND se.repo = ${key.repo}
+        ORDER BY u.followers DESC
+        LIMIT 60
+      `,
+      // 5. Power stargazers — CTE + INNER JOIN (avoids correlated subquery O(n²))
+      prisma.$queryRaw<{ login: string; cnt: bigint }[]>`
+        WITH repo_logins AS (
+          SELECT DISTINCT login FROM star_event WHERE owner = ${key.owner} AND repo = ${key.repo}
+        )
+        SELECT se.login, COUNT(*) AS cnt
+        FROM star_event se
+        INNER JOIN repo_logins USING (login)
+        GROUP BY se.login
+        HAVING COUNT(*) > 1
+        ORDER BY cnt DESC
+        LIMIT 20
+      `,
+    ]);
 
     const countryCount = new Map<string, number>();
     const cityCount = new Map<string, number>();
@@ -85,53 +124,12 @@ export const GET = async (
       if (city) cityCount.set(city, (cityCount.get(city) ?? 0) + n);
     }
 
-    // 3. Top companies
-    const companyRows = await prisma.$queryRaw<{ company: string; cnt: bigint }[]>`
-      SELECT u.company, COUNT(*) AS cnt
-      FROM star_event se
-      JOIN github_user u USING (login)
-      WHERE se.owner = ${key.owner} AND se.repo = ${key.repo}
-        AND u.company IS NOT NULL
-      GROUP BY u.company
-      ORDER BY cnt DESC
-      LIMIT 50
-    `;
     const companyCount = new Map(companyRows.map(({ company, cnt }) => [company, Number(cnt)] as [string, number]));
 
-    // 4. Top users (by followers, max 60 deduplicated)
-    const topUsersRaw = await prisma.$queryRaw<{
-      login: string;
-      name: string | null;
-      followers: number;
-      publicRepos: number;
-      location: string | null;
-      company: string | null;
-    }[]>`
-      SELECT u.login, u.name, u.followers, u."publicRepos", u.location, u.company
-      FROM star_event se
-      JOIN github_user u USING (login)
-      WHERE se.owner = ${key.owner} AND se.repo = ${key.repo}
-      ORDER BY u.followers DESC
-      LIMIT 60
-    `;
     const topUsers = topUsersRaw.map((u) => ({
       ...u,
       avatarUrl: `https://github.com/${u.login}.png`,
     }));
-
-    // 5. Power stargazers — CTE + INNER JOIN (avoids correlated subquery O(n²))
-    const crossRepoGroups = await prisma.$queryRaw<{ login: string; cnt: bigint }[]>`
-      WITH repo_logins AS (
-        SELECT DISTINCT login FROM star_event WHERE owner = ${key.owner} AND repo = ${key.repo}
-      )
-      SELECT se.login, COUNT(*) AS cnt
-      FROM star_event se
-      INNER JOIN repo_logins USING (login)
-      GROUP BY se.login
-      HAVING COUNT(*) > 1
-      ORDER BY cnt DESC
-      LIMIT 20
-    `;
 
     // Fetch user details for power stargazers (logins list is small — max 20)
     const powerLogins = crossRepoGroups.map((g) => g.login);
