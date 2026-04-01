@@ -635,7 +635,6 @@ export default function ExplorePage() {
                     <CountryChoroplethDynamic
                       countryData={mapCountriesData.items}
                       onCountryClick={handleChoroplethCountryClick}
-                      styleUrl={mapStyleUrl}
                     />
                   ) : (
                     <div className="flex items-center justify-center h-full text-muted-subtle text-sm bg-surface-alt">

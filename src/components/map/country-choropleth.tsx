@@ -5,7 +5,8 @@
 
 import { useEffect, useRef, memo } from "react";
 import maplibregl from "maplibre-gl";
-import { MAP_STYLE_DARK } from "@/lib/theme";
+import { MAP_STYLE_DARK, MAP_STYLE_LIGHT } from "@/lib/theme";
+import { useTheme } from "@/hooks/useTheme";
 import { feature } from "topojson-client";
 import type { Topology, GeometryCollection } from "topojson-specification";
 import { toGeoName } from "@/lib/country-geo-names";
@@ -16,11 +17,9 @@ const topoData = require("world-atlas/countries-110m.json") as Topology;
 type Props = {
   countryData: [string, number][];
   onCountryClick?: (country: string) => void;
-  styleUrl?: string;
 };
 
 const JAWG_TOKEN = process.env.NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN ?? "";
-const STYLE_URL = MAP_STYLE_DARK(JAWG_TOKEN);
 
 /**
  * Normalize a polygon ring so no two adjacent vertices differ by >180° in longitude.
@@ -76,7 +75,10 @@ const buildChoroplethGeoJSON = (countryData: [string, number][]) => {
   };
 };
 
-export const CountryChoropleth = memo(({ countryData, onCountryClick, styleUrl }: Props) => {
+export const CountryChoropleth = memo(({ countryData, onCountryClick }: Props) => {
+  const { theme } = useTheme();
+  const styleUrl = theme === "light" ? MAP_STYLE_LIGHT(JAWG_TOKEN) : MAP_STYLE_DARK(JAWG_TOKEN);
+
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const tooltipRef = useRef<maplibregl.Popup | null>(null);
@@ -84,7 +86,7 @@ export const CountryChoropleth = memo(({ countryData, onCountryClick, styleUrl }
   useEffect(() => {
     if (!containerRef.current) return;
 
-    const initUrl = styleUrl ?? STYLE_URL;
+    const initUrl = styleUrl;
     const map = new maplibregl.Map({
       container: containerRef.current,
       style: initUrl,
