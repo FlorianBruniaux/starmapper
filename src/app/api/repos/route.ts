@@ -32,7 +32,9 @@ export const GET = async () => {
       updatedAt: r.updatedAt.toISOString(),
     }));
 
-    return NextResponse.json({ repos });
+    return NextResponse.json({ repos }, {
+      headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600" },
+    });
   } catch {
     return jsonError("internal", 500);
   }

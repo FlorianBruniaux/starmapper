@@ -142,11 +142,10 @@ export const POST = async (req: NextRequest) => {
         const newStarEvents = page.stargazers
           .filter((sg) => writtenLogins.has(sg.login))
           .map((sg) => ({ login: sg.login, owner: ownerKey, repo: repoKey, starredAt: sg.starredAt }));
-        bulkUpsertUsers(usersToWrite, health)
-          .then((ok) => {
-            if (ok && newStarEvents.length > 0) return bulkUpsertStarEvents(newStarEvents, health);
-          })
-          .catch(console.error);
+        Promise.all([
+          bulkUpsertUsers(usersToWrite, health),
+          newStarEvents.length > 0 ? bulkUpsertStarEvents(newStarEvents, health) : Promise.resolve(true),
+        ]).catch(console.error);
       }
     }).catch(console.error);
 

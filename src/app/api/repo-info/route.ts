@@ -28,7 +28,7 @@ export const GET = async (req: NextRequest) => {
       stars: data.stargazers_count,
       language: data.language,
       avatar: data.owner?.avatar_url,
-    });
+    }, { headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600" } });
   } catch {
     return jsonError("Failed to reach GitHub", 502);
   }

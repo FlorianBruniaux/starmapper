@@ -83,13 +83,14 @@ const classifyRoute = (method: string, pathname: string): Tier => {
   if (pathname.startsWith("/api/stargazer-cache/")) return "stargazer-cache-get";
 
   // Strict GET — data-rich endpoints with per-user PII (logins, locations, coordinates)
+  // Note: /api/repos is intentionally excluded — it only returns aggregate badge stats,
+  // no per-user data. moderate-get (rate limit only) is sufficient.
   if (
     pathname.startsWith("/api/stats/") ||
     pathname === "/api/explore/top" ||
     pathname === "/api/explore/power" ||
     pathname === "/api/explore/user-repos" ||
     pathname === "/api/explore/global-map" ||
-    pathname === "/api/repos" ||
     pathname.startsWith("/api/profile/")
   ) {
     return "strict-get";

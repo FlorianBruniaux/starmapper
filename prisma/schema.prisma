@@ -23,6 +23,7 @@ model BadgeCache {
   updatedAt    DateTime @updatedAt @default(now())
 
   @@id([owner, repo])
+  @@index([updatedAt(sort: Desc)])
   @@map("badge_cache")
 }
 
@@ -58,6 +59,7 @@ model GitHubUser {
   @@index([followers(sort: Desc)])
   @@index([company])
   @@index([location])
+  @@index([lat, lng])
   @@map("github_user")
 }
 
