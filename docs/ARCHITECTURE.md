@@ -135,7 +135,11 @@ isGeocodeableLocation() filter
         |
         v
   [1] Jawg Places API
-      api.jawg.io/places/v1/search
+      starmapper.jawg.io (dedicated Pelias instance, sponsored by JawgMaps)
+      Uses a dedicated geocoding token (JAWGMAP_ACCESS_TOKEN) — separate from the
+      map tile token (NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN). Batch geocoding is not
+      permitted on the standard Jawg API; this dedicated instance was provided
+      specifically for StarMapper to allow high-volume location resolution.
       Circuit breaker: 3 errors → disabled 1h (in-memory)
       Parallel batches of 5 when available
         |
@@ -174,6 +178,8 @@ The geocache was pre-seeded with ~51,000 entries from GeoNames data (cities with
 **DB resilience**: All Prisma calls in `geocoder.ts` are wrapped in `try/catch`. If Neon is down, geocoding still works via direct API calls — results just won't be cached.
 
 **Parallelism**: When Jawg or Geoapify is available, up to 5 locations are geocoded in parallel. When both are down and Nominatim is the only option, geocoding is strictly sequential with a 1100ms delay between calls to respect the polite use policy.
+
+**Jawg sponsorship**: The Jawg geocoding endpoint (`starmapper.jawg.io`) is a dedicated Pelias instance provided by JawgMaps. Batch geocoding is not permitted on the public Jawg API — this dedicated server exists specifically for StarMapper. The geocoding token (`JAWGMAP_ACCESS_TOKEN`) is scoped to geocoding only and cannot access tile rendering.
 
 ---
 

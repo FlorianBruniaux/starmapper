@@ -10,6 +10,7 @@
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "db:push": "sh -c 'set -a && . .env.local && set +a && prisma db push'",
+    "db:push:local": "sh -c 'set -a && . .env.local && set +a && DATABASE_URL=$DATABASE_URL_LOCAL prisma db push'",
     "db:generate": "prisma generate",
     "db:studio": "sh -c 'set -a && . .env.local && set +a && prisma studio'",
     "create:grid-mv": "tsx scripts/create-grid-mv.ts",
