@@ -58,6 +58,7 @@ sync_table() {
   # _sync created WITHOUT constraints (AS SELECT ... LIMIT 0) so \copy never fails
   # on NOT NULL / CHECK violations in transit data.
   cat > "$TMPDIR/import_$TABLE.sql" <<EOF
+SET statement_timeout = 0;
 DROP TABLE IF EXISTS _sync;
 CREATE TABLE _sync AS SELECT * FROM $TABLE LIMIT 0;
 EOF
