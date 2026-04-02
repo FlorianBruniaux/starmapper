@@ -16,7 +16,6 @@ export type UserWritePayload = {
   accountCreatedAt: string | null;
   lat: number;
   lng: number;
-  linkedinUrl: string | null;
   countryNormalized: string | null;
   cityNormalized: string | null;
 };
@@ -53,7 +52,6 @@ export const bulkUpsertUsers = async (
     const createdAts          = users.map((u) => u.accountCreatedAt); // ISO string | null
     const lats                = users.map((u) => u.lat);
     const lngs                = users.map((u) => u.lng);
-    const linkedinUrls        = users.map((u) => u.linkedinUrl);
     const countryNormalizeds  = users.map((u) => u.countryNormalized);
     const cityNormalizeds     = users.map((u) => u.cityNormalized);
     const now                 = new Date();
@@ -61,7 +59,7 @@ export const bulkUpsertUsers = async (
     await prisma.$queryRaw`
       INSERT INTO github_user
         (login, name, company, location, followers, following,
-         "publicRepos", "accountCreatedAt", "dataVersion", lat, lng, "linkedinUrl",
+         "publicRepos", "accountCreatedAt", "dataVersion", lat, lng,
          "countryNormalized", "cityNormalized", "fetchedAt")
       SELECT
         unnest(${logins}::text[]),
@@ -75,7 +73,6 @@ export const bulkUpsertUsers = async (
         1,
         unnest(${lats}::float8[]),
         unnest(${lngs}::float8[]),
-        unnest(${linkedinUrls}::text[]),
         unnest(${countryNormalizeds}::text[]),
         unnest(${cityNormalizeds}::text[]),
         ${now}
@@ -90,7 +87,6 @@ export const bulkUpsertUsers = async (
         "dataVersion"         = 1,
         lat                   = EXCLUDED.lat,
         lng                   = EXCLUDED.lng,
-        "linkedinUrl"         = EXCLUDED."linkedinUrl",
         "countryNormalized"   = EXCLUDED."countryNormalized",
         "cityNormalized"      = EXCLUDED."cityNormalized",
         "fetchedAt"           = EXCLUDED."fetchedAt"

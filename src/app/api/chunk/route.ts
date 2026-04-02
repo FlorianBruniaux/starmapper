@@ -135,7 +135,6 @@ export const POST = async (req: NextRequest) => {
             accountCreatedAt: sg.accountCreatedAt,
             lat: p.lat,
             lng: p.lng,
-            linkedinUrl: sg.linkedinUrl,
             countryNormalized: country,
             cityNormalized: city,
           };

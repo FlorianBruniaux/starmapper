@@ -30,8 +30,8 @@ model BadgeCache {
 model StargazerCache {
   owner           String
   repo            String
-  points          Json
-  unmapped        Json
+  points          String
+  unmapped        String
   totalCount      Int
   scannedAt       DateTime  @default(now())
   latestStarredAt DateTime?
@@ -54,7 +54,6 @@ model GitHubUser {
   dataVersion      Int         @default(0)
   lat              Float?
   lng              Float?
-  linkedinUrl          String?
   countryNormalized    String?
   cityNormalized       String?
   fetchedAt            DateTime    @default(now())
@@ -79,7 +78,6 @@ model StarEvent {
   user      GitHubUser @relation(fields: [login], references: [login])
 
   @@unique([login, owner, repo])
-  @@index([owner, repo])
   @@index([login])
   @@index([owner, repo, login])
   @@map("star_event")
