@@ -54,6 +54,7 @@ model GitHubUser {
   dataVersion      Int         @default(0)
   lat              Float?
   lng              Float?
+  linkedinUrl          String?
   countryNormalized    String?
   cityNormalized       String?
   fetchedAt            DateTime    @default(now())

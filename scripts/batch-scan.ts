@@ -217,6 +217,7 @@ type StargazerRaw = {
   company: string | null;
   location: string | null;
   followers: number;
+  linkedinUrl: string | null;
   starredAt: string;
 };
 
@@ -239,6 +240,7 @@ const GRAPHQL_QUERY = `
           node {
             login name company location
             followers { totalCount }
+            socialAccounts(first: 5) { nodes { provider url } }
           }
         }
       }
@@ -323,6 +325,7 @@ const fetchPage = async (
             company: string | null;
             location: string | null;
             followers: { totalCount: number };
+            socialAccounts?: { nodes: { provider: string; url: string }[] };
           };
         }[];
       };
@@ -331,14 +334,20 @@ const fetchPage = async (
     if (!data) throw Object.assign(new Error("not_found"), { code: "NOT_FOUND" });
 
     const page = data.stargazers;
-    const stargazers: StargazerRaw[] = page.edges.map((e) => ({
-      login:     e.node.login,
-      name:      e.node.name ?? null,
-      company:   e.node.company ? e.node.company.trim().replace(/^@/, "") : null,
-      location:  e.node.location ?? null,
-      followers: e.node.followers.totalCount,
-      starredAt: e.starredAt,
-    }));
+    const stargazers: StargazerRaw[] = page.edges.map((e) => {
+      const linkedinNode = (e.node.socialAccounts?.nodes ?? []).find(
+        (n) => n.provider === "LINKEDIN",
+      );
+      return {
+        login:      e.node.login,
+        name:       e.node.name ?? null,
+        company:    e.node.company ? e.node.company.trim().replace(/^@/, "") : null,
+        location:   e.node.location ?? null,
+        followers:  e.node.followers.totalCount,
+        linkedinUrl: linkedinNode?.url?.startsWith("https://") ? linkedinNode.url : null,
+        starredAt:  e.starredAt,
+      };
+    });
 
     return {
       totalCount:    data.stargazerCount,
@@ -505,6 +514,7 @@ type SlimPoint = {
   followers: number;
   lat: number;
   lng: number;
+  linkedinUrl: string | null;
   starredAt: string | null;
 };
 
@@ -585,6 +595,7 @@ const writeUsers = async (
           followers: p.followers,
           lat: p.lat,
           lng: p.lng,
+          linkedinUrl: p.linkedinUrl,
           fetchedAt: new Date(),
         },
         update: {
@@ -594,6 +605,7 @@ const writeUsers = async (
           followers: p.followers,
           lat: p.lat,
           lng: p.lng,
+          linkedinUrl: p.linkedinUrl,
           fetchedAt: new Date(),
         },
       })
@@ -728,14 +740,15 @@ const main = async () => {
 
           if (coords) {
             const pt: SlimPoint = {
-              login:     sg.login,
-              name:      sg.name,
-              company:   sg.company,
-              location:  sg.location,
-              followers: sg.followers,
-              lat:       coords[0],
-              lng:       coords[1],
-              starredAt: sg.starredAt,
+              login:      sg.login,
+              name:       sg.name,
+              company:    sg.company,
+              location:   sg.location,
+              followers:  sg.followers,
+              lat:        coords[0],
+              lng:        coords[1],
+              linkedinUrl: sg.linkedinUrl,
+              starredAt:  sg.starredAt,
             };
             allPoints.push(pt);
             pendingPoints.push(pt);
