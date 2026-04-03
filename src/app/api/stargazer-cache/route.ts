@@ -8,7 +8,7 @@ import { checkDbHealth, DB_CRITICAL_PCT } from "@/lib/db-health";
 import { validateOwnerRepo } from "@/lib/api-validation";
 import { jsonError } from "@/lib/api-helpers";
 
-const MAX_CACHEABLE_STARS = 100_000;
+const MAX_CACHEABLE_STARS = 500_000;
 
 export const POST = async (req: NextRequest) => {
   try {
@@ -43,8 +43,8 @@ export const POST = async (req: NextRequest) => {
 
     if (typeof pointsGz === "string" && typeof unmappedGz === "string") {
       // New format: client compressed client-side to stay under Vercel's 4.5MB body limit
-      // 10 MB base64 ≈ 7.5 MB gzip — well above the ~800 KB real-world maximum for 100k stars
-      if (pointsGz.length > 10_000_000 || unmappedGz.length > 10_000_000) {
+      // 30 MB base64 per field — supports up to ~500k stars
+      if (pointsGz.length > 30_000_000 || unmappedGz.length > 30_000_000) {
         return jsonError("payload_too_large", 413);
       }
       finalPointsGz = pointsGz;

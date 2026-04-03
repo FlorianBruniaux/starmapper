@@ -113,7 +113,7 @@ POST /api/stargazer-cache
   Body: { owner, repo, pointsGz, unmappedGz, totalCount }  (new format — client-compressed)
       | { owner, repo, points, unmapped, totalCount }       (legacy format — server compresses)
   Returns: { ok: true }
-  Note: upserts StargazerCache; validates totalCount ≤ 100,000
+  Note: upserts StargazerCache; validates totalCount ≤ 500,000
 
 POST /api/user-details
   Header: x-gh-token (optional, falls back to server GITHUB_TOKEN)

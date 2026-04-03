@@ -733,7 +733,7 @@ const main = async () => {
         totalGeocacheMisses += misses;
 
         for (const sg of result.stargazers) {
-          if (allPoints.length + allUnmapped.length >= 100_000) break;
+          if (allPoints.length + allUnmapped.length >= 500_000) break;
 
           const locKey = sg.location?.toLowerCase().trim() ?? "";
           const coords = locKey ? (geoMap.get(locKey) ?? null) : null;
@@ -771,8 +771,8 @@ const main = async () => {
         }
 
         if (!result.nextCursor) break;
-        if (allPoints.length + allUnmapped.length >= 100_000) {
-          console.warn(`\n  Cap reached (100k stars). Stopping pagination.`);
+        if (allPoints.length + allUnmapped.length >= 500_000) {
+          console.warn(`\n  Cap reached (500k stars). Stopping pagination.`);
           break;
         }
         cursor = result.nextCursor;
