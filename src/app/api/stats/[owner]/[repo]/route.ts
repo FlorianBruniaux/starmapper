@@ -157,7 +157,7 @@ export const GET = async (
       mappingRate: total > 0 ? Math.round((mappedCount / total) * 100) : 0,
       avgFollowers,
       countryCount: countryCount.size,
-      topCountries: [...countryCount.entries()].sort((a, b) => b[1] - a[1]).slice(0, 30),
+      topCountries: [...countryCount.entries()].sort((a, b) => b[1] - a[1]),
       topCities: [...cityCount.entries()].sort((a, b) => b[1] - a[1]).slice(0, 30),
       topCompanies: [...companyCount.entries()].sort((a, b) => b[1] - a[1]).slice(0, 30),
       topUsers,

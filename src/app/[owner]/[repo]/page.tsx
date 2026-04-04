@@ -834,7 +834,7 @@ export default function MapPage({
         if (c) companyCount.set(c, (companyCount.get(c) ?? 0) + 1);
       }
     }
-    const topCountries = [...countryCount.entries()].sort((a, b) => b[1] - a[1]).slice(0, 30);
+    const topCountries = [...countryCount.entries()].sort((a, b) => b[1] - a[1]);
     const topCities = [...cityCount.entries()].sort((a, b) => b[1] - a[1]).slice(0, 30);
     const topUsers = [...points]
       .sort((a, b) => b.followers - a.followers)

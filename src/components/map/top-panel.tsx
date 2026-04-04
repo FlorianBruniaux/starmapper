@@ -7,6 +7,7 @@ import { useState } from "react";
 import type { StargazerPoint } from "@/app/api/chunk/route";
 import type { TimeEstimate } from "@/lib/format";
 import { formatEstimate, timeAgo } from "@/lib/format";
+import { isCountry, normalizeCountry } from "@/lib/countries";
 
 type RepoInfo = {
   name: string;
@@ -75,7 +76,9 @@ export const TopPanel = ({
   const [usernameInput, setUsernameInput] = useState("");
   const mappingPct = total > 0 ? Math.round((points.length / total) * 100) : 0;
   const locationCount = new Set(
-    points.map((p) => p.location?.split(",").pop()?.trim())
+    points
+      .map((p) => { const s = p.location?.split(",").pop()?.trim(); return s && isCountry(s) ? normalizeCountry(s) : null; })
+      .filter(Boolean),
   ).size;
 
   return (
