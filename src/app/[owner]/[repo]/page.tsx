@@ -185,6 +185,7 @@ export default function MapPage({
   const [allSort, setAllSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: "followers", dir: -1 });
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [fetching, setFetching] = useState(false);
+  const csvEnabled = process.env.NEXT_PUBLIC_CSV_EXPORT === "true";
   const [filterFollowers, setFilterFollowers] = useState(0);
   const [filterMapped, setFilterMapped] = useState<"all" | "mapped" | "unmapped">("all");
   const [followerMapFilter, setFollowerMapFilter] = useState<"all" | "high" | "mid" | "low">("all");
@@ -1383,15 +1384,17 @@ export default function MapPage({
               <table className="w-full text-xs border-collapse">
                 <thead className="sticky top-0 bg-surface z-10">
                   <tr className="border-b border-border-subtle">
-                    <th className="px-3 py-2.5 w-8">
-                      <input
-                        type="checkbox"
-                        checked={selected.size > 0 && selected.size === filteredStargazers.length}
-                        ref={(el) => { if (el) el.indeterminate = selected.size > 0 && selected.size < filteredStargazers.length; }}
-                        onChange={toggleAll}
-                        className="accent-accent-blue cursor-pointer"
-                      />
-                    </th>
+                    {csvEnabled && (
+                      <th className="px-3 py-2.5 w-8">
+                        <input
+                          type="checkbox"
+                          checked={selected.size > 0 && selected.size === filteredStargazers.length}
+                          ref={(el) => { if (el) el.indeterminate = selected.size > 0 && selected.size < filteredStargazers.length; }}
+                          onChange={toggleAll}
+                          className="accent-accent-blue cursor-pointer"
+                        />
+                      </th>
+                    )}
                     <th className="px-3 py-2.5 text-left text-muted font-medium w-6 text-right">#</th>
                     <th className="px-3 py-2.5 text-left text-muted font-medium">
                       <button onClick={() => toggleSort("login")} className="flex items-center gap-1 hover:text-foreground">
@@ -1430,19 +1433,23 @@ export default function MapPage({
                     return (
                     <tr
                       key={u.login}
-                      onClick={() => toggleRow(u.login)}
-                      className={`border-b border-surface cursor-pointer transition-colors ${
-                        selected.has(u.login) ? "bg-surface-alt" : "hover:bg-background"
+                      onClick={csvEnabled ? () => toggleRow(u.login) : undefined}
+                      className={`border-b border-surface transition-colors ${
+                        csvEnabled
+                          ? selected.has(u.login) ? "bg-surface-alt cursor-pointer" : "hover:bg-background cursor-pointer"
+                          : ""
                       }`}
                     >
-                      <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
-                        <input
-                          type="checkbox"
-                          checked={selected.has(u.login)}
-                          onChange={() => toggleRow(u.login)}
-                          className="accent-accent-blue cursor-pointer"
-                        />
-                      </td>
+                      {csvEnabled && (
+                        <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
+                          <input
+                            type="checkbox"
+                            checked={selected.has(u.login)}
+                            onChange={() => toggleRow(u.login)}
+                            className="accent-accent-blue cursor-pointer"
+                          />
+                        </td>
+                      )}
                       <td className="px-3 py-2 text-muted-subtle text-right">{i + 1}</td>
                       <td className="px-3 py-2">
                         <div className="flex items-center gap-2">
@@ -1531,8 +1538,8 @@ export default function MapPage({
               )}
             </div>
 
-            {/* Selection action bar */}
-            {selected.size > 0 && (
+            {/* Selection action bar — only when CSV export is enabled */}
+            {csvEnabled && selected.size > 0 && (
               <div className="flex items-center justify-between px-5 py-3 border-t border-border-subtle bg-background rounded-b-2xl flex-shrink-0">
                 <span className="text-xs text-muted">
                   <strong className="text-foreground">{selected.size}</strong> selected
@@ -1545,23 +1552,19 @@ export default function MapPage({
                   >
                     Copy logins
                   </button>
-                  {process.env.NEXT_PUBLIC_CSV_EXPORT === "true" && (
-                    <>
-                      <button
-                        onClick={() => exportCsv(allStargazers.filter((u) => selected.has(u.login)))}
-                        className="bg-surface-alt border border-border rounded-lg px-3 py-1.5 text-xs text-muted hover:text-foreground transition-colors"
-                      >
-                        ↓ Export CSV
-                      </button>
-                      <button
-                        onClick={fetchAndExport}
-                        disabled={fetching}
-                        className="bg-accent-green-emphasis hover:opacity-90 disabled:opacity-50 rounded-lg px-3 py-1.5 text-xs text-white font-medium transition-opacity"
-                      >
-                        {fetching ? "Fetching…" : `↓ Fetch details + CSV (${selected.size})`}
-                      </button>
-                    </>
-                  )}
+                  <button
+                    onClick={() => exportCsv(allStargazers.filter((u) => selected.has(u.login)))}
+                    className="bg-surface-alt border border-border rounded-lg px-3 py-1.5 text-xs text-muted hover:text-foreground transition-colors"
+                  >
+                    ↓ Export CSV
+                  </button>
+                  <button
+                    onClick={fetchAndExport}
+                    disabled={fetching}
+                    className="bg-accent-green-emphasis hover:opacity-90 disabled:opacity-50 rounded-lg px-3 py-1.5 text-xs text-white font-medium transition-opacity"
+                  >
+                    {fetching ? "Fetching…" : `↓ Fetch details + CSV (${selected.size})`}
+                  </button>
                 </div>
               </div>
             )}
