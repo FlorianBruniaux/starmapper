@@ -11,6 +11,8 @@
 --   sh -c 'set -a && . .env.local && set +a && psql "$DATABASE_URL" \
 --     -f scripts/backfill-latest-starred-at.sql'
 
+SET statement_timeout = 0;
+
 UPDATE stargazer_cache sc
 SET "latestStarredAt" = se.max_starred_at
 FROM (
