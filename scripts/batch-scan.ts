@@ -15,16 +15,20 @@
  *   --input <path>       JSON array of "owner/repo" strings (required)
  *   --local              Use DATABASE_URL_LOCAL from .env.local (Docker Postgres)
  *   --dry-run            Preview only — no DB writes, shows geocoding budget estimate
- *   --force              Rescan repos already in stargazer_cache
+ *   --force              Full rescan (ignores existing cache, deletes stale star_events)
  *   --allow-neon         Explicitly allow writing to Neon production DB
  *   --skip-geocoding     Fetch GitHub data only, skip geocoding
  *   --token <PAT>        GitHub PAT override (otherwise uses GITHUB_TOKEN from env)
  *   --flush-every <N>    Flush github_user + star_event every N users (default: 2000)
+ *
+ * Delta scanning (default behavior):
+ *   If a repo is cached with latestStarredAt → only fetches new stars since that date,
+ *   then merges with existing cached data. Use --force to bypass and do a full rescan.
  */
 
 import { readFileSync } from "fs";
 import { join } from "path";
-import { gzipSync } from "zlib";
+import { gzipSync, gunzipSync } from "zlib";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import pg from "pg";
@@ -253,6 +257,7 @@ const fetchPage = async (
   owner: string,
   repo: string,
   cursor: string | null,
+  since?: string, // ISO timestamp — stop when we hit stars older or equal to this
 ): Promise<GHPage> => {
   for (let attempt = 0; attempt < MAX_FETCH_ATTEMPTS; attempt++) {
     let res: Response;
@@ -334,11 +339,19 @@ const fetchPage = async (
     if (!data) throw Object.assign(new Error("not_found"), { code: "NOT_FOUND" });
 
     const page = data.stargazers;
-    const stargazers: StargazerRaw[] = page.edges.map((e) => {
+    const sinceTs = since ? new Date(since).getTime() : null;
+    let hasMore = page.pageInfo.hasNextPage;
+    const stargazers: StargazerRaw[] = [];
+
+    for (const e of page.edges) {
+      if (sinceTs !== null && new Date(e.starredAt).getTime() <= sinceTs) {
+        hasMore = false; // hit stars already in cache — stop
+        break;
+      }
       const linkedinNode = (e.node.socialAccounts?.nodes ?? []).find(
         (n) => n.provider === "LINKEDIN",
       );
-      return {
+      stargazers.push({
         login:      e.node.login,
         name:       e.node.name ?? null,
         company:    e.node.company ? e.node.company.trim().replace(/^@/, "") : null,
@@ -346,12 +359,12 @@ const fetchPage = async (
         followers:  e.node.followers.totalCount,
         linkedinUrl: linkedinNode?.url?.startsWith("https://") ? linkedinNode.url : null,
         starredAt:  e.starredAt,
-      };
-    });
+      });
+    }
 
     return {
       totalCount:    data.stargazerCount,
-      nextCursor:    page.pageInfo.hasNextPage ? page.pageInfo.endCursor : null,
+      nextCursor:    hasMore ? page.pageInfo.endCursor : null,
       stargazers,
       rateRemaining,
       rateReset,
@@ -536,6 +549,7 @@ const writeRepoCache = async (
   points: SlimPoint[],
   unmapped: UnmappedUser[],
   totalCount: number,
+  latestStarredAt?: Date,
 ) => {
   const pointsGz   = gzipSync(JSON.stringify(points)).toString("base64");
   const unmappedGz = gzipSync(JSON.stringify(unmapped)).toString("base64");
@@ -550,8 +564,8 @@ const writeRepoCache = async (
 
   await prisma.stargazerCache.upsert({
     where: { owner_repo: key },
-    create: { ...key, points: pointsGz, unmapped: unmappedGz, totalCount, scannedAt: now },
-    update: { points: pointsGz, unmapped: unmappedGz, totalCount, scannedAt: now },
+    create: { ...key, points: pointsGz, unmapped: unmappedGz, totalCount, scannedAt: now, latestStarredAt: latestStarredAt ?? null },
+    update: { points: pointsGz, unmapped: unmappedGz, totalCount, scannedAt: now, ...(latestStarredAt ? { latestStarredAt } : {}) },
   });
 
   await prisma.badgeCache.upsert({
@@ -672,15 +686,29 @@ const main = async () => {
     const { owner, repo } = repos[ri];
     const prefix = `[${ri + 1}/${repos.length}] ${owner}/${repo}`;
 
-    // Resume check
-    if (!FORCE && !DRY_RUN) {
+    // Resume / delta check
+    let isDelta = false;
+    let deltaSince: string | undefined;
+    let deltaExistingPoints:   SlimPoint[]    = [];
+    let deltaExistingUnmapped: UnmappedUser[] = [];
+
+    if (!FORCE) {
       const cached = await prisma.stargazerCache.findUnique({
         where: { owner_repo: { owner: owner.toLowerCase(), repo: repo.toLowerCase() } },
-        select: { totalCount: true, scannedAt: true },
+        select: { totalCount: true, scannedAt: true, latestStarredAt: true, points: true, unmapped: true },
       });
       if (cached) {
-        console.log(`${prefix} — already cached (${cached.totalCount} stars, ${cached.scannedAt.toISOString().slice(0, 10)}), skipping`);
-        continue;
+        if (!cached.latestStarredAt) {
+          // No timestamp reference — cannot delta, skip
+          console.log(`${prefix} — already cached (${cached.totalCount} stars, ${cached.scannedAt.toISOString().slice(0, 10)}), skipping`);
+          continue;
+        }
+        // Delta scan — only fetch stars newer than last scan
+        isDelta = true;
+        deltaSince = cached.latestStarredAt.toISOString();
+        deltaExistingPoints   = JSON.parse(gunzipSync(Buffer.from(cached.points   as string, "base64")).toString("utf8")) as SlimPoint[];
+        deltaExistingUnmapped = JSON.parse(gunzipSync(Buffer.from(cached.unmapped as string, "base64")).toString("utf8")) as UnmappedUser[];
+        console.log(`${prefix} — delta (since ${deltaSince.slice(0, 10)}, ${deltaExistingPoints.length} mapped + ${deltaExistingUnmapped.length} unmapped cached)`);
       }
     }
 
@@ -696,11 +724,11 @@ const main = async () => {
       }
     }
 
-    const allPoints:   SlimPoint[] = [];
-    const allUnmapped: UnmappedUser[] = [];
+    let allPoints:   SlimPoint[] = [];
+    let allUnmapped: UnmappedUser[] = [];
     // Pending batch: accumulates since last flush, cleared on each flush.
     let pendingPoints:   SlimPoint[] = [];
-    let pendingUnmapped: typeof allUnmapped = [];
+    let pendingUnmapped: UnmappedUser[] = [];
     let flushedCount = 0;
     let cursor: string | null = null;
     let totalCount = 0;
@@ -714,7 +742,7 @@ const main = async () => {
           await sleep(60_000);
         }
 
-        const result = await fetchPage(owner, repo, cursor);
+        const result = await fetchPage(owner, repo, cursor, isDelta ? deltaSince : undefined);
         globalRateRemaining = result.rateRemaining;
         totalCount = result.totalCount;
         page++;
@@ -778,6 +806,37 @@ const main = async () => {
         cursor = result.nextCursor;
       }
 
+      // ── Delta merge: new results + existing cache ────────────────────────
+      if (isDelta) {
+        const newMappedCount   = allPoints.length;
+        const newUnmappedCount = allUnmapped.length;
+        const seen = new Set<string>();
+        const mergedPoints:   SlimPoint[]    = [];
+        const mergedUnmapped: UnmappedUser[] = [];
+
+        // New mapped first (fresher data), then existing mapped
+        for (const p of [...allPoints, ...deltaExistingPoints]) {
+          if (!seen.has(p.login)) { seen.add(p.login); mergedPoints.push(p); }
+        }
+        // Unmapped: skip logins already in mapped set
+        for (const u of [...allUnmapped, ...deltaExistingUnmapped]) {
+          if (!seen.has(u.login)) { seen.add(u.login); mergedUnmapped.push(u); }
+        }
+
+        allPoints   = mergedPoints;
+        allUnmapped = mergedUnmapped;
+        console.log(`  +${newMappedCount} mapped +${newUnmappedCount} unmapped new → merged total: ${allPoints.length} + ${allUnmapped.length}`);
+      }
+
+      // ── Compute latestStarredAt (newest star across all data) ─────────────
+      const allStarredAts = [
+        ...allPoints.map((p) => p.starredAt),
+        ...allUnmapped.map((u) => u.starredAt),
+      ].filter((s): s is string => !!s);
+      const latestStarredAt = allStarredAts.length > 0
+        ? new Date(allStarredAts.sort().at(-1)!)
+        : undefined;
+
       const mappedPct = totalCount > 0 ? Math.round((allPoints.length / totalCount) * 100) : 0;
       const countries = new Set(allPoints.map((p) => extractCountry(p.location)).filter(Boolean));
       console.log(
@@ -792,7 +851,7 @@ const main = async () => {
           process.stdout.write(" OK\n");
         }
         process.stdout.write("  Writing cache...");
-        await writeRepoCache(owner, repo, allPoints, allUnmapped, totalCount);
+        await writeRepoCache(owner, repo, allPoints, allUnmapped, totalCount, latestStarredAt);
         process.stdout.write(" cache OK\n");
       } else {
         console.log("  (dry-run: skipping DB writes)");
