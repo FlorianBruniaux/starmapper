@@ -27,6 +27,7 @@ export const GET = async (req: NextRequest) => {
         SELECT "countryNormalized" AS label, COUNT(*) AS cnt
         FROM github_user
         WHERE "countryNormalized" IS NOT NULL
+          AND "countryNormalized" NOT LIKE 'http%'
         GROUP BY "countryNormalized"
         ORDER BY cnt DESC
         LIMIT 500

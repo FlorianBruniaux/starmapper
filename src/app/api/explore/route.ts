@@ -28,6 +28,7 @@ export const GET = async () => {
         SELECT DISTINCT "countryNormalized" AS country
         FROM github_user
         WHERE "countryNormalized" IS NOT NULL
+          AND "countryNormalized" NOT LIKE 'http%'
         ORDER BY "countryNormalized"
       `,
     ]);
