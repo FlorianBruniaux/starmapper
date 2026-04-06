@@ -83,3 +83,16 @@ model StarEvent {
   @@index([owner, repo, login])
   @@map("star_event")
 }
+
+model DeletionLog {
+  id          Int       @id @default(autoincrement())
+  login       String
+  requestedAt DateTime  @default(now())
+  deletedAt   DateTime?
+  status      String    @default("pending")
+  notes       String?
+
+  @@index([login])
+  @@index([requestedAt(sort: Desc)])
+  @@map("deletion_log")
+}

@@ -126,6 +126,22 @@ const jsonLd = {
             text: "Yes. After scanning a repository, StarMapper generates an embeddable SVG badge showing the star count and number of mapped countries. You can copy the Markdown snippet directly from the map page.",
           },
         },
+        {
+          "@type": "Question",
+          name: "Where does the stargazer data come from?",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "StarMapper uses the GitHub public API (GraphQL + REST) with an authenticated token to access publicly visible profile fields: username, display name, and the self-declared location field. Location text is geocoded using Jawg, Geoapify, and Nominatim. Results are displayed as geographic clusters, not searchable individual records. See our Privacy Policy for details.",
+          },
+        },
+        {
+          "@type": "Question",
+          name: "How do I request removal of my data from StarMapper?",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "Send an email to florian@bruniaux.com with your GitHub username and confirmation that you own the account. We will delete your profile data and star events within 30 days. Alternatively, remove your location from your GitHub profile settings — the next scan will reflect the change automatically.",
+          },
+        },
       ],
     },
   ],

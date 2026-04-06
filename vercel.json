@@ -1,0 +1,12 @@
+{
+  "crons": [
+    {
+      "path": "/api/admin/cleanup",
+      "schedule": "0 3 1 * *"
+    },
+    {
+      "path": "/api/admin/refresh-grid-mv",
+      "schedule": "0 */2 * * *"
+    }
+  ]
+}

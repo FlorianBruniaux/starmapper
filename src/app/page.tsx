@@ -359,6 +359,14 @@ export default function HomePage() {
                 q: "Can I embed a badge in my README?",
                 a: "Yes. After scanning a repo, StarMapper generates an embeddable SVG badge with the star count and number of mapped countries. Copy the Markdown snippet directly from the map page.",
               },
+              {
+                q: "Where does the stargazer data come from?",
+                a: "StarMapper uses the GitHub public API (GraphQL + REST) with an authenticated token. We access only publicly visible profile fields: username, display name, and the self-declared location field. No private information is ever accessed. Location text is geocoded (converted to coordinates) using Jawg, Geoapify, and Nominatim. Results are displayed as geographic clusters, not searchable individual records.",
+              },
+              {
+                q: "How do I request removal of my data?",
+                a: "Send an email to florian@bruniaux.com with your GitHub username and confirmation that you own the account. We will delete your profile data and star events within 30 days. Simpler alternative: remove your location from your GitHub profile settings — the next scan will reflect the change automatically.",
+              },
             ].map(({ q, a }) => (
               <details key={q} className="group bg-surface">
                 <summary className="flex items-center justify-between gap-3 px-4 py-3 cursor-pointer list-none text-xs font-medium text-foreground hover:text-accent-blue transition-colors select-none">

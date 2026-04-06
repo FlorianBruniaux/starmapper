@@ -78,6 +78,14 @@ export const Footer = () => (
         </div>
       </div>
 
+      {/* Legal links */}
+      <div className="border-t border-border-subtle pt-5 pb-4 flex flex-wrap gap-4">
+        <a href="/privacy" className="text-2xs text-muted-subtle hover:text-muted transition-colors">Privacy Policy</a>
+        <a href="/terms" className="text-2xs text-muted-subtle hover:text-muted transition-colors">Terms of Service</a>
+        <a href="/legal" className="text-2xs text-muted-subtle hover:text-muted transition-colors">Legal</a>
+        <a href="mailto:florian@bruniaux.com" className="text-2xs text-muted-subtle hover:text-muted transition-colors">florian@bruniaux.com</a>
+      </div>
+
       {/* Bottom bar */}
       <div className="border-t border-border-subtle pt-5 flex flex-col sm:flex-row justify-between items-center gap-3">
         <div className="flex items-center gap-2">

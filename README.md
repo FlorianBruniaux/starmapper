@@ -114,6 +114,46 @@ pnpm seed:geonames:dry    # Preview keys that would be inserted
 pnpm seed:geonames        # Insert ~51k GeoNames entries into geocache
 ```
 
+## Privacy & Data
+
+### What data is collected
+
+StarMapper accesses **publicly available data** from the GitHub API — the same data visible to anyone browsing github.com:
+
+- GitHub username (login)
+- Display name (if set on the profile)
+- Self-declared location field (e.g. "Paris, France")
+- Star date
+
+No private data is ever accessed. No email addresses. No repository data beyond the public stargazer list.
+
+### What we do with it
+
+Location text is geocoded into coordinates (via Jawg → Geoapify → Nominatim) and stored in a shared cache to avoid redundant API calls. Results appear as **geographic clusters on a map** — not as searchable individual records.
+
+### What we don't do
+
+- No ads, no analytics, no tracking
+- No selling or sharing of data with any third party for commercial purposes
+- No user accounts, no email collection
+- No monetisation of any kind — this is a free, non-commercial side project
+
+### This project makes no money
+
+StarMapper is a free, open-source tool built by one developer. No revenue, no investors, no sponsorship. The geocoding cache and scan results are stored on a Neon free-tier Postgres database (512 MB). Data is automatically purged after 12 months.
+
+### Your rights
+
+If you want your profile data removed:
+
+**Option 1 (immediate):** Remove or clear your location in your [GitHub profile settings](https://github.com/settings/profile). The next scan that includes you will use your updated profile.
+
+**Option 2 (full deletion):** Email `florian@bruniaux.com` with the subject "GDPR Data Deletion Request" and your GitHub username. Done within 30 days.
+
+Full privacy policy: [starmapper.bruniaux.com/privacy](https://starmapper.bruniaux.com/privacy)
+
+---
+
 ## Contributing
 
 Open an issue before sending a pull request for anything beyond a typo fix. The project is intentionally minimal — see `CLAUDE.md` section X for what is explicitly out of scope.
