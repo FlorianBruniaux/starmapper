@@ -6,7 +6,7 @@
     },
     {
       "path": "/api/admin/refresh-grid-mv",
-      "schedule": "0 */2 * * *"
+      "schedule": "0 3 * * *"
     }
   ]
 }
