@@ -599,6 +599,7 @@ export default function ExplorePage() {
   // Is the map showing nearby city data?
   const showNearbyMap = tab === "nearby" && nearbyUserPoints.length > 0;
 
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <CommandSearch />
@@ -1115,13 +1116,26 @@ export default function ExplorePage() {
               {/* Map */}
               <div className="relative w-full" style={{ height: "calc(100vh - 200px)", minHeight: "420px" }}>
                 {showNearbyMap ? (
-                  // Nearby tab with results — city aggregate scatter
-                  <StargazerMapDynamic
-                    points={nearbyUserPoints}
-                    styleUrl={mapStyleUrl}
-                    flyTarget={nearbyFlyTarget}
-                    onFlyDone={() => setNearbyFlyTarget(null)}
-                  />
+                  // Nearby tab with results — real user scatter
+                  <>
+                    <StargazerMapDynamic
+                      points={nearbyUserPoints}
+                      styleUrl={mapStyleUrl}
+                      flyTarget={nearbyFlyTarget}
+                      onFlyDone={() => setNearbyFlyTarget(null)}
+                    />
+                    {nearbyLoading && !nearbyData && (
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div className="bg-surface/80 backdrop-blur-sm border border-border rounded-xl px-4 py-2.5 flex items-center gap-2 shadow-lg">
+                          <svg className="animate-spin size-4 text-accent-blue" viewBox="0 0 24 24" fill="none">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                          </svg>
+                          <span className="text-sm text-muted">Loading…</span>
+                        </div>
+                      </div>
+                    )}
+                  </>
                 ) : tab === "nearby" ? (
                   // Nearby tab — no results yet, show choropleth as default
                   mapCountriesData ? (
