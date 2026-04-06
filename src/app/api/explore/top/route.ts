@@ -49,7 +49,12 @@ export const GET = async (req: NextRequest) => {
         take: size,
         select: { login: true, name: true, followers: true, company: true, publicRepos: true },
       }),
-      prisma.gitHubUser.count({ where }),
+      // Avoid full table COUNT on unfiltered requests — use pg_class estimate (microseconds vs 2s).
+      isFiltered
+        ? prisma.gitHubUser.count({ where })
+        : prisma.$queryRaw<{ n: bigint }[]>`
+            SELECT reltuples::bigint AS n FROM pg_class WHERE relname = 'github_user'
+          `.then((rows) => Number(rows[0]?.n ?? 0)),
     ]);
 
     const items = users.map((u) => ({

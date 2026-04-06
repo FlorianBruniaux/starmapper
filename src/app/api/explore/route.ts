@@ -3,7 +3,6 @@
 
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { parseLocation } from "@/lib/location-parser";
 import { jsonError, logError } from "@/lib/api-helpers";
 
 export type ExploreSummary = {
@@ -16,26 +15,26 @@ export type ExploreSummary = {
 
 export const GET = async () => {
   try {
-    const [totalUsers, totalStarEvents, totalTrackedRepos, locationGroups] = await Promise.all([
-      prisma.gitHubUser.count(),
-      prisma.starEvent.count(),
+    // pg_class.reltuples = table statistics estimate, updated by ANALYZE/autovacuum.
+    // Accuracy: ±1-5% on large tables, but loads in microseconds vs 8s full scan.
+    const [estimates, totalTrackedRepos, distinctCountries] = await Promise.all([
+      prisma.$queryRaw<{ users: bigint; events: bigint }[]>`
+        SELECT
+          (SELECT reltuples::bigint FROM pg_class WHERE relname = 'github_user') AS users,
+          (SELECT reltuples::bigint FROM pg_class WHERE relname = 'star_event')  AS events
+      `,
       prisma.badgeCache.count(),
-      prisma.gitHubUser.groupBy({
-        by: ["location"],
-        _count: { location: true },
-        where: { location: { not: null } },
-        orderBy: { _count: { location: "desc" } },
-        take: 5000,
-      }),
+      prisma.$queryRaw<{ country: string }[]>`
+        SELECT DISTINCT "countryNormalized" AS country
+        FROM github_user
+        WHERE "countryNormalized" IS NOT NULL
+        ORDER BY "countryNormalized"
+      `,
     ]);
 
-    const countrySet = new Set<string>();
-    for (const { location } of locationGroups) {
-      const { country } = parseLocation(location);
-      if (country) countrySet.add(country);
-    }
-
-    const countryList = [...countrySet].sort();
+    const totalUsers = Number(estimates[0]?.users ?? 0);
+    const totalStarEvents = Number(estimates[0]?.events ?? 0);
+    const countryList = distinctCountries.map((r) => r.country);
 
     const data: ExploreSummary = {
       totalUsers,
