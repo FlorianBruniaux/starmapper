@@ -85,8 +85,10 @@ const classifyRoute = (method: string, pathname: string): Tier => {
   // Strict GET — data-rich endpoints with per-user PII (logins, locations, coordinates)
   // Note: /api/repos is intentionally excluded — it only returns aggregate badge stats,
   // no per-user data. moderate-get (rate limit only) is sufficient.
+  // Note: /api/stats/[owner]/[repo] (without /top-users suffix) serves only aggregate data
+  // (country counts, companies, mapping rate) — no individual profiles. moderate-get is fine.
   if (
-    pathname.startsWith("/api/stats/") ||
+    pathname.match(/^\/api\/stats\/[^/]+\/[^/]+\/top-users$/) ||
     pathname === "/api/explore/top" ||
     pathname === "/api/explore/power" ||
     pathname === "/api/explore/user-repos" ||
@@ -153,9 +155,33 @@ const checkReferer = (req: NextRequest): boolean => {
 // Middleware
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// CORS helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Add CORS headers to a response.
+ *  - Public endpoints (badge, map-image): Allow all origins — they're embedded in third-party READMEs.
+ *  - All other API endpoints: Restrict to the app origin only.
+ */
+const withCors = (res: NextResponse, isPublic: boolean): NextResponse => {
+  const origin = isPublic ? "*" : (appOrigin() || "");
+  if (origin) res.headers.set("Access-Control-Allow-Origin", origin);
+  res.headers.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.headers.set("Access-Control-Allow-Headers", "Content-Type, x-gh-token, x-admin-secret");
+  if (!isPublic) res.headers.set("Access-Control-Max-Age", "86400");
+  return res;
+};
+
 export const middleware = async (req: NextRequest): Promise<NextResponse> => {
   const { pathname } = req.nextUrl;
   const method = req.method;
+
+  // ── CORS preflight ────────────────────────────────────────────────────────
+  if (method === "OPTIONS" && pathname.startsWith("/api/")) {
+    const isPublic = pathname.startsWith("/api/badge/") || pathname.startsWith("/api/map-image/");
+    return withCors(new NextResponse(null, { status: 204 }), isPublic);
+  }
 
   // ── Non-API page requests: issue / refresh HMAC session cookie ────────────
   // The cookie is HttpOnly + SameSite=Strict — auto-sent with all same-origin
@@ -182,7 +208,7 @@ export const middleware = async (req: NextRequest): Promise<NextResponse> => {
   const tier = classifyRoute(method, pathname);
 
   // ── Public / exempt ───────────────────────────────────────────────────────
-  if (tier === "public" || tier === "exempt") return NextResponse.next();
+  if (tier === "public" || tier === "exempt") return withCors(NextResponse.next(), tier === "public");
 
   const ip = getIP(req);
 
@@ -202,14 +228,14 @@ export const middleware = async (req: NextRequest): Promise<NextResponse> => {
       const blocked = await rateLimit(limiter, ip);
       if (blocked) return blocked;
     }
-    return NextResponse.next();
+    return withCors(NextResponse.next(), false);
   }
 
   // ── Admin routes: rate limit only ─────────────────────────────────────────
   if (tier === "admin") {
     const blocked = await rateLimit(TIER_LIMITERS["admin"], ip);
     if (blocked) return blocked;
-    return NextResponse.next();
+    return withCors(NextResponse.next(), false);
   }
 
   // ── Stargazer-cache GET: same checks as strict-get, tighter rate limit ───
@@ -225,7 +251,7 @@ export const middleware = async (req: NextRequest): Promise<NextResponse> => {
     }
     const blocked = await rateLimit(TIER_LIMITERS["stargazer-cache-get"], ip);
     if (blocked) return blocked;
-    return NextResponse.next();
+    return withCors(NextResponse.next(), false);
   }
 
   // ── Strict GET: token check + referer check + rate limit ─────────────────
@@ -245,13 +271,13 @@ export const middleware = async (req: NextRequest): Promise<NextResponse> => {
     }
     const blocked = await rateLimit(TIER_LIMITERS["strict-get"], ip);
     if (blocked) return blocked;
-    return NextResponse.next();
+    return withCors(NextResponse.next(), false);
   }
 
   // ── Moderate GET: rate limit only ─────────────────────────────────────────
   const blocked = await rateLimit(TIER_LIMITERS["moderate-get"], ip);
   if (blocked) return blocked;
-  return NextResponse.next();
+  return withCors(NextResponse.next(), false);
 };
 
 export const config = {

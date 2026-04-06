@@ -23,6 +23,10 @@
 # misc
 .DS_Store
 *.pem
+*.key
+*.cert
+*.p12
+*.pfx
 
 # IDE
 .idea/

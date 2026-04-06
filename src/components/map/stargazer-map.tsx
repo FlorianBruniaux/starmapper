@@ -357,12 +357,17 @@ const makeGridCellPopup = (bio: string, login: string): HTMLElement => {
 // Profile fetch dedup — same login = same Promise, avoids duplicate network calls on repeated clicks
 const profileFetchCache = new Map<string, Promise<{ ownedRepos?: { owner: string; repo: string }[] } | null>>();
 
+// Defense-in-depth: strip any HTML tags from user-controlled strings before
+// passing to the DOM. The popup uses .textContent (already XSS-safe), but this
+// ensures any future refactor to .innerHTML can't accidentally introduce XSS.
+const sanitizeText = (s: string): string => String(s).replace(/<[^>]*>/g, "").trim();
+
 const makePopupElement = (props: Record<string, unknown>): HTMLElement => {
-  const login = String(props.login ?? "");
-  const name = props.name ? String(props.name) : login;
-  const location = props.location ? String(props.location) : "";
-  const bio = props.bio ? String(props.bio) : "";
-  const company = props.company ? String(props.company) : "";
+  const login = sanitizeText(String(props.login ?? ""));
+  const name = props.name ? sanitizeText(String(props.name)) : login;
+  const location = props.location ? sanitizeText(String(props.location)) : "";
+  const bio = props.bio ? sanitizeText(String(props.bio)) : "";
+  const company = props.company ? sanitizeText(String(props.company)) : "";
 
   // Synthetic grid cell point — render compact cluster popup
   if (bio.startsWith("__grid__:")) return makeGridCellPopup(bio, login);

@@ -49,7 +49,12 @@ export const POST = async (req: NextRequest) => {
     const key = validateOwnerRepo(owner, repo);
     if (!key) return jsonError("Invalid owner/repo format", 400);
 
-    if (since !== undefined && (typeof since !== "string" || isNaN(new Date(since).getTime()))) {
+    if (cursor !== undefined && (typeof cursor !== "string" || cursor.length > 1000)) {
+      return jsonError("Invalid cursor", 400);
+    }
+
+    const ISO_8601_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z$/;
+    if (since !== undefined && (typeof since !== "string" || !ISO_8601_RE.test(since) || isNaN(new Date(since).getTime()))) {
       return jsonError("Invalid since parameter", 400);
     }
 

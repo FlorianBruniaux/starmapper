@@ -58,4 +58,10 @@ if echo "$CONTENT" | grep -qE '(readFile|open|path\.join)\s*\([^)]*req\.(params|
     echo "SECURITY-GATE: Potential path traversal in $FILE_PATH — validate user input before file ops" >&2; exit 2
 fi
 
+# Sensitive keys in localStorage (regression guard for C2 fix)
+# GitHub PAT and any key containing "token" must use sessionStorage with TTL, not localStorage.
+if echo "$CONTENT" | grep -qE 'localStorage\.(setItem|getItem)\s*\(\s*["'"'"'][^"'"'"']*(token|secret|key)[^"'"'"']*["'"'"']'; then
+    echo "SECURITY-GATE: Sensitive key in localStorage in $FILE_PATH — use sessionStorage with TTL (see token-modal.tsx)" >&2; exit 2
+fi
+
 exit 0

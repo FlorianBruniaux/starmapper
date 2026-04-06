@@ -10,16 +10,50 @@ import { NextRequest, NextResponse } from "next/server";
 export const jsonError = (message: string, status: number) =>
   NextResponse.json({ error: message }, { status });
 
+/** Extract the real client IP — Vercel injects cf-connecting-ip on production. */
+const getIP = (req: NextRequest): string =>
+  req.headers.get("cf-connecting-ip") ??
+  req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+  "unknown";
+
 /**
- * Returns a 401 response if the request is not authenticated as admin,
+ * Returns a 401/403 response if the request is not authenticated as admin,
  * or `null` if authentication passes (caller may proceed).
+ *
+ * Two layers of protection:
+ *  1. IP allowlist — ADMIN_ALLOWED_IPS env var (comma-separated). When set,
+ *     any IP not in the list is blocked before the secret is even checked.
+ *  2. x-admin-secret header — must match ADMIN_SECRET env var.
+ *
+ * Set ADMIN_ALLOWED_IPS to your home/VPN IP in the Vercel dashboard.
+ * Leave unset in local dev (IP check is skipped when the var is absent).
  */
 export const requireAdminAuth = (req: NextRequest): NextResponse | null => {
+  const allowedIPs = process.env.ADMIN_ALLOWED_IPS;
+  if (allowedIPs) {
+    const ip = getIP(req);
+    const allowed = allowedIPs.split(",").map((s) => s.trim()).filter(Boolean);
+    if (!allowed.includes(ip)) {
+      logAdminAudit(req, "denied_ip");
+      return jsonError("Forbidden", 403);
+    }
+  }
+
   const secret = process.env.ADMIN_SECRET;
   if (!secret || req.headers.get("x-admin-secret") !== secret) {
+    logAdminAudit(req, "denied_secret");
     return jsonError("Unauthorized", 401);
   }
+
+  logAdminAudit(req, "allowed");
   return null;
+};
+
+/** Structured audit log for admin endpoint access — captured by Vercel Logs. */
+const logAdminAudit = (req: NextRequest, action: "allowed" | "denied_ip" | "denied_secret"): void => {
+  const ip = getIP(req);
+  const path = new URL(req.url).pathname;
+  console.log(`[ADMIN_AUDIT] ts=${new Date().toISOString()} ip=${ip} path=${path} action=${action}`);
 };
 
 /**

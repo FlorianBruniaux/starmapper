@@ -9,27 +9,43 @@ import { Modal } from "@/components/modal";
 const TOKEN_KEY = "gh_token";
 const USERNAME_KEY = "gh_username";
 
-export const getStoredToken = (): string => {
-  try { return localStorage.getItem(TOKEN_KEY) ?? ""; } catch { return ""; }
+// 30-minute TTL — token is cleared automatically after inactivity.
+// sessionStorage is preferred over localStorage: it never persists across
+// browser sessions and is not accessible by other tabs.
+const TOKEN_TTL_MS = 30 * 60 * 1000;
+
+type StoredValue = { v: string; exp: number };
+
+const readSession = (key: string): string => {
+  try {
+    const raw = sessionStorage.getItem(key);
+    if (!raw) return "";
+    const parsed: StoredValue = JSON.parse(raw);
+    if (parsed.exp < Date.now()) {
+      sessionStorage.removeItem(key);
+      return "";
+    }
+    return parsed.v;
+  } catch { return ""; }
 };
 
-export const setStoredToken = (token: string) => {
+const writeSession = (key: string, value: string) => {
   try {
-    if (token) localStorage.setItem(TOKEN_KEY, token);
-    else localStorage.removeItem(TOKEN_KEY);
+    if (value) {
+      sessionStorage.setItem(key, JSON.stringify({ v: value, exp: Date.now() + TOKEN_TTL_MS }));
+    } else {
+      sessionStorage.removeItem(key);
+    }
   } catch { /* ignore */ }
 };
 
-export const getStoredUsername = (): string => {
-  try { return localStorage.getItem(USERNAME_KEY) ?? ""; } catch { return ""; }
-};
+export const getStoredToken = (): string => readSession(TOKEN_KEY);
 
-export const setStoredUsername = (username: string) => {
-  try {
-    if (username) localStorage.setItem(USERNAME_KEY, username);
-    else localStorage.removeItem(USERNAME_KEY);
-  } catch { /* ignore */ }
-};
+export const setStoredToken = (token: string) => writeSession(TOKEN_KEY, token);
+
+export const getStoredUsername = (): string => readSession(USERNAME_KEY);
+
+export const setStoredUsername = (username: string) => writeSession(USERNAME_KEY, username);
 
 type Props = {
   onClose: () => void;
@@ -71,8 +87,8 @@ export const TokenModal = ({ onClose }: Props) => {
           >
             public-only token
           </a>{" "}
-          is enough. It's stored only in your browser's localStorage, never sent to our servers
-          except as an API relay header.
+          is enough. It's stored only in your browser's session memory (auto-cleared after
+          30 minutes or when you close the tab), never persisted to our servers except as an API relay header.
         </p>
 
         <div>

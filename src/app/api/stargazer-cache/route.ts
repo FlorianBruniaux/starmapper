@@ -7,6 +7,7 @@ import { prisma } from "@/lib/db";
 import { checkDbHealth, DB_CRITICAL_PCT } from "@/lib/db-health";
 import { validateOwnerRepo } from "@/lib/api-validation";
 import { jsonError } from "@/lib/api-helpers";
+import { verifyToken, COOKIE_NAME } from "@/lib/api-token";
 
 const MAX_CACHEABLE_STARS = 500_000;
 
@@ -23,6 +24,17 @@ export const POST = async (req: NextRequest) => {
     // Freshness check — rejects requests older than 5 minutes (anti-replay)
     if (typeof ts !== "number" || Math.abs(Date.now() - ts) > 5 * 60_000) {
       return jsonError("expired_request", 400);
+    }
+
+    // Session token check — only browsers that loaded a StarMapper page can write the cache.
+    // The sm-token cookie is issued by the middleware on every page load (HttpOnly, SameSite=Strict).
+    // Skip when SM_TOKEN_SECRET is not configured (local dev without env vars).
+    const SM_SECRET = process.env.SM_TOKEN_SECRET ?? "";
+    if (SM_SECRET) {
+      const smToken = req.cookies.get(COOKIE_NAME)?.value;
+      if (!await verifyToken(smToken, SM_SECRET)) {
+        return jsonError("forbidden", 403);
+      }
     }
 
     // Run plausibility check and DB health check in parallel (independent queries).
