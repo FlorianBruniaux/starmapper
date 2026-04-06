@@ -6,6 +6,10 @@ import { prisma } from "@/lib/db";
 import { requireAdminAuth, jsonError } from "@/lib/api-helpers";
 
 export const POST = async (req: NextRequest) => {
+  // Destructive operation — local dev only. Blocked in production.
+  // Run via script instead: DATABASE_URL=<prod_url> npx tsx scripts/clean-geocache-garbage.ts
+  if (process.env.NODE_ENV === "production") return NextResponse.json({ error: "not_found" }, { status: 404 });
+
   const authError = requireAdminAuth(req);
   if (authError) return authError;
 
