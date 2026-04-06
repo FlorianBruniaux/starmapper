@@ -398,8 +398,8 @@ export default function MapPage({
         setTotal(chunk!.totalCount);
         const newPts = chunk!.points;
         const newUnmapped = chunk!.unmapped;
-        allPoints = [...allPoints, ...newPts];
-        allUnmapped = [...allUnmapped, ...newUnmapped];
+        allPoints.push(...newPts);
+        allUnmapped.push(...newUnmapped);
         dispatch({ type: "chunk", points: allPoints, unmapped: allUnmapped });
         if (!chunk!.nextCursor) break;
         cursor = chunk!.nextCursor;
@@ -502,8 +502,8 @@ export default function MapPage({
         if (!newestStarredAt && chunk!.latestStarredAt) newestStarredAt = chunk!.latestStarredAt;
         latestTotalCount = chunk!.totalCount;
         setTotal(chunk!.totalCount);
-        newPoints = [...newPoints, ...chunk!.points];
-        newUnmapped = [...newUnmapped, ...chunk!.unmapped];
+        newPoints.push(...chunk!.points);
+        newUnmapped.push(...chunk!.unmapped);
         if (!chunk!.nextCursor) break;
         cursor = chunk!.nextCursor;
       }
@@ -574,6 +574,7 @@ export default function MapPage({
     setCompareStatus("loading");
     let cursor: string | null = null;
     const allPts: StargazerPoint[] = [];
+    let lastCompareUpdate = 0;
     try {
       while (true) {
         const res = await fetch("/api/chunk", {
@@ -584,7 +585,12 @@ export default function MapPage({
         if (!res.ok) break;
         const chunk = await res.json() as ChunkResponse;
         allPts.push(...chunk.points);
-        setComparePoints([...allPts]);
+        // Throttle: update compare state at most once every 2s during scan.
+        const now = Date.now();
+        if (now - lastCompareUpdate >= 2000) {
+          setComparePoints([...allPts]);
+          lastCompareUpdate = now;
+        }
         if (!chunk.nextCursor) break;
         cursor = chunk.nextCursor;
       }
@@ -594,6 +600,8 @@ export default function MapPage({
       compareRunningRef.current = false;
       return;
     }
+    // Always apply final state at end of scan
+    setComparePoints([...allPts]);
     setCompareStatus("done");
     compareRunningRef.current = false;
   }, [compareOwner, compareRepo, ghHeaders]);

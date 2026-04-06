@@ -5,13 +5,14 @@
 
 import { useCallback, useEffect, useRef, useState, useMemo, memo } from "react";
 import maplibregl from "maplibre-gl";
+import "maplibre-gl/dist/maplibre-gl.css";
 import type { StyleSpecification } from "maplibre-gl";
 import type { StargazerPoint } from "@/app/api/chunk/route";
 
 type Props = {
   points: StargazerPoint[];
   comparePoints?: StargazerPoint[];
-  flyTarget?: { lat: number; lng: number; login: string } | null;
+  flyTarget?: { lat: number; lng: number; login: string; zoom?: number } | null;
   onFlyDone?: () => void;
   onReady?: (controls: {
     captureCanvas: () => Promise<string | null>;
@@ -34,6 +35,7 @@ const fetchAndPatchStyle = async (url: string): Promise<string | StyleSpecificat
     const res = await fetch(url);
     if (!res.ok) return url;
     const json = await res.json() as StyleSpecification;
+    if (!json || typeof json !== "object") return url;
     if (!json.projection) json.projection = { type: "mercator" };
     if (json.glyphs && JAWG_TOKEN) {
       json.glyphs = json.glyphs.includes("access-token")
@@ -479,9 +481,15 @@ const StargazerMapInner = ({ points, comparePoints, flyTarget, onFlyDone, onRead
   const clusterRadiusRef = useRef(clusterRadius ?? CLUSTER_RADIUS.default);
   const hasInitializedRef = useRef(false);
   const appliedStyleUrlRef = useRef<string>("");
+  // Throttle refs: prevent MapLibre setData from firing on every chunk during progressive loading.
+  // Leading call fires immediately; subsequent calls within the window are batched (trailing wins).
+  type PendingData = { main: ReturnType<typeof buildGeoJSON>; heat: ReturnType<typeof buildHeatGeoJSON> };
+  const setDataTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingSetDataRef = useRef<PendingData | null>(null);
   const [mapReady, setMapReady] = useState(false);
   const geoJSON = useMemo(() => buildGeoJSON(points), [points]);
   const heatGeoJSON = useMemo(() => buildHeatGeoJSON(points), [points]);
+  const compareGeoJSON = useMemo(() => buildGeoJSON(comparePoints ?? []), [comparePoints]);
 
   useEffect(() => {
     pointsRef.current = points;
@@ -662,22 +670,41 @@ const StargazerMapInner = ({ points, comparePoints, flyTarget, onFlyDone, onRead
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !mapReady) return;
-    const source = map.getSource("stargazers") as maplibregl.GeoJSONSource | undefined;
-    if (source) source.setData(geoJSON);
-    const heatSrc = map.getSource("stargazers-heat") as maplibregl.GeoJSONSource | undefined;
-    if (heatSrc) heatSrc.setData(heatGeoJSON);
+
+    const applyData = (main: ReturnType<typeof buildGeoJSON>, heat: ReturnType<typeof buildHeatGeoJSON>) => {
+      const src = map.getSource("stargazers") as maplibregl.GeoJSONSource | undefined;
+      if (src) src.setData(main);
+      const hSrc = map.getSource("stargazers-heat") as maplibregl.GeoJSONSource | undefined;
+      if (hSrc) hSrc.setData(heat);
+    };
+
+    // Throttle: fire immediately on leading edge, batch trailing calls within a 2s window.
+    // Prevents MapLibre from rebuilding the clustering index on every chunk during a scan.
+    if (setDataTimerRef.current === null) {
+      applyData(geoJSON, heatGeoJSON);
+      setDataTimerRef.current = setTimeout(() => {
+        setDataTimerRef.current = null;
+        const pending = pendingSetDataRef.current;
+        if (pending) {
+          pendingSetDataRef.current = null;
+          applyData(pending.main, pending.heat);
+        }
+      }, 2000);
+    } else {
+      pendingSetDataRef.current = { main: geoJSON, heat: heatGeoJSON };
+    }
   }, [geoJSON, heatGeoJSON, mapReady]);
 
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !mapReady) return;
     const src = map.getSource("stargazers-compare") as maplibregl.GeoJSONSource | undefined;
-    if (src) src.setData(buildGeoJSON(comparePoints ?? []));
-  }, [comparePoints, mapReady]);
+    if (src) src.setData(compareGeoJSON);
+  }, [compareGeoJSON, mapReady]);
 
   useEffect(() => {
     if (!flyTarget || !mapRef.current || !mapReady) return;
-    mapRef.current.flyTo({ center: [flyTarget.lng, flyTarget.lat], zoom: 12, duration: 1200 });
+    mapRef.current.flyTo({ center: [flyTarget.lng, flyTarget.lat], zoom: flyTarget.zoom ?? 12, duration: 1200 });
     onFlyDone?.();
   }, [flyTarget, onFlyDone, mapReady]);
 

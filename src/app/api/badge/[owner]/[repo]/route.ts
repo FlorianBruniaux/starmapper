@@ -75,7 +75,7 @@ export const GET = async (
   return new NextResponse(makeSvg(label, value), {
     headers: {
       "Content-Type": "image/svg+xml",
-      "Cache-Control": "public, max-age=21600, s-maxage=21600",
+      "Cache-Control": "public, max-age=21600, s-maxage=21600, stale-while-revalidate=3600",
     },
   });
 };

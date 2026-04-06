@@ -60,8 +60,8 @@ export const POST = async (req: NextRequest) => {
     const token = extractGhToken(req);
     if (!token) return jsonError("github_token_required", 401);
 
-    // Fetch with concurrency 10
-    const CONCURRENCY = 10;
+    // Fetch with concurrency 25 (GitHub REST rate limit is 5000/hr — 200 users is fine)
+    const CONCURRENCY = 25;
     const results: UserDetail[] = [];
     for (let i = 0; i < logins.length; i += CONCURRENCY) {
       const batch = logins.slice(i, i + CONCURRENCY);

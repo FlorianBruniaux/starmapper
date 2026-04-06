@@ -129,7 +129,7 @@ const callJawg = async (
 const callNominatim = async (location: string): Promise<[number, number] | null> => {
   try {
     const url = `${NOMINATIM_GEOCODING}?q=${encodeURIComponent(location)}&format=json&limit=1`;
-    const res = await fetch(url, {
+    const res = await fetchWithTimeout(url, 5000, {
       headers: { "User-Agent": `StarMapper/1.0 (${process.env.NEXT_PUBLIC_APP_URL ?? "starmapper.bruniaux.com"})` },
     });
     if (!res.ok) return null;

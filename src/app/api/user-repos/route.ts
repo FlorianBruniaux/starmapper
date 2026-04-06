@@ -67,10 +67,13 @@ export const GET = async (req: NextRequest) => {
 
   try {
     const [userRes, page1Res] = await Promise.all([
-      fetch(`https://api.github.com/users/${username}`, { headers: ghHeaders }),
+      fetch(`https://api.github.com/users/${username}`, {
+        headers: ghHeaders,
+        next: { revalidate: 120 },
+      }),
       fetch(
         `https://api.github.com/users/${username}/repos?type=public&sort=stars&direction=desc&per_page=100&page=1`,
-        { headers: ghHeaders },
+        { headers: ghHeaders, next: { revalidate: 120 } },
       ),
     ]);
 
@@ -107,7 +110,10 @@ export const GET = async (req: NextRequest) => {
       for (const page of morePages) repos = [...repos, ...page.map(mapRepo)];
     }
 
-    return NextResponse.json({ user, repos });
+    return NextResponse.json(
+      { user, repos },
+      { headers: { "Cache-Control": "public, s-maxage=120, stale-while-revalidate=300" } },
+    );
   } catch {
     return jsonError("internal", 500);
   }

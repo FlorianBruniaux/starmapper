@@ -31,7 +31,7 @@ export const GET = async (req: NextRequest) => {
   if (skip > MAX_SKIP) return jsonError("invalid_params", 400);
 
   const where = {
-    ...(country ? { location: { contains: country, mode: "insensitive" as const } } : {}),
+    ...(country ? { countryNormalized: { equals: country, mode: "insensitive" as const } } : {}),
     ...(search  ? {
       OR: [
         { login: { contains: search, mode: "insensitive" as const } },

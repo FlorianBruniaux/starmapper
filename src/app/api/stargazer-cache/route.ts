@@ -25,12 +25,17 @@ export const POST = async (req: NextRequest) => {
       return jsonError("expired_request", 400);
     }
 
+    // Run plausibility check and DB health check in parallel (independent queries).
+    const [existingBadge, health] = await Promise.all([
+      prisma.badgeCache.findUnique({
+        where: { owner_repo: key },
+        select: { totalCount: true },
+      }),
+      checkDbHealth(),
+    ]);
+
     // Plausibility check — if badge data exists, totalCount must be within ±20%
     // Prevents overwriting a 50k-star repo cache with fabricated data
-    const existingBadge = await prisma.badgeCache.findUnique({
-      where: { owner_repo: key },
-      select: { totalCount: true },
-    });
     if (existingBadge && existingBadge.totalCount > 0) {
       const ratio = totalCount / existingBadge.totalCount;
       if (ratio < 0.8 || ratio > 1.2) {
@@ -62,7 +67,6 @@ export const POST = async (req: NextRequest) => {
       return jsonError("invalid_params", 400);
     }
 
-    const health = await checkDbHealth();
     if (health.ok && health.usagePct >= DB_CRITICAL_PCT)
       return jsonError("storage_full", 507);
 

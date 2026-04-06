@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { fetchStargazersPage, GitHubRateLimitError } from "@/lib/github";
 import { geocodeBatch } from "@/lib/geocoder";
 import { checkDbHealth, DB_WARN_PCT } from "@/lib/db-health";
@@ -103,55 +103,60 @@ export const POST = async (req: NextRequest) => {
     // First stargazer has the most recent starredAt (DESC order)
     const latestStarredAt = page.stargazers[0]?.starredAt ?? null;
 
-    // Fire-and-forget: persist users + star events to DB for cross-repo analytics.
-    // Never awaited — does not affect chunk response time.
+    // Persist users + star events to DB for cross-repo analytics after the response is sent.
+    // `after()` keeps the Lambda alive until the work completes, preventing silent data loss.
     const ownerKey = key.owner;
     const repoKey = key.repo;
-    checkDbHealth().then((health) => {
-      const dbWarn = health.ok && health.usagePct >= DB_WARN_PCT;
-      if (dbWarn) console.warn(`[chunk] DB storage at ${health.usagePct}%`);
+    after(async () => {
+      try {
+        const health = await checkDbHealth();
+        const dbWarn = health.ok && health.usagePct >= DB_WARN_PCT;
+        if (dbWarn) console.warn(`[chunk] DB storage at ${health.usagePct}%`);
 
-      // Only upsert users that are new, changed, or not yet enriched with v0.3.0 data
-      const sgByLogin = new Map(page.stargazers.map((sg) => [sg.login, sg]));
-      const pointsToWrite = points.filter((p) => {
-        const known = knownUsers.get(p.login);
-        if (!known) return true; // new user
-        if (known.dataVersion < 1) return true; // pre-v0.3.0 user — force re-write to enrich
-        return known.location !== (p.location ?? null) || known.lat !== p.lat || known.lng !== p.lng;
-      });
-      const usersToWrite: UserWritePayload[] = pointsToWrite
-        .map((p) => {
-          const sg = sgByLogin.get(p.login);
-          if (!sg) return null;
-          const { country, city } = parseLocation(p.location);
-          return {
-            login: p.login,
-            name: p.name,
-            company: p.company,
-            location: p.location,
-            followers: sg.followers,
-            following: sg.following,
-            publicRepos: sg.publicRepos,
-            accountCreatedAt: sg.accountCreatedAt,
-            lat: p.lat,
-            lng: p.lng,
-            linkedinUrl: sg.linkedinUrl,
-            countryNormalized: country,
-            cityNormalized: city,
-          };
-        })
-        .filter((u): u is UserWritePayload => u !== null);
-      if (usersToWrite.length > 0) {
-        const writtenLogins = new Set(usersToWrite.map((u) => u.login));
-        const newStarEvents = page.stargazers
-          .filter((sg) => writtenLogins.has(sg.login))
-          .map((sg) => ({ login: sg.login, owner: ownerKey, repo: repoKey, starredAt: sg.starredAt }));
-        Promise.all([
-          bulkUpsertUsers(usersToWrite, health),
-          newStarEvents.length > 0 ? bulkUpsertStarEvents(newStarEvents, health) : Promise.resolve(true),
-        ]).catch(console.error);
+        // Only upsert users that are new, changed, or not yet enriched with v0.3.0 data
+        const sgByLogin = new Map(page.stargazers.map((sg) => [sg.login, sg]));
+        const pointsToWrite = points.filter((p) => {
+          const known = knownUsers.get(p.login);
+          if (!known) return true; // new user
+          if (known.dataVersion < 1) return true; // pre-v0.3.0 user — force re-write to enrich
+          return known.location !== (p.location ?? null) || known.lat !== p.lat || known.lng !== p.lng;
+        });
+        const usersToWrite: UserWritePayload[] = pointsToWrite
+          .map((p) => {
+            const sg = sgByLogin.get(p.login);
+            if (!sg) return null;
+            const { country, city } = parseLocation(p.location);
+            return {
+              login: p.login,
+              name: p.name,
+              company: p.company,
+              location: p.location,
+              followers: sg.followers,
+              following: sg.following,
+              publicRepos: sg.publicRepos,
+              accountCreatedAt: sg.accountCreatedAt,
+              lat: p.lat,
+              lng: p.lng,
+              linkedinUrl: sg.linkedinUrl,
+              countryNormalized: country,
+              cityNormalized: city,
+            };
+          })
+          .filter((u): u is UserWritePayload => u !== null);
+        if (usersToWrite.length > 0) {
+          const writtenLogins = new Set(usersToWrite.map((u) => u.login));
+          const newStarEvents = page.stargazers
+            .filter((sg) => writtenLogins.has(sg.login))
+            .map((sg) => ({ login: sg.login, owner: ownerKey, repo: repoKey, starredAt: sg.starredAt }));
+          await Promise.all([
+            bulkUpsertUsers(usersToWrite, health),
+            newStarEvents.length > 0 ? bulkUpsertStarEvents(newStarEvents, health) : Promise.resolve(true),
+          ]);
+        }
+      } catch (err) {
+        console.error("[chunk] background write failed:", err);
       }
-    }).catch(console.error);
+    });
 
     return NextResponse.json({
       points,

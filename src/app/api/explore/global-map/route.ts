@@ -18,20 +18,9 @@ export type GlobalMapData = {
   totalMapped: number;
 };
 
-// Refresh the materialized view at most once every 30 minutes (fire-and-forget).
-// CONCURRENTLY does not block reads — the old data stays visible until refresh completes.
-let _lastGridRefresh = 0;
-const GRID_REFRESH_TTL_MS = 30 * 60 * 1000;
-const maybeRefreshGridMv = () => {
-  const now = Date.now();
-  if (now - _lastGridRefresh < GRID_REFRESH_TTL_MS) return;
-  _lastGridRefresh = now;
-  prisma.$executeRaw`REFRESH MATERIALIZED VIEW CONCURRENTLY github_user_grid_mv`
-    .catch((err) => logError("global-map/refresh-mv", err));
-};
-
+// MV refresh is handled by Vercel Cron every 2h via /api/admin/refresh-grid-mv.
+// This route is a pure read — no refresh triggered here.
 export const GET = async () => {
-  void maybeRefreshGridMv();
   try {
     const rows = await prisma.$queryRaw<
       { lat: number; lng: number; count: number; total_followers: number; top_login: string }[]

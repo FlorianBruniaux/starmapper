@@ -38,7 +38,7 @@ export const GET = async (req: NextRequest) => {
       _count: { company: true },
       where: {
         company: { not: null },
-        ...(country ? { location: { contains: country, mode: "insensitive" as const } } : {}),
+        ...(country ? { countryNormalized: { equals: country, mode: "insensitive" as const } } : {}),
       },
       orderBy: { _count: { company: "desc" } },
       take: 1000,
