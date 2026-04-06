@@ -536,11 +536,9 @@ export default function ExplorePage() {
             const data = await res.json() as GeocodeResponse;
             setNearbyInput(data.displayName);
             setNearbyCoords({ lat: data.lat, lng: data.lng, label: data.displayName });
-            setNearbyFlyTarget({ lat: data.lat, lng: data.lng, login: "__nearby_center__" });
           } else {
             setNearbyCoords({ lat, lng, label: `${lat.toFixed(2)}, ${lng.toFixed(2)}` });
             setNearbyInput(`${lat.toFixed(4)}, ${lng.toFixed(4)}`);
-            setNearbyFlyTarget({ lat, lng, login: "__nearby_center__" });
           }
         } catch {
           setNearbyError("Could not determine your location name.");
@@ -558,7 +556,6 @@ export default function ExplorePage() {
   const handleNearbySelect = useCallback((item: AutocompleteItem) => {
     setNearbyInput(item.label);
     setNearbyCoords({ lat: item.lat, lng: item.lng, label: item.label });
-    setNearbyFlyTarget({ lat: item.lat, lng: item.lng, login: "__nearby_center__" });
     setNearbyError(null);
   }, []);
 
@@ -590,7 +587,6 @@ export default function ExplorePage() {
       const data = await res.json() as GeocodeResponse;
       setNearbyCoords({ lat: data.lat, lng: data.lng, label: data.displayName });
       setNearbyInput(data.displayName);
-      setNearbyFlyTarget({ lat: data.lat, lng: data.lng, login: "__nearby_center__" });
     } catch {
       setNearbyError("Search failed. Please try again.");
     } finally {
