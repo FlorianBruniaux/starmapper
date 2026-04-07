@@ -49,23 +49,29 @@ const normalizeGeometry = (geom: GeoJSON.Geometry): GeoJSON.Geometry => {
   return geom;
 };
 
-/** Build a GeoJSON FeatureCollection from world-atlas, annotated with dev counts. */
+/**
+ * Pre-compute TopoJSON → GeoJSON + antimeridian normalization once at module level.
+ * The topology never changes — only the per-country intensities vary.
+ */
+const BASE_FEATURES = feature(
+  topoData,
+  topoData.objects.countries as GeometryCollection,
+).features.map((f) => ({
+  ...f,
+  geometry: normalizeGeometry(f.geometry),
+}));
+
+/** Build a GeoJSON FeatureCollection annotated with dev counts. Geometry is pre-computed. */
 const buildChoroplethGeoJSON = (countryData: [string, number][]) => {
   const countMap = new Map(countryData.map(([name, n]) => [toGeoName(name), n]));
   const maxCount = Math.max(...countryData.map(([, n]) => n), 1);
 
-  const geoJson = feature(
-    topoData,
-    topoData.objects.countries as GeometryCollection,
-  );
-
   return {
-    ...geoJson,
-    features: geoJson.features.map((f) => {
+    type: "FeatureCollection" as const,
+    features: BASE_FEATURES.map((f) => {
       const count = countMap.get((f.properties as { name: string } | null)?.name ?? "") ?? 0;
       return {
         ...f,
-        geometry: normalizeGeometry(f.geometry),
         properties: {
           ...f.properties,
           count,

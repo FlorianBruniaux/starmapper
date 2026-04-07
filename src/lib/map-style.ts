@@ -5,6 +5,9 @@ import type { StyleSpecification } from "maplibre-gl";
 
 const JAWG_TOKEN = process.env.NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN ?? "";
 
+/** In-memory cache so re-inits (theme switch, Nearby↔choropleth) skip the Jawg round-trip. */
+const styleCache = new Map<string, string | StyleSpecification>();
+
 /**
  * Fetch a Jawg style URL and apply StarMapper-specific patches:
  * - Adds `projection: { type: "mercator" }` if missing (prevents MapLibre crash)
@@ -17,6 +20,9 @@ const JAWG_TOKEN = process.env.NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN ?? "";
  * so MapLibre can still attempt to load the style on its own.
  */
 export const fetchAndPatchStyle = async (url: string): Promise<string | StyleSpecification> => {
+  const cached = styleCache.get(url);
+  if (cached !== undefined) return cached;
+
   try {
     const res = await fetch(url);
     if (!res.ok) return url;
@@ -45,8 +51,10 @@ export const fetchAndPatchStyle = async (url: string): Promise<string | StyleSpe
     });
     const fixed = JSON.parse(JSON.stringify(json).replace(/"name:fr"/g, '"name:en"')) as StyleSpecification;
     Object.assign(json, fixed);
+    styleCache.set(url, json);
     return json;
   } catch {
+    styleCache.set(url, url);
     return url;
   }
 };

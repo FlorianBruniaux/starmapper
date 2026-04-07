@@ -378,6 +378,7 @@ export default function ExplorePage() {
   const [mapMode, setMapMode]             = useState<"choropleth" | "heatmap">("choropleth");
   const [mapEverOpened, setMapEverOpened] = useState(false);
   const [heatmapEverOpened, setHeatmapEverOpened] = useState(false);
+  const mapColumnRef = useRef<HTMLDivElement>(null);
 
   // Nearby tab state
   const [nearbyInput, setNearbyInput]     = useState("");
@@ -396,8 +397,17 @@ export default function ExplorePage() {
       .finally(() => setSummaryLoading(false));
   }, []);
 
+  // On desktop (lg+) the map column is immediately visible — init right away.
+  // On mobile it sits below the fold — use IntersectionObserver to defer until visible.
   useEffect(() => {
-    setMapEverOpened(true);
+    const el = mapColumnRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setMapEverOpened(true); observer.disconnect(); } },
+      { threshold: 0.1 },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
   }, []);
 
   // Debounce search input → search
@@ -1074,7 +1084,7 @@ export default function ExplorePage() {
           </div>
 
           {/* ── RIGHT COLUMN: persistent map ── */}
-          <div className="flex-1 min-w-0">
+          <div ref={mapColumnRef} className="flex-1 min-w-0">
             <div className="bg-surface border border-border rounded-xl overflow-hidden lg:sticky lg:top-[72px]">
 
               {/* Map header */}
