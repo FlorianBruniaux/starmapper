@@ -18,6 +18,7 @@
     "backfill:linkedin": "tsx scripts/backfill-linkedin.ts",
     "backfill:linkedin:prod": "tsx scripts/backfill-linkedin.ts --prod",
     "backfill:linkedin:dry": "tsx scripts/backfill-linkedin.ts --dry-run",
+    "fix:country-linkedin": "sh -c 'set -a && . .env.local && set +a && psql \"$DATABASE_URL\" -f scripts/fix-country-normalized-linkedin.sql'",
     "seed:geonames": "tsx scripts/seed-geocache-geonames.ts",
     "seed:geonames:dry": "tsx scripts/seed-geocache-geonames.ts --dry-run",
     "batch:scan": "tsx scripts/batch-scan.ts",
