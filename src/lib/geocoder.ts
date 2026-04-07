@@ -145,6 +145,68 @@ const callNominatim = async (location: string): Promise<[number, number] | null>
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+// @-handle strings like "@paris" or "@berlin" — strip @ and geocode the remainder.
+// Caches result under the original key (e.g. "@paris" → same coords as "paris").
+const _resolveAtHandle = async (
+  location: string,
+  originalKey: string,
+): Promise<[number, number] | null> => {
+  const stripped = location.replace(/^@/, "").trim();
+  if (!stripped || !isGeocodeableLocation(stripped)) {
+    await cacheWrite(originalKey, null, null);
+    return null;
+  }
+  const strippedKey = stripped.toLowerCase();
+  const cached = await cacheRead(strippedKey);
+  if (cached !== undefined && cached !== null) {
+    const coords =
+      cached.lat !== null && cached.lng !== null
+        ? ([cached.lat, cached.lng] as [number, number])
+        : null;
+    await cacheWrite(originalKey, coords?.[0] ?? null, coords?.[1] ?? null);
+    return coords;
+  }
+  const result = await _resolveAndCache(stripped, strippedKey);
+  await cacheWrite(originalKey, result?.[0] ?? null, result?.[1] ?? null);
+  return result;
+};
+
+// Multi-location strings like "DEL/BLR/SF" or "NYC / LON" — try each part in order.
+// Caches the full original key once a valid result is found.
+const _resolveMultiLocation = async (
+  location: string,
+  originalKey: string,
+): Promise<[number, number] | null> => {
+  const parts = location
+    .split("/")
+    .map((s) => s.trim())
+    .filter((s) => isGeocodeableLocation(s));
+
+  for (const part of parts) {
+    const partKey = part.toLowerCase();
+    // Check if this part is already cached
+    const cached = await cacheRead(partKey);
+    if (cached !== undefined && cached !== null) {
+      if (cached.lat !== null && cached.lng !== null) {
+        const coords: [number, number] = [cached.lat, cached.lng];
+        await cacheWrite(originalKey, coords[0], coords[1]);
+        return coords;
+      }
+      // cached as null = "not found" → try next part
+      continue;
+    }
+    // Not cached — try geocoding this part
+    const result = await _resolveAndCache(part, partKey);
+    if (result) {
+      await cacheWrite(originalKey, result[0], result[1]);
+      return result;
+    }
+  }
+
+  await cacheWrite(originalKey, null, null);
+  return null;
+};
+
 // Internal: call external API (Jawg → Mapbox → Nominatim) + write cache.
 // Used by both geocode() and geocodeBatch() to avoid double cache reads.
 const _resolveAndCache = async (
@@ -199,12 +261,20 @@ const isGeocodeableLocation = (location: string): boolean => {
   if (s.startsWith(".")) return false;
   // Reject URL-like strings: https://, .hack//metaverse
   if (s.includes("://") || s.includes("//")) return false;
+  // Reject filesystem paths: /dev/null, /home/user, /etc/nginx
+  if (/^\/[a-zA-Z]/.test(s)) return false;
   // Reject bare phone prefixes: +62, +233 (digits only after +)
   if (/^\+\d[\d\s]*$/.test(s)) return false;
   // Reject hashtags, shell vars, code artifacts: #pnw, $home, <html>, [object Object], {{}}, \f.x
   if (/^[#$<>\[{\\!"]/.test(s)) return false;
+  // Reject IP addresses and network strings: 127.0.0.1, 0.0.0.0, 10.0.2.2/24
+  if (/^\d{1,3}\.\d{1,3}(\.\d{1,3}){0,2}(\/\d+)?$/.test(s)) return false;
+  // Reject pure timezone codes: UTC, GMT+5, CET, IST, PST, etc. (no geographic context)
+  if (/^(utc|gmt|cet|cest|eet|eest|ist|est|pst|mst|cst|cdt|edt|pdt|mdt|jst|bst|aest|nzst|wat|cat|eat|wet|art|nst|ast|hst|akst|sgt|hkt|ict|wib|wit|wita)([+-]\d{1,2}(:\d{2})?)?$/i.test(s)) return false;
+  // Reject fictional/tech-humor locations that geocode to random real places
+  if (/^(the internet|cyberspace|the matrix|matrix|mordor|narnia|hogwarts|middle.?earth|the cloud|digital nomad|planet earth|the void|null island|the moon|mars|universe)$/i.test(s)) return false;
   // Common GitHub placeholder values
-  if (/^\(?(null|undefined|none|n\/a|na|tbd|remote|anywhere|earth|world|internet|online|everywhere)\)?$/i.test(s)) return false;
+  if (/^\(?(null|undefined|none|n\/a|na|tbd|remote|anywhere|earth|world|internet|online|everywhere|localhost)\)?$/i.test(s)) return false;
   return true;
 };
 
@@ -216,6 +286,15 @@ export async function geocode(location: string): Promise<[number, number] | null
   const cached = await cacheRead(key);
   if (cached !== undefined && cached !== null) {
     return cached.lat !== null && cached.lng !== null ? [cached.lat, cached.lng] : null;
+  }
+
+  // @-handle strings like "@paris" — strip @ and geocode remainder
+  if (location.trimStart().startsWith("@")) {
+    return _resolveAtHandle(location.trimStart(), key);
+  }
+  // Multi-city strings like "DEL/BLR/SF" — try each part individually
+  if (location.includes("/")) {
+    return _resolveMultiLocation(location, key);
   }
 
   return _resolveAndCache(location, key);
@@ -246,21 +325,25 @@ export async function geocodeBatch(
   const missResults: ([number, number] | null)[] = [];
   const useParallel = isJawgAvailable() || isGeoapifyAvailable();
 
+  const resolveLocation = (loc: string): Promise<[number, number] | null> => {
+    const key = loc.trim().toLowerCase();
+    if (loc.trimStart().startsWith("@")) return _resolveAtHandle(loc.trimStart(), key);
+    if (loc.includes("/")) return _resolveMultiLocation(loc, key);
+    return _resolveAndCache(loc, key);
+  };
+
   if (useParallel) {
     // Jawg or Geoapify available: batch of 5 in parallel (no Nominatim rate limit concern)
     const CONCURRENCY = 5;
     for (let i = 0; i < misses.length; i += CONCURRENCY) {
       const batch = misses.slice(i, i + CONCURRENCY);
-      const results = await Promise.all(
-        batch.map((loc) => _resolveAndCache(loc, loc.trim().toLowerCase())),
-      );
+      const results = await Promise.all(batch.map(resolveLocation));
       missResults.push(...results);
     }
   } else {
     // Both Jawg and Mapbox down: sequential Nominatim with 1100ms delay (polite use policy)
     for (let i = 0; i < misses.length; i++) {
-      const loc = misses[i];
-      const result = await _resolveAndCache(loc, loc.trim().toLowerCase());
+      const result = await resolveLocation(misses[i]);
       missResults.push(result);
       if (i < misses.length - 1) await sleep(300);
     }

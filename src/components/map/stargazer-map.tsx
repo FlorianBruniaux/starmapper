@@ -446,6 +446,41 @@ const makePopupElement = (props: Record<string, unknown>): HTMLElement => {
       .then((r) => r.ok ? r.json() : null)
       .catch(() => null));
   }
+  // "Wrong location?" button — only shown when user has a location string
+  if (location) {
+    const reportBtn = document.createElement("button");
+    reportBtn.style.cssText =
+      "display:block;margin-top:8px;font-size:11px;color:var(--color-muted-subtle);background:none;border:none;padding:0;cursor:pointer;text-align:left;text-decoration:underline;text-underline-offset:2px";
+    reportBtn.textContent = "Wrong location?";
+    reportBtn.addEventListener("click", () => {
+      reportBtn.disabled = true;
+      reportBtn.textContent = "Recalculating…";
+      fetch("/api/recalculate-location", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ login }),
+      })
+        .then((r) => r.json())
+        .then((data: { lat?: number; lng?: number; unmapped?: boolean; error?: string }) => {
+          if (data.error) {
+            reportBtn.textContent = "Error — try again";
+            reportBtn.disabled = false;
+          } else if (data.unmapped) {
+            reportBtn.textContent = "No location found";
+            reportBtn.style.color = "var(--color-muted)";
+          } else {
+            reportBtn.textContent = `✓ Recalculated (${data.lat?.toFixed(2)}, ${data.lng?.toFixed(2)})`;
+            reportBtn.style.color = "var(--color-accent-green, #3fb950)";
+          }
+        })
+        .catch(() => {
+          reportBtn.textContent = "Error — try again";
+          reportBtn.disabled = false;
+        });
+    });
+    el.appendChild(reportBtn);
+  }
+
   profileFetchCache.get(login)!
     .then((data: { ownedRepos?: { owner: string; repo: string }[] } | null) => {
       const repos = data?.ownedRepos ?? [];
