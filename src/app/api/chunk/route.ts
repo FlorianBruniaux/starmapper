@@ -49,7 +49,7 @@ export const POST = async (req: NextRequest) => {
     const key = validateOwnerRepo(owner, repo);
     if (!key) return jsonError("Invalid owner/repo format", 400);
 
-    if (cursor !== undefined && (typeof cursor !== "string" || cursor.length > 1000)) {
+    if (cursor !== undefined && cursor !== null && (typeof cursor !== "string" || cursor.length > 1000)) {
       return jsonError("Invalid cursor", 400);
     }
 
