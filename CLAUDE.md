@@ -253,6 +253,30 @@ Never send raw `points` arrays for large repos — the JSON payload will exceed 
 
 `src/lib/user-cache.ts` calls `checkDbHealth()` before every write. If the DB is unavailable or storage exceeds 95% of the 512MB Neon free limit, writes are silently skipped. This is intentional — user-level cache is non-critical.
 
+### Materialized Views — One-Time Setup Required
+
+Two MVs are not managed by Prisma and must be created manually on any new DB instance:
+
+**`github_user_grid_mv`** — heatmap grid (lat/lng buckets + follower aggregation):
+```sql
+-- see scripts/create-grid-mv.sql if it exists, or check git history
+```
+
+**`country_stats_mv`** — country aggregation (replaces 9s full-scan on 4.3M rows):
+```sql
+CREATE MATERIALIZED VIEW country_stats_mv AS
+  SELECT "countryNormalized" AS country, COUNT(*) AS cnt
+  FROM github_user
+  WHERE "countryNormalized" IS NOT NULL
+    AND "countryNormalized" NOT LIKE 'http%'
+  GROUP BY "countryNormalized"
+  ORDER BY cnt DESC;
+
+CREATE UNIQUE INDEX country_stats_mv_country_idx ON country_stats_mv (country);
+```
+
+Both are refreshed daily via `/api/admin/refresh-grid-mv` (Vercel Cron, 03:00 UTC). If missing, `explore/route.ts` and `explore/locations/route.ts` fall back to direct table scans (slow but functional).
+
 ---
 
 ## V. Code Conventions (PRIORITY #4)

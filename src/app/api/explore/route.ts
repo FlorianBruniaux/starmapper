@@ -24,10 +24,19 @@ export const GET = async () => {
           (SELECT reltuples::bigint FROM pg_class WHERE relname = 'star_event')  AS events
       `,
       prisma.badgeCache.count(),
-      // country_stats_mv pre-aggregates 4.3M rows — reads in ~5ms instead of 9s full scan
+      // country_stats_mv pre-aggregates 4.3M rows — reads in ~5ms instead of 9s full scan.
+      // Falls back to direct DISTINCT scan if MV is missing (new DB instance, rollback, etc.).
       prisma.$queryRaw<{ country: string }[]>`
         SELECT country FROM country_stats_mv ORDER BY country
-      `,
+      `.catch(() =>
+        prisma.$queryRaw<{ country: string }[]>`
+          SELECT DISTINCT "countryNormalized" AS country
+          FROM github_user
+          WHERE "countryNormalized" IS NOT NULL
+            AND "countryNormalized" NOT LIKE 'http%'
+          ORDER BY "countryNormalized"
+        `
+      ),
     ]);
 
     const totalUsers = Number(estimates[0]?.users ?? 0);
