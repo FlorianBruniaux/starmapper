@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 
-// Refreshes github_user_grid_mv materialized view.
-// Runs every 2 hours via Vercel Cron (see vercel.json). Also callable manually via admin auth.
+// Refreshes github_user_grid_mv and country_stats_mv materialized views.
+// Runs 1x/day via Vercel Cron (see vercel.json). Also callable manually via admin auth.
 // CONCURRENTLY = does not block reads during refresh.
 
 import { NextRequest, NextResponse } from "next/server";
@@ -30,7 +30,10 @@ export const GET = async (req: NextRequest) => {
 const runRefresh = async () => {
   const start = Date.now();
   try {
-    await prisma.$executeRaw`REFRESH MATERIALIZED VIEW CONCURRENTLY github_user_grid_mv`;
+    await Promise.all([
+      prisma.$executeRaw`REFRESH MATERIALIZED VIEW CONCURRENTLY github_user_grid_mv`,
+      prisma.$executeRaw`REFRESH MATERIALIZED VIEW CONCURRENTLY country_stats_mv`,
+    ]);
     return NextResponse.json({ ok: true, durationMs: Date.now() - start });
   } catch (err) {
     logError("admin/refresh-grid-mv", err);
