@@ -51,15 +51,15 @@ export default function DevsLanguagePage({ params }: Props) {
 
     fetch(`/api/devs/${encodeURIComponent(slug)}`)
       .then(async (res) => {
-        if (res.status === 404) {
-          setNotFound(true);
-          return;
-        }
+        if (res.status === 404) { setNotFound(true); return; }
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = await res.json() as LanguageMapData;
         setData(json);
       })
-      .catch(() => setNotFound(true))
+      .catch((err) => {
+        console.error("[devs] fetch error:", err);
+        // Don't show 404 for server errors — keep loading state on transient failures
+      })
       .finally(() => setLoading(false));
   }, [slug]);
 
