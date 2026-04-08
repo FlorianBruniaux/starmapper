@@ -275,7 +275,32 @@ CREATE MATERIALIZED VIEW country_stats_mv AS
 CREATE UNIQUE INDEX country_stats_mv_country_idx ON country_stats_mv (country);
 ```
 
-Both are refreshed daily via `/api/admin/refresh-grid-mv` (Vercel Cron, 03:00 UTC). If missing, `explore/route.ts` and `explore/locations/route.ts` fall back to direct table scans (slow but functional).
+**`power_users_mv`** — star_event aggregation (replaces timeout on 11.9M rows, fixes Power tab):
+```sql
+CREATE MATERIALIZED VIEW power_users_mv AS
+  SELECT login, COUNT(*) AS cnt
+  FROM star_event
+  GROUP BY login
+  HAVING COUNT(*) > 1
+  ORDER BY cnt DESC, login ASC;
+
+CREATE UNIQUE INDEX power_users_mv_login_idx ON power_users_mv (login);
+CREATE INDEX power_users_mv_cnt_login_idx ON power_users_mv (cnt DESC, login ASC);
+```
+
+**`company_stats_mv`** — company aggregation (replaces slow groupBy on 4.3M rows):
+```sql
+CREATE MATERIALIZED VIEW company_stats_mv AS
+  SELECT company, COUNT(*) AS cnt
+  FROM github_user
+  WHERE company IS NOT NULL AND company <> ''
+  GROUP BY company
+  ORDER BY cnt DESC;
+
+CREATE UNIQUE INDEX company_stats_mv_company_idx ON company_stats_mv (company);
+```
+
+All 4 MVs are refreshed daily via `/api/admin/refresh-grid-mv` (Vercel Cron, 03:00 UTC). Routes using MVs fall back to direct table scans if a MV is missing.
 
 ---
 

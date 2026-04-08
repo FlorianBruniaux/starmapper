@@ -13,65 +13,46 @@ export type PowerResponse = {
   nextCursor: string | null;
 };
 
-// Module-level cache for the expensive COUNT(*) total — 5min TTL
-// Avoids full table scan on every paginated request (944ms → ~0ms on cache hit)
-let _powerTotal: { value: number; ts: number } | null = null;
-const getCachedPowerTotal = async (): Promise<number> => {
-  const now = Date.now();
-  if (_powerTotal && now - _powerTotal.ts < 5 * 60 * 1000) return _powerTotal.value;
-  const [row] = await prisma.$queryRaw<{ total: bigint }[]>`
-    SELECT COUNT(*) AS total
-    FROM (SELECT 1 FROM star_event GROUP BY login HAVING COUNT(*) > 1) subq
-  `;
-  const value = Number(row?.total ?? 0);
-  _powerTotal = { value, ts: now };
-  return value;
-};
-
 export const GET = async (req: NextRequest) => {
   const { searchParams } = new URL(req.url);
   const page = Math.min(20, Math.max(1, parseInt(searchParams.get("page") ?? "1",  10)));
   const size = Math.min(50, Math.max(1, parseInt(searchParams.get("size") ?? "30", 10)));
   const cursor = searchParams.get("cursor"); // keyset cursor: "${cnt}|${login}"
 
-  // Hard offset cap (OFFSET-based) — prevents full table scan on deep pages
+  // Hard offset cap (OFFSET-based) — prevents full scan on deep pages
   const MAX_SKIP = 500;
   const skip = (page - 1) * size;
   if (!cursor && skip > MAX_SKIP) return jsonError("invalid_params", 400);
 
   try {
-    // Keyset pagination when cursor provided — O(1) regardless of page depth
-    // Fallback to OFFSET when no cursor (first page or legacy page param)
+    // power_users_mv pre-aggregates star_event (11.9M rows) — reads in ~5ms instead of timeout.
+    // Keyset pagination when cursor provided — O(1) regardless of page depth.
+    // Fallback to OFFSET when no cursor (first page or legacy page param).
     let groupsQuery: Promise<{ login: string; cnt: bigint }[]>;
     if (cursor) {
       const [cntStr, cursorLogin] = cursor.split("|");
       const cursorCnt = parseInt(cntStr, 10);
       if (!cursorLogin || isNaN(cursorCnt)) return jsonError("invalid_params", 400);
       groupsQuery = prisma.$queryRaw<{ login: string; cnt: bigint }[]>`
-        SELECT login, COUNT(*) AS cnt
-        FROM star_event
-        GROUP BY login
-        HAVING COUNT(*) > 1
-          AND (COUNT(*) < ${cursorCnt}::bigint
-            OR (COUNT(*) = ${cursorCnt}::bigint AND login > ${cursorLogin}))
+        SELECT login, cnt FROM power_users_mv
+        WHERE cnt < ${cursorCnt}::bigint
+           OR (cnt = ${cursorCnt}::bigint AND login > ${cursorLogin})
         ORDER BY cnt DESC, login ASC
         LIMIT ${size}::int
       `;
     } else {
       groupsQuery = prisma.$queryRaw<{ login: string; cnt: bigint }[]>`
-        SELECT login, COUNT(*) AS cnt
-        FROM star_event
-        GROUP BY login
-        HAVING COUNT(*) > 1
+        SELECT login, cnt FROM power_users_mv
         ORDER BY cnt DESC, login ASC
         LIMIT ${size}::int OFFSET ${skip}::int
       `;
     }
 
-    const [groups, total] = await Promise.all([
+    const [groups, totalRows] = await Promise.all([
       groupsQuery,
-      getCachedPowerTotal(),
+      prisma.$queryRaw<{ total: bigint }[]>`SELECT COUNT(*) AS total FROM power_users_mv`,
     ]);
+    const total = Number(totalRows[0]?.total ?? 0);
 
     const logins = groups.map((g) => g.login);
     const users = logins.length > 0

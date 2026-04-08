@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 
-// Refreshes github_user_grid_mv and country_stats_mv materialized views.
+// Refreshes all materialized views: github_user_grid_mv, country_stats_mv,
+// power_users_mv, company_stats_mv.
 // Runs 1x/day via Vercel Cron (see vercel.json). Also callable manually via admin auth.
 // CONCURRENTLY = does not block reads during refresh.
 
@@ -33,6 +34,8 @@ const runRefresh = async () => {
     await Promise.all([
       prisma.$executeRaw`REFRESH MATERIALIZED VIEW CONCURRENTLY github_user_grid_mv`,
       prisma.$executeRaw`REFRESH MATERIALIZED VIEW CONCURRENTLY country_stats_mv`,
+      prisma.$executeRaw`REFRESH MATERIALIZED VIEW CONCURRENTLY power_users_mv`,
+      prisma.$executeRaw`REFRESH MATERIALIZED VIEW CONCURRENTLY company_stats_mv`,
     ]);
     return NextResponse.json({ ok: true, durationMs: Date.now() - start });
   } catch (err) {

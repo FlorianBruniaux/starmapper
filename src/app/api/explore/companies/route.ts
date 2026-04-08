@@ -32,30 +32,49 @@ export const GET = async (req: NextRequest) => {
   const size    = Math.min(50, Math.max(1, parseInt(searchParams.get("size") ?? "30", 10)));
   const country = searchParams.get("country") ?? "";
 
+  type RawRow = { company: string; cnt: number };
+
   try {
-    const raw = await prisma.gitHubUser.groupBy({
-      by: ["company"],
-      _count: { company: true },
-      where: {
-        company: { not: null },
-        ...(country ? { countryNormalized: { equals: country, mode: "insensitive" as const } } : {}),
-      },
-      orderBy: { _count: { company: "desc" } },
-      take: 1000,
-    });
+    // company_stats_mv pre-aggregates 4.3M rows — reads in ~5ms instead of full scan.
+    // Country filter bypasses MV (no country column) and hits the table directly.
+    let raw: RawRow[];
+    if (country) {
+      const rows = await prisma.$queryRaw<{ company: string; cnt: bigint }[]>`
+        SELECT company, COUNT(*) AS cnt
+        FROM github_user
+        WHERE company IS NOT NULL AND company <> ''
+          AND "countryNormalized" ILIKE ${country}
+        GROUP BY company
+        ORDER BY cnt DESC
+        LIMIT 1000
+      `;
+      raw = rows.map((r) => ({ company: r.company, cnt: Number(r.cnt) }));
+    } else {
+      raw = await prisma.$queryRaw<{ company: string; cnt: bigint }[]>`
+          SELECT company, cnt FROM company_stats_mv LIMIT 1000
+        `.then((rows) => rows.map((r) => ({ company: r.company, cnt: Number(r.cnt) })))
+          .catch(async () => {
+            const rows = await prisma.$queryRaw<{ company: string; cnt: bigint }[]>`
+              SELECT company, COUNT(*) AS cnt FROM github_user
+              WHERE company IS NOT NULL AND company <> ''
+              GROUP BY company ORDER BY cnt DESC LIMIT 1000
+            `;
+            return rows.map((r) => ({ company: r.company, cnt: Number(r.cnt) }));
+          });
+    }
 
     // Normalize and aggregate in JS (handles @-prefix stripping, title-casing, dedup)
     // O(n) lookup via inverse map: lowercase → canonical name
     const companyCount = new Map<string, number>();
     const lowerToCanonical = new Map<string, string>();
-    for (const { company, _count } of raw) {
+    for (const { company, cnt } of raw) {
       if (!company) continue;
       const normalized = normalizeCompany(company);
       if (!normalized) continue;
       const keyLower = normalized.toLowerCase();
       const canonical = lowerToCanonical.get(keyLower) ?? normalized;
       lowerToCanonical.set(keyLower, canonical);
-      companyCount.set(canonical, (companyCount.get(canonical) ?? 0) + _count.company);
+      companyCount.set(canonical, (companyCount.get(canonical) ?? 0) + cnt);
     }
 
     const sorted: [string, number][] = [...companyCount.entries()].sort((a, b) => b[1] - a[1]);
