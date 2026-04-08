@@ -105,27 +105,66 @@ export default function DevsLanguagePage({ params }: Props) {
 
   if (notFound) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen gap-4 bg-background text-foreground">
-        <p className="text-muted text-sm">Language not found: <code className="text-foreground">{slug}</code></p>
-        <Link href="/" className="text-accent-blue text-sm hover:underline">← Back to StarMapper</Link>
+      <div className="flex flex-col items-center justify-center min-h-screen gap-6 bg-background text-foreground px-4">
+        <div className="flex flex-col items-center gap-3 text-center">
+          <div className="size-12 rounded-full bg-surface flex items-center justify-center border border-border">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+              className="text-muted-subtle" aria-hidden="true">
+              <circle cx="11" cy="11" r="8" />
+              <path d="M21 21l-4.35-4.35" />
+            </svg>
+          </div>
+          <p className="text-foreground font-semibold">Language not found</p>
+          <p className="text-muted text-sm">
+            <code className="font-mono bg-surface border border-border px-1.5 py-0.5 rounded text-xs">
+              {slug}
+            </code>
+            {" "}doesn&apos;t match any tracked language.
+          </p>
+        </div>
+        <Link
+          href="/"
+          className="flex items-center gap-1.5 text-accent-blue text-sm hover:underline"
+        >
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+            <path d="M7.78 12.53a.75.75 0 0 1-1.06 0L2.47 8.28a.75.75 0 0 1 0-1.06l4.25-4.25a.75.75 0 0 1 1.06 1.06L4.81 7.25h7.44a.75.75 0 0 1 0 1.5H4.81l2.97 2.97a.75.75 0 0 1 0 1.06z"/>
+          </svg>
+          Back to StarMapper
+        </Link>
       </div>
     );
   }
 
+  // Top countries max value for proportional bars
+  const maxCountryCount = data && data.topCountries.length > 0 ? data.topCountries[0].count : 1;
+
   return (
     <div className="flex flex-col h-screen bg-background text-foreground overflow-hidden">
-      {/* Header */}
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-border shrink-0 min-w-0">
-        <Link href="/" className="text-muted hover:text-foreground transition-colors text-sm shrink-0">
-          ← StarMapper
+      {/* ── Header ─────────────────────────────────────────────────────────── */}
+      <header className="flex items-center gap-3 px-4 py-2.5 border-b border-border shrink-0 min-w-0 bg-surface">
+        {/* Back link */}
+        <Link
+          href="/"
+          className="flex items-center gap-1 text-muted hover:text-foreground transition-colors text-xs shrink-0"
+          aria-label="Back to StarMapper"
+        >
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+            <path d="M7.78 12.53a.75.75 0 0 1-1.06 0L2.47 8.28a.75.75 0 0 1 0-1.06l4.25-4.25a.75.75 0 0 1 1.06 1.06L4.81 7.25h7.44a.75.75 0 0 1 0 1.5H4.81l2.97 2.97a.75.75 0 0 1 0 1.06z"/>
+          </svg>
+          <span className="hidden sm:inline font-medium">StarMapper</span>
         </Link>
-        <span className="text-border shrink-0">|</span>
+
+        {/* Divider */}
+        <span className="text-border-subtle shrink-0 select-none" aria-hidden="true">/</span>
+
+        {/* Page identity */}
         <h1
-          className="text-sm font-semibold text-foreground flex items-center gap-2 min-w-0"
+          className="flex items-center gap-2 min-w-0 flex-1"
           aria-live="polite"
         >
           {loading && !displayName ? (
-            "Loading…"
+            <span className="h-7 w-32 bg-surface-alt rounded animate-pulse" />
           ) : (
             <>
               <LanguageSwitcher
@@ -135,29 +174,90 @@ export default function DevsLanguagePage({ params }: Props) {
                 loading={optionsLoading}
                 onSelect={handleLanguageSelect}
               />
-              <span className="text-foreground font-semibold shrink-0">developers</span>
-              {data && data.totalMapped > 0 && (
-                <span className="text-muted font-normal hidden sm:inline shrink-0">
-                  — {data.totalMapped.toLocaleString()} mapped
-                </span>
-              )}
+              <span className="text-muted text-sm font-normal shrink-0">developers</span>
             </>
           )}
         </h1>
-      </div>
 
-      {/* Main: map + sidebar */}
+        {/* Mapped count badge — right-aligned */}
+        {data && data.totalMapped > 0 && (
+          <div
+            className="flex items-center gap-1.5 shrink-0 bg-accent-blue/10 border border-accent-blue/20
+                        text-accent-blue text-xs font-medium px-2.5 py-1 rounded-full"
+            aria-label={`${data.totalMapped.toLocaleString()} developers mapped`}
+          >
+            <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+              <path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0zm.25 7.5a.75.75 0 0 0-.75.75v3.5a.75.75 0 0 0 1.5 0v-3.5A.75.75 0 0 0 8.25 7.5zm0-3a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5z"/>
+            </svg>
+            <span className="hidden sm:inline">
+              {data.totalMapped.toLocaleString()} mapped
+            </span>
+            <span className="sm:hidden">
+              {data.totalMapped >= 1000
+                ? `${(data.totalMapped / 1000).toFixed(1)}k`
+                : data.totalMapped}
+            </span>
+          </div>
+        )}
+        {loading && (
+          <span className="h-6 w-24 bg-surface-alt rounded-full animate-pulse shrink-0" />
+        )}
+      </header>
+
+      {/* ── Main: map + sidebar ────────────────────────────────────────────── */}
       <div className="flex flex-1 min-h-0">
         {/* Map */}
         <div className="flex-1 relative">
           {loading ? (
-            <div className="flex items-center justify-center h-full text-muted-subtle text-sm bg-surface-alt">
-              Loading map…
+            <div className="flex flex-col items-center justify-center h-full gap-4 bg-surface-alt">
+              {/* Animated globe placeholder */}
+              <div className="relative size-16">
+                <div className="absolute inset-0 rounded-full border-2 border-border animate-pulse" />
+                <div className="absolute inset-2 rounded-full border border-border-subtle animate-pulse
+                                [animation-delay:150ms]" />
+                <svg
+                  width="32" height="32" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="absolute inset-0 m-auto text-muted-subtle"
+                  aria-hidden="true"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                </svg>
+              </div>
+              <div className="flex flex-col items-center gap-1">
+                <p className="text-foreground text-sm font-medium">Loading map…</p>
+                <p className="text-muted-subtle text-xs">Fetching developer locations</p>
+              </div>
             </div>
           ) : points.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full gap-2 text-muted text-sm bg-surface-alt">
-              <p>No data yet for <strong className="text-foreground">{displayName}</strong>.</p>
-              <p className="text-muted-subtle text-xs">Backfill in progress — check back soon.</p>
+            <div className="flex flex-col items-center justify-center h-full gap-5 bg-surface-alt px-6 text-center">
+              <div className="size-14 rounded-full bg-surface flex items-center justify-center border border-border">
+                <svg
+                  width="24" height="24" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"
+                  strokeLinejoin="round" className="text-muted-subtle" aria-hidden="true"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                </svg>
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <p className="text-foreground font-semibold">
+                  No data yet for{" "}
+                  <span className="text-accent-blue">{displayName}</span>
+                </p>
+                <p className="text-muted text-sm">
+                  Backfill is in progress — check back soon.
+                </p>
+              </div>
+              <Link
+                href="/"
+                className="text-accent-blue text-sm hover:underline"
+              >
+                Explore other languages
+              </Link>
             </div>
           ) : (
             <StargazerMapDynamic points={points} />
@@ -166,19 +266,60 @@ export default function DevsLanguagePage({ params }: Props) {
 
         {/* Sidebar — top countries */}
         {data && data.topCountries.length > 0 && (
-          <div className="w-56 shrink-0 border-l border-border overflow-y-auto bg-surface">
-            <div className="p-3 border-b border-border">
-              <p className="text-xs font-semibold text-muted uppercase tracking-wide">Top countries</p>
+          <aside
+            className="w-56 shrink-0 border-l border-border overflow-y-auto bg-surface flex flex-col"
+            aria-label="Top countries"
+          >
+            {/* Sidebar header */}
+            <div className="px-4 py-3 border-b border-border shrink-0">
+              <p className="text-xs font-semibold text-muted uppercase tracking-widest">
+                Top countries
+              </p>
             </div>
-            <ul className="divide-y divide-border-subtle">
-              {data.topCountries.map((c) => (
-                <li key={c.country} className="flex items-center justify-between px-3 py-2 text-sm">
-                  <span className="text-foreground truncate mr-2">{c.country}</span>
-                  <span className="text-muted shrink-0">{c.count.toLocaleString()}</span>
-                </li>
-              ))}
+
+            {/* Country list */}
+            <ul className="flex-1 py-1" role="list">
+              {data.topCountries.map((c, index) => {
+                const pct = Math.round((c.count / maxCountryCount) * 100);
+                return (
+                  <li key={c.country} className="group px-3 py-2">
+                    {/* Row: rank + name + count */}
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-muted-subtle text-2xs font-mono w-4 text-right shrink-0">
+                        {index + 1}
+                      </span>
+                      <span className="text-foreground text-xs truncate flex-1 group-hover:text-accent-blue transition-colors">
+                        {c.country}
+                      </span>
+                      <span className="text-muted text-xs shrink-0 tabular-nums">
+                        {c.count.toLocaleString()}
+                      </span>
+                    </div>
+                    {/* Proportional bar */}
+                    <div className="ml-6 h-0.5 rounded-full bg-border-subtle overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-accent-blue/40 transition-all duration-300"
+                        style={{ width: `${pct}%` }}
+                        aria-hidden="true"
+                      />
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
-          </div>
+
+            {/* Footer: total */}
+            {data.totalMapped > 0 && (
+              <div className="px-4 py-3 border-t border-border shrink-0">
+                <p className="text-muted-subtle text-2xs uppercase tracking-widest">
+                  Total mapped
+                </p>
+                <p className="text-foreground text-sm font-semibold tabular-nums mt-0.5">
+                  {data.totalMapped.toLocaleString()}
+                </p>
+              </div>
+            )}
+          </aside>
         )}
       </div>
     </div>
