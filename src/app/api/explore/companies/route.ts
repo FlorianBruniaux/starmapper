@@ -50,17 +50,11 @@ export const GET = async (req: NextRequest) => {
       `;
       raw = rows.map((r) => ({ company: r.company, cnt: Number(r.cnt) }));
     } else {
-      raw = await prisma.$queryRaw<{ company: string; cnt: bigint }[]>`
-          SELECT company, cnt FROM company_stats_mv LIMIT 1000
-        `.then((rows) => rows.map((r) => ({ company: r.company, cnt: Number(r.cnt) })))
-          .catch(async () => {
-            const rows = await prisma.$queryRaw<{ company: string; cnt: bigint }[]>`
-              SELECT company, COUNT(*) AS cnt FROM github_user
-              WHERE company IS NOT NULL AND company <> ''
-              GROUP BY company ORDER BY cnt DESC LIMIT 1000
-            `;
-            return rows.map((r) => ({ company: r.company, cnt: Number(r.cnt) }));
-          });
+      // Fallback: empty (not a slow full scan — that would also timeout)
+      const mvRows = await prisma.$queryRaw<{ company: string; cnt: bigint }[]>`
+        SELECT company, cnt FROM company_stats_mv LIMIT 1000
+      `.catch(() => []);
+      raw = mvRows.map((r) => ({ company: r.company, cnt: Number(r.cnt) }));
     }
 
     // Normalize and aggregate in JS (handles @-prefix stripping, title-casing, dedup)
