@@ -6,8 +6,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Header } from "@/components/header";
 import { StargazerMapDynamic } from "@/components/map/stargazer-map-dynamic";
 import { LanguageSwitcher } from "@/components/devs/language-switcher";
+import { TokenModal, getStoredToken } from "@/components/token-modal";
 import { slugToLanguage, displayLanguage } from "@/lib/languages";
 import type { LanguageMapData } from "@/app/api/devs/[language]/route";
 import type { LanguageListData } from "@/app/api/devs/route";
@@ -35,6 +37,27 @@ const cellsToPoints = (data: LanguageMapData): StargazerPoint[] =>
     linkedinUrl: null,
   }));
 
+// Mapped count badge rendered as rightAccessory in Header
+const MappedBadge = ({ count }: { count: number }) => (
+  <div
+    className="flex items-center gap-1.5 shrink-0 bg-accent-blue/10 border border-accent-blue/20
+                text-accent-blue text-xs font-medium px-2.5 py-1 rounded-full"
+    aria-label={`${count.toLocaleString()} developers mapped`}
+  >
+    <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+      <path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0zm.25 7.5a.75.75 0 0 0-.75.75v3.5a.75.75 0 0 0 1.5 0v-3.5A.75.75 0 0 0 8.25 7.5zm0-3a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5z"/>
+    </svg>
+    <span className="hidden sm:inline">
+      {count.toLocaleString()} mapped
+    </span>
+    <span className="sm:hidden">
+      {count >= 1000
+        ? `${(count / 1000).toFixed(1)}k`
+        : count}
+    </span>
+  </div>
+);
+
 export default function DevsLanguagePage({ params }: Props) {
   const router = useRouter();
   const [slug, setSlug] = useState<string>("");
@@ -46,12 +69,25 @@ export default function DevsLanguagePage({ params }: Props) {
   const [langOptions, setLangOptions] = useState<LanguageOption[]>([]);
   const [optionsLoading, setOptionsLoading] = useState(true);
 
+  // Token modal state
+  const [tokenOpen, setTokenOpen] = useState(false);
+  const [hasToken, setHasToken] = useState(false);
+
   // Resolve the dynamic slug from Next.js params (async in App Router)
   useEffect(() => {
     params.then(({ language }) => {
       setSlug(language);
     });
   }, [params]);
+
+  useEffect(() => {
+    setHasToken(!!getStoredToken());
+  }, []);
+
+  const handleTokenClose = useCallback(() => {
+    setTokenOpen(false);
+    setHasToken(!!getStoredToken());
+  }, []);
 
   // Fetch the language list once for the switcher
   useEffect(() => {
@@ -87,7 +123,6 @@ export default function DevsLanguagePage({ params }: Props) {
       })
       .catch((e) => {
         if (e.name !== "AbortError") console.error("[devs] fetch error:", e);
-        // Don't show 404 for server errors — keep loading state on transient failures
       })
       .finally(() => setLoading(false));
 
@@ -124,13 +159,13 @@ export default function DevsLanguagePage({ params }: Props) {
           </p>
         </div>
         <Link
-          href="/"
+          href="/devs"
           className="flex items-center gap-1.5 text-accent-blue text-sm hover:underline"
         >
           <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
             <path d="M7.78 12.53a.75.75 0 0 1-1.06 0L2.47 8.28a.75.75 0 0 1 0-1.06l4.25-4.25a.75.75 0 0 1 1.06 1.06L4.81 7.25h7.44a.75.75 0 0 1 0 1.5H4.81l2.97 2.97a.75.75 0 0 1 0 1.06z"/>
           </svg>
-          Back to StarMapper
+          Back to Developer maps
         </Link>
       </div>
     );
@@ -141,32 +176,25 @@ export default function DevsLanguagePage({ params }: Props) {
 
   return (
     <div className="flex flex-col h-screen bg-background text-foreground overflow-hidden">
-      {/* ── Header ─────────────────────────────────────────────────────────── */}
-      <header className="flex items-center gap-3 px-4 py-2.5 border-b border-border shrink-0 min-w-0 bg-surface">
-        {/* Back link */}
-        <Link
-          href="/"
-          className="flex items-center gap-1 text-muted hover:text-foreground transition-colors text-xs shrink-0"
-          aria-label="Back to StarMapper"
-        >
-          <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-            <path d="M7.78 12.53a.75.75 0 0 1-1.06 0L2.47 8.28a.75.75 0 0 1 0-1.06l4.25-4.25a.75.75 0 0 1 1.06 1.06L4.81 7.25h7.44a.75.75 0 0 1 0 1.5H4.81l2.97 2.97a.75.75 0 0 1 0 1.06z"/>
-          </svg>
-          <span className="hidden sm:inline font-medium">StarMapper</span>
-        </Link>
-
-        {/* Divider */}
-        <span className="text-border-subtle shrink-0 select-none" aria-hidden="true">/</span>
-
-        {/* Page identity */}
-        <h1
-          className="flex items-center gap-2 min-w-0 flex-1"
-          aria-live="polite"
-        >
-          {loading && !displayName ? (
-            <span className="h-7 w-32 bg-surface-alt rounded animate-pulse" />
-          ) : (
-            <>
+      <Header
+        sticky
+        showNav
+        showToken
+        hasToken={hasToken}
+        onTokenClick={() => setTokenOpen(true)}
+        afterLogo={
+          <>
+            <span className="text-border-subtle shrink-0 select-none" aria-hidden="true">/</span>
+            <Link
+              href="/devs"
+              className="text-muted text-sm hover:text-foreground transition-colors shrink-0"
+            >
+              Developers
+            </Link>
+            <span className="text-border-subtle shrink-0 select-none" aria-hidden="true">/</span>
+            {loading && !displayName ? (
+              <span className="h-6 w-24 bg-surface-alt rounded animate-pulse" />
+            ) : (
               <LanguageSwitcher
                 currentSlug={slug}
                 currentName={displayName || "…"}
@@ -174,38 +202,20 @@ export default function DevsLanguagePage({ params }: Props) {
                 loading={optionsLoading}
                 onSelect={handleLanguageSelect}
               />
-              <span className="text-muted text-sm font-normal shrink-0">developers</span>
-            </>
-          )}
-        </h1>
-
-        {/* Mapped count badge — right-aligned */}
-        {data && data.totalMapped > 0 && (
-          <div
-            className="flex items-center gap-1.5 shrink-0 bg-accent-blue/10 border border-accent-blue/20
-                        text-accent-blue text-xs font-medium px-2.5 py-1 rounded-full"
-            aria-label={`${data.totalMapped.toLocaleString()} developers mapped`}
-          >
-            <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-              <path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0zm.25 7.5a.75.75 0 0 0-.75.75v3.5a.75.75 0 0 0 1.5 0v-3.5A.75.75 0 0 0 8.25 7.5zm0-3a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5z"/>
-            </svg>
-            <span className="hidden sm:inline">
-              {data.totalMapped.toLocaleString()} mapped
-            </span>
-            <span className="sm:hidden">
-              {data.totalMapped >= 1000
-                ? `${(data.totalMapped / 1000).toFixed(1)}k`
-                : data.totalMapped}
-            </span>
-          </div>
-        )}
-        {loading && (
-          <span className="h-6 w-24 bg-surface-alt rounded-full animate-pulse shrink-0" />
-        )}
-      </header>
+            )}
+          </>
+        }
+        rightAccessory={
+          data && data.totalMapped > 0
+            ? <MappedBadge count={data.totalMapped} />
+            : loading
+              ? <span className="h-6 w-24 bg-surface-alt rounded-full animate-pulse shrink-0" />
+              : undefined
+        }
+      />
 
       {/* ── Main: map + sidebar ────────────────────────────────────────────── */}
-      <div className="flex flex-1 min-h-0">
+      <div className="flex flex-1 min-h-0 pt-14">
         {/* Map */}
         <div className="flex-1 relative">
           {loading ? (
@@ -253,7 +263,7 @@ export default function DevsLanguagePage({ params }: Props) {
                 </p>
               </div>
               <Link
-                href="/"
+                href="/devs"
                 className="text-accent-blue text-sm hover:underline"
               >
                 Explore other languages
@@ -322,6 +332,8 @@ export default function DevsLanguagePage({ params }: Props) {
           </aside>
         )}
       </div>
+
+      {tokenOpen && <TokenModal onClose={handleTokenClose} />}
     </div>
   );
 }

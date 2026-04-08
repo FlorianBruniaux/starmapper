@@ -5,6 +5,7 @@
 
 import { use, useEffect, useRef, useState, useCallback, useMemo, useDeferredValue, useReducer } from "react";
 import { StargazerMapDynamic } from "@/components/map/stargazer-map-dynamic";
+import { MapFloatingNav } from "@/components/map/map-floating-nav";
 import { CLUSTER_RADIUS } from "@/components/map/stargazer-map";
 import type { StargazerPoint, ChunkResponse } from "@/app/api/chunk/route";
 import type { RepoStats } from "@/app/api/stats/[owner]/[repo]/route";
@@ -13,8 +14,6 @@ import { Modal } from "@/components/modal";
 import { saveBookmark } from "@/lib/bookmarks";
 import { FilterCombobox } from "@/components/filter-combobox";
 import { isCountry, normalizeCountry } from "@/lib/countries";
-import Link from "next/link";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { StatsList } from "@/components/stats-list";
 import { useTheme } from "@/hooks/useTheme";
 import { MAP_STYLE_DARK, MAP_STYLE_LIGHT } from "@/lib/theme";
@@ -935,33 +934,6 @@ export default function MapPage({
         </div>
       )}
 
-      {/* Top-right controls row */}
-      <div className="absolute top-3 right-3 z-20 flex items-center gap-2">
-        <Link
-          href="/explore"
-          className="flex items-center gap-1.5 text-xs text-muted hover:text-foreground border border-border bg-background/80 hover:border-accent-blue px-3 py-1.5 rounded-lg transition-colors"
-        >
-          <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-            <path d="M2.5 2A1.5 1.5 0 0 0 1 3.5V5a5 5 0 0 0 4.797 4.994A4.001 4.001 0 0 0 8 13.277V14H5.5a.75.75 0 0 0 0 1.5h5a.75.75 0 0 0 0-1.5H8v-.723a4.001 4.001 0 0 0 2.203-3.283A5 5 0 0 0 15 5V3.5A1.5 1.5 0 0 0 13.5 2h-11Zm11 1.5V5a3.5 3.5 0 0 1-2.81 3.441A4.005 4.005 0 0 0 11 7V3.5h2.5Zm-10 0H5V7a4.005 4.005 0 0 0 .31 1.441A3.5 3.5 0 0 1 2.5 5V3.5Z" />
-          </svg>
-          Leaderboard
-        </Link>
-        <ThemeToggle />
-        <button
-          onClick={() => setTokenOpen(true)}
-          className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border transition-colors ${
-            hasToken
-              ? "border-accent-green-emphasis text-accent-green bg-background/80 hover:bg-accent-green-emphasis/10"
-              : "border-border text-muted bg-background/80 hover:text-foreground hover:border-accent-blue"
-          }`}
-          title="GitHub access token"
-        >
-          <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
-            <path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Zm7-3.25v2.992l2.028.812a.75.75 0 0 1-.557 1.392l-2.5-1A.751.751 0 0 1 7 8.25v-3.5a.75.75 0 0 1 1.5 0Z"/>
-          </svg>
-          {hasToken ? "Token set" : "Add token"}
-        </button>
-      </div>
 
       {/* Map */}
       <StargazerMapDynamic
@@ -1211,14 +1183,12 @@ export default function MapPage({
         </div>
       )}
 
-      {/* Back link */}
-      <a
-        href="/"
-        className="absolute top-4 left-4 z-10 bg-background/90 border border-border
-          rounded-lg px-3 py-2 text-xs text-muted hover:text-foreground backdrop-blur-md transition-colors"
-      >
-        ← Back
-      </a>
+      <MapFloatingNav
+        owner={owner}
+        repo={repo}
+        hasToken={hasToken}
+        onTokenClick={() => setTokenOpen(true)}
+      />
 
       {/* Bottom-left — vertical dock */}
       {(displayStats || allStargazers.length > 0) && (

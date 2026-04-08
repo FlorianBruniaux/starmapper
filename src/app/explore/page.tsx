@@ -5,6 +5,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Header } from "@/components/header";
+import { TokenModal, getStoredToken } from "@/components/token-modal";
 import { CommandSearch } from "@/components/command-search";
 import { Footer } from "@/components/footer";
 import { StatsList } from "@/components/stats-list";
@@ -381,6 +382,9 @@ export default function ExplorePage() {
   const mapColumnRef = useRef<HTMLDivElement>(null);
 
   // Nearby tab state
+  const [tokenOpen, setTokenOpen]         = useState(false);
+  const [hasToken, setHasToken]           = useState(false);
+
   const [nearbyInput, setNearbyInput]     = useState("");
   const [nearbyCoords, setNearbyCoords]   = useState<{ lat: number; lng: number; label: string } | null>(null);
   const [nearbyRadius, setNearbyRadius]   = useState(50);
@@ -388,6 +392,15 @@ export default function ExplorePage() {
   const [nearbySearching, setNearbySearching]   = useState(false);
   const [nearbyError, setNearbyError]     = useState<string | null>(null);
   const [nearbyFlyTarget, setNearbyFlyTarget] = useState<{ lat: number; lng: number; login: string; zoom?: number } | null>(null);
+
+  useEffect(() => {
+    setHasToken(!!getStoredToken());
+  }, []);
+
+  const handleTokenClose = useCallback(() => {
+    setTokenOpen(false);
+    setHasToken(!!getStoredToken());
+  }, []);
 
   useEffect(() => {
     fetch("/api/explore")
@@ -615,8 +628,11 @@ export default function ExplorePage() {
       <CommandSearch />
       <Header
         sticky
+        showNav
+        showToken
+        hasToken={hasToken}
+        onTokenClick={() => setTokenOpen(true)}
         innerMaxWidth="max-w-7xl"
-        nav={<span className="text-sm text-foreground font-medium" aria-current="page">Leaderboard</span>}
       />
 
       <main id="main" className="flex-1 w-full max-w-7xl mx-auto px-4 lg:px-6 pt-6 pb-8">
@@ -1186,6 +1202,7 @@ export default function ExplorePage() {
       </main>
 
       <Footer />
+      {tokenOpen && <TokenModal onClose={handleTokenClose} />}
     </div>
   );
 }
