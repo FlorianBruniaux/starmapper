@@ -11,6 +11,7 @@ export type LanguageMapCell = {
   lat: number;
   lng: number;
   count: number;
+  topLogin: string;
 };
 
 export type LanguageTopCountry = {
@@ -41,16 +42,25 @@ export const GET = async (
     // GIN index on github_user.languages makes the ANY() filter fast.
     // language is already validated against the whitelist above — $queryRawUnsafe is safe here.
     const [gridRows, countryRows] = await Promise.all([
-      prisma.$queryRawUnsafe<{ lat: number; lng: number; count: number }[]>(`
-        SELECT
-          ROUND(lat::numeric, 1)::float  AS lat,
-          ROUND(lng::numeric, 1)::float  AS lng,
-          COUNT(*)::int                  AS count
-        FROM github_user
-        WHERE languages @> ARRAY[$1]::text[]
-          AND lat IS NOT NULL
-          AND lng IS NOT NULL
-        GROUP BY 1, 2
+      prisma.$queryRawUnsafe<{ lat: number; lng: number; count: number; topLogin: string }[]>(`
+        SELECT lat, lng, count, "topLogin" FROM (
+          SELECT
+            ROUND(lat::numeric, 1)::float  AS lat,
+            ROUND(lng::numeric, 1)::float  AS lng,
+            COUNT(*) OVER (
+              PARTITION BY ROUND(lat::numeric, 1), ROUND(lng::numeric, 1)
+            )::int AS count,
+            login AS "topLogin",
+            ROW_NUMBER() OVER (
+              PARTITION BY ROUND(lat::numeric, 1), ROUND(lng::numeric, 1)
+              ORDER BY followers DESC
+            ) AS rn
+          FROM github_user
+          WHERE languages @> ARRAY[$1]::text[]
+            AND lat IS NOT NULL
+            AND lng IS NOT NULL
+        ) t
+        WHERE rn = 1
         ORDER BY count DESC
       `, language),
       prisma.$queryRawUnsafe<{ country: string; count: number }[]>(`
@@ -71,6 +81,7 @@ export const GET = async (
       lat: r.lat,
       lng: r.lng,
       count: r.count,
+      topLogin: r.topLogin,
     }));
 
     const totalMapped = cells.reduce((acc, c) => acc + c.count, 0);
