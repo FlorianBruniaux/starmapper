@@ -3,11 +3,15 @@
 
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { StargazerMapDynamic } from "@/components/map/stargazer-map-dynamic";
+import { LanguageSwitcher } from "@/components/devs/language-switcher";
 import { slugToLanguage, displayLanguage } from "@/lib/languages";
 import type { LanguageMapData } from "@/app/api/devs/[language]/route";
+import type { LanguageListData } from "@/app/api/devs/route";
+import type { LanguageOption } from "@/components/devs/language-switcher";
 import type { StargazerPoint } from "@/app/api/chunk/route";
 
 type Props = {
@@ -18,13 +22,13 @@ type Props = {
 // Mirrors the pattern in src/lib/grid-to-points.ts but without topLogin.
 const cellsToPoints = (data: LanguageMapData): StargazerPoint[] =>
   data.cells.map((c) => ({
-    login: `${data.language}-${c.lat}-${c.lng}`,
+    login: c.topLogin,
     name: `${c.count.toLocaleString()} ${data.language} developer${c.count !== 1 ? "s" : ""}`,
-    bio: `__grid__:${c.count}:`,
+    bio: `__grid__:${c.count}:${c.topLogin}`,
     company: null,
     location: null,
     followers: c.count,
-    avatarUrl: "",
+    avatarUrl: `https://github.com/${c.topLogin}.png`,
     lat: c.lat,
     lng: c.lng,
     starredAt: null,
@@ -32,36 +36,67 @@ const cellsToPoints = (data: LanguageMapData): StargazerPoint[] =>
   }));
 
 export default function DevsLanguagePage({ params }: Props) {
+  const router = useRouter();
   const [slug, setSlug] = useState<string>("");
   const [data, setData] = useState<LanguageMapData | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
+  // Language switcher state
+  const [langOptions, setLangOptions] = useState<LanguageOption[]>([]);
+  const [optionsLoading, setOptionsLoading] = useState(true);
+
+  // Resolve the dynamic slug from Next.js params (async in App Router)
   useEffect(() => {
     params.then(({ language }) => {
       setSlug(language);
     });
   }, [params]);
 
+  // Fetch the language list once for the switcher
+  useEffect(() => {
+    const ctrl = new AbortController();
+    fetch("/api/devs", { signal: ctrl.signal })
+      .then(async (res) => {
+        if (!res.ok) return;
+        const json = await res.json() as LanguageListData;
+        setLangOptions(json.languages);
+      })
+      .catch((e) => {
+        if (e.name !== "AbortError") console.error("[devs] options fetch error:", e);
+      })
+      .finally(() => setOptionsLoading(false));
+    return () => ctrl.abort();
+  }, []);
+
+  // Fetch the map data for the current language
   useEffect(() => {
     if (!slug) return;
 
     setLoading(true);
     setNotFound(false);
+    setData(null);
 
-    fetch(`/api/devs/${encodeURIComponent(slug)}`)
+    const ctrl = new AbortController();
+    fetch(`/api/devs/${encodeURIComponent(slug)}`, { signal: ctrl.signal })
       .then(async (res) => {
         if (res.status === 404) { setNotFound(true); return; }
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = await res.json() as LanguageMapData;
         setData(json);
       })
-      .catch((err) => {
-        console.error("[devs] fetch error:", err);
+      .catch((e) => {
+        if (e.name !== "AbortError") console.error("[devs] fetch error:", e);
         // Don't show 404 for server errors — keep loading state on transient failures
       })
       .finally(() => setLoading(false));
+
+    return () => ctrl.abort();
   }, [slug]);
+
+  const handleLanguageSelect = useCallback((newSlug: string) => {
+    router.push(`/devs/${newSlug}`);
+  }, [router]);
 
   const points = useMemo(() => (data ? cellsToPoints(data) : []), [data]);
 
@@ -80,18 +115,29 @@ export default function DevsLanguagePage({ params }: Props) {
   return (
     <div className="flex flex-col h-screen bg-background text-foreground overflow-hidden">
       {/* Header */}
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-border shrink-0">
-        <Link href="/" className="text-muted hover:text-foreground transition-colors text-sm">
+      <div className="flex items-center gap-3 px-4 py-3 border-b border-border shrink-0 min-w-0">
+        <Link href="/" className="text-muted hover:text-foreground transition-colors text-sm shrink-0">
           ← StarMapper
         </Link>
-        <span className="text-border">|</span>
-        <h1 className="text-sm font-semibold text-foreground">
-          {loading ? "Loading…" : (
+        <span className="text-border shrink-0">|</span>
+        <h1
+          className="text-sm font-semibold text-foreground flex items-center gap-2 min-w-0"
+          aria-live="polite"
+        >
+          {loading && !displayName ? (
+            "Loading…"
+          ) : (
             <>
-              <span className="text-accent-blue">{displayName}</span>
-              {" developers"}
+              <LanguageSwitcher
+                currentSlug={slug}
+                currentName={displayName || "…"}
+                options={langOptions}
+                loading={optionsLoading}
+                onSelect={handleLanguageSelect}
+              />
+              <span className="text-foreground font-semibold shrink-0">developers</span>
               {data && data.totalMapped > 0 && (
-                <span className="text-muted font-normal ml-2">
+                <span className="text-muted font-normal hidden sm:inline shrink-0">
                   — {data.totalMapped.toLocaleString()} mapped
                 </span>
               )}
