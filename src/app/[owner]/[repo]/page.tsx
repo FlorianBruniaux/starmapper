@@ -45,6 +45,7 @@ type RepoInfo = {
   name: string;
   description: string | null;
   stars: number;
+  language: string | null;
   avatar: string | null;
 };
 
@@ -431,6 +432,7 @@ export default function MapPage({
           mappedCount: allPoints.length,
           countryCount: countrySet.size,
           totalCount: allPoints.length + allUnmapped.length,
+          language: repoInfo?.language ?? null,
         }),
       }).catch(() => {});
 

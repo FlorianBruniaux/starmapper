@@ -9,17 +9,19 @@ import { jsonError } from "@/lib/api-helpers";
 export const POST = async (req: NextRequest) => {
   try {
     const body = await req.json();
-    const { owner, repo, mappedCount, countryCount, totalCount } = body;
+    const { owner, repo, mappedCount, countryCount, totalCount, language } = body;
 
     const key = validateOwnerRepo(owner, repo);
     if (
       !key ||
       typeof mappedCount !== "number" || mappedCount < 0 || mappedCount > 10_000_000 ||
       typeof countryCount !== "number" || countryCount < 0 || countryCount > 10_000 ||
-      typeof totalCount !== "number" || totalCount < 0 || totalCount > 10_000_000
+      typeof totalCount !== "number" || totalCount < 0 || totalCount > 10_000_000 ||
+      (language !== undefined && language !== null && typeof language !== "string")
     ) {
       return jsonError("invalid_params", 400);
     }
+    const lang: string | null = typeof language === "string" && language.length > 0 ? language : null;
 
     // Plausibility check: reject updates that deviate >50% from existing badge data.
     // Prevents arbitrary overwrites with fabricated star counts.
@@ -33,8 +35,8 @@ export const POST = async (req: NextRequest) => {
 
     await prisma.badgeCache.upsert({
       where: { owner_repo: key },
-      create: { ...key, mappedCount, countryCount, totalCount },
-      update: { mappedCount, countryCount, totalCount },
+      create: { ...key, mappedCount, countryCount, totalCount, language: lang },
+      update: { mappedCount, countryCount, totalCount, language: lang },
     });
 
     return NextResponse.json({ ok: true });

@@ -20,6 +20,7 @@ model BadgeCache {
   mappedCount  Int
   countryCount Int
   totalCount   Int
+  language     String?
   updatedAt    DateTime @updatedAt @default(now())
 
   @@id([owner, repo])

@@ -12,15 +12,25 @@ export type MappedRepo = {
   countryCount: number;
   totalCount: number;
   mappedPercent: number;
+  language: string | null;
   updatedAt: string;
 };
 
-export const GET = async () => {
+export type ReposResponse = {
+  repos: MappedRepo[];
+  total: number;
+};
+
+export const GET = async (req: Request) => {
   try {
-    const rows = await prisma.badgeCache.findMany({
-      orderBy: { updatedAt: "desc" },
-      take: 10000,
-    });
+    const url = new URL(req.url);
+    const limitParam = url.searchParams.get("limit");
+    const limit = limitParam ? Math.min(parseInt(limitParam, 10), 10000) : 10000;
+
+    const [rows, total] = await Promise.all([
+      prisma.badgeCache.findMany({ orderBy: { updatedAt: "desc" }, take: limit }),
+      prisma.badgeCache.count(),
+    ]);
 
     const repos: MappedRepo[] = rows.map((r) => ({
       owner: r.owner,
@@ -29,10 +39,11 @@ export const GET = async () => {
       countryCount: r.countryCount,
       totalCount: r.totalCount,
       mappedPercent: r.totalCount > 0 ? Math.round((r.mappedCount / r.totalCount) * 100) : 0,
+      language: r.language ?? null,
       updatedAt: r.updatedAt.toISOString(),
     }));
 
-    return NextResponse.json({ repos }, {
+    return NextResponse.json({ repos, total } satisfies ReposResponse, {
       headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600" },
     });
   } catch {

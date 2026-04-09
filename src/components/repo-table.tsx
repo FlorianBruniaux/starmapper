@@ -94,6 +94,9 @@ export const RepoTable = ({ repos }: { repos: MappedRepo[] }) => {
             <th className="py-2.5 px-4 text-xs uppercase tracking-wider text-muted-subtle font-medium text-left">
               Repo
             </th>
+            <th className="py-2.5 px-4 text-xs uppercase tracking-wider text-muted-subtle font-medium text-left hidden sm:table-cell">
+              Main language
+            </th>
             <ColHeader label="Stars" col="totalCount" active={sortCol === "totalCount"} dir={sortDir} onSort={handleSort} />
             <ColHeader label="Mapped" col="mappedPercent" active={sortCol === "mappedPercent"} dir={sortDir} onSort={handleSort} />
             <ColHeader label="Countries" col="countryCount" active={sortCol === "countryCount"} dir={sortDir} onSort={handleSort} />
@@ -117,6 +120,19 @@ export const RepoTable = ({ repos }: { repos: MappedRepo[] }) => {
                     {r.repo}
                   </span>
                 </Link>
+              </td>
+              <td className="py-3 px-4 hidden sm:table-cell">
+                {r.language ? (
+                  <Link
+                    href={`/devs/${encodeURIComponent(r.language.toLowerCase())}`}
+                    className="text-xs text-muted bg-surface-alt border border-border-subtle rounded px-2 py-0.5 hover:border-accent-blue/40 hover:text-foreground transition-colors"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {r.language}
+                  </Link>
+                ) : (
+                  <span className="text-xs text-muted-subtle">—</span>
+                )}
               </td>
               <td className="py-3 px-4 text-right tabular-nums">
                 <span className="inline-flex items-center justify-end gap-1 text-xs text-muted">
