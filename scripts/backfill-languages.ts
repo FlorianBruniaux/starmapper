@@ -69,6 +69,7 @@ const TOP_USERS     = parseInt(getArg("--top", "0"), 10);           // 0 = all
 const MIN_FOLLOWERS = parseInt(getArg("--min-followers", "0"), 10); // 0 = all
 const BATCH_SIZE    = Math.min(parseInt(getArg("--batch", "10"), 10), 50);
 const START_CURSOR  = getArg("--cursor", "");
+const TOKEN_INDEX   = parseInt(getArg("--token-index", "-1"), 10);  // -1 = all tokens
 
 const DB_URL = USE_PROD
   ? (process.env.DATABASE_URL ?? "")
@@ -95,7 +96,9 @@ const buildTokenPool = (): TokenState[] => {
     i++;
   }
   if (all.length === 0) { console.error("Error: no GITHUB_TOKEN set"); process.exit(1); }
-  return all.map((token) => ({ token, remaining: 5000, resetAt: 0, callCount: 0 }));
+  const filtered = TOKEN_INDEX >= 0 ? all.filter((_, idx) => idx === TOKEN_INDEX) : all;
+  if (filtered.length === 0) { console.error(`Error: --token-index ${TOKEN_INDEX} out of range (${all.length} tokens)`); process.exit(1); }
+  return filtered.map((token) => ({ token, remaining: 5000, resetAt: 0, callCount: 0 }));
 };
 
 const TOKEN_POOL = buildTokenPool();
