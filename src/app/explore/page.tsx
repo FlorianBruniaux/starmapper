@@ -1133,7 +1133,10 @@ export default function ExplorePage() {
                   </div>
                 )}
                 {!showNearbyMap && mapMode === "choropleth" && (
-                  <span className="text-2xs text-muted-subtle hidden sm:block">
+                  <span className="hidden sm:flex items-center gap-1.5 text-xs text-muted border border-border-subtle rounded-md px-2.5 py-1">
+                    <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" className="text-accent-blue shrink-0">
+                      <path d="M1 2.75C1 1.784 1.784 1 2.75 1h10.5c.966 0 1.75.784 1.75 1.75v7.5A1.75 1.75 0 0 1 13.25 12H9.06l.47 2h1.72a.75.75 0 0 1 0 1.5H4.75a.75.75 0 0 1 0-1.5h1.72l.47-2H2.75A1.75 1.75 0 0 1 1 10.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h10.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z" />
+                    </svg>
                     Click a country to filter
                   </span>
                 )}

@@ -17,7 +17,7 @@ const SOCIAL_LINKS = [
 
 export const Footer = () => (
   <footer className="border-t border-border-subtle mt-0 bg-background">
-    <div className="mx-auto max-w-5xl px-6 py-10">
+    <div className="mx-auto max-w-7xl px-6 py-10">
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 mb-8">
         {/* Brand */}
         <div className="sm:col-span-1">
