@@ -153,10 +153,9 @@ export const POST = async (req: NextRequest) => {
           const newStarEvents = page.stargazers
             .filter((sg) => writtenLogins.has(sg.login))
             .map((sg) => ({ login: sg.login, owner: ownerKey, repo: repoKey, starredAt: sg.starredAt }));
-          await Promise.all([
-            bulkUpsertUsers(usersToWrite, health),
-            newStarEvents.length > 0 ? bulkUpsertStarEvents(newStarEvents, health) : Promise.resolve(true),
-          ]);
+          // Sequential: star_event has a FK on github_user.login — users must exist first.
+          await bulkUpsertUsers(usersToWrite, health);
+          if (newStarEvents.length > 0) await bulkUpsertStarEvents(newStarEvents, health);
         }
       } catch (err) {
         console.error("[chunk] background write failed:", err);

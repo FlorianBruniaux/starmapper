@@ -309,7 +309,7 @@ export const TopPanel = ({
               transition-colors"
           />
           <button
-            onClick={findUser}
+            onClick={() => findUser()}
             disabled={findStatus === "searching"}
             className="ml-2 flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium
               bg-surface-alt border border-border text-muted
