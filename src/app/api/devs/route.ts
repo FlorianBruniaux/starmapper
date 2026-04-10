@@ -21,17 +21,26 @@ const CANONICAL_BY_VALUE = new Set(Object.values(LANGUAGE_SLUG_MAP));
 
 export const GET = async () => {
   try {
-    // Single unnest + GROUP BY — one GIN-backed scan, no N+1 queries.
-    // Filter against the whitelist server-side to exclude GitHub lang parasites
-    // (e.g. "robots.txt", "YAML", one-off typos).
-    const rows = await prisma.$queryRaw<{ lang: string; cnt: number }[]>`
-      SELECT lang, COUNT(*)::int AS cnt
-      FROM github_user, unnest(languages) AS lang
-      WHERE languages IS NOT NULL
-        AND lat IS NOT NULL
-      GROUP BY lang
-      ORDER BY cnt DESC
-    `;
+    // Read from country_language_stats_mv (already aggregated) — fast even on 4M rows.
+    // Falls back to full table scan if MV is missing (graceful degradation).
+    let rows: { lang: string; cnt: number }[];
+    try {
+      rows = await prisma.$queryRaw<{ lang: string; cnt: number }[]>`
+        SELECT lang, SUM(cnt)::int AS cnt
+        FROM country_language_stats_mv
+        GROUP BY lang
+        ORDER BY cnt DESC
+      `;
+    } catch {
+      // MV not yet created — fall back to direct scan (slower but correct)
+      rows = await prisma.$queryRaw<{ lang: string; cnt: number }[]>`
+        SELECT lang, COUNT(*)::int AS cnt
+        FROM github_user, unnest(languages) AS lang
+        WHERE languages IS NOT NULL AND lat IS NOT NULL
+        GROUP BY lang
+        ORDER BY cnt DESC
+      `;
+    }
 
     const languages: LanguageListItem[] = rows
       .filter((r) => CANONICAL_BY_VALUE.has(r.lang) && r.cnt > 0)
