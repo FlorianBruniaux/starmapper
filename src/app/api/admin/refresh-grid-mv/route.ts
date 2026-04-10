@@ -36,6 +36,7 @@ const runRefresh = async () => {
       prisma.$executeRaw`REFRESH MATERIALIZED VIEW CONCURRENTLY country_stats_mv`,
       prisma.$executeRaw`REFRESH MATERIALIZED VIEW CONCURRENTLY power_users_mv`,
       prisma.$executeRaw`REFRESH MATERIALIZED VIEW CONCURRENTLY company_stats_mv`,
+      prisma.$executeRaw`REFRESH MATERIALIZED VIEW CONCURRENTLY country_language_stats_mv`,
     ]);
     return NextResponse.json({ ok: true, durationMs: Date.now() - start });
   } catch (err) {

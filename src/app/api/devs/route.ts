@@ -28,6 +28,7 @@ export const GET = async () => {
       SELECT lang, COUNT(*)::int AS cnt
       FROM github_user, unnest(languages) AS lang
       WHERE languages IS NOT NULL
+        AND lat IS NOT NULL
       GROUP BY lang
       ORDER BY cnt DESC
     `;

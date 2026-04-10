@@ -207,6 +207,25 @@ button:disabled, [role="button"][aria-disabled="true"] {
   color: var(--color-muted);
 }
 
+.choropleth-tip .tip-sub {
+  font-size: 11px;
+  color: var(--color-muted-subtle);
+  margin-top: 1px;
+}
+
+.choropleth-tip .tip-lang {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.choropleth-tip .tip-lang-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
 /* ─── Cluster density slider ────────────────────────────────────────────────── */
 
 input[type="range"].sm-slider {

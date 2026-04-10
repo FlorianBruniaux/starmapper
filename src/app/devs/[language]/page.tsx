@@ -76,7 +76,7 @@ export default function DevsLanguagePage({ params }: Props) {
   // Resolve the dynamic slug from Next.js params (async in App Router)
   useEffect(() => {
     params.then(({ language }) => {
-      setSlug(language);
+      setSlug(decodeURIComponent(language));
     });
   }, [params]);
 

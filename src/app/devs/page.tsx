@@ -77,6 +77,22 @@ export default function DevsHubPage() {
               {totalMapped.toLocaleString()} developers mapped across {data?.languages.length ?? 0} languages
             </p>
           )}
+          <Link
+            href="/devs/atlas"
+            className="inline-flex items-center gap-2 mt-4 px-4 py-2 rounded-lg border border-border
+                       text-sm text-muted hover:text-foreground hover:border-accent-blue/50
+                       bg-surface hover:bg-surface-alt transition-all duration-150 group"
+          >
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true" className="shrink-0">
+              <circle cx="8" cy="8" r="6.5" />
+              <ellipse cx="8" cy="8" rx="3.5" ry="6.5" />
+              <line x1="1.5" y1="8" x2="14.5" y2="8" />
+            </svg>
+            <span>Language Atlas — which language dominates each country</span>
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" className="shrink-0 text-muted-subtle group-hover:text-muted transition-colors">
+              <path d="M6.22 3.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042L9.94 8 6.22 4.28a.75.75 0 0 1 0-1.06Z" />
+            </svg>
+          </Link>
         </div>
 
         {/* Search */}

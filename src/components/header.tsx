@@ -121,6 +121,17 @@ export const Header = ({
         </svg>
         Dev Maps
       </Link>
+      <Link
+        href="/devs/atlas"
+        className="flex items-center gap-1.5 text-sm text-muted hover:text-foreground border border-border hover:border-accent-blue px-3 py-1.5 rounded-lg transition-colors"
+      >
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+          <circle cx="8" cy="8" r="6.5" />
+          <ellipse cx="8" cy="8" rx="3.5" ry="6.5" />
+          <line x1="1.5" y1="8" x2="14.5" y2="8" />
+        </svg>
+        Atlas
+      </Link>
     </>
   );
 
@@ -217,6 +228,17 @@ export const Header = ({
                             <path d="M0 11.25c0-.966.784-1.75 1.75-1.75h12.5c.966 0 1.75.784 1.75 1.75v3A1.75 1.75 0 0 1 14.25 16H1.75A1.75 1.75 0 0 1 0 14.25Zm2-9.5C2 .784 2.784 0 3.75 0h8.5C13.216 0 14 .784 14 1.75v5a1.75 1.75 0 0 1-1.75 1.75h-8.5A1.75 1.75 0 0 1 2 6.75Zm1.75-.25a.25.25 0 0 0-.25.25v5c0 .138.112.25.25.25h8.5a.25.25 0 0 0 .25-.25v-5a.25.25 0 0 0-.25-.25Zm-2.25 9.75c0-.138.112-.25.25-.25h12.5a.25.25 0 0 1 .25.25v3a.25.25 0 0 1-.25.25H1.75a.25.25 0 0 1-.25-.25Z" />
                           </svg>
                           Dev Maps
+                        </Link>
+                        <Link
+                          href="/devs/atlas"
+                          className="flex items-center gap-2 px-4 py-2.5 text-sm text-muted hover:text-foreground hover:bg-surface-alt transition-colors"
+                        >
+                          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+                            <circle cx="8" cy="8" r="6.5" />
+                            <ellipse cx="8" cy="8" rx="3.5" ry="6.5" />
+                            <line x1="1.5" y1="8" x2="14.5" y2="8" />
+                          </svg>
+                          Atlas
                         </Link>
                       </>
                     )}
