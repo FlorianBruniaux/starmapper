@@ -23,9 +23,10 @@
  *   --min-followers <N>   Only process users with at least N followers (default: 0)
  *   --top <N>             Only process top N users by followers (default: all)
  *   --cursor <login>      Resume from this login (followers desc, login asc order)
- *   --batch <N>           Users per GraphQL request (default: 20, max: 50)
+ *   --batch <N>           Users per GraphQL request (default: 50, max: 50)
  *   --force               Re-fetch even if languagesFetchedAt is already set
  *   --dry-run             Query GitHub but don't write to DB
+ *   --from-cache          Pre-fill languages from star_event + badge_cache (no API calls)
  */
 
 import { readFileSync } from "fs";
@@ -56,9 +57,10 @@ loadEnvLocal();
 // ─── CLI args ─────────────────────────────────────────────────────────────────
 
 const argv = process.argv.slice(2);
-const DRY_RUN  = argv.includes("--dry-run");
-const USE_PROD = argv.includes("--prod");
-const FORCE    = argv.includes("--force");
+const DRY_RUN    = argv.includes("--dry-run");
+const USE_PROD   = argv.includes("--prod");
+const FORCE      = argv.includes("--force");
+const FROM_CACHE = argv.includes("--from-cache");
 
 const getArg = (flag: string, fallback: string) => {
   const i = argv.indexOf(flag);
@@ -67,7 +69,7 @@ const getArg = (flag: string, fallback: string) => {
 
 const TOP_USERS     = parseInt(getArg("--top", "0"), 10);           // 0 = all
 const MIN_FOLLOWERS = parseInt(getArg("--min-followers", "0"), 10); // 0 = all
-const BATCH_SIZE    = Math.min(parseInt(getArg("--batch", "10"), 10), 50);
+const BATCH_SIZE    = Math.min(parseInt(getArg("--batch", "50"), 10), 50);
 const START_CURSOR  = getArg("--cursor", "");
 const TOKEN_INDEX   = parseInt(getArg("--token-index", "-1"), 10);  // -1 = all tokens
 
@@ -147,7 +149,7 @@ const fetchLanguagesBatch = async (logins: string[]): Promise<BatchResult[]> => 
   const aliases = logins
     .map((login, i) => `u${i}: user(login: ${JSON.stringify(login)}) {
       contributionsCollection {
-        commitContributionsByRepository(maxRepositories: 30) {
+        commitContributionsByRepository(maxRepositories: 10) {
           repository { primaryLanguage { name } }
         }
       }
@@ -239,6 +241,58 @@ const formatEta = (processedSoFar: number, total: number, elapsedMs: number): st
   return `${h}h${m.toString().padStart(2, "0")}`;
 };
 
+// ─── Bulk SQL update (replaces N individual Prisma updates) ──────────────────
+
+const bulkUpdateLanguages = async (results: BatchResult[]): Promise<void> => {
+  if (results.length === 0) return;
+  const logins = results.map((r) => r.login);
+  const langs  = results.map((r) => r.languages);
+  // Single UPDATE ... FROM unnest() — one roundtrip regardless of batch size
+  await pool.query(
+    `UPDATE github_user u
+     SET languages = v.langs, "languagesFetchedAt" = NOW()
+     FROM (SELECT * FROM unnest($1::text[], $2::text[][]) AS t(ulogin, langs)) v
+     WHERE u.login = v.ulogin`,
+    [logins, langs],
+  );
+};
+
+// ─── --from-cache: pre-fill languages from star_event + badge_cache ───────────
+
+const runFromCache = async (): Promise<void> => {
+  console.log("\nPre-filling languages from star_event + badge_cache (no API calls)...");
+  const minFollowersClause = MIN_FOLLOWERS > 0 ? `AND u.followers >= ${MIN_FOLLOWERS}` : "";
+  const result = await pool.query<{ count: string }>(`
+    WITH lang_counts AS (
+      SELECT se.login, bc.language, COUNT(*)::int AS freq
+      FROM star_event se
+      JOIN badge_cache bc ON bc.owner = se.owner AND bc.repo = se.repo
+      WHERE bc.language IS NOT NULL AND bc.language != ''
+      GROUP BY se.login, bc.language
+    ),
+    ranked AS (
+      SELECT login, array_agg(language ORDER BY freq DESC, language ASC) AS languages
+      FROM lang_counts
+      GROUP BY login
+    ),
+    updated AS (
+      UPDATE github_user u
+      SET languages = r.languages, "languagesFetchedAt" = NOW()
+      FROM ranked r
+      WHERE u.login = r.login
+        AND u."languagesFetchedAt" IS NULL
+        AND u.lat IS NOT NULL
+        ${minFollowersClause}
+      RETURNING u.login
+    )
+    SELECT COUNT(*)::text AS count FROM updated
+  `);
+  console.log(`  Pre-filled ${Number(result.rows[0].count).toLocaleString()} users from star_event + badge_cache`);
+  console.log("  (These users now have languages derived from repos they starred — not commit history.)");
+};
+
+// ─── Main ─────────────────────────────────────────────────────────────────────
+
 const main = async () => {
   const runStartTs = new Date().toISOString();
 
@@ -248,14 +302,24 @@ const main = async () => {
   console.log(`  Min followers: ${MIN_FOLLOWERS > 0 ? `≥${MIN_FOLLOWERS}` : "all"}`);
   console.log(`  Top users:     ${TOP_USERS > 0 ? TOP_USERS : "all"}`);
   console.log(`  Cursor:        ${START_CURSOR || "(none)"}`);
-  console.log(`  Tokens:        ${TOKEN_POOL.map((t) => t.token.slice(0, 8) + "…").join(", ")}`);
+  console.log(`  Tokens:        ${FROM_CACHE ? "(none — cache mode)" : TOKEN_POOL.map((t) => t.token.slice(0, 8) + "…").join(", ")}`);
   console.log(`  Force refetch: ${FORCE}`);
+  console.log(`  From cache:    ${FROM_CACHE}`);
   console.log(`  Dry run:       ${DRY_RUN}`);
   console.log(`  Run start:     ${runStartTs}`);
   console.log(`\n  Rollback SQL (if needed):`);
   console.log(`  UPDATE github_user SET languages='{}', "languagesFetchedAt"=NULL WHERE "languagesFetchedAt">='${runStartTs}';\n`);
 
+  // Fast path: derive languages from existing DB data — no GitHub API calls
+  if (FROM_CACHE) {
+    if (!DRY_RUN) await runFromCache();
+    else console.log("  [dry-run] --from-cache skipped");
+    await prisma.$disconnect();
+    return;
+  }
+
   const baseWhere = {
+    lat: { not: null },   // only geocoded users — unmapped users won't appear on /devs anyway
     ...(FORCE ? {} : { languagesFetchedAt: null }),
     ...(MIN_FOLLOWERS > 0 ? { followers: { gte: MIN_FOLLOWERS } } : {}),
   };
@@ -291,15 +355,7 @@ const main = async () => {
       const results = await fetchLanguagesBatch(logins);
 
       if (!DRY_RUN) {
-        const now = new Date();
-        await prisma.$transaction(
-          results.map(({ login, languages }) =>
-            prisma.gitHubUser.update({
-              where: { login },
-              data: { languages, languagesFetchedAt: now },
-            }),
-          ),
-        );
+        await bulkUpdateLanguages(results);
       }
 
       for (const r of results) {
