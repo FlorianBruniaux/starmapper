@@ -86,7 +86,13 @@ EOF
 # badge_cache + stargazer_cache have no FK deps → run in parallel
 # star_event references github_user → must run after github_user completes
 
-sync_table "github_user" "ON CONFLICT (login) DO NOTHING"
+sync_table "github_user" 'ON CONFLICT (login) DO UPDATE SET
+  name=EXCLUDED.name, company=EXCLUDED.company, location=EXCLUDED.location,
+  followers=EXCLUDED.followers, following=EXCLUDED.following,
+  "publicRepos"=EXCLUDED."publicRepos", lat=EXCLUDED.lat, lng=EXCLUDED.lng,
+  "countryNormalized"=EXCLUDED."countryNormalized",
+  languages=EXCLUDED.languages, "languagesFetchedAt"=EXCLUDED."languagesFetchedAt",
+  "fetchedAt"=EXCLUDED."fetchedAt"'
 
 sync_table "badge_cache"     'ON CONFLICT (owner, repo) DO UPDATE SET "mappedCount"=EXCLUDED."mappedCount", "countryCount"=EXCLUDED."countryCount", "totalCount"=EXCLUDED."totalCount", "updatedAt"=EXCLUDED."updatedAt"' &
 sync_table "stargazer_cache" 'ON CONFLICT (owner, repo) DO UPDATE SET points=EXCLUDED.points, unmapped=EXCLUDED.unmapped, "totalCount"=EXCLUDED."totalCount", "scannedAt"=EXCLUDED."scannedAt"' &
@@ -94,6 +100,32 @@ wait
 
 sync_table "star_event" "WHERE login IN (SELECT login FROM github_user) ON CONFLICT (login, owner, repo) DO NOTHING"
 
+echo ""
+echo "Creating/refreshing materialized views on Neon..."
+psql "$NEON_URL" <<'EOSQL'
+-- country_language_stats_mv (Language Atlas)
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_matviews WHERE matviewname = 'country_language_stats_mv') THEN
+    EXECUTE $q$
+      CREATE MATERIALIZED VIEW country_language_stats_mv AS
+        SELECT "countryNormalized" AS country, lang, COUNT(*)::int AS cnt
+        FROM github_user, unnest(languages) AS lang
+        WHERE "countryNormalized" IS NOT NULL
+          AND "countryNormalized" NOT LIKE 'http%'
+          AND languages IS NOT NULL
+          AND lat IS NOT NULL
+        GROUP BY "countryNormalized", lang;
+      CREATE UNIQUE INDEX country_language_stats_mv_pk_idx ON country_language_stats_mv (country, lang);
+      CREATE INDEX country_language_stats_mv_lang_idx ON country_language_stats_mv (lang);
+    $q$;
+    RAISE NOTICE 'country_language_stats_mv created';
+  ELSE
+    REFRESH MATERIALIZED VIEW CONCURRENTLY country_language_stats_mv;
+    RAISE NOTICE 'country_language_stats_mv refreshed';
+  END IF;
+END $$;
+EOSQL
 echo ""
 echo "Sync complete."
 echo ""
