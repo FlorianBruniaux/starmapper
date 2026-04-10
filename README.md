@@ -14,6 +14,8 @@ Enter any GitHub repository URL and StarMapper fetches all stargazers, geocodes 
 - Progressive loading via client-side chunk loop — no serverless timeout limit
 - 3-level geocoding cascade: Jawg (primary), Geoapify (fallback), Nominatim (ultimate fallback)
 - Geocache pre-seeded with ~51k GeoNames entries — >99% of locations resolve without any API call
+- **Language Atlas** — choropleth map showing the most popular language per country (`/devs/atlas`)
+- **Dev Maps by language** — filter the developer map by programming language (`/devs/[language]`)
 - Community maps table on the landing page (sortable, paginated)
 - Dark / light mode toggle
 - Embeddable SVG badge showing mapped count and country stats
@@ -112,6 +114,13 @@ npx prisma generate       # Regenerate Prisma client after schema edits
 # Geocache seeding (one-shot, idempotent)
 pnpm seed:geonames:dry    # Preview keys that would be inserted
 pnpm seed:geonames        # Insert ~51k GeoNames entries into geocache
+
+# Language backfill (Language Atlas data)
+pnpm backfill:languages --from-cache   # Pre-fill from star_event + badge_cache (no API)
+pnpm backfill:languages --token-index 0  # Fill remaining via GitHub API (parallelizable)
+
+# DB sync (local Docker → Neon prod)
+pnpm db:sync              # Push github_user, star_event, badge_cache, stargazer_cache + refresh MVs
 ```
 
 ## Privacy & Data

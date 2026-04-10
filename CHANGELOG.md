@@ -5,6 +5,32 @@ Versioning : Semantic Versioning (MAJOR.MINOR.PATCH)
 
 ---
 
+## [0.3.0] — 2026-04-10
+
+### Nouvelles fonctionnalités
+
+- **Language Atlas** — Page `/devs/atlas` : carte choroplèthe mondiale affichant le langage le plus populaire par pays, calculé sur les repos étoilés et contribués. Détail par pays au clic (langage dominant, %, nombre de devs). Bandeau "Early preview" le temps du backfill.
+- **Dev Maps par langage** — Pages `/devs` et `/devs/[language]` : carte des développeurs filtrée par langage, avec combobox de sélection.
+- **Backfill langages** — Script `backfill-languages.ts` pour alimenter le champ `languages[]` sur `github_user`. Mode `--from-cache` : dérive les langages depuis `star_event + badge_cache` sans appel GitHub (1,23M users en quelques secondes). Mode API : parallélisable via `--token-index`.
+- **Materialized view `country_language_stats_mv`** — Agrégation (pays × langage) pour l'Atlas. Créée/rafraîchie automatiquement par `pnpm db:sync` et le cron admin quotidien.
+
+### Performances
+
+- **Backfill 3× plus rapide** — `maxRepositories: 30 → 10` (moins de points GraphQL consommés), batch par défaut `10 → 50`, bulk UPDATE via `unnest()` (1 requête SQL au lieu de N individuelles).
+
+### Corrections
+
+- **db:sync** — `github_user` passait de `DO NOTHING` à `DO UPDATE` : les colonnes `languages` et `languagesFetchedAt` n'étaient jamais poussées vers Neon. Corrigé.
+- **db:sync** — Création automatique de `country_language_stats_mv` sur Neon lors du sync si elle n'existe pas encore.
+
+### Technique
+
+- **`LANGUAGE_COLORS`** — Map de 24 langages vers des couleurs distinctives dans `src/lib/language-colors.ts`.
+- **`LanguageChoropleth`** — Composant MapLibre choroplèthe (dynamic import `ssr: false`).
+- **Copy Atlas** — Wording "gravitate toward" et "favor" plutôt que "use" / "dominant" (données = affinité, pas pratique certifiée).
+
+---
+
 ## [0.2.0] — 2026-03-31
 
 ### Sécurité

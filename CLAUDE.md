@@ -132,6 +132,15 @@ POST /api/badge-update
 
 GET /api/admin/clear-geocache   — admin: truncate geocache table
 POST /api/admin/import-geocache — admin: bulk-import geocache entries
+
+GET /api/devs/atlas
+  Returns: AtlasDominantData { countries: CountryDominant[], meta: { generatedAt, minDevsThreshold } }
+  Cache: public, 6h CDN
+  Note: reads country_language_stats_mv — falls back to {} if MV missing
+
+GET /api/devs?language=<slug>
+  Returns: { points: GeoPoint[], total: number }
+  Note: reads github_user filtered by language (from languages[]), geocoded users only
 ```
 
 ---
@@ -148,11 +157,18 @@ POST /api/admin/import-geocache — admin: bulk-import geocache entries
 │   │   ├── [owner]/[repo]/
 │   │   │   ├── page.tsx                       # Map page — chunk loop + UI + all modals
 │   │   │   └── opengraph-image.tsx            # OG image generation
+│   │   ├── devs/
+│   │   │   ├── page.tsx                       # Dev Maps landing — language selector
+│   │   │   ├── [language]/page.tsx            # Dev map filtered by language
+│   │   │   └── atlas/page.tsx                 # Language Atlas — choropleth map by country
 │   │   └── api/
 │   │       ├── chunk/route.ts                 # POST — fetch + geocode 100 users
 │   │       ├── repo-info/route.ts             # GET  — repo metadata (GitHub REST)
 │   │       ├── repos/route.ts                 # GET  — community maps list (BadgeCache)
 │   │       ├── stats/[owner]/[repo]/route.ts  # GET  — aggregated repo stats (GitHubUser+StarEvent)
+│   │       ├── devs/
+│   │       │   ├── route.ts                   # GET  — dev map points filtered by language
+│   │       │   └── atlas/route.ts             # GET  — country × language aggregation (MV)
 │   │       ├── stargazer-cache/
 │   │       │   ├── route.ts                   # POST — write full scan cache (gzip+base64)
 │   │       │   └── [owner]/[repo]/route.ts    # GET  — read full scan cache
@@ -161,7 +177,8 @@ POST /api/admin/import-geocache — admin: bulk-import geocache entries
 │   │       ├── badge/[owner]/[repo]/route.ts  # GET  — SVG shield badge
 │   │       └── admin/
 │   │           ├── clear-geocache/route.ts    # GET  — truncate geocache (admin)
-│   │           └── import-geocache/route.ts   # POST — bulk import geocache (admin)
+│   │           ├── import-geocache/route.ts   # POST — bulk import geocache (admin)
+│   │           └── refresh-grid-mv/route.ts   # GET  — refresh all materialized views (cron)
 │   ├── components/
 │   │   ├── token-modal.tsx                    # GitHub token input modal (PAT override)
 │   │   ├── theme-toggle.tsx                   # Dark/light mode toggle button
@@ -170,7 +187,9 @@ POST /api/admin/import-geocache — admin: bulk-import geocache entries
 │   │   ├── footer.tsx                         # Landing page footer with ecosystem links
 │   │   └── map/
 │   │       ├── stargazer-map.tsx              # MapLibre GL map (client component)
-│   │       └── stargazer-map-dynamic.tsx      # Dynamic import wrapper (ssr: false)
+│   │       ├── stargazer-map-dynamic.tsx      # Dynamic import wrapper (ssr: false)
+│   │       ├── language-choropleth.tsx        # Choropleth map — language by country
+│   │       └── language-choropleth-dynamic.tsx # Dynamic import wrapper (ssr: false)
 │   └── lib/
 │       ├── db.ts                              # Prisma + Neon adapter singleton
 │       ├── db-health.ts                       # DB storage usage check (Neon 512MB limit)
@@ -179,12 +198,16 @@ POST /api/admin/import-geocache — admin: bulk-import geocache entries
 │       ├── bookmarks.ts                       # Client-side repo bookmarks (localStorage)
 │       ├── user-cache.ts                      # bulkUpsertUsers() + bulkUpsertStarEvents()
 │       ├── countries.ts                       # ISO 3166 country set + normalizeCountry()
+│       ├── language-colors.ts                 # LANGUAGE_COLORS map (24 languages → hex)
 │       └── theme.ts                           # getStoredTheme() / applyTheme() — dark/light
 ├── prisma/
 │   └── schema.prisma                          # GeoCache + BadgeCache + StargazerCache + GitHubUser + StarEvent
 ├── scripts/
 │   ├── seed-geocache-geonames.ts              # One-shot: pre-seed geocache from GeoNames data
-│   └── clean-geocache-garbage.ts              # One-shot: delete garbage entries (#, $, code artifacts)
+│   ├── clean-geocache-garbage.ts              # One-shot: delete garbage entries (#, $, code artifacts)
+│   ├── backfill-languages.ts                  # Backfill languages[] on github_user (--from-cache or GitHub API)
+│   ├── create-country-language-mv.sql         # Create country_language_stats_mv (run once per DB instance)
+│   └── db-sync-to-neon.sh                     # Sync local Docker → Neon prod (github_user, star_event, badge_cache…)
 ├── docs/                                      # Project documentation
 └── .env.local                                 # Local environment variables (not committed)
 ```
@@ -255,7 +278,7 @@ Never send raw `points` arrays for large repos — the JSON payload will exceed 
 
 ### Materialized Views — One-Time Setup Required
 
-Two MVs are not managed by Prisma and must be created manually on any new DB instance:
+Five MVs are not managed by Prisma and must be created manually on any new DB instance. `pnpm db:sync` creates/refreshes them automatically when syncing from local Docker.
 
 **`github_user_grid_mv`** — heatmap grid (lat/lng buckets + follower aggregation):
 ```sql
@@ -300,7 +323,13 @@ CREATE MATERIALIZED VIEW company_stats_mv AS
 CREATE UNIQUE INDEX company_stats_mv_company_idx ON company_stats_mv (company);
 ```
 
-All 4 MVs are refreshed daily via `/api/admin/refresh-grid-mv` (Vercel Cron, 03:00 UTC). Routes using MVs fall back to direct table scans if a MV is missing.
+**`country_language_stats_mv`** — language × country aggregation (powers Language Atlas `/devs/atlas`):
+```sql
+-- see scripts/create-country-language-mv.sql
+-- or: pnpm create:country-language-mv:prod
+```
+
+All 5 MVs are refreshed daily via `/api/admin/refresh-grid-mv` (Vercel Cron, 03:00 UTC). Routes using MVs fall back to direct table scans if a MV is missing.
 
 ---
 
@@ -436,5 +465,5 @@ vercel --prod
 
 ---
 
-*Last updated: 2026-03-27*
-*Version: 0.2.0*
+*Last updated: 2026-04-10*
+*Version: 0.3.0*
