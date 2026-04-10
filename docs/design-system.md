@@ -42,7 +42,7 @@
 | `--color-accent-blue` | `#58a6ff` | `text-accent-blue` | Links, info, primary repo |
 | `--color-accent-green` | `#238636` | `bg-accent-green` | CTA principal, succès |
 | `--color-accent-red` | `#f85149` | `text-accent-red` | Erreurs |
-| `--color-accent-orange` | `#ffa657` | — | Map: followers moyen |
+| `--color-accent-orange` | `#ffa657` | `text-accent-orange` | Map: followers moyen, bandeaux warning |
 | `--color-accent-purple` | `#a371f7` | — | Map: repo compare |
 
 ### 2.4 Map Layers (non-Tailwind, MapLibre uniquement)
@@ -286,4 +286,4 @@ localStorage override ("light" | "dark")
 
 ---
 
-*Dernière mise à jour : 2026-03-27 (v0.2.0)*
+*Dernière mise à jour : 2026-04-10 (v0.3.0)*

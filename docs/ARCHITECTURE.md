@@ -1,7 +1,7 @@
 # StarMapper — Architecture
 
-**Version**: 0.2.0
-**Last updated**: 2026-03-27
+**Version**: 0.3.0
+**Last updated**: 2026-04-10
 
 ---
 
@@ -210,13 +210,14 @@ model BadgeCache {
   mappedCount  Int
   countryCount Int
   totalCount   Int
-  updatedAt    DateTime @updatedAt
+  language     String?   // primary language of the repo (from GitHub REST)
+  updatedAt    DateTime  @updatedAt @default(now())
 
   @@id([owner, repo])       // keys stored lowercase
 }
 ```
 
-**Purpose**: Store pre-computed map stats so the badge SVG at `/api/badge/[owner]/[repo]` renders instantly. Updated via `POST /api/badge-update` after the chunk loop completes. Also used by `GET /api/repos` (community maps) and as a fallback metadata source when StargazerCache is missing.
+**Purpose**: Store pre-computed map stats so the badge SVG at `/api/badge/[owner]/[repo]` renders instantly. Updated via `POST /api/badge-update` after the chunk loop completes. Also used by `GET /api/repos` (community maps) and as a fallback metadata source when StargazerCache is missing. The `language` field is used by `--from-cache` backfill to derive developer languages without GitHub API calls.
 
 ---
 
@@ -224,12 +225,14 @@ model BadgeCache {
 
 ```prisma
 model StargazerCache {
-  owner      String
-  repo       String
-  points     Json          // gzip+base64 encoded JSON array of StargazerPoint
-  unmapped   Json          // gzip+base64 encoded JSON array of UnmappedUser
-  totalCount Int
-  scannedAt  DateTime @default(now())
+  owner           String
+  repo            String
+  points          String            // gzip+base64 encoded JSON array of StargazerPoint
+  unmapped        String            // gzip+base64 encoded JSON array of UnmappedUser
+  totalCount      Int
+  scannedAt       DateTime          @default(now())
+  latestStarredAt DateTime?
+  expiresAt       DateTime          @default(dbgenerated("NOW() + INTERVAL '90 days'"))
 
   @@id([owner, repo])
 }
@@ -243,19 +246,28 @@ model StargazerCache {
 
 ```prisma
 model GitHubUser {
-  login     String      @id
-  name      String?
-  company   String?
-  location  String?
-  followers Int         @default(0)
-  lat       Float?
-  lng       Float?
-  fetchedAt DateTime
-  stars     StarEvent[]
+  login              String      @id
+  name               String?
+  company            String?
+  location           String?
+  followers          Int         @default(0)
+  following          Int         @default(0)
+  publicRepos        Int         @default(0)
+  accountCreatedAt   DateTime?
+  dataVersion        Int         @default(0)
+  lat                Float?
+  lng                Float?
+  linkedinUrl        String?
+  countryNormalized  String?
+  cityNormalized     String?
+  languages          String[]    @default([])
+  languagesFetchedAt DateTime?
+  fetchedAt          DateTime    @default(now())
+  stars              StarEvent[]
 }
 ```
 
-**Purpose**: Normalized per-user data. Written via `bulkUpsertUsers()` in `src/lib/user-cache.ts` during each chunk. Read by `/api/stats/[owner]/[repo]` to compute aggregated statistics without re-parsing scan data.
+**Purpose**: Normalized per-user data. Written via `bulkUpsertUsers()` in `src/lib/user-cache.ts` during each chunk. Read by `/api/stats/[owner]/[repo]` and `/api/devs`. `languages[]` is populated by `scripts/backfill-languages.ts` — see Language Atlas.
 
 ---
 
@@ -407,6 +419,26 @@ Called by the browser after the chunk loop completes to persist map stats.
 
 ---
 
+### `GET /api/devs/atlas`
+
+Returns country-level language dominance data for the Language Atlas choropleth map.
+
+**Response**: `AtlasDominantData { mode: "dominant", countries: AtlasCountry[], meta: { minDevsThreshold, generatedAt } }`
+
+**Cache**: `public, s-maxage=3600` (1h CDN). Reads `country_language_stats_mv`. Falls back to empty response if MV is missing (graceful degradation).
+
+---
+
+### `GET /api/devs?language=<slug>`
+
+Returns geocoded developer points filtered by programming language.
+
+**Query params**: `?language=typescript` (slug format, e.g. `typescript`, `python`, `c-cpp`)
+
+**Response**: `{ points: GeoPoint[], total: number }` — geocoded users only (`lat IS NOT NULL`), filtered by `languages[]` array.
+
+---
+
 ### `GET /api/admin/clear-geocache`
 
 Truncates the `geocache` table. No authentication guard. Use with care.
@@ -416,6 +448,17 @@ Truncates the `geocache` table. No authentication guard. Use with care.
 ### `POST /api/admin/import-geocache`
 
 Bulk-inserts geocache entries. Used to seed the cache from an external dataset.
+
+---
+
+### `GET /api/admin/refresh-grid-mv`
+
+Refreshes all materialized views (cron endpoint, runs daily at 03:00 UTC):
+- `github_user_grid_mv`
+- `country_stats_mv`
+- `power_users_mv`
+- `company_stats_mv`
+- `country_language_stats_mv`
 
 ---
 
@@ -431,11 +474,18 @@ Bulk-inserts geocache entries. Used to seed the cache from an external dataset.
 │   │   ├── [owner]/[repo]/
 │   │   │   ├── page.tsx                       # Map page — chunk loop + progressive rendering + all modals
 │   │   │   └── opengraph-image.tsx            # OG image generation
+│   │   ├── devs/
+│   │   │   ├── page.tsx                       # Dev Maps — language selector + map
+│   │   │   ├── [language]/page.tsx            # Dev map filtered by language
+│   │   │   └── atlas/page.tsx                 # Language Atlas — choropleth map by country
 │   │   └── api/
 │   │       ├── chunk/route.ts                 # POST — fetch + geocode 100 stargazers
 │   │       ├── repo-info/route.ts             # GET  — repo metadata (GitHub REST)
 │   │       ├── repos/route.ts                 # GET  — community maps list (BadgeCache)
 │   │       ├── stats/[owner]/[repo]/route.ts  # GET  — aggregated repo stats (GitHubUser + StarEvent)
+│   │       ├── devs/
+│   │       │   ├── route.ts                   # GET  — developer map points by language
+│   │       │   └── atlas/route.ts             # GET  — country × language dominance (MV)
 │   │       ├── stargazer-cache/
 │   │       │   ├── route.ts                   # POST — write full scan (gzip+base64)
 │   │       │   └── [owner]/[repo]/route.ts    # GET  — read full scan (200/206/404)
@@ -444,7 +494,8 @@ Bulk-inserts geocache entries. Used to seed the cache from an external dataset.
 │   │       ├── badge/[owner]/[repo]/route.ts  # GET  — SVG shield badge
 │   │       └── admin/
 │   │           ├── clear-geocache/route.ts    # GET  — truncate geocache (admin)
-│   │           └── import-geocache/route.ts   # POST — bulk import geocache (admin)
+│   │           ├── import-geocache/route.ts   # POST — bulk import geocache (admin)
+│   │           └── refresh-grid-mv/route.ts   # GET  — refresh all MVs (Vercel Cron 03:00 UTC)
 │   ├── components/
 │   │   ├── token-modal.tsx                    # GitHub token input modal (PAT override)
 │   │   ├── theme-toggle.tsx                   # Dark/light mode toggle button
@@ -453,7 +504,9 @@ Bulk-inserts geocache entries. Used to seed the cache from an external dataset.
 │   │   ├── footer.tsx                         # Landing page footer with ecosystem links + author credit
 │   │   └── map/
 │   │       ├── stargazer-map.tsx              # MapLibre GL map (client component, React.memo)
-│   │       └── stargazer-map-dynamic.tsx      # Dynamic import wrapper — ssr: false
+│   │       ├── stargazer-map-dynamic.tsx      # Dynamic import wrapper — ssr: false
+│   │       ├── language-choropleth.tsx        # Choropleth map — language dominance by country
+│   │       └── language-choropleth-dynamic.tsx # Dynamic import wrapper — ssr: false
 │   └── lib/
 │       ├── db.ts                              # Prisma + Neon adapter singleton
 │       ├── db-health.ts                       # DB storage check — checkDbHealth(), warns at 80%, skips at 95%
@@ -462,12 +515,16 @@ Bulk-inserts geocache entries. Used to seed the cache from an external dataset.
 │       ├── bookmarks.ts                       # Client-side repo bookmarks (localStorage)
 │       ├── user-cache.ts                      # bulkUpsertUsers() + bulkUpsertStarEvents()
 │       ├── countries.ts                       # ISO 3166 country set + isCountry() + normalizeCountry()
+│       ├── language-colors.ts                 # LANGUAGE_COLORS map (24 languages → hex)
 │       └── theme.ts                           # getStoredTheme() / applyTheme() / MAP_STYLE_DARK/_LIGHT
 ├── prisma/
-│   └── schema.prisma                          # GeoCache + BadgeCache + StargazerCache + GitHubUser + StarEvent
+│   └── schema.prisma                          # GeoCache + BadgeCache + StargazerCache + GitHubUser + StarEvent + DeletionLog
 ├── scripts/
 │   ├── seed-geocache-geonames.ts              # One-shot: pre-seed geocache from GeoNames data
-│   └── clean-geocache-garbage.ts              # One-shot: delete garbage entries (#, $, code artifacts)
+│   ├── clean-geocache-garbage.ts              # One-shot: delete garbage entries (#, $, code artifacts)
+│   ├── backfill-languages.ts                  # Backfill languages[] on github_user (--from-cache or GitHub API)
+│   ├── create-country-language-mv.sql         # SQL: create country_language_stats_mv (run once per DB instance)
+│   └── db-sync-to-neon.sh                     # Sync local Docker → Neon prod (github_user, star_event…)
 ├── docs/                                      # Project documentation
 └── .env.local                                 # Local environment variables (not committed)
 ```

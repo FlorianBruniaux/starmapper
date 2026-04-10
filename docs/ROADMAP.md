@@ -1,6 +1,6 @@
 # StarMapper — Roadmap
 
-*Dernière mise à jour : 2026-03-28 — Phase 1 Stargazer Intelligence shipped*
+*Dernière mise à jour : 2026-04-10 — Language Atlas + Dev Maps shipped (v0.3.0)*
 
 ---
 
@@ -12,6 +12,8 @@
 - **Compression client-side cache** — Web CompressionStream (gzip+base64) avant écriture `POST /api/stargazer-cache`. Résout les timeouts sur repos 50k+ étoiles.
 - **Geocache pre-seeding** — ~51k entrées GeoNames (villes + pays). >99% hit rate sur scans réels.
 - **Stargazer Intelligence — Phase 1** — Stats panel enrichi : 6 summary cards (total stars), company badges sur Top Stars, sort toggle, nouveau tab ⚡ Power (cross-repo power stargazers via query `groupBy` sur `star_event`).
+- **Language Atlas** — `/devs/atlas` : carte choroplèthe mondiale, langage le plus populaire par pays. Données issues des repos étoilés + contribués. Bandeau "Early preview" le temps du backfill complet.
+- **Dev Maps par langage** — `/devs` + `/devs/[language]` : carte des développeurs filtrée par langage.
 
 ---
 
@@ -49,7 +51,7 @@ On accumule des milliers de profils GitHub en base (`github_user` + `star_event`
 - Stats panel : 6 summary cards, sort toggle Top Stars, company badges, tab ⚡ Power
 - `/api/stats` : `company` dans `topUsers`, nouveau champ `powerStargazers` (cross-repo `groupBy`)
 
-### Phase 2 : Page `/explore` (leaderboard global)
+### ~~Phase 2 : Page `/explore` (leaderboard global)~~ ✅ Shipped
 
 Page standalone, nouveau point d'entrée vers StarMapper. Exploite toute la base cross-repo.
 
