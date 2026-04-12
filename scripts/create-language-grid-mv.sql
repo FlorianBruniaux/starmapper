@@ -9,6 +9,9 @@
 --   pnpm refresh:language-grid-mv:prod
 --   (also wired into /api/admin/refresh-grid-mv cron — runs daily at 03:00 UTC)
 
+-- Disable timeout for this long-running CREATE (scanning 4.4M rows)
+SET statement_timeout = 0;
+
 CREATE MATERIALIZED VIEW IF NOT EXISTS language_grid_mv AS
   SELECT
     lang,
