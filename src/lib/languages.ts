@@ -15,8 +15,8 @@ export const LANGUAGE_SLUG_MAP: Record<string, string> = {
   "astro":           "Astro",
   "blade":           "Blade",
   "c":               "C",
-  "c#":              "C#",
-  "c++":             "C++",
+  "csharp":          "C#",
+  "cpp":             "C++",
   "clojure":         "Clojure",
   "cmake":           "CMake",
   "coffeescript":    "CoffeeScript",
@@ -27,7 +27,7 @@ export const LANGUAGE_SLUG_MAP: Record<string, string> = {
   "elixir":          "Elixir",
   "elm":             "Elm",
   "erlang":          "Erlang",
-  "f#":              "F#",
+  "fsharp":          "F#",
   "fortran":         "Fortran",
   "go":              "Go",
   "groovy":          "Groovy",
@@ -37,7 +37,7 @@ export const LANGUAGE_SLUG_MAP: Record<string, string> = {
   "java":            "Java",
   "javascript":      "JavaScript",
   "julia":           "Julia",
-  "jupyter notebook": "Jupyter Notebook",
+  "jupyter-notebook": "Jupyter Notebook",
   "kotlin":          "Kotlin",
   "lua":             "Lua",
   "makefile":        "Makefile",
@@ -63,7 +63,7 @@ export const LANGUAGE_SLUG_MAP: Record<string, string> = {
   "typescript":      "TypeScript",
   "v":               "V",
   "verilog":         "Verilog",
-  "vim script":      "Vim Script",
+  "vim-script":      "Vim Script",
   "vue":             "Vue",
   "webassembly":     "WebAssembly",
   "zig":             "Zig",
@@ -89,11 +89,21 @@ export const slugToLanguage = (slug: string): string | null =>
 export const displayLanguage = (canonical: string): string => canonical;
 
 /**
- * Converts a canonical language name to a URL slug.
+ * Reverse lookup: canonical (lowercase) → URL-safe slug.
+ * Built once at module load from LANGUAGE_SLUG_MAP.
+ */
+const CANONICAL_TO_SLUG: Record<string, string> = Object.fromEntries(
+  Object.entries(LANGUAGE_SLUG_MAP).map(([slug, name]) => [name.toLowerCase(), slug]),
+);
+
+/**
+ * Converts a canonical language name to a URL-safe slug.
  * Used for generating links to /devs/[slug].
  *
  * languageToSlug("TypeScript") → "typescript"
- * languageToSlug("C++") → "c++"
+ * languageToSlug("C#")        → "csharp"
+ * languageToSlug("C++")       → "cpp"
+ * languageToSlug("F#")        → "fsharp"
  */
 export const languageToSlug = (canonical: string): string =>
-  canonical.toLowerCase();
+  CANONICAL_TO_SLUG[canonical.toLowerCase()] ?? canonical.toLowerCase();
