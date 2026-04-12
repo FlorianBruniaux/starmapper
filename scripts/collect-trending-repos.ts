@@ -24,6 +24,8 @@
  * Options:
  *   --min-stars <N>      Only include repos with at least N stars (default: 100)
  *   --since-months <N>   Only repos pushed in the last N months (default: 12)
+ *   --language <lang>    Filter by language (e.g. "rust", "go", "haskell") — can be repeated
+ *   --exclude-language <lang>  Exclude a language — can be repeated
  *   --output <path>      Output file path (default: scripts/repos-trending.json)
  *   --dry-run            Print stats only, don't write file
  */
@@ -68,6 +70,17 @@ const SINCE_MONTHS = parseInt(getArg("--since-months", "12"), 10);
 const OUTPUT_FILE  = getArg("--output", "scripts/repos-trending.json");
 // --token <n>  Force a single token by index (1 = GITHUB_TOKEN, 2 = GITHUB_TOKEN_2, …)
 const TOKEN_INDEX  = parseInt(getArg("--token", "0"), 10); // 0 = use all
+
+// --language <lang>  Filter by language (repeatable)
+const getArgs = (flag: string): string[] => {
+  const result: string[] = [];
+  for (let i = 0; i < argv.length; i++) {
+    if (argv[i] === flag && argv[i + 1]) result.push(argv[i + 1]);
+  }
+  return result;
+};
+const LANGUAGES         = getArgs("--language");
+const EXCLUDE_LANGUAGES = getArgs("--exclude-language");
 
 const CUTOFF_DATE = new Date();
 CUTOFF_DATE.setMonth(CUTOFF_DATE.getMonth() - SINCE_MONTHS);
@@ -170,8 +183,9 @@ const fetchSearchPage = async (
   for (let attempt = 0; attempt < 3; attempt++) {
     const tok = await acquireToken();
 
+    const langFilter = LANGUAGES.map((l) => `language:${l}`).join(" ");
     const q = encodeURIComponent(
-      `${starsQ} pushed:>${CUTOFF_ISO} fork:false archived:false`,
+      `${starsQ} pushed:>${CUTOFF_ISO} fork:false archived:false${langFilter ? " " + langFilter : ""}`,
     );
     const url = `https://api.github.com/search/repositories?q=${q}&sort=stars&order=desc&per_page=100&page=${page}`;
 
@@ -208,11 +222,19 @@ const fetchSearchPage = async (
       const body = await res.json() as {
         total_count: number;
         incomplete_results: boolean;
-        items: { full_name: string; stargazers_count: number }[];
+        items: { full_name: string; stargazers_count: number; language: string | null }[];
       };
 
+      const items = body.items
+        .filter((r) => {
+          if (EXCLUDE_LANGUAGES.length === 0) return true;
+          const lang = (r.language ?? "").toLowerCase();
+          return !EXCLUDE_LANGUAGES.map((l) => l.toLowerCase()).includes(lang);
+        })
+        .map((r) => ({ fullName: r.full_name, stars: r.stargazers_count }));
+
       return {
-        repos: body.items.map((r) => ({ fullName: r.full_name, stars: r.stargazers_count })),
+        repos: items,
         totalCount: body.total_count,
         incomplete: body.incomplete_results,
       };
@@ -269,6 +291,8 @@ const main = async () => {
   console.log(`  Min stars:    ${MIN_STARS}`);
   console.log(`  Since months: ${SINCE_MONTHS} (cutoff: ${CUTOFF_ISO})`);
   console.log(`  Star ranges:  ${ranges.map((r) => r.label).join(", ")}`);
+  if (LANGUAGES.length)         console.log(`  Languages:    ${LANGUAGES.join(", ")}`);
+  if (EXCLUDE_LANGUAGES.length) console.log(`  Exclude:      ${EXCLUDE_LANGUAGES.join(", ")}`);
   console.log(`  Tokens:       ${TOKEN_POOL.length} (${TOKEN_POOL.map((t) => t.token.slice(0, 8) + "...").join(", ")})`);
   console.log(`  DB:           ${DATABASE_URL.split("@")[1] ?? DATABASE_URL}`);
   console.log("");
