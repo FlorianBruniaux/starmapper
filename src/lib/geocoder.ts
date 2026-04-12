@@ -3,7 +3,7 @@
 
 import { prisma } from "@/lib/db";
 
-const JAWG_GEOCODING = "https://api.jawg.io/places/v1/search";
+const JAWG_GEOCODING = "https://starmapper.jawg.io/places/v1/search";
 const GEOAPIFY_GEOCODING = "https://api.geoapify.com/v1/geocode/search";
 const NOMINATIM_GEOCODING = "https://nominatim.openstreetmap.org/search";
 
@@ -109,11 +109,13 @@ const callGeoapify = async (
 
 const callJawg = async (
   location: string,
-  token: string,
+  apiKey: string,
 ): Promise<[number, number] | null | "error"> => {
   try {
-    const url = `${JAWG_GEOCODING}?text=${encodeURIComponent(location)}&size=1&access-token=${token}`;
-    const res = await fetchWithTimeout(url, 3000);
+    const url = `${JAWG_GEOCODING}?text=${encodeURIComponent(location)}&size=1`;
+    const res = await fetchWithTimeout(url, 3000, {
+      headers: { "x-api-key": apiKey },
+    });
     if (!res.ok) return "error"; // 429, 402, 5xx — transient, don't cache
     const data = await res.json();
     if (data.features?.length > 0) {
@@ -213,9 +215,9 @@ const _resolveAndCache = async (
   location: string,
   key: string,
 ): Promise<[number, number] | null> => {
-  // 1. Jawg (primary)
+  // 1. Jawg (primary) — dedicated instance starmapper.jawg.io, auth via x-api-key header
   if (isJawgAvailable()) {
-    const token = process.env.JAWGMAP_ACCESS_TOKEN;
+    const token = process.env.JAWG_TOKEN_HEADER;
     if (token) {
       const jawgResult = await callJawg(location, token);
       if (jawgResult === "error") {

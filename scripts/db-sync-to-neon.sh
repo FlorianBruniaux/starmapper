@@ -43,8 +43,12 @@ sync_table() {
 
   echo "[$TABLE]"
 
-  # Export from local
-  psql "$LOCAL_URL" -c "\copy $TABLE TO '$TMPDIR/$TABLE.csv' CSV HEADER"
+  # Export from local — explicit column list for github_user to be immune to schema drift
+  if [[ "$TABLE" == "github_user" ]]; then
+    psql "$LOCAL_URL" -c "\copy (SELECT login,name,company,location,followers,lat,lng,\"fetchedAt\",\"accountCreatedAt\",\"dataVersion\",following,\"publicRepos\",\"linkedinUrl\",\"cityNormalized\",\"countryNormalized\",languages,\"languagesFetchedAt\" FROM github_user) TO '$TMPDIR/$TABLE.csv' CSV HEADER"
+  else
+    psql "$LOCAL_URL" -c "\copy $TABLE TO '$TMPDIR/$TABLE.csv' CSV HEADER"
+  fi
   local ROWS
   ROWS=$(( $(wc -l < "$TMPDIR/$TABLE.csv") - 1 ))
   echo "  exported $ROWS rows"
@@ -90,8 +94,11 @@ sync_table "github_user" 'ON CONFLICT (login) DO UPDATE SET
   name=EXCLUDED.name, company=EXCLUDED.company, location=EXCLUDED.location,
   followers=EXCLUDED.followers, following=EXCLUDED.following,
   "publicRepos"=EXCLUDED."publicRepos", lat=EXCLUDED.lat, lng=EXCLUDED.lng,
-  "countryNormalized"=EXCLUDED."countryNormalized",
-  languages=EXCLUDED.languages, "languagesFetchedAt"=EXCLUDED."languagesFetchedAt",
+  "cityNormalized"=COALESCE(EXCLUDED."cityNormalized", github_user."cityNormalized"),
+  "countryNormalized"=COALESCE(EXCLUDED."countryNormalized", github_user."countryNormalized"),
+  "linkedinUrl"=COALESCE(EXCLUDED."linkedinUrl", github_user."linkedinUrl"),
+  languages=COALESCE(EXCLUDED.languages, github_user.languages),
+  "languagesFetchedAt"=COALESCE(EXCLUDED."languagesFetchedAt", github_user."languagesFetchedAt"),
   "fetchedAt"=EXCLUDED."fetchedAt"'
 
 sync_table "badge_cache"     'ON CONFLICT (owner, repo) DO UPDATE SET "mappedCount"=EXCLUDED."mappedCount", "countryCount"=EXCLUDED."countryCount", "totalCount"=EXCLUDED."totalCount", "updatedAt"=EXCLUDED."updatedAt"' &

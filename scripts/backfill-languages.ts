@@ -5,9 +5,9 @@
  * backfill-languages.ts
  *
  * Fetches tech languages for github_user rows where languagesFetchedAt IS NULL.
- * Uses contributionsCollection.commitContributionsByRepository — captures repos
- * the user actually committed to (not just owned), covering OSS contributors and
- * corporate devs who don't push their own public repos.
+ * Uses repositories(ownerAffiliations: OWNER, isFork: false) — the user's own
+ * non-fork repos ordered by last updated. Much cheaper than contributionsCollection
+ * (no contribution history scan → no "Resource limits exceeded" errors).
  *
  * Languages are stored as a String[] sorted by frequency desc, e.g.:
  *   ["TypeScript", "Python", "Rust"]
@@ -69,7 +69,7 @@ const getArg = (flag: string, fallback: string) => {
 
 const TOP_USERS     = parseInt(getArg("--top", "0"), 10);           // 0 = all
 const MIN_FOLLOWERS = parseInt(getArg("--min-followers", "0"), 10); // 0 = all
-const BATCH_SIZE    = Math.min(parseInt(getArg("--batch", "50"), 10), 50);
+const BATCH_SIZE    = Math.min(parseInt(getArg("--batch", "30"), 10), 50);
 const START_CURSOR  = getArg("--cursor", "");
 const TOKEN_INDEX   = parseInt(getArg("--token-index", "-1"), 10);  // -1 = all tokens
 
@@ -136,7 +136,7 @@ const computeLanguages = (rawLangs: (string | null | undefined)[]): string[] => 
     .map(([name]) => name);
 };
 
-// ─── GitHub GraphQL — contributionsCollection batch ───────────────────────────
+// ─── GitHub GraphQL — repositories batch (cheap: no contribution scan) ────────
 
 const GITHUB_GRAPHQL = "https://api.github.com/graphql";
 
@@ -146,12 +146,14 @@ const fetchLanguagesBatch = async (logins: string[]): Promise<BatchResult[]> => 
   const tok = await acquireToken();
 
   // Aliased batch — u0, u1, ... uN
+  // Uses repositories(ownerAffiliations: OWNER) — much cheaper than contributionsCollection.
+  // No contribution history scan → no "Resource limits exceeded" errors.
+  // Trade-off: only captures languages from user's own repos (not OSS contributions),
+  // but covers the vast majority of devs and is 10x cheaper in GraphQL points.
   const aliases = logins
     .map((login, i) => `u${i}: user(login: ${JSON.stringify(login)}) {
-      contributionsCollection {
-        commitContributionsByRepository(maxRepositories: 10) {
-          repository { primaryLanguage { name } }
-        }
+      repositories(first: 10, ownerAffiliations: OWNER, orderBy: {field: UPDATED_AT, direction: DESC}, isFork: false) {
+        nodes { primaryLanguage { name } }
       }
     }`)
     .join("\n");
@@ -199,10 +201,8 @@ const fetchLanguagesBatch = async (logins: string[]): Promise<BatchResult[]> => 
 
   for (let i = 0; i < logins.length; i++) {
     const userData = json.data?.[`u${i}`] as {
-      contributionsCollection?: {
-        commitContributionsByRepository: Array<{
-          repository: { primaryLanguage: { name: string } | null } | null;
-        }>;
+      repositories?: {
+        nodes: Array<{ primaryLanguage: { name: string } | null } | null>;
       };
     } | null | undefined;
 
@@ -212,9 +212,8 @@ const fetchLanguagesBatch = async (logins: string[]): Promise<BatchResult[]> => 
       continue;
     }
 
-    const rawLangs = (
-      userData.contributionsCollection?.commitContributionsByRepository ?? []
-    ).map((c) => c.repository?.primaryLanguage?.name ?? null);
+    const rawLangs = (userData.repositories?.nodes ?? [])
+      .map((n) => n?.primaryLanguage?.name ?? null);
 
     results.push({
       login: logins[i],
@@ -245,15 +244,16 @@ const formatEta = (processedSoFar: number, total: number, elapsedMs: number): st
 
 const bulkUpdateLanguages = async (results: BatchResult[]): Promise<void> => {
   if (results.length === 0) return;
-  const logins = results.map((r) => r.login);
-  const langs  = results.map((r) => r.languages);
-  // Single UPDATE ... FROM unnest() — one roundtrip regardless of batch size
+  // pg doesn't serialize text[][] reliably via unnest — use a VALUES list instead
+  const values = results.map((_, i) => `($${i * 2 + 1}, $${i * 2 + 2}::text[])`).join(", ");
+  const params: (string | string[])[] = [];
+  for (const r of results) { params.push(r.login, r.languages); }
   await pool.query(
     `UPDATE github_user u
      SET languages = v.langs, "languagesFetchedAt" = NOW()
-     FROM (SELECT * FROM unnest($1::text[], $2::text[][]) AS t(ulogin, langs)) v
+     FROM (VALUES ${values}) AS v(ulogin, langs)
      WHERE u.login = v.ulogin`,
-    [logins, langs],
+    params,
   );
 };
 
@@ -387,7 +387,7 @@ const main = async () => {
     }
 
     // Polite delay to stay under secondary rate limits
-    await sleep(300);
+    await sleep(150);
 
     if (TOP_USERS > 0 && processed >= TOP_USERS) break;
   }
