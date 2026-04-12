@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 48" fill="none">
+  <defs>
+    <clipPath id="globe-clip-logo">
+      <circle cx="24" cy="24" r="18.5"/>
+    </clipPath>
+  </defs>
+
+  <!-- Globe meridians -->
+  <g clip-path="url(#globe-clip-logo)" stroke="#58a6ff" stroke-width="1.8" fill="none">
+    <ellipse cx="24" cy="24" rx="18.5" ry="6.5"/>
+    <ellipse cx="24" cy="24" rx="6.5" ry="18.5"/>
+    <ellipse cx="24" cy="15" rx="15" ry="4.8"/>
+    <ellipse cx="24" cy="33" rx="15" ry="4.8"/>
+  </g>
+
+  <!-- Globe outer ring -->
+  <circle cx="24" cy="24" r="18.5" stroke="#58a6ff" stroke-width="2"/>
+
+  <!-- Star -->
+  <polygon
+    points="24,13 26.4,20 34,20 28,24.5 30.4,31.5 24,27 17.6,31.5 20,24.5 14,20 21.6,20"
+    fill="#f0883e"
+  />
+
+  <!-- Wordmark -->
+  <text
+    x="52"
+    y="31"
+    font-family="system-ui, -apple-system, 'Segoe UI', sans-serif"
+    font-size="20"
+    font-weight="600"
+    letter-spacing="-0.3"
+    fill="#f0f6fc"
+  >StarMapper</text>
+</svg>

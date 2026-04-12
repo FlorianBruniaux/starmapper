@@ -14,6 +14,10 @@ export const metadata: Metadata = {
   description: "See where in the world your GitHub repo's fans are — geocoded, clustered, and beautiful.",
   metadataBase: new URL(APP_URL),
   alternates: { canonical: "/" },
+  icons: {
+    icon: "/icon.svg",
+    apple: "/icon.svg",
+  },
   openGraph: {
     title: "StarMapper — Map your GitHub stargazers",
     description: "See where in the world your GitHub repo's fans are — geocoded, clustered, and beautiful.",
