@@ -43,24 +43,16 @@ export const GET = async (
     // language is already validated against the whitelist above — $queryRawUnsafe is safe here.
     const [gridRows, countryRows] = await Promise.all([
       prisma.$queryRawUnsafe<{ lat: number; lng: number; count: number; topLogin: string }[]>(`
-        SELECT lat, lng, count, "topLogin" FROM (
-          SELECT
-            ROUND(lat::numeric, 1)::float  AS lat,
-            ROUND(lng::numeric, 1)::float  AS lng,
-            COUNT(*) OVER (
-              PARTITION BY ROUND(lat::numeric, 1), ROUND(lng::numeric, 1)
-            )::int AS count,
-            login AS "topLogin",
-            ROW_NUMBER() OVER (
-              PARTITION BY ROUND(lat::numeric, 1), ROUND(lng::numeric, 1)
-              ORDER BY followers DESC
-            ) AS rn
-          FROM github_user
-          WHERE languages @> ARRAY[$1]::text[]
-            AND lat IS NOT NULL
-            AND lng IS NOT NULL
-        ) t
-        WHERE rn = 1
+        SELECT
+          ROUND(lat::numeric, 1)::float  AS lat,
+          ROUND(lng::numeric, 1)::float  AS lng,
+          COUNT(*)::int                  AS count,
+          (array_agg(login ORDER BY followers DESC))[1] AS "topLogin"
+        FROM github_user
+        WHERE languages @> ARRAY[$1]::text[]
+          AND lat IS NOT NULL
+          AND lng IS NOT NULL
+        GROUP BY ROUND(lat::numeric, 1), ROUND(lng::numeric, 1)
         ORDER BY count DESC
       `, language),
       prisma.$queryRawUnsafe<{ country: string; count: number }[]>(`
