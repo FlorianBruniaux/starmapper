@@ -42,19 +42,27 @@ export const GET = async (
     // GIN index on github_user.languages makes the ANY() filter fast.
     // language is already validated against the whitelist above — $queryRawUnsafe is safe here.
     const [gridRows, countryRows] = await Promise.all([
+      // Try MV first (sub-second) — fall back to direct scan if MV not yet created
       prisma.$queryRawUnsafe<{ lat: number; lng: number; count: number; topLogin: string }[]>(`
-        SELECT
-          ROUND(lat::numeric, 1)::float  AS lat,
-          ROUND(lng::numeric, 1)::float  AS lng,
-          COUNT(*)::int                  AS count,
-          (array_agg(login ORDER BY followers DESC))[1] AS "topLogin"
-        FROM github_user
-        WHERE languages @> ARRAY[$1]::text[]
-          AND lat IS NOT NULL
-          AND lng IS NOT NULL
-        GROUP BY ROUND(lat::numeric, 1), ROUND(lng::numeric, 1)
-        ORDER BY count DESC
-      `, language),
+        SELECT lat, lng, cnt AS count, top_login AS "topLogin"
+        FROM language_grid_mv
+        WHERE lang = $1
+        ORDER BY cnt DESC
+      `, language).catch(() =>
+        prisma.$queryRawUnsafe<{ lat: number; lng: number; count: number; topLogin: string }[]>(`
+          SELECT
+            ROUND(lat::numeric, 1)::float  AS lat,
+            ROUND(lng::numeric, 1)::float  AS lng,
+            COUNT(*)::int                  AS count,
+            (array_agg(login ORDER BY followers DESC))[1] AS "topLogin"
+          FROM github_user
+          WHERE languages @> ARRAY[$1]::text[]
+            AND lat IS NOT NULL
+            AND lng IS NOT NULL
+          GROUP BY ROUND(lat::numeric, 1), ROUND(lng::numeric, 1)
+          ORDER BY count DESC
+        `, language)
+      ),
       prisma.$queryRawUnsafe<{ country: string; count: number }[]>(`
         SELECT
           "countryNormalized" AS country,
