@@ -262,7 +262,7 @@ export default function HomePage() {
             <div className="max-w-7xl mx-auto px-4 lg:px-6 py-6 flex items-center justify-center gap-8 sm:gap-16 flex-wrap">
               <div className="text-center">
                 <div className="text-2xl font-bold text-foreground tabular-nums">
-                  {repos.length.toLocaleString()}
+                  {(reposTotal || repos.length).toLocaleString()}
                 </div>
                 <div className="text-xs text-muted mt-0.5">repos mapped</div>
               </div>
