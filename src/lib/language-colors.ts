@@ -45,7 +45,7 @@ export const LANGUAGE_COLORS: Record<string, string> = {
   "Perl":            "#0298c3",
   "PHP":             "#4F5D95",
   "PowerShell":      "#012456",
-  "Python":          "#3572A5",
+  "Python":          "#FFD343",
   "R":               "#198CE7",
   "Ruby":            "#701516",
   "Rust":            "#dea584",
