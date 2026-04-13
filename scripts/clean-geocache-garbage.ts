@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
+
 /**
  * clean-geocache-garbage.ts
  *
@@ -10,6 +13,7 @@
  */
 
 import { readFileSync } from "fs";
+import { parseArgs } from "node:util";
 import { join } from "path";
 import { PrismaClient } from "@prisma/client";
 import { PrismaNeon } from "@prisma/adapter-neon";
@@ -31,7 +35,11 @@ const loadEnvLocal = () => {
 
 loadEnvLocal();
 
-const DRY_RUN = process.argv.includes("--dry-run");
+const { values: argv } = parseArgs({
+  options: { "dry-run": { type: "boolean", default: false } },
+  strict: true,
+});
+const DRY_RUN = argv["dry-run"];
 
 // Patterns that indicate a non-geocodeable garbage key
 const isGarbage = (key: string): boolean => {

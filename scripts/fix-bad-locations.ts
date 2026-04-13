@@ -20,6 +20,7 @@
  */
 
 import { readFileSync } from "fs";
+import { parseArgs } from "node:util";
 import { join } from "path";
 import { PrismaClient } from "@prisma/client";
 import { PrismaNeon } from "@prisma/adapter-neon";
@@ -41,7 +42,11 @@ const loadEnvLocal = () => {
 
 loadEnvLocal();
 
-const DRY_RUN = process.argv.includes("--dry-run");
+const { values: argv } = parseArgs({
+  options: { "dry-run": { type: "boolean", default: false } },
+  strict: true,
+});
+const DRY_RUN = argv["dry-run"];
 
 // Geocache keys are already lowercased — patterns use lowercase.
 // github_user.location is mixed case — patterns use case-insensitive matching.

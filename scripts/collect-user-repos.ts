@@ -26,6 +26,7 @@
  */
 
 import { readFileSync, writeFileSync } from "fs";
+import { parseArgs } from "node:util";
 import { join } from "path";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
@@ -52,23 +53,30 @@ loadEnvLocal();
 
 // ─── CLI args ─────────────────────────────────────────────────────────────────
 
-const argv = process.argv.slice(2);
-const DRY_RUN = argv.includes("--dry-run");
+const { values: argv } = parseArgs({
+  options: {
+    "dry-run":      { type: "boolean", default: false },
+    "top":          { type: "string",  default: "1000" },
+    "min-stars":    { type: "string",  default: "100" },
+    "per-user":     { type: "string",  default: "20" },
+    "since-months": { type: "string",  default: "12" },
+    "concurrency":  { type: "string",  default: "8" },
+    "output":       { type: "string",  default: "scripts/repos-from-users.json" },
+    // --token <n>  Force a single token by index (1 = GITHUB_TOKEN, 2 = GITHUB_TOKEN_2, …)
+    // Useful to run multiple instances in parallel each with a dedicated token.
+    "token":        { type: "string",  default: "0" },
+  },
+  strict: true,
+});
 
-const getArg = (flag: string, fallback: string) => {
-  const i = argv.indexOf(flag);
-  return i !== -1 && argv[i + 1] ? argv[i + 1] : fallback;
-};
-
-const TOP_USERS    = parseInt(getArg("--top", "1000"), 10);
-const MIN_STARS    = parseInt(getArg("--min-stars", "100"), 10);
-const PER_USER     = parseInt(getArg("--per-user", "20"), 10);
-const SINCE_MONTHS = parseInt(getArg("--since-months", "12"), 10);
-const CONCURRENCY  = parseInt(getArg("--concurrency", "8"), 10);
-const OUTPUT_FILE  = getArg("--output", "scripts/repos-from-users.json");
-// --token <n>  Force a single token by index (1 = GITHUB_TOKEN, 2 = GITHUB_TOKEN_2, …)
-// Useful to run multiple instances in parallel each with a dedicated token.
-const TOKEN_INDEX  = parseInt(getArg("--token", "0"), 10); // 0 = use all
+const DRY_RUN      = argv["dry-run"];
+const TOP_USERS    = parseInt(argv.top,          10);
+const MIN_STARS    = parseInt(argv["min-stars"],  10);
+const PER_USER     = parseInt(argv["per-user"],   10);
+const SINCE_MONTHS = parseInt(argv["since-months"], 10);
+const CONCURRENCY  = parseInt(argv.concurrency,  10);
+const OUTPUT_FILE  = argv.output;
+const TOKEN_INDEX  = parseInt(argv.token, 10); // 0 = use all
 
 // Cutoff date: only repos pushed after this date
 const CUTOFF_DATE = new Date();

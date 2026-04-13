@@ -21,6 +21,7 @@
  */
 
 import { readFileSync } from "fs";
+import { parseArgs } from "node:util";
 import { join } from "path";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
@@ -47,19 +48,24 @@ loadEnvLocal();
 
 // ─── CLI args ─────────────────────────────────────────────────────────────────
 
-const argv = process.argv.slice(2);
-const DRY_RUN   = argv.includes("--dry-run");
-const USE_PROD  = argv.includes("--prod");
+const { values: argv } = parseArgs({
+  options: {
+    "dry-run":       { type: "boolean", default: false },
+    "prod":          { type: "boolean", default: false },
+    "top":           { type: "string",  default: "0" },
+    "min-followers": { type: "string",  default: "0" },
+    "batch":         { type: "string",  default: "20" },
+    "cursor":        { type: "string",  default: "" },
+  },
+  strict: true,
+});
 
-const getArg = (flag: string, fallback: string) => {
-  const i = argv.indexOf(flag);
-  return i !== -1 && argv[i + 1] ? argv[i + 1] : fallback;
-};
-
-const TOP_USERS      = parseInt(getArg("--top", "0"), 10);            // 0 = all
-const MIN_FOLLOWERS  = parseInt(getArg("--min-followers", "0"), 10);  // 0 = all
-const BATCH_SIZE     = Math.min(parseInt(getArg("--batch", "20"), 10), 50);
-const START_CURSOR   = getArg("--cursor", "");
+const DRY_RUN       = argv["dry-run"];
+const USE_PROD      = argv.prod;
+const TOP_USERS     = parseInt(argv.top,           10); // 0 = all
+const MIN_FOLLOWERS = parseInt(argv["min-followers"], 10); // 0 = all
+const BATCH_SIZE    = Math.min(parseInt(argv.batch, 10), 50);
+const START_CURSOR  = argv.cursor;
 
 const DB_URL = USE_PROD
   ? (process.env.DATABASE_URL ?? "")

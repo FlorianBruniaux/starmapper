@@ -27,6 +27,7 @@
  */
 
 import { readFileSync } from "fs";
+import { parseArgs } from "node:util";
 import { join } from "path";
 import { gzipSync, gunzipSync } from "zlib";
 import { PrismaClient } from "@prisma/client";
@@ -68,28 +69,35 @@ process.on("unhandledRejection", (reason) => {
 
 // ─── CLI args ─────────────────────────────────────────────────────────────────
 
-const argv = process.argv.slice(2);
-const DRY_RUN        = argv.includes("--dry-run");
-const FORCE          = argv.includes("--force");
-const SKIP_GEOCODING = argv.includes("--skip-geocoding");
-// --local  Use DATABASE_URL_LOCAL from .env.local (Docker Postgres).
-const USE_LOCAL      = argv.includes("--local");
-// --allow-neon  Explicitly allow writing to Neon production. Separate from --force
-// (which means "rescan even if cached") to prevent accidental Neon writes.
-const ALLOW_NEON     = argv.includes("--allow-neon");
+const { values: argv } = parseArgs({
+  options: {
+    "dry-run":        { type: "boolean", default: false },
+    "force":          { type: "boolean", default: false },
+    "skip-geocoding": { type: "boolean", default: false },
+    // Use DATABASE_URL_LOCAL from .env.local (Docker Postgres).
+    "local":          { type: "boolean", default: false },
+    // Explicitly allow writing to Neon production. Separate from --force
+    // (which means "rescan even if cached") to prevent accidental Neon writes.
+    "allow-neon":     { type: "boolean", default: false },
+    "input":          { type: "string" },
+    "token":          { type: "string" },
+    // --flush-every <N>  Flush github_user + star_event to DB every N users (default: 2000).
+    //                    Prevents losing hours of work if the process is interrupted.
+    "flush-every":    { type: "string",  default: "2000" },
+  },
+  strict: true,
+});
 
-const get = (flag: string) => {
-  const i = argv.indexOf(flag);
-  return i !== -1 ? argv[i + 1] ?? null : null;
-};
-
-const INPUT_FILE     = get("--input");
-const TOKEN_OVERRIDE = get("--token");
-// --flush-every <N>  Flush github_user + star_event to DB every N users (default: 2000).
-//                    Prevents losing hours of work if the process is interrupted.
-const FLUSH_EVERY_RAW = parseInt(get("--flush-every") ?? "2000", 10);
+const DRY_RUN        = argv["dry-run"];
+const FORCE          = argv.force;
+const SKIP_GEOCODING = argv["skip-geocoding"];
+const USE_LOCAL      = argv.local;
+const ALLOW_NEON     = argv["allow-neon"];
+const INPUT_FILE     = argv.input ?? null;
+const TOKEN_OVERRIDE = argv.token ?? null;
+const FLUSH_EVERY_RAW = parseInt(argv["flush-every"] ?? "2000", 10);
 if (isNaN(FLUSH_EVERY_RAW) || FLUSH_EVERY_RAW < 1) {
-  console.error("Error: --flush-every must be a positive integer (got: " + get("--flush-every") + ")");
+  console.error("Error: --flush-every must be a positive integer (got: " + argv["flush-every"] + ")");
   process.exit(1);
 }
 const FLUSH_EVERY = FLUSH_EVERY_RAW;
@@ -376,7 +384,7 @@ const fetchPage = async (
 
 // ─── Geocoding cascade ────────────────────────────────────────────────────────
 
-const JAWG_URL       = "https://api.jawg.io/places/v1/search";
+const JAWG_URL       = "https://starmapper.jawg.io/places/v1/search";
 const GEOAPIFY_URL   = "https://api.geoapify.com/v1/geocode/search";
 const NOMINATIM_URL  = "https://nominatim.openstreetmap.org/search";
 
@@ -393,11 +401,14 @@ const isGeocodeable = (loc: string) => {
 type Coords = [number, number]; // [lat, lng]
 
 const jawgGeocode = async (loc: string): Promise<Coords | null> => {
-  const token = process.env.JAWGMAP_ACCESS_TOKEN;
+  const token = process.env.JAWG_TOKEN_HEADER;
   if (!token) return null;
   try {
-    const url = `${JAWG_URL}?text=${encodeURIComponent(loc)}&size=1&access-token=${token}`;
-    const r = await fetch(url, { headers: { "User-Agent": "starmapper-batch/1.0" }, signal: AbortSignal.timeout(3_000) });
+    const url = `${JAWG_URL}?text=${encodeURIComponent(loc)}&size=1&access-token=${encodeURIComponent(token)}`;
+    const r = await fetch(url, {
+      headers: { "x-api-key": token, "User-Agent": "starmapper-batch/1.0" },
+      signal: AbortSignal.timeout(3_000),
+    });
     if (!r.ok) return null;
     const f = (await r.json() as { features?: { geometry: { coordinates: [number, number] } }[] }).features?.[0];
     if (!f) return null;

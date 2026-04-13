@@ -16,6 +16,7 @@
  */
 
 import { readFileSync } from "fs";
+import { parseArgs } from "node:util";
 import { join } from "path";
 import { PrismaClient } from "@prisma/client";
 import { PrismaNeon } from "@prisma/adapter-neon";
@@ -43,9 +44,15 @@ loadEnvLocal();
 
 // ─── CLI args ─────────────────────────────────────────────────────────────────
 
-const argv = process.argv.slice(2);
-const DRY_RUN  = argv.includes("--dry-run");
-const USE_PROD = argv.includes("--prod");
+const { values: argv } = parseArgs({
+  options: {
+    "dry-run": { type: "boolean", default: false },
+    "prod":    { type: "boolean", default: false },
+  },
+  strict: true,
+});
+const DRY_RUN  = argv["dry-run"];
+const USE_PROD = argv.prod;
 
 const DB_URL = USE_PROD
   ? (process.env.DATABASE_URL ?? "")

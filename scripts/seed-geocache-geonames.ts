@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
+
 /**
  * seed-geocache-geonames.ts
  *
@@ -14,6 +17,7 @@
  */
 
 import { readFileSync, writeFileSync } from "fs";
+import { parseArgs } from "node:util";
 import { join } from "path";
 import { PrismaClient } from "@prisma/client";
 import { PrismaNeon } from "@prisma/adapter-neon";
@@ -41,7 +45,11 @@ loadEnvLocal();
 
 const CITIES_FILE = join(process.env.HOME ?? "", "Downloads", "cities15000.txt");
 const COUNTRIES_FILE = join(process.env.HOME ?? "", "Downloads", "countryInfo.txt");
-const DRY_RUN = process.argv.includes("--dry-run");
+const { values: argv } = parseArgs({
+  options: { "dry-run": { type: "boolean", default: false } },
+  strict: true,
+});
+const DRY_RUN = argv["dry-run"];
 const INSERT_BATCH_SIZE = 1000;
 const KEY_LOOKUP_BATCH_SIZE = 5000;
 

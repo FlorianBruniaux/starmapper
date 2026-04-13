@@ -31,6 +31,7 @@
  */
 
 import { readFileSync, writeFileSync } from "fs";
+import { parseArgs } from "node:util";
 import { join } from "path";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
@@ -57,30 +58,28 @@ loadEnvLocal();
 
 // ─── CLI args ─────────────────────────────────────────────────────────────────
 
-const argv = process.argv.slice(2);
-const DRY_RUN = argv.includes("--dry-run");
+const { values: argv } = parseArgs({
+  options: {
+    "dry-run":          { type: "boolean", default: false },
+    "min-stars":        { type: "string",  default: "100" },
+    "since-months":     { type: "string",  default: "12" },
+    "output":           { type: "string",  default: "scripts/repos-trending.json" },
+    // --token <n>  Force a single token by index (1 = GITHUB_TOKEN, 2 = GITHUB_TOKEN_2, …)
+    "token":            { type: "string",  default: "0" },
+    // --language <lang>  Filter by language (repeatable)
+    "language":         { type: "string",  multiple: true },
+    "exclude-language": { type: "string",  multiple: true },
+  },
+  strict: true,
+});
 
-const getArg = (flag: string, fallback: string) => {
-  const i = argv.indexOf(flag);
-  return i !== -1 && argv[i + 1] ? argv[i + 1] : fallback;
-};
-
-const MIN_STARS    = parseInt(getArg("--min-stars", "100"), 10);
-const SINCE_MONTHS = parseInt(getArg("--since-months", "12"), 10);
-const OUTPUT_FILE  = getArg("--output", "scripts/repos-trending.json");
-// --token <n>  Force a single token by index (1 = GITHUB_TOKEN, 2 = GITHUB_TOKEN_2, …)
-const TOKEN_INDEX  = parseInt(getArg("--token", "0"), 10); // 0 = use all
-
-// --language <lang>  Filter by language (repeatable)
-const getArgs = (flag: string): string[] => {
-  const result: string[] = [];
-  for (let i = 0; i < argv.length; i++) {
-    if (argv[i] === flag && argv[i + 1]) result.push(argv[i + 1]);
-  }
-  return result;
-};
-const LANGUAGES         = getArgs("--language");
-const EXCLUDE_LANGUAGES = getArgs("--exclude-language");
+const DRY_RUN           = argv["dry-run"];
+const MIN_STARS         = parseInt(argv["min-stars"],    10);
+const SINCE_MONTHS      = parseInt(argv["since-months"], 10);
+const OUTPUT_FILE       = argv.output;
+const TOKEN_INDEX       = parseInt(argv.token, 10); // 0 = use all
+const LANGUAGES         = argv.language ?? [];
+const EXCLUDE_LANGUAGES = argv["exclude-language"] ?? [];
 
 const CUTOFF_DATE = new Date();
 CUTOFF_DATE.setMonth(CUTOFF_DATE.getMonth() - SINCE_MONTHS);
