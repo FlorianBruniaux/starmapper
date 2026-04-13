@@ -81,7 +81,7 @@
     "@upstash/redis": "^1.37.0",
     "maplibre-gl": "^5.22.0",
     "next": "16.2.3",
-    "prisma": "^7.6.0",
+    "prisma": "^7.7.0",
     "react": "19.2.5",
     "react-dom": "19.2.4",
     "topojson-client": "^3.1.0",
