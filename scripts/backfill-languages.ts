@@ -30,6 +30,7 @@
  */
 
 import { readFileSync } from "fs";
+import { parseArgs } from "node:util";
 import { join } from "path";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
@@ -56,22 +57,30 @@ loadEnvLocal();
 
 // ─── CLI args ─────────────────────────────────────────────────────────────────
 
-const argv = process.argv.slice(2);
-const DRY_RUN    = argv.includes("--dry-run");
-const USE_PROD   = argv.includes("--prod");
-const FORCE      = argv.includes("--force");
-const FROM_CACHE = argv.includes("--from-cache");
+const { values: argv } = parseArgs({
+  options: {
+    "dry-run":       { type: "boolean", default: false },
+    "prod":          { type: "boolean", default: false },
+    "force":         { type: "boolean", default: false },
+    "from-cache":    { type: "boolean", default: false },
+    "top":           { type: "string",  default: "0" },
+    "min-followers": { type: "string",  default: "0" },
+    "batch":         { type: "string",  default: "30" },
+    "cursor":        { type: "string",  default: "" },
+    "token-index":   { type: "string",  default: "-1" },
+  },
+  strict: true,
+});
 
-const getArg = (flag: string, fallback: string) => {
-  const i = argv.indexOf(flag);
-  return i !== -1 && argv[i + 1] ? argv[i + 1] : fallback;
-};
-
-const TOP_USERS     = parseInt(getArg("--top", "0"), 10);           // 0 = all
-const MIN_FOLLOWERS = parseInt(getArg("--min-followers", "0"), 10); // 0 = all
-const BATCH_SIZE    = Math.min(parseInt(getArg("--batch", "30"), 10), 50);
-const START_CURSOR  = getArg("--cursor", "");
-const TOKEN_INDEX   = parseInt(getArg("--token-index", "-1"), 10);  // -1 = all tokens
+const DRY_RUN      = argv["dry-run"];
+const USE_PROD     = argv.prod;
+const FORCE        = argv.force;
+const FROM_CACHE   = argv["from-cache"];
+const TOP_USERS     = parseInt(argv.top,           10); // 0 = all
+const MIN_FOLLOWERS = parseInt(argv["min-followers"], 10); // 0 = all
+const BATCH_SIZE    = Math.min(parseInt(argv.batch, 10), 50);
+const START_CURSOR  = argv.cursor;
+const TOKEN_INDEX   = parseInt(argv["token-index"], 10); // -1 = all tokens
 
 const DB_URL = USE_PROD
   ? (process.env.DATABASE_URL ?? "")
