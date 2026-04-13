@@ -66,16 +66,17 @@ Open [http://localhost:3000](http://localhost:3000), enter any public GitHub rep
 | `DATABASE_URL` | Yes | Postgres connection string (Neon, Docker, Railway, Supabase…) |
 | `DATABASE_DRIVER` | No | `neon` (default, Vercel) or `standard` (plain PostgreSQL) |
 | `GITHUB_TOKEN` | Yes | GitHub PAT with `read:user` scope |
-| `JAWGMAP_ACCESS_TOKEN` | Recommended | Geocoding primary provider (dedicated Jawg Places instance — see note below) |
+| `JAWG_TOKEN_HEADER` | Recommended | Main stargazer geocoding token — dedicated Jawg Places instance (`starmapper.jawg.io`, provided by JawgMaps). Sent as `x-api-key` header + `access-token` query param — see note below. |
+| `JAWGMAP_ACCESS_TOKEN` | Recommended | Jawg token for explore page autocomplete + reverse geocoding (`api.jawg.io`) |
 | `NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN` | Yes (client) | Jawg token for client-side MapLibre tile URL (map rendering only) |
 | `GEOAPIFY_APIKEY` | Recommended | Geocoding fallback when Jawg fails |
 | `NEXT_PUBLIC_APP_URL` | No | App base URL, used for OG metadata and Nominatim User-Agent |
 | `ADMIN_SECRET` | No | Secret header for `/api/admin/*` routes — if unset, admin routes return 401 |
 | `DB_STORAGE_LIMIT_MB` | No | DB storage cap in MB for health guard (default: 512, Neon Launch: 10240) |
 
-Without `JAWGMAP_ACCESS_TOKEN` and `GEOAPIFY_APIKEY`, geocoding falls back to Nominatim only — rate-limited to 1 req/s. Thanks to the GeoNames pre-seeding, this matters far less in practice (most locations already cached).
+Without `JAWG_TOKEN_HEADER` and `GEOAPIFY_APIKEY`, stargazer geocoding falls back to Nominatim only — rate-limited to 1 req/s. Thanks to GeoNames pre-seeding, this matters far less in practice (most locations already cached).
 
-> **Note on Jawg geocoding**: Batch geocoding is not permitted on the standard Jawg API. `JAWGMAP_ACCESS_TOKEN` targets a dedicated Jawg Places instance (`starmapper.jawg.io`) provided by JawgMaps specifically for StarMapper. It is separate from the map tile token and scoped to geocoding only.
+> **Note on Jawg geocoding**: Batch geocoding is not permitted on the standard Jawg API. `JAWG_TOKEN_HEADER` targets a dedicated Jawg Places instance (`starmapper.jawg.io`) provided by JawgMaps specifically for StarMapper — requests include both an `x-api-key` header and an `access-token` query param. It is separate from the map tile token and scoped to geocoding only.
 
 Without `GITHUB_TOKEN`, GitHub's unauthenticated rate limit applies (60 requests/hour), which will block any repo above roughly 6000 stars.
 

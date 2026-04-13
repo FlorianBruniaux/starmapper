@@ -136,10 +136,11 @@ isGeocodeableLocation() filter
         v
   [1] Jawg Places API
       starmapper.jawg.io (dedicated Jawg Places instance, sponsored by JawgMaps)
-      Uses a dedicated geocoding token (JAWGMAP_ACCESS_TOKEN) — separate from the
-      map tile token (NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN). Batch geocoding is not
-      permitted on the standard Jawg API; this dedicated instance was provided
-      specifically for StarMapper to allow high-volume location resolution.
+      Uses a dedicated geocoding token (JAWG_TOKEN_HEADER) — sent as x-api-key
+      header AND access-token query param. Separate from the map tile token
+      (NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN). Batch geocoding is not permitted on the
+      standard Jawg API; this dedicated instance was provided specifically for
+      StarMapper to allow high-volume location resolution.
       Circuit breaker: 3 errors → disabled 1h (in-memory)
       Parallel batches of 5 when available
         |
@@ -179,7 +180,7 @@ The geocache was pre-seeded with ~51,000 entries from GeoNames data (cities with
 
 **Parallelism**: When Jawg or Geoapify is available, up to 5 locations are geocoded in parallel. When both are down and Nominatim is the only option, geocoding is strictly sequential with a 1100ms delay between calls to respect the polite use policy.
 
-**Jawg sponsorship**: The Jawg geocoding endpoint (`starmapper.jawg.io`) is a dedicated Jawg Places instance provided by JawgMaps (Jawg Places is based on Pelias). Batch geocoding is not permitted on the public Jawg API — this dedicated server exists specifically for StarMapper. The geocoding token (`JAWGMAP_ACCESS_TOKEN`) is scoped to geocoding only and cannot access tile rendering.
+**Jawg sponsorship**: The Jawg geocoding endpoint (`starmapper.jawg.io`) is a dedicated Jawg Places instance provided by JawgMaps (Jawg Places is based on Pelias). Batch geocoding is not permitted on the public Jawg API — this dedicated server exists specifically for StarMapper. The geocoding token (`JAWG_TOKEN_HEADER`) is scoped to geocoding only and cannot access tile rendering. The explore page uses a separate token (`JAWGMAP_ACCESS_TOKEN`) against the public `api.jawg.io` endpoint.
 
 ---
 
@@ -512,6 +513,7 @@ Refreshes all materialized views (cron endpoint, runs daily at 03:00 UTC):
 │       ├── db-health.ts                       # DB storage check — checkDbHealth(), warns at 80%, skips at 95%
 │       ├── geocoder.ts                        # geocode() + geocodeBatch() — 3-level cascade
 │       ├── github.ts                          # fetchStargazersPage() — GitHub GraphQL
+│       ├── map-style.ts                       # fetchAndPatchStyle() — fetch + patch Jawg tile style (projection, attribution)
 │       ├── bookmarks.ts                       # Client-side repo bookmarks (localStorage)
 │       ├── user-cache.ts                      # bulkUpsertUsers() + bulkUpsertStarEvents()
 │       ├── countries.ts                       # ISO 3166 country set + isCountry() + normalizeCountry()
@@ -520,9 +522,16 @@ Refreshes all materialized views (cron endpoint, runs daily at 03:00 UTC):
 ├── prisma/
 │   └── schema.prisma                          # GeoCache + BadgeCache + StargazerCache + GitHubUser + StarEvent + DeletionLog
 ├── scripts/
+│   ├── batch-scan.ts                          # Batch-scan repos from a JSON list → writes to badge_cache
+│   ├── backfill-languages.ts                  # Backfill languages[] on github_user (--from-cache or GitHub API)
+│   ├── backfill-linkedin.ts                   # Backfill linkedinUrl on github_user via GitHub social accounts
+│   ├── backfill-repo-languages.ts             # Backfill language field on badge_cache via GitHub REST
+│   ├── collect-user-repos.ts                  # Collect repos from top StarMapper devs → JSON list for batch-scan
+│   ├── collect-trending-repos.ts              # Collect trending repos via GitHub Search API → JSON list
 │   ├── seed-geocache-geonames.ts              # One-shot: pre-seed geocache from GeoNames data
 │   ├── clean-geocache-garbage.ts              # One-shot: delete garbage entries (#, $, code artifacts)
-│   ├── backfill-languages.ts                  # Backfill languages[] on github_user (--from-cache or GitHub API)
+│   ├── fix-bad-locations.ts                   # One-shot: null out bad lat/lng (IPs, timezone codes, paths)
+│   ├── fix-slash-locations.ts                 # One-shot: re-geocode slash-separated city strings
 │   ├── create-country-language-mv.sql         # SQL: create country_language_stats_mv (run once per DB instance)
 │   └── db-sync-to-neon.sh                     # Sync local Docker → Neon prod (github_user, star_event…)
 ├── docs/                                      # Project documentation
@@ -541,7 +550,9 @@ Refreshes all materialized views (cron endpoint, runs daily at 03:00 UTC):
 
 **`src/lib/countries.ts`** — ISO 3166-1 country name set with aliases. `isCountry(s)` checks if a string is a known country; `normalizeCountry(s)` returns a canonical English name.
 
-**`src/lib/theme.ts`** — Theme management: `getStoredTheme()` / `setStoredTheme()` (localStorage), `getSystemTheme()` (prefers-color-scheme), `applyTheme()` (applies class to `<html>`). Also exports `MAP_STYLE_DARK` and `MAP_STYLE_LIGHT` tile URL factories for Jawg.
+**`src/lib/map-style.ts`** — Single source of truth for Jawg tile style fetching and patching. `fetchAndPatchStyle(url, projection)` fetches the JSON style, patches projection (forced to `projection` param, default `"mercator"`), patches Noto Sans → Open Sans fonts, strips `water_name`/`marine` layers, and adds `utm_source` attribution. In-memory cache keyed by `${url}#${projection}` to avoid globe/mercator collisions.
+
+**`src/lib/theme.ts`** — Theme management: `getStoredTheme()` / `setStoredTheme()` (localStorage), `getSystemTheme()` (prefers-color-scheme), `applyTheme()` (applies class to `<html>`). Also exports `MAP_STYLE_DARK` and `MAP_STYLE_LIGHT` tile URL factories for Jawg, and the `MapProjection` type.
 
 **`src/app/[owner]/[repo]/page.tsx`** — The map page owns the chunk loop. It checks the DB cache first; if found, loads directly. Otherwise calls `/api/chunk` sequentially, accumulates `StargazerPoint[]` in state, passes the growing array to `StargazerMapDynamic`, and shows live progress. All modals (stats, share, badge, unmapped drawer, token, stargazers table) are rendered here.
 
@@ -555,12 +566,13 @@ Refreshes all materialized views (cron endpoint, runs daily at 03:00 UTC):
 |---|---|---|---|
 | `DATABASE_URL` | Yes | Server | Neon Postgres connection string |
 | `GITHUB_TOKEN` | Yes | Server | PAT with `read:user` scope. Without it: 60 req/hr unauthenticated limit. |
-| `JAWGMAP_ACCESS_TOKEN` | Recommended | Server | Geocoding primary provider (Jawg Places API) |
+| `JAWG_TOKEN_HEADER` | Recommended | Server | Main stargazer geocoding — dedicated Jawg Places instance (`starmapper.jawg.io`). Sent as `x-api-key` header + `access-token` query param. |
+| `JAWGMAP_ACCESS_TOKEN` | Recommended | Server | Explore page autocomplete + reverse geocoding (`api.jawg.io`). Also used by `batch-scan.ts`. |
 | `GEOAPIFY_APIKEY` | Recommended | Server | Geocoding fallback provider (Geoapify) |
 | `NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN` | Yes (client) | Browser | Used to construct the MapLibre tile style URL |
 | `NEXT_PUBLIC_APP_URL` | No | Server | App base URL for metadata and OG image generation |
 
-Without `JAWGMAP_ACCESS_TOKEN` and `GEOAPIFY_APIKEY`, all geocoding falls through to Nominatim, which is strictly sequential at 1100ms per call — noticeably slower for large repos.
+Without `JAWG_TOKEN_HEADER` and `GEOAPIFY_APIKEY`, all stargazer geocoding falls through to Nominatim, which is strictly sequential at 1100ms per call — noticeably slower for large repos.
 
 ---
 

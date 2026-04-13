@@ -195,6 +195,7 @@ GET /api/devs?language=<slug>
 │       ├── db-health.ts                       # DB storage usage check (Neon 512MB limit)
 │       ├── geocoder.ts                        # geocode() + geocodeBatch() — 3-tier cascade
 │       ├── github.ts                          # fetchStargazersPage() — GitHub GraphQL
+│       ├── map-style.ts                       # fetchAndPatchStyle() — single source for Jawg tile style patching
 │       ├── bookmarks.ts                       # Client-side repo bookmarks (localStorage)
 │       ├── user-cache.ts                      # bulkUpsertUsers() + bulkUpsertStarEvents()
 │       ├── countries.ts                       # ISO 3166 country set + normalizeCountry()
@@ -203,9 +204,16 @@ GET /api/devs?language=<slug>
 ├── prisma/
 │   └── schema.prisma                          # GeoCache + BadgeCache + StargazerCache + GitHubUser + StarEvent
 ├── scripts/
+│   ├── batch-scan.ts                          # Batch-scan repos from a JSON list (uses starmapper.jawg.io)
+│   ├── backfill-languages.ts                  # Backfill languages[] on github_user (--from-cache or GitHub API)
+│   ├── backfill-linkedin.ts                   # Backfill linkedinUrl on github_user via GitHub social accounts
+│   ├── backfill-repo-languages.ts             # Backfill language field on badge_cache via GitHub REST
+│   ├── collect-user-repos.ts                  # Collect repos from top StarMapper devs → JSON for batch-scan
+│   ├── collect-trending-repos.ts              # Collect trending repos via GitHub Search API → JSON for batch-scan
 │   ├── seed-geocache-geonames.ts              # One-shot: pre-seed geocache from GeoNames data
 │   ├── clean-geocache-garbage.ts              # One-shot: delete garbage entries (#, $, code artifacts)
-│   ├── backfill-languages.ts                  # Backfill languages[] on github_user (--from-cache or GitHub API)
+│   ├── fix-bad-locations.ts                   # One-shot: null out bad lat/lng (IPs, timezone codes, paths)
+│   ├── fix-slash-locations.ts                 # One-shot: re-geocode slash-separated city strings
 │   ├── create-country-language-mv.sql         # Create country_language_stats_mv (run once per DB instance)
 │   └── db-sync-to-neon.sh                     # Sync local Docker → Neon prod (github_user, star_event, badge_cache…)
 ├── docs/                                      # Project documentation
@@ -380,7 +388,8 @@ import type { StargazerPoint } from "@/app/api/chunk/route";
 |----------|----------|-------------|
 | `DATABASE_URL` | Yes | Neon Postgres connection string |
 | `GITHUB_TOKEN` | Yes | PAT with `read:user` scope (without it: 60 req/hr unauthenticated) |
-| `JAWGMAP_ACCESS_TOKEN` | Recommended | Jawg Places API — primary geocoding provider |
+| `JAWG_TOKEN_HEADER` | Recommended | Jawg dedicated token — main stargazer geocoding via `starmapper.jawg.io` (x-api-key header + access-token query param) |
+| `JAWGMAP_ACCESS_TOKEN` | Recommended | Jawg token for explore autocomplete + reverse geocoding (`api.jawg.io`) |
 | `GEOAPIFY_APIKEY` | Recommended | Geoapify — geocoding fallback 1 |
 | `NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN` | Yes (client) | Jawg token for MapLibre tile style URL |
 | `NEXT_PUBLIC_APP_URL` | No | App URL for metadata |
@@ -388,7 +397,7 @@ import type { StargazerPoint } from "@/app/api/chunk/route";
 | `UPSTASH_REDIS_REST_URL` | Recommended | Upstash Redis URL for distributed rate limiting |
 | `UPSTASH_REDIS_REST_TOKEN` | Recommended | Upstash Redis token |
 
-Without `JAWGMAP_ACCESS_TOKEN` and `GEOAPIFY_APIKEY`, all geocoding falls through to Nominatim — strictly sequential at 1100ms per call, noticeably slower for large repos.
+Without `JAWG_TOKEN_HEADER` and `GEOAPIFY_APIKEY`, all stargazer geocoding falls through to Nominatim — strictly sequential at 1100ms per call, noticeably slower for large repos.
 
 **First-time DB setup:**
 ```bash

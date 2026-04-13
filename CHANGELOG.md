@@ -5,6 +5,24 @@ Versioning : Semantic Versioning (MAJOR.MINOR.PATCH)
 
 ---
 
+## [0.3.1] — 2026-04-13
+
+### Corrections
+
+- **Fix auth Jawg** — `callJawg()` dans `geocoder.ts` envoyait le token uniquement via header `x-api-key`. Ajout du query param `access-token` requis par l'endpoint dédié `starmapper.jawg.io`. Sans ce param, les requêtes Jawg retournaient 401 silencieusement.
+- **Fix label geocode explore** — `/api/explore/geocode` reconstruisait le label manuellement avec `p.city` (champ inexistant dans le modèle Jawg Places). Remplacé par `feature.properties.label` que Jawg fournit nativement.
+- **Fix tests geocoder** — `geocoder.test.ts` stubbait `JAWGMAP_ACCESS_TOKEN` alors que le code lit `JAWG_TOKEN_HEADER`. 7 tests pré-existants échouaient silencieusement. Corrigé.
+- **Docs** — Remplacement de toutes les occurrences de "Pelias" par "Jawg Places" dans `README.md` et `docs/ARCHITECTURE.md`. Jawg Places est basé sur Pelias mais la marque correcte est Jawg Places.
+
+### Technique
+
+- **Consolidation `fetchAndPatchStyle`** — La fonction existait en double : une version inline dans `stargazer-map.tsx` (30 lignes, sans cache) et une version dans `lib/map-style.ts` (avec cache). `lib/map-style.ts` est désormais la source unique. La fonction accepte un paramètre `projection` (`"mercator"` | `"globe"`, défaut `"mercator"`) avec clé de cache composite `${url}#${projection}` pour éviter les collisions globe/mercator.
+- **Suppression patches style obsolètes** — `lang=en` retiré des URLs de style dans `theme.ts` et `stargazer-map.tsx` (Jawg gère la langue nativement). Patch glyphs URL retiré (`lib/map-style.ts`, `stargazer-map.tsx`). Remplacement `name:fr → name:en` retiré (`map-style.ts`, `stargazer-map.tsx`).
+- **Migration `batch-scan.ts`** — Endpoint geocodage migré de `api.jawg.io` vers `starmapper.jawg.io` (endpoint dédié StarMapper). Token migré de `JAWGMAP_ACCESS_TOKEN` vers `JAWG_TOKEN_HEADER`. Ajout du header `x-api-key`.
+- **Refactor CLI scripts** — Les 10 scripts dans `scripts/` utilisent désormais `node:util parseArgs` avec `strict: true` au lieu des patterns ad-hoc `process.argv.includes` / `getArg`. `parseArgs` est natif Node 18+, sans dépendance.
+
+---
+
 ## [0.3.0] — 2026-04-10
 
 ### Nouvelles fonctionnalités
