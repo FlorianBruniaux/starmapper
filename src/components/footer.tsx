@@ -83,6 +83,7 @@ export const Footer = () => (
         <a href="/privacy" className="text-2xs text-muted-subtle hover:text-muted transition-colors">Privacy Policy</a>
         <a href="/terms" className="text-2xs text-muted-subtle hover:text-muted transition-colors">Terms of Service</a>
         <a href="/legal" className="text-2xs text-muted-subtle hover:text-muted transition-colors">Legal</a>
+        <a href="/sponsor" className="text-2xs text-muted-subtle hover:text-muted transition-colors">Sponsor</a>
         <a href="mailto:florian@bruniaux.com" className="text-2xs text-muted-subtle hover:text-muted transition-colors">florian@bruniaux.com</a>
       </div>
 

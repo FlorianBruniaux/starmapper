@@ -7,6 +7,7 @@ import { useEffect, useRef, memo } from "react";
 import maplibregl from "maplibre-gl";
 import { MAP_STYLE_DARK, MAP_STYLE_LIGHT } from "@/lib/theme";
 import { fetchAndPatchStyle } from "@/lib/map-style";
+import { JawgBadge } from "@/components/map/jawg-badge";
 import { useTheme } from "@/hooks/useTheme";
 import { feature } from "topojson-client";
 import type { Topology, GeometryCollection } from "topojson-specification";
@@ -105,7 +106,7 @@ export const CountryChoropleth = memo(({ countryData, onCountryClick }: Props) =
         style: patchedStyle,
         center: [15, 20],
         zoom: 1.4,
-        attributionControl: false,
+        attributionControl: {},
       });
       mapRef.current = map;
 
@@ -235,6 +236,7 @@ export const CountryChoropleth = memo(({ countryData, onCountryClick }: Props) =
   return (
     <div className="relative w-full h-full">
       <div ref={containerRef} className="w-full h-full" />
+      <JawgBadge />
     </div>
   );
 });

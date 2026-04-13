@@ -51,6 +51,16 @@ export const fetchAndPatchStyle = async (url: string): Promise<string | StyleSpe
     });
     const fixed = JSON.parse(JSON.stringify(json).replace(/"name:fr"/g, '"name:en"')) as StyleSpecification;
     Object.assign(json, fixed);
+    // Patch Jawg attribution links to use utm_source=starmapper
+    for (const key of Object.keys(json.sources ?? {})) {
+      const src = (json.sources as Record<string, { attribution?: string }>)[key];
+      if (src?.attribution?.includes("jawg.io")) {
+        src.attribution = src.attribution.replace(
+          /utm_source=[^&"]+/,
+          "utm_source=starmapper",
+        );
+      }
+    }
     styleCache.set(url, json);
     return json;
   } catch {

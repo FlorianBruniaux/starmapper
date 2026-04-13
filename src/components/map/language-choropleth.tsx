@@ -8,6 +8,7 @@ import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { MAP_STYLE_DARK, MAP_STYLE_LIGHT } from "@/lib/theme";
 import { fetchAndPatchStyle } from "@/lib/map-style";
+import { JawgBadge } from "@/components/map/jawg-badge";
 import { useTheme } from "@/hooks/useTheme";
 import { feature } from "topojson-client";
 import type { Topology, GeometryCollection } from "topojson-specification";
@@ -134,7 +135,7 @@ export const LanguageChoropleth = memo(({ countries, onCountryClick }: Props) =>
         style: patchedStyle,
         center: [15, 20],
         zoom: 1.4,
-        attributionControl: false,
+        attributionControl: {},
       });
       mapRef.current = map;
 
@@ -282,6 +283,7 @@ export const LanguageChoropleth = memo(({ countries, onCountryClick }: Props) =>
   return (
     <div className="relative w-full h-full">
       <div ref={containerRef} className="w-full h-full" />
+      <JawgBadge />
     </div>
   );
 });

@@ -9,6 +9,7 @@ import { TokenModal, getStoredToken } from "@/components/token-modal";
 import { getBookmarks } from "@/lib/bookmarks";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
+import { SponsorsBlock } from "@/components/sponsors-block";
 import Link from "next/link";
 import { CommandSearch } from "@/components/command-search";
 import type { Bookmark } from "@/lib/bookmarks";
@@ -391,6 +392,9 @@ export default function HomePage() {
             </div>
           </section>
         )}
+
+        {/* ── Sponsors ── */}
+        <SponsorsBlock />
 
         {/* ── FAQ ── */}
         <section className="w-full max-w-7xl mx-auto px-4 lg:px-6 pb-16">
