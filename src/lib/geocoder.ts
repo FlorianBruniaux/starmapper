@@ -112,7 +112,7 @@ const callJawg = async (
   apiKey: string,
 ): Promise<[number, number] | null | "error"> => {
   try {
-    const url = `${JAWG_GEOCODING}?text=${encodeURIComponent(location)}&size=1`;
+    const url = `${JAWG_GEOCODING}?text=${encodeURIComponent(location)}&size=1&access-token=${encodeURIComponent(apiKey)}`;
     const res = await fetchWithTimeout(url, 3000, {
       headers: { "x-api-key": apiKey },
     });

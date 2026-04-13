@@ -60,7 +60,7 @@ const nominatimFound = (lat: number, lng: number) => [{ lat: String(lat), lon: S
 
 describe("geocode()", () => {
   beforeEach(() => {
-    vi.stubEnv("JAWGMAP_ACCESS_TOKEN", "test_jawg_token");
+    vi.stubEnv("JAWG_TOKEN_HEADER", "test_jawg_token");
     vi.stubEnv("GEOAPIFY_APIKEY", "test_geoapify_key");
     mockFindUnique.mockResolvedValue(null); // default: cache miss
     mockUpsert.mockResolvedValue(undefined);
@@ -266,7 +266,7 @@ describe("geocode()", () => {
 
 describe("geocodeBatch()", () => {
   beforeEach(() => {
-    vi.stubEnv("JAWGMAP_ACCESS_TOKEN", "test_jawg_token");
+    vi.stubEnv("JAWG_TOKEN_HEADER", "test_jawg_token");
     vi.stubEnv("GEOAPIFY_APIKEY", "test_geoapify_key");
     mockFindMany.mockResolvedValue([]);
     mockUpsert.mockResolvedValue(undefined);

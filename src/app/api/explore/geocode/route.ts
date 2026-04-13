@@ -24,15 +24,7 @@ const reverseGeocode = async (lat: number, lng: number): Promise<string | null> 
     const data = await res.json();
     const feature = data.features?.[0];
     if (!feature) return null;
-    // Build a concise label from the most specific address components
-    const p = feature.properties ?? {};
-    const parts: string[] = [];
-    if (p.name)           parts.push(p.name);
-    else if (p.street)    parts.push(p.street);
-    if (p.city)           parts.push(p.city);
-    else if (p.locality)  parts.push(p.locality);
-    if (p.country)        parts.push(p.country);
-    return parts.length > 0 ? parts.join(", ") : (feature.properties?.label ?? null);
+    return (feature.properties?.label as string | undefined) ?? null;
   } catch {
     return null;
   }
