@@ -56,3 +56,26 @@ export const MAP_STYLE_DARK = (token: string) =>
 
 export const MAP_STYLE_LIGHT = (token: string) =>
   `https://api.jawg.io/styles/jawg-light.json?access-token=${token}&lang=en`;
+
+// ─── Map projection preference ──────────────────────────────────────────────
+// Persists user's globe ↔ mercator toggle choice across sessions.
+
+export type MapProjection = "globe" | "mercator";
+
+const PROJECTION_KEY = "starmapper:projection";
+
+export const getStoredProjection = (): MapProjection | null => {
+  try {
+    const v = localStorage.getItem(PROJECTION_KEY);
+    if (v === "globe" || v === "mercator") return v;
+    return null;
+  } catch {
+    return null;
+  }
+};
+
+export const setStoredProjection = (p: MapProjection): void => {
+  try {
+    localStorage.setItem(PROJECTION_KEY, p);
+  } catch { /* localStorage unavailable */ }
+};

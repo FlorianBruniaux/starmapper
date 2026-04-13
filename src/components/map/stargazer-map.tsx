@@ -8,6 +8,9 @@ import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import type { StyleSpecification } from "maplibre-gl";
 import type { StargazerPoint } from "@/app/api/chunk/route";
+import { getStoredProjection, setStoredProjection } from "@/lib/theme";
+import type { MapProjection } from "@/lib/theme";
+import { JawgBadge } from "@/components/map/jawg-badge";
 
 type Props = {
   points: StargazerPoint[];
@@ -26,17 +29,19 @@ type Props = {
 const JAWG_TOKEN = process.env.NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN ?? "";
 const STYLE_URL = `https://api.jawg.io/styles/jawg-dark.json?access-token=${JAWG_TOKEN}&lang=en`;
 const CLUSTER_MAX_ZOOM = 20;
+const ENABLE_GLOBE = process.env.NEXT_PUBLIC_ENABLE_GLOBE !== "false";
 
 export const CLUSTER_RADIUS = { min: 20, max: 150, default: 40, step: 10 } as const;
 
+
 // Fetch a Jawg style URL and apply StarMapper-specific patches (font names, lang, water labels)
-const fetchAndPatchStyle = async (url: string): Promise<string | StyleSpecification> => {
+const fetchAndPatchStyle = async (url: string, projection: MapProjection = "mercator"): Promise<string | StyleSpecification> => {
   try {
     const res = await fetch(url);
     if (!res.ok) return url;
     const json = await res.json() as StyleSpecification;
     if (!json || typeof json !== "object") return url;
-    if (!json.projection) json.projection = { type: "mercator" };
+    json.projection = { type: projection };
     if (json.glyphs && JAWG_TOKEN) {
       json.glyphs = json.glyphs.includes("access-token")
         ? json.glyphs
@@ -521,6 +526,8 @@ const StargazerMapInner = ({ points, comparePoints, flyTarget, onFlyDone, onRead
   const clusterRadiusRef = useRef(clusterRadius ?? CLUSTER_RADIUS.default);
   const hasInitializedRef = useRef(false);
   const appliedStyleUrlRef = useRef<string>("");
+  const projectionRef = useRef<MapProjection>("mercator");
+  const [projectionState, setProjectionState] = useState<MapProjection>("mercator");
   // Throttle refs: prevent MapLibre setData from firing on every chunk during progressive loading.
   // Leading call fires immediately; subsequent calls within the window are batched (trailing wins).
   type PendingData = { main: ReturnType<typeof buildGeoJSON>; heat: ReturnType<typeof buildHeatGeoJSON> };
@@ -569,6 +576,19 @@ const StargazerMapInner = ({ points, comparePoints, flyTarget, onFlyDone, onRead
     rebuildClusteredSources(clusterRadius ?? CLUSTER_RADIUS.default);
   }, [clusterRadius, rebuildClusteredSources]);
 
+  const handleToggle = useCallback(() => {
+    const map = mapRef.current;
+    if (!map || !mapReady) return;
+
+    const newProj: MapProjection = projectionRef.current === "globe" ? "mercator" : "globe";
+    projectionRef.current = newProj;
+    setProjectionState(newProj);
+    setStoredProjection(newProj);
+
+    // MapLibre 5: setProjection updates rendering without a full style reload
+    map.setProjection({ type: newProj });
+  }, [mapReady]);
+
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
 
@@ -577,8 +597,18 @@ const StargazerMapInner = ({ points, comparePoints, flyTarget, onFlyDone, onRead
     const initMap = async () => {
       if (!containerRef.current) return;
 
+      const isMobile =
+        typeof window !== "undefined" &&
+        window.matchMedia("(pointer: coarse)").matches &&
+        window.innerWidth < 768;
+      const stored = getStoredProjection();
+      // Explicit user preference wins over auto-detection
+      const projection: MapProjection = stored ?? (ENABLE_GLOBE && !isMobile ? "globe" : "mercator");
+      projectionRef.current = projection;
+      setProjectionState(projection);
+
       const resolvedStyleUrl = styleUrl ?? STYLE_URL;
-      const style = await fetchAndPatchStyle(resolvedStyleUrl);
+      const style = await fetchAndPatchStyle(resolvedStyleUrl, projection);
 
       if (cancelled || !containerRef.current || mapRef.current) return;
       appliedStyleUrlRef.current = resolvedStyleUrl;
@@ -589,6 +619,7 @@ const StargazerMapInner = ({ points, comparePoints, flyTarget, onFlyDone, onRead
         center: [10, 30],
         zoom: 2,
         minZoom: 1,
+        maxPitch: 85,
       });
 
       // Expose controls: canvas capture + view mode toggle (cluster / heatmap)
@@ -614,7 +645,10 @@ const StargazerMapInner = ({ points, comparePoints, flyTarget, onFlyDone, onRead
 
       onReady?.({ captureCanvas, setViewMode });
 
-      map.addControl(new maplibregl.NavigationControl(), "bottom-right");
+      map.addControl(
+        new maplibregl.NavigationControl({ visualizePitch: true, showCompass: true }),
+        "bottom-right",
+      );
 
       map.on("load", () => {
         setupClusteredSourcesAndLayers(
@@ -772,10 +806,41 @@ const StargazerMapInner = ({ points, comparePoints, flyTarget, onFlyDone, onRead
       }, 100);
     };
     map.on("styledata", onStyleData);
-    map.setStyle(newUrl, { diff: false });
+
+    // Re-patch style with current projection so globe/mercator persists across theme swaps
+    fetchAndPatchStyle(newUrl, projectionRef.current).then((patchedStyle) => {
+      map.setStyle(patchedStyle, { diff: false });
+    });
   }, [styleUrl, mapReady]);
 
-  return <div ref={containerRef} className="w-full h-full" />;
+  return (
+    <div className="relative w-full h-full">
+      <div ref={containerRef} className="w-full h-full" />
+      <button
+        onClick={handleToggle}
+        title={projectionState === "globe" ? "Switch to flat map" : "Switch to globe"}
+        className="absolute top-3 right-3 z-10 flex items-center justify-center size-9 rounded-md bg-surface border border-border text-muted hover:text-foreground hover:bg-surface-alt transition-colors shadow-sm"
+      >
+        {projectionState === "globe" ? (
+          /* Flat map icon — shown when globe is active, click switches to flat */
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <rect x="3" y="6" width="18" height="12" rx="1" />
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="9" y1="6" x2="9" y2="18" />
+            <line x1="15" y1="6" x2="15" y2="18" />
+          </svg>
+        ) : (
+          /* Globe icon — shown when flat is active, click switches to globe */
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" />
+            <ellipse cx="12" cy="12" rx="3.5" ry="9" />
+            <line x1="3" y1="12" x2="21" y2="12" />
+          </svg>
+        )}
+      </button>
+      <JawgBadge />
+    </div>
+  );
 };
 
 export const StargazerMap = memo(StargazerMapInner);
