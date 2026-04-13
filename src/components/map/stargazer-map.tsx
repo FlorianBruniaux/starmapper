@@ -10,6 +10,7 @@ import type { StyleSpecification } from "maplibre-gl";
 import type { StargazerPoint } from "@/app/api/chunk/route";
 import { getStoredProjection, setStoredProjection } from "@/lib/theme";
 import type { MapProjection } from "@/lib/theme";
+import { JawgBadge } from "@/components/map/jawg-badge";
 
 
 type Props = {
@@ -818,10 +819,11 @@ const StargazerMapInner = ({ points, comparePoints, flyTarget, onFlyDone, onRead
     });
   }, [styleUrl, mapReady]);
 
-  if (showProjectionToggle && ENABLE_GLOBE) {
-    return (
-      <div className="relative w-full h-full">
-        <div ref={containerRef} className="w-full h-full" />
+  return (
+    <div className="relative w-full h-full">
+      <div ref={containerRef} className="w-full h-full" />
+      <JawgBadge />
+      {showProjectionToggle && ENABLE_GLOBE && (
         <button
           onClick={() => {
             const map = mapRef.current;
@@ -852,11 +854,9 @@ const StargazerMapInner = ({ points, comparePoints, flyTarget, onFlyDone, onRead
           )}
           <span>{projectionState === "globe" ? "2D" : "3D"}</span>
         </button>
-      </div>
-    );
-  }
-
-  return <div ref={containerRef} className="w-full h-full" />;
+      )}
+    </div>
+  );
 };
 
 export const StargazerMap = memo(StargazerMapInner);
