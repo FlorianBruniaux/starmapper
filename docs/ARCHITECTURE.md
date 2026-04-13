@@ -137,10 +137,11 @@ isGeocodeableLocation() filter
   [1] Jawg Places API
       starmapper.jawg.io (dedicated Jawg Places instance, sponsored by JawgMaps)
       Uses a dedicated geocoding token (JAWG_TOKEN_HEADER) — sent as x-api-key
-      header AND access-token query param. Separate from the map tile token
-      (NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN). Batch geocoding is not permitted on the
-      standard Jawg API; this dedicated instance was provided specifically for
-      StarMapper to allow high-volume location resolution.
+      header AND access-token query param (query param is used for JawgMaps usage
+      stats; must be a new dedicated token from the Jawg dashboard, not the default
+      account token). Separate from the map tile token (NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN).
+      Batch geocoding is not permitted on the standard Jawg API; this dedicated
+      instance was provided specifically for StarMapper.
       Circuit breaker: 3 errors → disabled 1h (in-memory)
       Parallel batches of 5 when available
         |

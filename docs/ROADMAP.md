@@ -34,6 +34,16 @@
 
 ---
 
+## Intégration Jawg Places JS
+
+Jawg fournit une lib d'intégration native pour l'autocomplete et le reverse geocoding : [Jawg Places JS](https://www.jawg.io/docs/integration/places-js/). Elle transforme n'importe quel input en barre de recherche avec interactions sur la carte (suggestions live, fly-to sur sélection).
+
+Intérêt pour l'explore page : remplacer les routes `/api/explore/autocomplete` + `/api/explore/geocode` maison (qui font un simple proxy vers `api.jawg.io`) par la lib officielle côté client. Moins de code serveur, meilleure UX (suggestions instantanées sans round-trip).
+
+Prérequis : bundle size à évaluer, compat MapLibre GL à tester.
+
+---
+
 ## Distribution / open source
 
 - **Extension Chrome** — bouton sur chaque page GitHub `/repo`, ouvre le map sans quitter GitHub. C'est le vrai multiplicateur d'usage (cf. star-history.com).

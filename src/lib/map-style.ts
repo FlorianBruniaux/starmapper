@@ -17,7 +17,14 @@ const styleCache = new Map<string, string | StyleSpecification>();
  * - Removes water_name / marine layers (noisy on the stargazer map)
  * - Patches attribution links to include utm_source=starmapper
  *
- * Language localisation is handled automatically by Jawg based on Accept-Language.
+ * Language localisation is handled automatically by Jawg based on Accept-Language header —
+ * no lang= param is needed. The map will render in the visitor's browser language.
+ *
+ * Note on font and label patches: these are applied in code for fork-friendliness so any
+ * self-hosted instance works without a Jawg account style. Jawg's Back Office can configure
+ * both (Open Sans font + label density) directly in the style, which avoids patching at
+ * runtime — but that style is then tied to a specific Jawg account and not forkable.
+ *
  * Falls back to the raw URL string if the fetch fails or returns invalid JSON,
  * so MapLibre can still attempt to load the style on its own.
  *
