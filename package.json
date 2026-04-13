@@ -75,7 +75,7 @@
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.2",
-    "@prisma/adapter-neon": "^7.6.0",
+    "@prisma/adapter-neon": "^7.7.0",
     "@prisma/client": "^7.6.0",
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.37.0",
