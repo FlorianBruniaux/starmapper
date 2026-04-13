@@ -5,8 +5,20 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { jsonError, logError } from "@/lib/api-helpers";
 
+export type TopUser = {
+  login: string;
+  name: string | null;
+  followers: number;
+  company: string | null;
+  avatarUrl: string;
+  publicRepos: number;
+  lat: number | null;
+  lng: number | null;
+  countryNormalized: string | null;
+};
+
 export type TopUsersResponse = {
-  items: { login: string; name: string | null; followers: number; company: string | null; avatarUrl: string; publicRepos: number }[];
+  items: TopUser[];
   total: number;
   page: number;
   pageSize: number;
@@ -40,15 +52,38 @@ export const GET = async (req: NextRequest) => {
     } : {}),
   };
 
+  type RawUser = { login: string; name: string | null; followers: number; company: string | null; publicRepos: number; lat: number | null; lng: number | null; countryNormalized: string | null };
+
   try {
     const [users, total] = await Promise.all([
-      prisma.gitHubUser.findMany({
-        where,
-        orderBy: { followers: "desc" },
-        skip,
-        take: size,
-        select: { login: true, name: true, followers: true, company: true, publicRepos: true },
-      }),
+      // UNION splits the OR across two GIN trigram indexes (login + name), each branch
+      // gets its own index scan. A single WHERE login ILIKE x OR name ILIKE x causes
+      // the planner to prefer a parallel seq scan over BitmapOr of two GIN indexes.
+      search && !country
+        ? prisma.$queryRaw<RawUser[]>`
+            SELECT * FROM (
+              SELECT login, name, followers, company, "publicRepos", lat, lng, "countryNormalized" FROM github_user WHERE login ILIKE ${`%${search}%`}
+              UNION
+              SELECT login, name, followers, company, "publicRepos", lat, lng, "countryNormalized" FROM github_user WHERE name  ILIKE ${`%${search}%`}
+            ) sub
+            ORDER BY followers DESC LIMIT ${size} OFFSET ${skip}
+          `
+        : search && country
+        ? prisma.$queryRaw<RawUser[]>`
+            SELECT * FROM (
+              SELECT login, name, followers, company, "publicRepos", lat, lng, "countryNormalized" FROM github_user WHERE login ILIKE ${`%${search}%`} AND "countryNormalized" ILIKE ${country}
+              UNION
+              SELECT login, name, followers, company, "publicRepos", lat, lng, "countryNormalized" FROM github_user WHERE name  ILIKE ${`%${search}%`} AND "countryNormalized" ILIKE ${country}
+            ) sub
+            ORDER BY followers DESC LIMIT ${size} OFFSET ${skip}
+          `
+        : prisma.gitHubUser.findMany({
+            where,
+            orderBy: { followers: "desc" },
+            skip,
+            take: size,
+            select: { login: true, name: true, followers: true, company: true, publicRepos: true, lat: true, lng: true, countryNormalized: true },
+          }),
       // Avoid full table COUNT on unfiltered requests — use pg_class estimate (microseconds vs 2s).
       isFiltered
         ? prisma.gitHubUser.count({ where })
@@ -57,8 +92,11 @@ export const GET = async (req: NextRequest) => {
           `.then((rows) => Number(rows[0]?.n ?? 0)),
     ]);
 
-    const items = users.map((u) => ({
+    const items: TopUser[] = users.map((u) => ({
       ...u,
+      lat: u.lat ?? null,
+      lng: u.lng ?? null,
+      countryNormalized: u.countryNormalized ?? null,
       avatarUrl: `https://github.com/${u.login}.png`,
     }));
 

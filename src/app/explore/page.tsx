@@ -18,7 +18,7 @@ import { MAP_STYLE_DARK, MAP_STYLE_LIGHT } from "@/lib/theme";
 import type { MapProjection } from "@/lib/theme";
 import { gridToPoints } from "@/lib/grid-to-points";
 import type { ExploreSummary } from "@/app/api/explore/route";
-import type { TopUsersResponse } from "@/app/api/explore/top/route";
+import type { TopUsersResponse, TopUser } from "@/app/api/explore/top/route";
 import type { PowerResponse } from "@/app/api/explore/power/route";
 import type { CompaniesResponse } from "@/app/api/explore/companies/route";
 import type { LocationsResponse } from "@/app/api/explore/locations/route";
@@ -408,6 +408,7 @@ export default function ExplorePage() {
   const [nearbySearching, setNearbySearching]   = useState(false);
   const [nearbyError, setNearbyError]     = useState<string | null>(null);
   const [nearbyFlyTarget, setNearbyFlyTarget] = useState<{ lat: number; lng: number; login: string; zoom?: number } | null>(null);
+  const [userPin, setUserPin]                 = useState<TopUser | null>(null);
 
   useEffect(() => {
     setHasToken(!!getStoredToken());
@@ -692,11 +693,21 @@ export default function ExplorePage() {
               label: "Developers",
               value: summaryLoading ? "…" : (summary?.totalUsers ?? 0).toLocaleString(),
               accent: "text-foreground",
+              icon: (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="text-muted-subtle">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                </svg>
+              ),
             },
             {
               label: "Tracked repos",
               value: summaryLoading ? "…" : (summary?.totalTrackedRepos ?? 0).toLocaleString(),
               accent: "text-foreground",
+              icon: (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="text-muted-subtle">
+                  <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22" />
+                </svg>
+              ),
             },
             {
               label: "Star events",
@@ -706,16 +717,29 @@ export default function ExplorePage() {
                   : summary.totalStarEvents.toString())
                 : "…",
               accent: "text-accent-orange",
+              icon: (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className="text-accent-orange/60">
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                </svg>
+              ),
             },
             {
               label: "Countries",
               value: summaryLoading ? "…" : (summary?.totalCountries ?? 0).toLocaleString(),
               accent: "text-accent-green",
+              icon: (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="text-accent-green/60">
+                  <circle cx="12" cy="12" r="10" /><line x1="2" y1="12" x2="22" y2="12" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                </svg>
+              ),
             },
-          ] as const).map(({ label, value, accent }) => (
-            <div key={label} className="bg-surface border border-border rounded-xl p-4 text-center">
-              <div className={`text-2xl font-bold ${accent}`}>{value}</div>
-              <div className="text-xs text-muted uppercase tracking-wide mt-1">{label}</div>
+          ] as const).map(({ label, value, accent, icon }) => (
+            <div key={label} className="bg-surface border border-border rounded-xl px-4 py-4">
+              <div className="flex items-center gap-1.5 mb-2">
+                {icon}
+                <span className="text-2xs text-muted uppercase tracking-wider font-medium">{label}</span>
+              </div>
+              <div className={`text-2xl font-bold tabular-nums leading-none ${accent}`}>{value}</div>
             </div>
           ))}
         </div>
@@ -791,49 +815,97 @@ export default function ExplorePage() {
                 }[tab as Exclude<Tab, "nearby">] && (
                   <div className="text-center text-muted-subtle text-sm py-12">Loading…</div>
                 )}
+                {/* Search in-flight loader (re-fetch with existing data) */}
+                {tab === "top" && topLoading && topData && (
+                  <div className="flex items-center gap-2 text-xs text-muted-subtle mb-3 px-2">
+                    <svg className="animate-spin size-3 text-accent-blue flex-shrink-0" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+                    </svg>
+                    Searching…
+                  </div>
+                )}
 
                 {/* Top Stars */}
                 {tab === "top" && topData && (
                   <>
-                    <div className="space-y-3">
-                      {topData.items.map((u, i) => (
-                        <div key={u.login} className="flex items-center gap-3">
-                          <span className="text-muted-subtle text-xs w-6 text-right flex-shrink-0">
+                    <div className="space-y-1">
+                      {topData.items.map((u, i) => {
+                        const isActive = userPin?.login === u.login;
+                        const hasCoors = u.lat != null && u.lng != null;
+                        return (
+                        <div
+                          key={u.login}
+                          className={`group flex items-center gap-3 px-2 py-2 rounded-lg transition-colors
+                            ${isActive ? "bg-accent-blue/8 ring-1 ring-accent-blue/20" : "hover:bg-surface-alt"}`}
+                        >
+                          <span className="text-muted-subtle text-xs w-5 text-right flex-shrink-0 tabular-nums">
                             {(pages.top - 1) * PAGE_SIZE + i + 1}
                           </span>
                           <img
                             src={u.avatarUrl}
                             alt=""
-                            className="w-9 h-9 rounded-full flex-shrink-0 ring-1 ring-border"
+                            className="w-8 h-8 rounded-full flex-shrink-0 ring-1 ring-border"
                           />
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
+                            <div className="flex items-center gap-1.5">
                               <a
                                 href={`https://github.com/${u.login}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-accent-blue text-sm font-medium hover:underline"
+                                className="text-accent-blue text-sm font-medium hover:underline truncate"
                               >
                                 @{u.login}
                               </a>
                               {u.company && (
-                                <span className="text-2xs text-muted bg-surface-alt border border-border-subtle rounded px-1.5 py-px truncate max-w-28">
+                                <span className="text-2xs text-muted bg-surface-alt border border-border-subtle rounded px-1.5 py-px truncate max-w-24 flex-shrink-0">
                                   {u.company.replace(/^@/, "")}
                                 </span>
                               )}
                             </div>
                             {u.name && u.name !== u.login && (
-                              <div className="text-muted-subtle text-xs truncate">{u.name}</div>
+                              <div className="text-muted-subtle text-xs truncate leading-tight">{u.name}</div>
                             )}
                           </div>
-                          <div className="flex items-center gap-2 flex-shrink-0">
+                          <div className="flex items-center gap-1.5 flex-shrink-0 w-28 justify-end">
                             <ReposBadge login={u.login} count={u.publicRepos} />
-                            <span className="text-muted text-xs tabular-nums">
-                              {u.followers.toLocaleString()} flw
+                            <span className="text-muted-subtle text-xs tabular-nums w-10 text-right">
+                              {u.followers >= 1000
+                                ? `${(u.followers / 1000).toFixed(1)}k`
+                                : u.followers.toLocaleString()}
                             </span>
+                            <button
+                              onClick={() => {
+                                if (!hasCoors) return;
+                                setUserPin(isActive ? null : u);
+                                setMapMode("heatmap");
+                                setHeatmapEverOpened(true);
+                                setMapEverOpened(true);
+                                if (!isActive) {
+                                  setNearbyFlyTarget({ lat: u.lat!, lng: u.lng!, login: u.login, zoom: 5 });
+                                }
+                              }}
+                              title={!hasCoors ? "No location data" : isActive ? "Unpin from map" : "Show on map"}
+                              aria-label={isActive ? "Unpin from map" : `Show ${u.login} on map`}
+                              disabled={!hasCoors}
+                              className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-2xs font-medium
+                                border transition-all duration-150 min-h-5
+                                ${!hasCoors
+                                  ? "border-transparent text-muted-subtle/30 cursor-default"
+                                  : isActive
+                                    ? "border-accent-blue text-accent-blue bg-accent-blue/10"
+                                    : "border-transparent text-muted-subtle opacity-0 group-hover:opacity-100 group-hover:border-border-subtle hover:text-accent-blue hover:border-accent-blue/50 hover:bg-accent-blue/5"
+                                }`}
+                            >
+                              <svg width="9" height="9" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                                <path d="M8 0C5.238 0 3 2.238 3 5c0 3.5 5 11 5 11s5-7.5 5-11c0-2.762-2.238-5-5-5Zm0 7a2 2 0 1 1 0-4 2 2 0 0 1 0 4Z"/>
+                              </svg>
+                              {isActive ? "Pinned" : "Map"}
+                            </button>
                           </div>
                         </div>
-                      ))}
+                        );
+                      })}
                       {topData.items.length === 0 && (
                         <div className="text-center text-muted-subtle text-sm py-12">No results.</div>
                       )}
@@ -866,16 +938,16 @@ export default function ExplorePage() {
                             No power stargazers yet. Appears after multiple repos are scanned.
                           </div>
                         )}
-                        <div className="space-y-3">
+                        <div className="space-y-1">
                           {powerData.items.map((u, i) => (
-                            <div key={u.login} className="flex items-center gap-3">
-                              <span className="text-muted-subtle text-xs w-6 text-right flex-shrink-0">
+                            <div key={u.login} className="group flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-surface-alt transition-colors">
+                              <span className="text-muted-subtle text-xs w-5 text-right flex-shrink-0 tabular-nums">
                                 {(pages.power - 1) * PAGE_SIZE + i + 1}
                               </span>
                               <img
                                 src={u.avatarUrl}
                                 alt=""
-                                className="w-9 h-9 rounded-full flex-shrink-0 ring-1 ring-border"
+                                className="w-8 h-8 rounded-full flex-shrink-0 ring-1 ring-border"
                               />
                               <div className="flex-1 min-w-0">
                                 <a
@@ -887,7 +959,7 @@ export default function ExplorePage() {
                                   @{u.login}
                                 </a>
                                 {u.name && u.name !== u.login && (
-                                  <div className="text-muted-subtle text-xs truncate">{u.name}</div>
+                                  <div className="text-muted-subtle text-xs truncate leading-tight">{u.name}</div>
                                 )}
                               </div>
                               <span
@@ -1069,50 +1141,88 @@ export default function ExplorePage() {
 
                         {/* User list */}
                         {nearbyData.users.length > 0 && (
-                          <div className="space-y-3">
+                          <div className="space-y-1">
                             {nearbyData.users.map((u, i) => (
-                              <div key={u.login} className="flex items-center gap-3">
-                                <span className="text-muted-subtle text-xs w-6 text-right flex-shrink-0">
+                              <div key={u.login} className="group flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-surface-alt transition-colors">
+                                <span className="text-muted-subtle text-xs w-5 text-right flex-shrink-0 tabular-nums">
                                   {(pages.nearby - 1) * PAGE_SIZE + i + 1}
                                 </span>
                                 <img
                                   src={`https://github.com/${u.login}.png`}
                                   alt=""
-                                  className="w-9 h-9 rounded-full flex-shrink-0 ring-1 ring-border"
+                                  className="w-8 h-8 rounded-full flex-shrink-0 ring-1 ring-border"
                                 />
                                 <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2 flex-wrap">
+                                  <div className="flex items-center gap-1.5">
                                     <a
                                       href={`https://github.com/${u.login}`}
                                       target="_blank"
                                       rel="noopener noreferrer"
-                                      className="text-accent-blue text-sm font-medium hover:underline"
+                                      className="text-accent-blue text-sm font-medium hover:underline truncate"
                                     >
                                       @{u.login}
                                     </a>
                                     {u.company && (
-                                      <span className="text-2xs text-muted bg-surface-alt border border-border-subtle rounded px-1.5 py-px truncate max-w-28">
+                                      <span className="text-2xs text-muted bg-surface-alt border border-border-subtle rounded px-1.5 py-px truncate max-w-24 flex-shrink-0">
                                         {u.company.replace(/^@/, "")}
                                       </span>
                                     )}
                                   </div>
                                   {u.name && u.name !== u.login && (
-                                    <div className="text-muted-subtle text-xs truncate">{u.name}</div>
+                                    <div className="text-muted-subtle text-xs truncate leading-tight">{u.name}</div>
                                   )}
                                   {(u.cityNormalized || u.countryNormalized) && (
-                                    <div className="text-muted-subtle text-xs truncate">
+                                    <div className="text-muted-subtle text-xs truncate leading-tight">
                                       {[u.cityNormalized, u.countryNormalized].filter(Boolean).join(", ")}
                                     </div>
                                   )}
                                 </div>
-                                <div className="flex items-center gap-2 flex-shrink-0">
+                                <div className="flex items-center gap-1.5 flex-shrink-0 w-28 justify-end">
                                   <ReposBadge login={u.login} count={u.trackedRepos} />
-                                  <span className="text-muted text-xs tabular-nums">
-                                    {u.followers.toLocaleString()} flw
-                                  </span>
-                                  <span className="text-muted-subtle text-xs tabular-nums">
+                                  <span className="text-muted-subtle text-xs tabular-nums w-10 text-right">
                                     {u.distanceKm} km
                                   </span>
+                                  {(() => {
+                                    const hasCoors = u.lat != null && u.lng != null;
+                                    const isActive = userPin?.login === u.login;
+                                    return (
+                                      <button
+                                        onClick={() => {
+                                          if (!hasCoors) return;
+                                          setUserPin(isActive ? null : {
+                                            login: u.login,
+                                            name: u.name ?? null,
+                                            followers: 0,
+                                            company: u.company ?? null,
+                                            avatarUrl: `https://github.com/${u.login}.png`,
+                                            publicRepos: u.trackedRepos ?? 0,
+                                            lat: u.lat!,
+                                            lng: u.lng!,
+                                            countryNormalized: u.countryNormalized ?? null,
+                                          });
+                                          setMapMode("heatmap");
+                                          setHeatmapEverOpened(true);
+                                          setMapEverOpened(true);
+                                          if (!isActive) {
+                                            setNearbyFlyTarget({ lat: u.lat!, lng: u.lng!, login: u.login, zoom: 5 });
+                                          }
+                                        }}
+                                        disabled={!hasCoors}
+                                        className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-2xs font-medium border transition-all duration-150 min-h-5
+                                          ${!hasCoors
+                                            ? "border-transparent text-muted-subtle/30 cursor-default"
+                                            : isActive
+                                            ? "border-accent-blue text-accent-blue bg-accent-blue/10"
+                                            : "border-transparent text-muted-subtle opacity-0 group-hover:opacity-100 hover:border-border hover:text-foreground"
+                                          }`}
+                                      >
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill={isActive ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                          <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>
+                                        </svg>
+                                        {isActive ? "Pinned" : "Map"}
+                                      </button>
+                                    );
+                                  })()}
                                 </div>
                               </div>
                             ))}
@@ -1235,10 +1345,26 @@ export default function ExplorePage() {
                     </div>
                   )
                 ) : (
-                  heatmapPoints.length > 0 ? (
+                  heatmapPoints.length > 0 || userPin ? (
                     <StargazerMapDynamic
-                      points={heatmapPoints}
+                      points={userPin
+                        ? [{
+                            login: userPin.login,
+                            name: userPin.name,
+                            bio: null,
+                            company: userPin.company,
+                            location: userPin.countryNormalized,
+                            followers: userPin.followers,
+                            avatarUrl: userPin.avatarUrl,
+                            lat: userPin.lat!,
+                            lng: userPin.lng!,
+                            starredAt: null,
+                            linkedinUrl: null,
+                          }]
+                        : heatmapPoints}
                       styleUrl={mapStyleUrl}
+                      flyTarget={userPin ? nearbyFlyTarget : null}
+                      onFlyDone={() => setNearbyFlyTarget(null)}
                       onReady={(controls) => {
                         mapControlsRef.current = controls;
                         setMapProjection(controls.getProjection());
