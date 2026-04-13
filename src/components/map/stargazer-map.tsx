@@ -6,10 +6,10 @@
 import { useCallback, useEffect, useRef, useState, useMemo, memo } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import type { StyleSpecification } from "maplibre-gl";
 import type { StargazerPoint } from "@/app/api/chunk/route";
 import { getStoredProjection, setStoredProjection } from "@/lib/theme";
 import type { MapProjection } from "@/lib/theme";
+import { fetchAndPatchStyle } from "@/lib/map-style";
 import { JawgBadge } from "@/components/map/jawg-badge";
 
 
@@ -41,36 +41,6 @@ const ENABLE_GLOBE = process.env.NEXT_PUBLIC_ENABLE_GLOBE !== "false";
 
 export const CLUSTER_RADIUS = { min: 20, max: 150, default: 40, step: 10 } as const;
 
-
-// Fetch a Jawg style URL and apply StarMapper-specific patches (font names, water labels).
-// Language localisation is handled automatically by Jawg based on Accept-Language.
-const fetchAndPatchStyle = async (url: string, projection: MapProjection = "mercator"): Promise<string | StyleSpecification> => {
-  try {
-    const res = await fetch(url);
-    if (!res.ok) return url;
-    const json = await res.json() as StyleSpecification;
-    if (!json || typeof json !== "object") return url;
-    json.projection = { type: projection };
-    for (const layer of json.layers ?? []) {
-      const fonts = (layer as { layout?: { "text-font"?: string[] } }).layout?.["text-font"];
-      if (fonts) {
-        for (let i = 0; i < fonts.length; i++) {
-          if (fonts[i].includes("Noto Sans")) fonts[i] = fonts[i].replace("Noto Sans", "Open Sans");
-        }
-      }
-    }
-    json.layers = (json.layers ?? []).filter((layer) => {
-      const sl = (layer as { "source-layer"?: string })["source-layer"];
-      if (sl === "water_name" || sl === "marine") return false;
-      const id = layer.id ?? "";
-      if (/^(ocean|marine|water.?name)/i.test(id)) return false;
-      return true;
-    });
-    return json;
-  } catch {
-    return url;
-  }
-};
 
 // Adds all clustered sources + layers — called at init and on radius rebuild
 const setupClusteredSourcesAndLayers = (

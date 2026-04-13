@@ -2,13 +2,17 @@
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 
 import type { StyleSpecification } from "maplibre-gl";
+import type { MapProjection } from "@/lib/theme";
 
-/** In-memory cache so re-inits (theme switch, Nearby↔choropleth) skip the Jawg round-trip. */
+/**
+ * In-memory cache so re-inits (theme switch, Nearby↔choropleth) skip the Jawg round-trip.
+ * Key: `${url}#${projection}` — different projections get separate cache entries.
+ */
 const styleCache = new Map<string, string | StyleSpecification>();
 
 /**
  * Fetch a Jawg style URL and apply StarMapper-specific patches:
- * - Adds `projection: { type: "mercator" }` if missing (prevents MapLibre crash)
+ * - Sets `projection` to the requested value (defaults to "mercator" if missing from style)
  * - Replaces Noto Sans → Open Sans (available in Jawg tiles)
  * - Removes water_name / marine layers (noisy on the stargazer map)
  * - Patches attribution links to include utm_source=starmapper
@@ -16,9 +20,16 @@ const styleCache = new Map<string, string | StyleSpecification>();
  * Language localisation is handled automatically by Jawg based on Accept-Language.
  * Falls back to the raw URL string if the fetch fails or returns invalid JSON,
  * so MapLibre can still attempt to load the style on its own.
+ *
+ * @param url        Jawg style JSON URL (including access-token query param)
+ * @param projection Map projection to enforce — "mercator" (default) or "globe"
  */
-export const fetchAndPatchStyle = async (url: string): Promise<string | StyleSpecification> => {
-  const cached = styleCache.get(url);
+export const fetchAndPatchStyle = async (
+  url: string,
+  projection: MapProjection = "mercator",
+): Promise<string | StyleSpecification> => {
+  const cacheKey = `${url}#${projection}`;
+  const cached = styleCache.get(cacheKey);
   if (cached !== undefined) return cached;
 
   try {
@@ -26,7 +37,7 @@ export const fetchAndPatchStyle = async (url: string): Promise<string | StyleSpe
     if (!res.ok) return url;
     const json = await res.json() as StyleSpecification;
     if (!json || typeof json !== "object") return url;
-    if (!json.projection) json.projection = { type: "mercator" };
+    json.projection = { type: projection };
     for (const layer of json.layers ?? []) {
       const fonts = (layer as { layout?: { "text-font"?: string[] } }).layout?.["text-font"];
       if (fonts) {
@@ -52,10 +63,10 @@ export const fetchAndPatchStyle = async (url: string): Promise<string | StyleSpe
         );
       }
     }
-    styleCache.set(url, json);
+    styleCache.set(cacheKey, json);
     return json;
   } catch {
-    styleCache.set(url, url);
+    styleCache.set(cacheKey, url);
     return url;
   }
 };
