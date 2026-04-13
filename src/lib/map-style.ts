@@ -3,19 +3,17 @@
 
 import type { StyleSpecification } from "maplibre-gl";
 
-const JAWG_TOKEN = process.env.NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN ?? "";
-
 /** In-memory cache so re-inits (theme switch, Nearby↔choropleth) skip the Jawg round-trip. */
 const styleCache = new Map<string, string | StyleSpecification>();
 
 /**
  * Fetch a Jawg style URL and apply StarMapper-specific patches:
  * - Adds `projection: { type: "mercator" }` if missing (prevents MapLibre crash)
- * - Patches glyph URLs to include the Jawg access token
  * - Replaces Noto Sans → Open Sans (available in Jawg tiles)
  * - Removes water_name / marine layers (noisy on the stargazer map)
- * - Forces English place names
+ * - Patches attribution links to include utm_source=starmapper
  *
+ * Language localisation is handled automatically by Jawg based on Accept-Language.
  * Falls back to the raw URL string if the fetch fails or returns invalid JSON,
  * so MapLibre can still attempt to load the style on its own.
  */
@@ -29,11 +27,6 @@ export const fetchAndPatchStyle = async (url: string): Promise<string | StyleSpe
     const json = await res.json() as StyleSpecification;
     if (!json || typeof json !== "object") return url;
     if (!json.projection) json.projection = { type: "mercator" };
-    if (json.glyphs && JAWG_TOKEN) {
-      json.glyphs = json.glyphs.includes("access-token")
-        ? json.glyphs
-        : `${json.glyphs}${json.glyphs.includes("?") ? "&" : "?"}access-token=${JAWG_TOKEN}`;
-    }
     for (const layer of json.layers ?? []) {
       const fonts = (layer as { layout?: { "text-font"?: string[] } }).layout?.["text-font"];
       if (fonts) {
@@ -49,8 +42,6 @@ export const fetchAndPatchStyle = async (url: string): Promise<string | StyleSpe
       if (/^(ocean|marine|water.?name)/i.test(id)) return false;
       return true;
     });
-    const fixed = JSON.parse(JSON.stringify(json).replace(/"name:fr"/g, '"name:en"')) as StyleSpecification;
-    Object.assign(json, fixed);
     // Patch Jawg attribution links to use utm_source=starmapper
     for (const key of Object.keys(json.sources ?? {})) {
       const src = (json.sources as Record<string, { attribution?: string }>)[key];

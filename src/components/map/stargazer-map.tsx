@@ -35,14 +35,15 @@ type Props = {
 };
 
 const JAWG_TOKEN = process.env.NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN ?? "";
-const STYLE_URL = `https://api.jawg.io/styles/jawg-dark.json?access-token=${JAWG_TOKEN}&lang=en`;
+const STYLE_URL = `https://api.jawg.io/styles/jawg-dark.json?access-token=${JAWG_TOKEN}`;
 const CLUSTER_MAX_ZOOM = 20;
 const ENABLE_GLOBE = process.env.NEXT_PUBLIC_ENABLE_GLOBE !== "false";
 
 export const CLUSTER_RADIUS = { min: 20, max: 150, default: 40, step: 10 } as const;
 
 
-// Fetch a Jawg style URL and apply StarMapper-specific patches (font names, lang, water labels)
+// Fetch a Jawg style URL and apply StarMapper-specific patches (font names, water labels).
+// Language localisation is handled automatically by Jawg based on Accept-Language.
 const fetchAndPatchStyle = async (url: string, projection: MapProjection = "mercator"): Promise<string | StyleSpecification> => {
   try {
     const res = await fetch(url);
@@ -50,11 +51,6 @@ const fetchAndPatchStyle = async (url: string, projection: MapProjection = "merc
     const json = await res.json() as StyleSpecification;
     if (!json || typeof json !== "object") return url;
     json.projection = { type: projection };
-    if (json.glyphs && JAWG_TOKEN) {
-      json.glyphs = json.glyphs.includes("access-token")
-        ? json.glyphs
-        : `${json.glyphs}${json.glyphs.includes("?") ? "&" : "?"}access-token=${JAWG_TOKEN}`;
-    }
     for (const layer of json.layers ?? []) {
       const fonts = (layer as { layout?: { "text-font"?: string[] } }).layout?.["text-font"];
       if (fonts) {
@@ -70,8 +66,6 @@ const fetchAndPatchStyle = async (url: string, projection: MapProjection = "merc
       if (/^(ocean|marine|water.?name)/i.test(id)) return false;
       return true;
     });
-    const fixed = JSON.parse(JSON.stringify(json).replace(/"name:fr"/g, '"name:en"')) as StyleSpecification;
-    Object.assign(json, fixed);
     return json;
   } catch {
     return url;

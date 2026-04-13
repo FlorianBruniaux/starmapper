@@ -52,10 +52,10 @@ export const applyTheme = (theme: Theme | null): Theme => {
 
 // Map tile URLs — swapped based on resolved theme
 export const MAP_STYLE_DARK = (token: string) =>
-  `https://api.jawg.io/styles/jawg-dark.json?access-token=${token}&lang=en`;
+  `https://api.jawg.io/styles/jawg-dark.json?access-token=${token}`;
 
 export const MAP_STYLE_LIGHT = (token: string) =>
-  `https://api.jawg.io/styles/jawg-light.json?access-token=${token}&lang=en`;
+  `https://api.jawg.io/styles/jawg-light.json?access-token=${token}`;
 
 // ─── Map projection preference ──────────────────────────────────────────────
 // Persists user's globe ↔ mercator toggle choice across sessions.
