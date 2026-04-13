@@ -15,6 +15,7 @@ import { StargazerMapDynamic } from "@/components/map/stargazer-map-dynamic";
 import { useFetch } from "@/hooks/use-fetch";
 import { useTheme } from "@/hooks/useTheme";
 import { MAP_STYLE_DARK, MAP_STYLE_LIGHT } from "@/lib/theme";
+import type { MapProjection } from "@/lib/theme";
 import { gridToPoints } from "@/lib/grid-to-points";
 import type { ExploreSummary } from "@/app/api/explore/route";
 import type { TopUsersResponse } from "@/app/api/explore/top/route";
@@ -31,7 +32,6 @@ type Tab = "top" | "power" | "companies" | "countries" | "cities" | "nearby";
 
 const PAGE_SIZE = 30;
 const JAWG_TOKEN = process.env.NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN ?? "";
-const JAWG_AUTOCOMPLETE = "https://api.jawg.io/places/v1/autocomplete";
 
 type AutocompleteItem = {
   label: string;
@@ -202,33 +202,26 @@ const LocationInput = ({
 }) => {
   const [suggestions, setSuggestions] = useState<AutocompleteItem[]>([]);
   const [open, setOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
   const containerRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Fetch Jawg autocomplete suggestions (client-side — token is NEXT_PUBLIC)
+  // Fetch autocomplete suggestions via server-side proxy (token kept server-side)
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    if (!value.trim() || value.length < 2 || !JAWG_TOKEN) {
+    if (!value.trim() || value.length < 2) {
       setSuggestions([]);
       setOpen(false);
       return;
     }
     debounceRef.current = setTimeout(async () => {
       try {
-        const url = `${JAWG_AUTOCOMPLETE}?text=${encodeURIComponent(value)}&size=5&access-token=${JAWG_TOKEN}`;
-        const res = await fetch(url);
+        const res = await fetch(`/api/explore/autocomplete?q=${encodeURIComponent(value)}`);
         if (!res.ok) return;
-        const data = await res.json();
-        const items: AutocompleteItem[] = (data.features ?? []).map((f: {
-          geometry: { coordinates: [number, number] };
-          properties: { label?: string };
-        }) => ({
-          label: f.properties?.label ?? "",
-          lng: f.geometry.coordinates[0],
-          lat: f.geometry.coordinates[1],
-        })).filter((i: AutocompleteItem) => i.label);
+        const items: AutocompleteItem[] = await res.json();
         setSuggestions(items);
         setOpen(items.length > 0);
+        setActiveIndex(-1);
       } catch {
         // non-fatal
       }
@@ -253,16 +246,30 @@ const LocationInput = ({
   const handleSelect = (item: AutocompleteItem) => {
     setSuggestions([]);
     setOpen(false);
+    setActiveIndex(-1);
     onSelect(item);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      setOpen(false);
-      onSearch();
+    if (!open || suggestions.length === 0) {
+      if (e.key === "Enter") { onSearch(); }
+      if (e.key === "Escape") { setOpen(false); }
+      return;
     }
-    if (e.key === "Escape") {
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setActiveIndex((prev) => (prev + 1) % suggestions.length);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActiveIndex((prev) => (prev <= 0 ? suggestions.length - 1 : prev - 1));
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      const target = activeIndex >= 0 ? suggestions[activeIndex] : suggestions[0];
+      if (target) { handleSelect(target); }
+      else { setOpen(false); onSearch(); }
+    } else if (e.key === "Escape") {
       setOpen(false);
+      setActiveIndex(-1);
     }
   };
 
@@ -343,9 +350,11 @@ const LocationInput = ({
           {suggestions.map((item, i) => (
             <button
               key={i}
-              onClick={() => handleSelect(item)}
-              className="w-full text-left px-3 py-2.5 text-sm text-foreground hover:bg-surface-alt transition-colors
-                first:rounded-t-xl last:rounded-b-xl border-b border-border-subtle last:border-0"
+              onMouseDown={(e) => { e.preventDefault(); handleSelect(item); }}
+              onMouseEnter={() => setActiveIndex(i)}
+              className={`w-full text-left px-3 py-2.5 text-sm text-foreground transition-colors
+                first:rounded-t-xl last:rounded-b-xl border-b border-border-subtle last:border-0
+                ${i === activeIndex ? "bg-accent-blue/10 text-accent-blue" : "hover:bg-surface-alt"}`}
             >
               <span className="text-muted-subtle mr-1.5 text-xs">📍</span>
               {item.label}
@@ -384,6 +393,13 @@ export default function ExplorePage() {
   // Nearby tab state
   const [tokenOpen, setTokenOpen]         = useState(false);
   const [hasToken, setHasToken]           = useState(false);
+
+  // Map projection toggle
+  const mapControlsRef = useRef<{
+    toggleProjection: () => MapProjection;
+    getProjection: () => MapProjection;
+  } | null>(null);
+  const [mapProjection, setMapProjection] = useState<MapProjection>("globe");
 
   const [nearbyInput, setNearbyInput]     = useState("");
   const [nearbyCoords, setNearbyCoords]   = useState<{ lat: number; lng: number; label: string } | null>(null);
@@ -633,6 +649,32 @@ export default function ExplorePage() {
         hasToken={hasToken}
         onTokenClick={() => setTokenOpen(true)}
         innerMaxWidth="max-w-7xl"
+        projectionButton={
+          <button
+            onClick={() => {
+              const next = mapControlsRef.current?.toggleProjection();
+              if (next) setMapProjection(next);
+            }}
+            className="hidden md:flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-border text-muted hover:text-foreground hover:border-accent-blue transition-colors"
+            title={mapProjection === "globe" ? "Switch to flat map" : "Switch to globe"}
+          >
+            {mapProjection === "globe" ? (
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <rect x="3" y="6" width="18" height="12" rx="1" />
+                <line x1="3" y1="12" x2="21" y2="12" />
+                <line x1="9" y1="6" x2="9" y2="18" />
+                <line x1="15" y1="6" x2="15" y2="18" />
+              </svg>
+            ) : (
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="9" />
+                <ellipse cx="12" cy="12" rx="3.5" ry="9" />
+                <line x1="3" y1="12" x2="21" y2="12" />
+              </svg>
+            )}
+            {mapProjection === "globe" ? "2D" : "3D"}
+          </button>
+        }
       />
 
       <main id="main" className="flex-1 w-full max-w-7xl mx-auto px-4 lg:px-6 pt-6 pb-8">
@@ -1152,6 +1194,10 @@ export default function ExplorePage() {
                       styleUrl={mapStyleUrl}
                       flyTarget={nearbyFlyTarget}
                       onFlyDone={() => setNearbyFlyTarget(null)}
+                      onReady={(controls) => {
+                        mapControlsRef.current = controls;
+                        setMapProjection(controls.getProjection());
+                      }}
                     />
                     {nearbyLoading && !nearbyData && (
                       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -1190,7 +1236,14 @@ export default function ExplorePage() {
                   )
                 ) : (
                   heatmapPoints.length > 0 ? (
-                    <StargazerMapDynamic points={heatmapPoints} styleUrl={mapStyleUrl} />
+                    <StargazerMapDynamic
+                      points={heatmapPoints}
+                      styleUrl={mapStyleUrl}
+                      onReady={(controls) => {
+                        mapControlsRef.current = controls;
+                        setMapProjection(controls.getProjection());
+                      }}
+                    />
                   ) : (
                     <div className="flex items-center justify-center h-full text-muted-subtle text-sm bg-surface-alt">
                       {globalMapLoading ? "Loading heatmap…" : "No data"}
