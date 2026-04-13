@@ -10,7 +10,7 @@ import type { StyleSpecification } from "maplibre-gl";
 import type { StargazerPoint } from "@/app/api/chunk/route";
 import { getStoredProjection, setStoredProjection } from "@/lib/theme";
 import type { MapProjection } from "@/lib/theme";
-import { JawgBadge } from "@/components/map/jawg-badge";
+
 
 type Props = {
   points: StargazerPoint[];
@@ -20,10 +20,17 @@ type Props = {
   onReady?: (controls: {
     captureCanvas: () => Promise<string | null>;
     setViewMode: (mode: "clusters" | "heatmap") => void;
+    toggleProjection: () => MapProjection;
+    getProjection: () => MapProjection;
   }) => void;
   clusterRadius?: number;
   // Optional: override the map tile style URL (for light/dark switching)
   styleUrl?: string;
+  // When true (default), renders a self-contained 2D/3D toggle overlay button.
+  // Set to false when the parent provides its own toggle UI (e.g. MapFloatingNav pill).
+  // When true, renders a self-contained 2D/3D toggle overlay button inside the map.
+  // Default false — parent pages typically provide their own toggle in the nav bar.
+  showProjectionToggle?: boolean;
 };
 
 const JAWG_TOKEN = process.env.NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN ?? "";
@@ -517,7 +524,7 @@ const makePopupElement = (props: Record<string, unknown>): HTMLElement => {
   return el;
 }
 
-const StargazerMapInner = ({ points, comparePoints, flyTarget, onFlyDone, onReady, styleUrl, clusterRadius }: Props) => {
+const StargazerMapInner = ({ points, comparePoints, flyTarget, onFlyDone, onReady, styleUrl, clusterRadius, showProjectionToggle = false }: Props) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const pointsRef = useRef<StargazerPoint[]>(points);
@@ -576,18 +583,6 @@ const StargazerMapInner = ({ points, comparePoints, flyTarget, onFlyDone, onRead
     rebuildClusteredSources(clusterRadius ?? CLUSTER_RADIUS.default);
   }, [clusterRadius, rebuildClusteredSources]);
 
-  const handleToggle = useCallback(() => {
-    const map = mapRef.current;
-    if (!map || !mapReady) return;
-
-    const newProj: MapProjection = projectionRef.current === "globe" ? "mercator" : "globe";
-    projectionRef.current = newProj;
-    setProjectionState(newProj);
-    setStoredProjection(newProj);
-
-    // MapLibre 5: setProjection updates rendering without a full style reload
-    map.setProjection({ type: newProj });
-  }, [mapReady]);
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
@@ -643,7 +638,17 @@ const StargazerMapInner = ({ points, comparePoints, flyTarget, onFlyDone, onRead
         }
       };
 
-      onReady?.({ captureCanvas, setViewMode });
+      const toggleProjection = (): MapProjection => {
+        const newProj: MapProjection = projectionRef.current === "globe" ? "mercator" : "globe";
+        projectionRef.current = newProj;
+        setProjectionState(newProj);
+        setStoredProjection(newProj);
+        map.setProjection({ type: newProj });
+        return newProj;
+      };
+      const getProjection = (): MapProjection => projectionRef.current;
+
+      onReady?.({ captureCanvas, setViewMode, toggleProjection, getProjection });
 
       map.addControl(
         new maplibregl.NavigationControl({ visualizePitch: true, showCompass: true }),
@@ -813,34 +818,45 @@ const StargazerMapInner = ({ points, comparePoints, flyTarget, onFlyDone, onRead
     });
   }, [styleUrl, mapReady]);
 
-  return (
-    <div className="relative w-full h-full">
-      <div ref={containerRef} className="w-full h-full" />
-      <button
-        onClick={handleToggle}
-        title={projectionState === "globe" ? "Switch to flat map" : "Switch to globe"}
-        className="absolute top-3 right-3 z-10 flex items-center justify-center size-9 rounded-md bg-surface border border-border text-muted hover:text-foreground hover:bg-surface-alt transition-colors shadow-sm"
-      >
-        {projectionState === "globe" ? (
-          /* Flat map icon — shown when globe is active, click switches to flat */
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <rect x="3" y="6" width="18" height="12" rx="1" />
-            <line x1="3" y1="12" x2="21" y2="12" />
-            <line x1="9" y1="6" x2="9" y2="18" />
-            <line x1="15" y1="6" x2="15" y2="18" />
-          </svg>
-        ) : (
-          /* Globe icon — shown when flat is active, click switches to globe */
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <circle cx="12" cy="12" r="9" />
-            <ellipse cx="12" cy="12" rx="3.5" ry="9" />
-            <line x1="3" y1="12" x2="21" y2="12" />
-          </svg>
-        )}
-      </button>
-      <JawgBadge />
-    </div>
-  );
+  if (showProjectionToggle && ENABLE_GLOBE) {
+    return (
+      <div className="relative w-full h-full">
+        <div ref={containerRef} className="w-full h-full" />
+        <button
+          onClick={() => {
+            const map = mapRef.current;
+            if (!map || !mapReady) return;
+            const newProj: MapProjection = projectionRef.current === "globe" ? "mercator" : "globe";
+            projectionRef.current = newProj;
+            setProjectionState(newProj);
+            setStoredProjection(newProj);
+            map.setProjection({ type: newProj });
+          }}
+          title={projectionState === "globe" ? "Switch to flat map" : "Switch to globe"}
+          aria-label={projectionState === "globe" ? "Switch to flat map" : "Switch to globe"}
+          className="absolute top-3 right-3 z-10 flex items-center gap-1.5 text-xs bg-surface/90 backdrop-blur-md border border-border rounded-full px-3 py-1.5 shadow-sm text-muted hover:text-foreground transition-colors"
+        >
+          {projectionState === "globe" ? (
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <rect x="3" y="6" width="18" height="12" rx="1" />
+              <line x1="3" y1="12" x2="21" y2="12" />
+              <line x1="9" y1="6" x2="9" y2="18" />
+              <line x1="15" y1="6" x2="15" y2="18" />
+            </svg>
+          ) : (
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="9" />
+              <ellipse cx="12" cy="12" rx="3.5" ry="9" />
+              <line x1="3" y1="12" x2="21" y2="12" />
+            </svg>
+          )}
+          <span>{projectionState === "globe" ? "2D" : "3D"}</span>
+        </button>
+      </div>
+    );
+  }
+
+  return <div ref={containerRef} className="w-full h-full" />;
 };
 
 export const StargazerMap = memo(StargazerMapInner);

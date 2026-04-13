@@ -8,6 +8,7 @@ import { StargazerMapDynamic } from "@/components/map/stargazer-map-dynamic";
 import { MapFloatingNav } from "@/components/map/map-floating-nav";
 import { CLUSTER_RADIUS } from "@/components/map/stargazer-map";
 import type { StargazerPoint, ChunkResponse } from "@/app/api/chunk/route";
+import type { MapProjection } from "@/lib/theme";
 import type { RepoStats } from "@/app/api/stats/[owner]/[repo]/route";
 import { TokenModal, getStoredToken, getStoredUsername, setStoredUsername } from "@/components/token-modal";
 import { Modal } from "@/components/modal";
@@ -207,7 +208,10 @@ export default function MapPage({
   const mapControlsRef = useRef<{
     captureCanvas: () => Promise<string | null>;
     setViewMode: (mode: "clusters" | "heatmap") => void;
+    toggleProjection: () => MapProjection;
+    getProjection: () => MapProjection;
   } | null>(null);
+  const [mapProjection, setMapProjection] = useState<MapProjection>("globe");
   const [viewMode, setViewMode] = useState<"clusters" | "heatmap">("clusters");
   const runningRef = useRef(false);
   const pendingScanRef = useRef(false);
@@ -943,31 +947,44 @@ export default function MapPage({
         comparePoints={comparePoints}
         flyTarget={flyTarget}
         onFlyDone={() => setFlyTarget(null)}
-        onReady={(controls) => { mapControlsRef.current = controls; }}
+        onReady={(controls) => {
+          mapControlsRef.current = controls;
+          setMapProjection(controls.getProjection());
+        }}
         styleUrl={mapStyleUrl}
         clusterRadius={debouncedClusterRadius}
       />
 
       {/* Attribution */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 pointer-events-none flex items-center gap-2">
+      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-10 pointer-events-none flex flex-col items-center gap-1.5">
+        <div className="flex items-center gap-2">
+          <a
+            href="https://florian.bruniaux.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="pointer-events-auto text-2xs text-accent-orange/80 hover:text-accent-orange transition-colors bg-background/60 backdrop-blur-sm px-2 py-0.5 rounded-full border border-accent-orange/20"
+          >
+            by Florian Bruniaux
+          </a>
+          <a
+            href="https://github.com/FlorianBruniaux"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="pointer-events-auto flex items-center gap-1 text-2xs text-muted/80 hover:text-foreground transition-colors bg-background/60 backdrop-blur-sm px-2 py-0.5 rounded-full border border-border/40 hover:border-accent-blue/40"
+          >
+            <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+              <path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z" />
+            </svg>
+            Follow
+          </a>
+        </div>
         <a
-          href="https://florian.bruniaux.com"
+          href="https://www.jawg.io/?utm_source=starmapper&utm_medium=map-badge"
           target="_blank"
           rel="noopener noreferrer"
-          className="pointer-events-auto text-2xs text-accent-orange/80 hover:text-accent-orange transition-colors bg-background/60 backdrop-blur-sm px-2 py-0.5 rounded-full border border-accent-orange/20"
+          className="pointer-events-auto text-2xs text-muted/70 hover:text-muted transition-colors"
         >
-          by Florian Bruniaux
-        </a>
-        <a
-          href="https://github.com/FlorianBruniaux"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="pointer-events-auto flex items-center gap-1 text-2xs text-muted/80 hover:text-foreground transition-colors bg-background/60 backdrop-blur-sm px-2 py-0.5 rounded-full border border-border/40 hover:border-accent-blue/40"
-        >
-          <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-            <path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z" />
-          </svg>
-          Follow
+          Map by <strong className="font-semibold text-accent-blue/80 hover:text-accent-blue">Jawg Maps</strong>
         </a>
       </div>
 
@@ -1190,6 +1207,11 @@ export default function MapPage({
         repo={repo}
         hasToken={hasToken}
         onTokenClick={() => setTokenOpen(true)}
+        projection={mapProjection}
+        onProjectionToggle={() => {
+          const next = mapControlsRef.current?.toggleProjection();
+          if (next) setMapProjection(next);
+        }}
       />
 
       {/* Bottom-left — vertical dock */}

@@ -3,7 +3,7 @@
 
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Header } from "@/components/header";
@@ -15,6 +15,7 @@ import type { LanguageMapData } from "@/app/api/devs/[language]/route";
 import type { LanguageListData } from "@/app/api/devs/route";
 import type { LanguageOption } from "@/components/devs/language-switcher";
 import type { StargazerPoint } from "@/app/api/chunk/route";
+import type { MapProjection } from "@/lib/theme";
 
 type Props = {
   params: Promise<{ language: string }>;
@@ -72,6 +73,13 @@ export default function DevsLanguagePage({ params }: Props) {
   // Token modal state
   const [tokenOpen, setTokenOpen] = useState(false);
   const [hasToken, setHasToken] = useState(false);
+
+  // Map projection toggle
+  const mapControlsRef = useRef<{
+    toggleProjection: () => MapProjection;
+    getProjection: () => MapProjection;
+  } | null>(null);
+  const [mapProjection, setMapProjection] = useState<MapProjection>("globe");
 
   // Resolve the dynamic slug from Next.js params (async in App Router)
   useEffect(() => {
@@ -212,6 +220,32 @@ export default function DevsLanguagePage({ params }: Props) {
               ? <span className="h-6 w-24 bg-surface-alt rounded-full animate-pulse shrink-0" />
               : undefined
         }
+        projectionButton={
+          <button
+            onClick={() => {
+              const next = mapControlsRef.current?.toggleProjection();
+              if (next) setMapProjection(next);
+            }}
+            className="hidden md:flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-border text-muted hover:text-foreground hover:border-accent-blue transition-colors"
+            title={mapProjection === "globe" ? "Switch to flat map" : "Switch to globe"}
+          >
+            {mapProjection === "globe" ? (
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <rect x="3" y="6" width="18" height="12" rx="1" />
+                <line x1="3" y1="12" x2="21" y2="12" />
+                <line x1="9" y1="6" x2="9" y2="18" />
+                <line x1="15" y1="6" x2="15" y2="18" />
+              </svg>
+            ) : (
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="9" />
+                <ellipse cx="12" cy="12" rx="3.5" ry="9" />
+                <line x1="3" y1="12" x2="21" y2="12" />
+              </svg>
+            )}
+            {mapProjection === "globe" ? "2D" : "3D"}
+          </button>
+        }
       />
 
       {/* ── Main: map + sidebar ────────────────────────────────────────────── */}
@@ -270,7 +304,13 @@ export default function DevsLanguagePage({ params }: Props) {
               </Link>
             </div>
           ) : (
-            <StargazerMapDynamic points={points} />
+            <StargazerMapDynamic
+              points={points}
+              onReady={(controls) => {
+                mapControlsRef.current = controls;
+                setMapProjection(controls.getProjection());
+              }}
+            />
           )}
         </div>
 

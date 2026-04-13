@@ -3,6 +3,7 @@
 
 import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
+import type { MapProjection } from "@/lib/theme";
 
 const pillCls =
   "flex items-center gap-2 bg-surface/90 backdrop-blur-md border border-border rounded-full px-3 py-1.5 shadow-sm";
@@ -12,9 +13,11 @@ type Props = {
   repo: string;
   hasToken: boolean;
   onTokenClick: () => void;
+  projection: MapProjection;
+  onProjectionToggle: () => void;
 };
 
-export const MapFloatingNav = ({ owner, repo, hasToken, onTokenClick }: Props) => (
+export const MapFloatingNav = ({ owner, repo, hasToken, onTokenClick, projection, onProjectionToggle }: Props) => (
   <>
     {/* Top-left pill: back + repo identity */}
     <div className="absolute top-3 left-3 z-20">
@@ -78,6 +81,31 @@ export const MapFloatingNav = ({ owner, repo, hasToken, onTokenClick }: Props) =
             </svg>
           )}
           <span className="hidden sm:inline">{hasToken ? "Token set" : "Add token"}</span>
+        </button>
+        <div className="w-px h-3.5 bg-border-subtle" aria-hidden="true" />
+        <button
+          onClick={onProjectionToggle}
+          className="flex items-center gap-1.5 text-xs text-muted hover:text-foreground transition-colors"
+          title={projection === "globe" ? "Switch to flat map" : "Switch to globe"}
+          aria-label={projection === "globe" ? "Switch to flat map" : "Switch to globe"}
+        >
+          {projection === "globe" ? (
+            /* Flat icon — active when globe, click → flat */
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <rect x="3" y="6" width="18" height="12" rx="1" />
+              <line x1="3" y1="12" x2="21" y2="12" />
+              <line x1="9" y1="6" x2="9" y2="18" />
+              <line x1="15" y1="6" x2="15" y2="18" />
+            </svg>
+          ) : (
+            /* Globe icon — active when flat, click → globe */
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="9" />
+              <ellipse cx="12" cy="12" rx="3.5" ry="9" />
+              <line x1="3" y1="12" x2="21" y2="12" />
+            </svg>
+          )}
+          <span className="hidden sm:inline">{projection === "globe" ? "2D" : "3D"}</span>
         </button>
         <div className="w-px h-3.5 bg-border-subtle" aria-hidden="true" />
         <ThemeToggle />

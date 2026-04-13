@@ -29,6 +29,7 @@ type Props = {
   hasToken?: boolean;
   onTokenClick?: () => void;
   rightAccessory?: React.ReactNode;  // rendered before ThemeToggle (e.g. "23 mapped" badge)
+  projectionButton?: React.ReactNode; // 2D/3D toggle, rendered between rightAccessory and token
 };
 
 export const Header = ({
@@ -42,6 +43,7 @@ export const Header = ({
   hasToken = false,
   onTokenClick,
   rightAccessory,
+  projectionButton,
 }: Props) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -165,6 +167,7 @@ export const Header = ({
         {/* Right: rightAccessory + token (desktop) + theme + burger (mobile) */}
         <div className="flex items-center gap-2">
           {rightAccessory}
+          {projectionButton}
 
           {/* Desktop-only token + theme */}
           <div className="hidden md:flex items-center gap-2">
