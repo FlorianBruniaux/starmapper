@@ -673,7 +673,15 @@ export default function MapPage({
     return points.filter((p) => p.followers < 100);
   }, [points, followerMapFilter]);
 
+  // Cheap boolean — used by Dock to show/hide the growth button
+  const hasGrowthData = useMemo(
+    () => [...points, ...unmapped].some((u) => !!u.starredAt),
+    [points, unmapped],
+  );
+
+  // Expensive computation — only runs when drawer is open (INP: F2)
   const growthData = useMemo(() => {
+    if (!growthOpen) return [];
     const all = [...points, ...unmapped].filter((u) => u.starredAt);
     if (all.length < 2) return [];
     const weekMap = new Map<string, number>();
@@ -686,7 +694,7 @@ export default function MapPage({
       weekMap.set(key, (weekMap.get(key) ?? 0) + 1);
     }
     return [...weekMap.entries()].sort((a, b) => a[0].localeCompare(b[0]));
-  }, [points, unmapped]);
+  }, [growthOpen, points, unmapped]);
 
   const filteredStargazers = useMemo(() => {
     const q = deferredSearch.toLowerCase();
@@ -849,12 +857,15 @@ export default function MapPage({
     }
   };
 
+  // Deferred points for stats — avoids blocking main thread on every chunk dispatch (INP: F3)
+  const deferredPointsForStats = useDeferredValue(points);
+
   const stats = useMemo(() => {
-    if (!points.length) return null;
+    if (!deferredPointsForStats.length) return null;
     const countryCount = new Map<string, number>();
     const cityCount = new Map<string, number>();
     const companyCount = new Map<string, number>();
-    for (const p of points) {
+    for (const p of deferredPointsForStats) {
       if (p.location) {
         const parts = p.location.split(",").map((s) => s.trim()).filter(Boolean);
         const lastSegment = parts[parts.length - 1];
@@ -870,19 +881,19 @@ export default function MapPage({
     }
     const topCountries = [...countryCount.entries()].sort((a, b) => b[1] - a[1]);
     const topCities = [...cityCount.entries()].sort((a, b) => b[1] - a[1]).slice(0, 30);
-    const topUsers = [...points]
+    const topUsers = [...deferredPointsForStats]
       .sort((a, b) => b.followers - a.followers)
       .slice(0, 30)
       .map((u) => ({ login: u.login, name: u.name, followers: u.followers, publicRepos: 0, location: u.location, avatarUrl: u.avatarUrl, company: u.company }));
     const topCompanies = [...companyCount.entries()].sort((a, b) => b[1] - a[1]).slice(0, 30);
-    const mappingRate = Math.round((points.length / (points.length + unmapped.length)) * 100);
-    const avgFollowers = points.length > 0
-      ? Math.round(points.reduce((s, p) => s + p.followers, 0) / points.length)
+    const mappingRate = Math.round((deferredPointsForStats.length / (deferredPointsForStats.length + unmapped.length)) * 100);
+    const avgFollowers = deferredPointsForStats.length > 0
+      ? Math.round(deferredPointsForStats.reduce((s, p) => s + p.followers, 0) / deferredPointsForStats.length)
       : 0;
-    const totalStars = points.length + unmapped.length;
+    const totalStars = deferredPointsForStats.length + unmapped.length;
     // botCount, enrichedUserCount, powerStargazers come from server stats only (requires dataVersion + cross-repo query)
     return { topCountries, topCities, topUsers, topCompanies, mappingRate, countryCount: countryCount.size, avgFollowers, totalStars, botCount: 0, enrichedUserCount: 0, powerStargazers: [] as RepoStats["powerStargazers"] };
-  }, [points, unmapped]);
+  }, [deferredPointsForStats, unmapped]);
 
   const pct = total > 0 ? Math.round((processed / total) * 100) : 0;
   const estimate = total > 0 ? estimateScan(total) : null;
@@ -1282,7 +1293,7 @@ export default function MapPage({
           repo={repo}
           hasStats={!!displayStats}
           allStargazersCount={allStargazers.length}
-          hasGrowthData={growthData.length > 0}
+          hasGrowthData={hasGrowthData}
           compareOwner={compareOwner}
           compareRepo={compareRepo}
           hasPoints={points.length > 0}
