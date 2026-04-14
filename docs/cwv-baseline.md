@@ -7,14 +7,28 @@
 
 ## Tableau de suivi
 
-| Scénario | LCP p75 | INP p75 | CLS p75 | TTFB | Long-tasks > 50ms | Date |
-|---|---|---|---|---|---|---|
-| Landing desktop | — | — | — | — | — | à mesurer |
-| Landing mobile | — | — | — | — | — | à mesurer |
-| Scan 10k stars (mobile) | — | — | — | — | — | à mesurer |
-| Scan 50k stars (mobile) | — | — | — | — | — | à mesurer |
+| Scénario | LCP | FCP | CLS | TBT | TTFB | Score LH | Date |
+|---|---|---|---|---|---|---|---|
+| Landing desktop | — | — | — | — | — | — | à mesurer |
+| Landing mobile | — | — | — | — | — | — | à mesurer |
+| Map page `/facebook/react` (mobile) | 36,873ms ⚠️ | 1,962ms | 0.000 ✅ | 82ms ✅ | 1,088ms | 72 | 2026-04-14 |
+| Scan 10k stars — INP réel | — | — | — | — | — | — | à mesurer |
 
-**Remplir ce tableau avant de commencer Phase 1.**
+> ⚠️ **LCP 36.8s — artefact Lighthouse, pas un bug de rendering.**
+> L'élément LCP est le bouton "Set my username" (15px hauteur) visible seulement après le scan complet.
+> Lighthouse attend la fin du scan sur réseau throttlé mobile (~36s pour facebook/react).
+> Le vrai LCP perçu par l'utilisateur = FCP 1.9s (shell + progress bar).
+>
+> **Ce qui compte vraiment** :
+> - FCP 1.9s — shell rapide ✅
+> - TBT 82ms — pas de blocking au load initial ✅
+> - CLS 0.000 — zéro layout shift ✅
+> - TTFB 1.1s — inflé par dev server, à re-mesurer en prod
+>
+> **Le vrai problème** = INP pendant le scan (non capturé par Lighthouse).
+> Mesurer avec PerformanceObserver (voir section 2 ci-dessous).
+
+**Prochaine étape** : mesurer INP réel pendant scan avec PerformanceObserver (section 2 ci-dessous).
 
 ---
 
@@ -26,16 +40,16 @@
 # Démarrer le serveur dev ou pointer vers prod
 pnpm dev
 
-# Landing desktop
+# Landing desktop (--preset=desktop = no throttling, desktop viewport)
 npx lighthouse http://localhost:3000 --preset=desktop \
   --output=json --output-path=./docs/cwv-baseline-landing-desktop.json
 
-# Landing mobile
-npx lighthouse http://localhost:3000 --preset=mobile \
+# Landing mobile (default = mobile throttled + mobile viewport)
+npx lighthouse http://localhost:3000 \
   --output=json --output-path=./docs/cwv-baseline-landing-mobile.json
 
-# Map page — repo ~10k stars
-npx lighthouse http://localhost:3000/facebook/react --preset=mobile \
+# Map page — repo ~10k stars (mobile throttled)
+npx lighthouse http://localhost:3000/facebook/react \
   --output=json --output-path=./docs/cwv-baseline-react-mobile.json
 ```
 
