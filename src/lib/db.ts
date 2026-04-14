@@ -26,12 +26,12 @@ const createPrismaClient = () => {
       ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: true } : undefined,
     });
     const adapter = new PrismaPg(pool);
-    return new PrismaClient({ adapter });
+    return new PrismaClient({ adapter, log: [{ emit: "event", level: "query" }] });
   }
 
   // Default: Neon serverless adapter (HTTP-based, no persistent TCP connection)
   const adapter = new PrismaNeon({ connectionString: process.env.DATABASE_URL });
-  return new PrismaClient({ adapter });
+  return new PrismaClient({ adapter, log: [{ emit: "event", level: "query" }] });
 };
 
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };
