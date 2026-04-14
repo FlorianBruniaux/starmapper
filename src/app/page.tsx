@@ -64,6 +64,7 @@ export default function HomePage() {
   const [hasToken, setHasToken] = useState(false);
   const [repos, setRepos] = useState<MappedRepo[]>([]);
   const [reposTotal, setReposTotal] = useState(0);
+  const [reposLoading, setReposLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
@@ -79,7 +80,8 @@ export default function HomePage() {
         if (Array.isArray(data.repos)) setRepos(data.repos);
         if (typeof data.total === "number") setReposTotal(data.total);
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setReposLoading(false));
   }, []);
 
   // Merge bookmarks + examples, deduplicate, bookmarks first — cap at 4
@@ -272,7 +274,17 @@ export default function HomePage() {
         </section>
 
         {/* ── Social proof strip ── */}
-        {repos.length > 0 && (
+        {reposLoading ? (
+          <div className="border-y border-border-subtle" aria-hidden="true">
+            <div className="max-w-7xl mx-auto px-4 lg:px-6 py-6 flex items-center justify-center gap-8 sm:gap-16 flex-wrap">
+              <div className="h-10 w-20 rounded bg-surface-alt animate-pulse" />
+              <div className="hidden sm:block h-8 w-px bg-border-subtle" />
+              <div className="h-10 w-16 rounded bg-surface-alt animate-pulse" />
+              <div className="hidden sm:block h-8 w-px bg-border-subtle" />
+              <div className="h-10 w-12 rounded bg-surface-alt animate-pulse" />
+            </div>
+          </div>
+        ) : repos.length > 0 ? (
           <div className="border-y border-border-subtle">
             <div className="max-w-7xl mx-auto px-4 lg:px-6 py-6 flex items-center justify-center gap-8 sm:gap-16 flex-wrap">
               <div className="text-center">
@@ -293,7 +305,7 @@ export default function HomePage() {
               </div>
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* ── How it works ── */}
         <section className="w-full max-w-7xl mx-auto px-4 lg:px-6 py-12">
@@ -358,7 +370,19 @@ export default function HomePage() {
         </section>
 
         {/* ── Community Maps (featured) ── */}
-        {repos.length > 0 && (
+        {reposLoading ? (
+          <section className="w-full max-w-7xl mx-auto px-4 lg:px-6 pb-12" aria-hidden="true">
+            <div className="flex items-center justify-between mb-4">
+              <div className="h-3 w-28 rounded bg-surface-alt animate-pulse" />
+              <div className="h-7 w-36 rounded-lg bg-surface-alt animate-pulse" />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="h-16 rounded-lg bg-surface-alt animate-pulse" />
+              ))}
+            </div>
+          </section>
+        ) : repos.length > 0 ? (
           <section className="w-full max-w-7xl mx-auto px-4 lg:px-6 pb-12">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-muted-subtle text-2xs uppercase tracking-widest">
@@ -405,7 +429,7 @@ export default function HomePage() {
               ))}
             </div>
           </section>
-        )}
+        ) : null}
 
         {/* ── Sponsors ── */}
         <SponsorsBlock />
