@@ -171,6 +171,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" suppressHydrationWarning>
       <head>
         <meta name="color-scheme" content="dark light" />
+        {/* Preconnect to tile/geocoding origins — shaves 100-300ms off map LCP */}
+        <link rel="preconnect" href="https://tile.jawg.io" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://api.jawg.io" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://starmapper.jawg.io" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://avatars.githubusercontent.com" />
         {/* Theme init — must run synchronously before first paint */}
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         <script
