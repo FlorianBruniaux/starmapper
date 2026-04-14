@@ -2,8 +2,8 @@
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 
 import { NextRequest, NextResponse } from "next/server";
-import { gzipSync } from "zlib";
 import { prisma } from "@/lib/db";
+import { compressToGzBase64 } from "@/lib/compression";
 import { checkDbHealth, DB_CRITICAL_PCT } from "@/lib/db-health";
 import { validateOwnerRepo } from "@/lib/api-validation";
 import { jsonError } from "@/lib/api-helpers";
@@ -73,8 +73,8 @@ export const POST = async (req: NextRequest) => {
       }
       type RawPoint = { bio?: unknown; avatarUrl?: unknown; [k: string]: unknown };
       const slim = (points as RawPoint[]).map(({ bio: _bio, avatarUrl: _av, ...rest }) => rest);
-      finalPointsGz = gzipSync(JSON.stringify(slim)).toString("base64");
-      finalUnmappedGz = gzipSync(JSON.stringify(unmapped)).toString("base64");
+      finalPointsGz = compressToGzBase64(slim);
+      finalUnmappedGz = compressToGzBase64(unmapped);
     } else {
       return jsonError("invalid_params", 400);
     }
