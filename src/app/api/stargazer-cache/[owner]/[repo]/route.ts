@@ -19,6 +19,14 @@ export const GET = async (
     const cached = await prisma.stargazerCache.findUnique({ where: { owner_repo: key } });
 
     if (cached) {
+      // ETag based on scannedAt — browser validates freshness on every request.
+      // If data hasn't changed → 304 (no payload transfer).
+      // If updated (after batch-scan + sync) → 200 with new data, no user action needed.
+      const etag = `"${cached.scannedAt.getTime()}"`;
+      if (_req.headers.get("if-none-match") === etag) {
+        return new NextResponse(null, { status: 304, headers: { ETag: etag } });
+      }
+
       const points = decompressGzBase64<Record<string, unknown>>(cached.points);
       const unmapped = decompressGzBase64(cached.unmapped);
 
@@ -41,7 +49,7 @@ export const GET = async (
           scannedAt: cached.scannedAt.toISOString(),
           latestStarredAt: cached.latestStarredAt?.toISOString() ?? null,
         },
-        { headers: { "Cache-Control": "public, s-maxage=600, stale-while-revalidate=1800" } },
+        { headers: { "Cache-Control": "no-cache", ETag: etag } },
       );
     }
 
