@@ -11,11 +11,11 @@ Enter any GitHub repository URL and StarMapper fetches all stargazers, geocodes 
 ## Features
 
 - Interactive world map with GeoJSON clustering (MapLibre GL)
-- Progressive loading via client-side chunk loop — no serverless timeout limit
+- Progressive loading via client-side chunk loop, no serverless timeout limit
 - 3-level geocoding cascade: Jawg (primary), Geoapify (fallback), Nominatim (ultimate fallback)
-- Geocache pre-seeded with ~51k GeoNames entries — >99% of locations resolve without any API call
-- **Language Atlas** — choropleth map showing the most popular language per country (`/devs/atlas`)
-- **Dev Maps by language** — filter the developer map by programming language (`/devs/[language]`)
+- Geocache pre-seeded with ~51k GeoNames entries (>99% of locations resolve without any API call)
+- **Language Atlas**: choropleth map showing the most popular language per country (`/devs/atlas`)
+- **Dev Maps by language**: filter the developer map by programming language (`/devs/[language]`)
 - Community maps table on the landing page (sortable, paginated)
 - Dark / light mode toggle
 - Embeddable SVG badge showing mapped count and country stats
@@ -49,7 +49,7 @@ Then fill in your values in `.env.local`. See [Environment Variables](#environme
 npx prisma db push
 ```
 
-This creates the `geocache` and `badge_cache` tables on your Neon database. No migration files are generated — `db push` is the intended workflow.
+This creates the `geocache` and `badge_cache` tables on your Neon database. No migration files are generated; `db push` is the intended workflow.
 
 ### 4. Start the dev server
 
@@ -66,17 +66,17 @@ Open [http://localhost:3000](http://localhost:3000), enter any public GitHub rep
 | `DATABASE_URL` | Yes | Postgres connection string (Neon, Docker, Railway, Supabase…) |
 | `DATABASE_DRIVER` | No | `neon` (default, Vercel) or `standard` (plain PostgreSQL) |
 | `GITHUB_TOKEN` | Yes | GitHub PAT with `read:user` scope |
-| `JAWG_TOKEN_HEADER` | Recommended | Main stargazer geocoding token — dedicated Jawg Places instance (`starmapper.jawg.io`, provided by JawgMaps). Create a **new dedicated token** from the Jawg dashboard (not the default one). Sent as `x-api-key` header + `access-token` query param for usage stats — see note below. |
+| `JAWG_TOKEN_HEADER` | Recommended | Main stargazer geocoding token for the dedicated Jawg Places instance (`starmapper.jawg.io`, provided by JawgMaps). Create a **new dedicated token** from the Jawg dashboard (not the default one). Sent as `x-api-key` header + `access-token` query param for usage stats (see note below). |
 | `JAWGMAP_ACCESS_TOKEN` | Recommended | Jawg token for explore page autocomplete + reverse geocoding (`api.jawg.io`) |
 | `NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN` | Yes (client) | Jawg token for client-side MapLibre tile URL (map rendering only) |
 | `GEOAPIFY_APIKEY` | Recommended | Geocoding fallback when Jawg fails |
 | `NEXT_PUBLIC_APP_URL` | No | App base URL, used for OG metadata and Nominatim User-Agent |
-| `ADMIN_SECRET` | No | Secret header for `/api/admin/*` routes — if unset, admin routes return 401 |
+| `ADMIN_SECRET` | No | Secret header for `/api/admin/*` routes; if unset, admin routes return 401 |
 | `DB_STORAGE_LIMIT_MB` | No | DB storage cap in MB for health guard (default: 512, Neon Launch: 10240) |
 
-Without `JAWG_TOKEN_HEADER` and `GEOAPIFY_APIKEY`, stargazer geocoding falls back to Nominatim only — rate-limited to 1 req/s. Thanks to GeoNames pre-seeding, this matters far less in practice (most locations already cached).
+Without `JAWG_TOKEN_HEADER` and `GEOAPIFY_APIKEY`, stargazer geocoding falls back to Nominatim only (rate-limited to 1 req/s). Thanks to GeoNames pre-seeding, this matters far less in practice (most locations already cached).
 
-> **Note on Jawg geocoding**: Batch geocoding is not permitted on the standard Jawg API. `JAWG_TOKEN_HEADER` targets a dedicated Jawg Places instance (`starmapper.jawg.io`) provided by JawgMaps specifically for StarMapper — requests include both an `x-api-key` header and an `access-token` query param (the query param is used for JawgMaps usage stats; the token must be a new dedicated one, not the default account token). It is separate from the map tile token and scoped to geocoding only.
+> **Note on Jawg geocoding**: Batch geocoding is not permitted on the standard Jawg API. `JAWG_TOKEN_HEADER` targets a dedicated Jawg Places instance (`starmapper.jawg.io`) provided by JawgMaps specifically for StarMapper; requests include both an `x-api-key` header and an `access-token` query param (the query param is used for JawgMaps usage stats; the token must be a new dedicated one, not the default account token). It is separate from the map tile token and scoped to geocoding only.
 
 Without `GITHUB_TOKEN`, GitHub's unauthenticated rate limit applies (60 requests/hour), which will block any repo above roughly 6000 stars.
 
@@ -128,7 +128,7 @@ pnpm db:sync              # Push github_user, star_event, badge_cache, stargazer
 
 ### What data is collected
 
-StarMapper accesses **publicly available data** from the GitHub API — the same data visible to anyone browsing github.com:
+StarMapper accesses **publicly available data** from the GitHub API, the same data visible to anyone browsing github.com:
 
 - GitHub username (login)
 - Display name (if set on the profile)
@@ -139,14 +139,14 @@ No private data is ever accessed. No email addresses. No repository data beyond 
 
 ### What we do with it
 
-Location text is geocoded into coordinates (via Jawg → Geoapify → Nominatim) and stored in a shared cache to avoid redundant API calls. Results appear as **geographic clusters on a map** — not as searchable individual records.
+Location text is geocoded into coordinates (via Jawg → Geoapify → Nominatim) and stored in a shared cache to avoid redundant API calls. Results appear as **geographic clusters on a map**, not as searchable individual records.
 
 ### What we don't do
 
 - No ads, no analytics, no tracking
 - No selling or sharing of data with any third party for commercial purposes
 - No user accounts, no email collection
-- No monetisation of any kind — this is a free, non-commercial side project
+- No monetisation of any kind (this is a free, non-commercial side project)
 
 ### This project makes no money
 
@@ -168,20 +168,20 @@ Full privacy policy: [starmapper.bruniaux.com/privacy](https://starmapper.brunia
 
 StarMapper is made possible thanks to the generous support of:
 
-- **[JawgMaps](https://www.jawg.io)** — map tiles and a dedicated geocoding instance (`starmapper.jawg.io`) powering the primary location resolution
-- **[Neon](https://neon.tech)** — serverless Postgres hosting the geocache, scan results, and all user data
+- **[JawgMaps](https://www.jawg.io)** for map tiles and a dedicated geocoding instance (`starmapper.jawg.io`) powering the primary location resolution
+- **[Neon](https://neon.tech)** for serverless Postgres hosting the geocache, scan results, and all user data
 
 ---
 
 ## Contributing
 
-Open an issue before sending a pull request for anything beyond a typo fix. The project is intentionally minimal — see `CLAUDE.md` section X for what is explicitly out of scope.
+Open an issue before sending a pull request for anything beyond a typo fix. The project is intentionally minimal; see `CLAUDE.md` section X for what is explicitly out of scope.
 
 By submitting a pull request, you certify that your contribution complies with the [Developer Certificate of Origin v1.1](https://developercertificate.org/). Add a `Signed-off-by` line to your commits (`git commit -s`).
 
 ## License
 
-[AGPL-3.0-only](./LICENSE) — free to use, fork, and self-host. If you modify StarMapper™ and run it as a public service, you must publish your source changes under the same license.
+[AGPL-3.0-only](./LICENSE), free to use, fork, and self-host. If you modify StarMapper™ and run it as a public service, you must publish your source changes under the same license.
 
 To report a license violation: florian@bruniaux.com
 

@@ -1,4 +1,4 @@
-# Design System — StarMapper
+# Design System StarMapper
 
 > Guide de référence visuel et technique. Dark theme inspiré GitHub.
 
@@ -6,7 +6,7 @@
 
 ## 1. Identité Visuelle
 
-**Thème** : Dark GitHub — interface sombre, accents colorés, données au premier plan.
+**Thème** : Dark GitHub, interface sombre, accents colorés, données au premier plan.
 
 **Principes** :
 - Données > chrome (la carte prend 100% de l'espace)
@@ -43,7 +43,7 @@
 | `--color-accent-green` | `#238636` | `bg-accent-green` | CTA principal, succès |
 | `--color-accent-red` | `#f85149` | `text-accent-red` | Erreurs |
 | `--color-accent-orange` | `#ffa657` | `text-accent-orange` | Map: followers moyen, bandeaux warning |
-| `--color-accent-purple` | `#a371f7` | — | Map: repo compare |
+| `--color-accent-purple` | `#a371f7` | (none) | Map: repo compare |
 
 ### 2.4 Map Layers (non-Tailwind, MapLibre uniquement)
 
@@ -69,7 +69,7 @@ Repo compare : `#a371f7` (violet) pour distinguer du repo principal.
 | Secondaire | `text-sm text-muted` |
 | Caption | `text-xs text-muted` |
 
-**Police** : System stack (Tailwind default) — pas de Google Fonts.
+**Police** : System stack (Tailwind default), pas de Google Fonts.
 
 ---
 
@@ -119,7 +119,7 @@ Repo compare : `#a371f7` (violet) pour distinguer du repo principal.
 
 ### 4.5 MapLibre Popup
 
-Style CSS dans `globals.css` (classe `.starmapper-popup`) — hors Tailwind.
+Style CSS dans `globals.css` (classe `.starmapper-popup`), hors Tailwind.
 
 ```css
 .starmapper-popup {
@@ -146,7 +146,7 @@ Layout deux colonnes sur desktop (`lg:flex-row`), colonne unique sur mobile.
 │ Left panel (form)     │ Right panel (community table)│
 │                       │                              │
 │  Title (xl, bold)     │  "Community Maps"            │
-│  Subtitle (sm, muted) │  [Sortable table — repos]    │
+│  Subtitle (sm, muted) │  [Sortable table: repos]     │
 │                       │  [Pagination prev/next]      │
 │  [URL Input ] [Map →] │                              │
 │  [Compare toggle]     │                              │
@@ -200,7 +200,7 @@ Base unit : 4px (Tailwind default).
 | `rounded-sm` | 4px | Inputs |
 | `rounded-md` | 6px | Boutons, cards |
 | `rounded-lg` | 8px | Panels, modals |
-| `rounded-full` | — | Pills, avatars |
+| `rounded-full` | varies | Pills, avatars |
 
 ---
 

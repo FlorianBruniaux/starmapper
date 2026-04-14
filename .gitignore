@@ -64,3 +64,4 @@ scripts/repos-trending.json
 
 # ESLint cache
 .eslintcache
+.worktrees/

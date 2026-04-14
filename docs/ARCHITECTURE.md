@@ -1,4 +1,4 @@
-# StarMapper — Architecture
+# StarMapper Architecture
 
 **Version**: 0.3.0
 **Last updated**: 2026-04-10
@@ -83,7 +83,7 @@ Browser                             Next.js Server                  External API
    |-- POST /api/chunk { cursor } ------->|   (repeat until              |
    |<- { ..., nextCursor: null } ---------|    nextCursor === null)       |
    |                                      |                               |
-   |   [loop complete — show stats]       |                               |
+   |   [loop complete, show stats]        |                               |
    |                                      |                               |
    |-- POST /api/stargazer-cache -------->|-- Neon: upsert StargazerCache |
    |   (gzip+base64, client-compressed)   |                               |
@@ -93,7 +93,7 @@ Browser                             Next.js Server                  External API
 
 ### Why the browser orchestrates the loop
 
-Vercel's free tier enforces a 10-second maximum execution time per serverless function. A 2,000-star repo requires approximately 20 GitHub GraphQL calls plus geocoding — far beyond that limit.
+Vercel's free tier enforces a 10-second maximum execution time per serverless function. A 2,000-star repo requires approximately 20 GitHub GraphQL calls plus geocoding, far beyond that limit.
 
 The solution: each `/api/chunk` call processes exactly 100 users and returns within 10 seconds. The browser calls it sequentially, accumulating points on the map progressively, until `nextCursor` is `null`. No long-running server process is needed.
 
@@ -101,7 +101,7 @@ The browser never runs chunks concurrently. Nominatim (the last-resort geocoding
 
 ### Client-side gzip compression
 
-After the chunk loop completes, the browser writes the full scan to `POST /api/stargazer-cache`. Raw JSON for a 50k-star repo is ~15MB — exceeding Vercel's 4.5MB request body limit. The fix: compress client-side using the Web `CompressionStream` API (gzip+base64) before the POST, reducing the payload to ~800KB.
+After the chunk loop completes, the browser writes the full scan to `POST /api/stargazer-cache`. Raw JSON for a 50k-star repo is ~15MB, which exceeds Vercel's 4.5MB request body limit. The fix: compress client-side using the Web `CompressionStream` API (gzip+base64) before the POST, reducing the payload to ~800KB.
 
 ```
 Raw points (~15MB) → TextEncoder → CompressionStream(gzip) → base64 → ~800KB
@@ -136,7 +136,7 @@ isGeocodeableLocation() filter
         v
   [1] Jawg Places API
       starmapper.jawg.io (dedicated Jawg Places instance, sponsored by JawgMaps)
-      Uses a dedicated geocoding token (JAWG_TOKEN_HEADER) — sent as x-api-key
+      Uses a dedicated geocoding token (JAWG_TOKEN_HEADER), sent as x-api-key
       header AND access-token query param (query param is used for JawgMaps usage
       stats; must be a new dedicated token from the Jawg dashboard, not the default
       account token). Separate from the map tile token (NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN).
@@ -171,23 +171,23 @@ isGeocodeableLocation() filter
 
 ### Key behaviors
 
-**Geocache**: A shared Neon table stores every resolved (or attempted) location. A null result for `lat`/`lng` is a valid cached entry — it means "this location does not geocode" and prevents repeated API calls for the same garbage string. The cache key is `location.toLowerCase().trim()`.
+**Geocache**: A shared Neon table stores every resolved (or attempted) location. A null result for `lat`/`lng` is a valid cached entry, meaning "this location does not geocode" and preventing repeated API calls for the same garbage string. The cache key is `location.toLowerCase().trim()`.
 
 The geocache was pre-seeded with ~51,000 entries from GeoNames data (cities with population > 15,000 + country names), covering the most common GitHub profile location strings. As a result, >99% of locations resolve from cache with no external API call. The seeding script is at `scripts/seed-geocache-geonames.ts`.
 
 **Circuit breaker**: Implemented in-memory per Vercel instance. After 3 consecutive errors, a provider is skipped for 1 hour. This protects against API outages without hard-coding fallback logic per request.
 
-**DB resilience**: All Prisma calls in `geocoder.ts` are wrapped in `try/catch`. If Neon is down, geocoding still works via direct API calls — results just won't be cached.
+**DB resilience**: All Prisma calls in `geocoder.ts` are wrapped in `try/catch`. If Neon is down, geocoding still works via direct API calls; results just won't be cached.
 
 **Parallelism**: When Jawg or Geoapify is available, up to 5 locations are geocoded in parallel. When both are down and Nominatim is the only option, geocoding is strictly sequential with a 1100ms delay between calls to respect the polite use policy.
 
-**Jawg sponsorship**: The Jawg geocoding endpoint (`starmapper.jawg.io`) is a dedicated Jawg Places instance provided by JawgMaps (Jawg Places is based on Pelias). Batch geocoding is not permitted on the public Jawg API — this dedicated server exists specifically for StarMapper. The geocoding token (`JAWG_TOKEN_HEADER`) is scoped to geocoding only and cannot access tile rendering. The explore page uses a separate token (`JAWGMAP_ACCESS_TOKEN`) against the public `api.jawg.io` endpoint.
+**Jawg sponsorship**: The Jawg geocoding endpoint (`starmapper.jawg.io`) is a dedicated Jawg Places instance provided by JawgMaps (Jawg Places is based on Pelias). Batch geocoding is not permitted on the public Jawg API; this dedicated server exists specifically for StarMapper. The geocoding token (`JAWG_TOKEN_HEADER`) is scoped to geocoding only and cannot access tile rendering. The explore page uses a separate token (`JAWGMAP_ACCESS_TOKEN`) against the public `api.jawg.io` endpoint.
 
 ---
 
 ## 5. Database Schema
 
-StarMapper uses Prisma with `@prisma/adapter-neon`. The Neon connection string is passed via the adapter, not via a `url` field in `schema.prisma`. There are no migration files — `prisma db push` is used to sync the schema directly.
+StarMapper uses Prisma with `@prisma/adapter-neon`. The Neon connection string is passed via the adapter, not via a `url` field in `schema.prisma`. There are no migration files; `prisma db push` is used to sync the schema directly.
 
 ### GeoCache
 
@@ -269,7 +269,7 @@ model GitHubUser {
 }
 ```
 
-**Purpose**: Normalized per-user data. Written via `bulkUpsertUsers()` in `src/lib/user-cache.ts` during each chunk. Read by `/api/stats/[owner]/[repo]` and `/api/devs`. `languages[]` is populated by `scripts/backfill-languages.ts` — see Language Atlas.
+**Purpose**: Normalized per-user data. Written via `bulkUpsertUsers()` in `src/lib/user-cache.ts` during each chunk. Read by `/api/stats/[owner]/[repo]` and `/api/devs`. `languages[]` is populated by `scripts/backfill-languages.ts` (see Language Atlas).
 
 ---
 
@@ -340,7 +340,7 @@ Fetches repository metadata via GitHub REST API.
 
 Returns the list of already-mapped repositories for the landing page Community Maps table.
 
-**Response**: `{ repos: MappedRepo[] }` — up to 200 repos, ordered by `updatedAt` desc.
+**Response**: `{ repos: MappedRepo[] }`, up to 200 repos, ordered by `updatedAt` desc.
 
 `MappedRepo` is exported from `src/app/api/repos/route.ts`.
 
@@ -363,9 +363,9 @@ Returns 404 if no user-level data exists for the repo (i.e., the repo has never 
 Reads the full cached scan result for a repo.
 
 **Responses**:
-- `200` — `{ points, unmapped, totalCount, scannedAt }` — full data, decompressed on server
-- `206` — `{ lastScan }` — scan metadata from `BadgeCache` only (no scan cache exists)
-- `404` — not found in either table
+- `200`: `{ points, unmapped, totalCount, scannedAt }`, full data, decompressed on server
+- `206`: `{ lastScan }`, scan metadata from `BadgeCache` only (no scan cache exists)
+- `404`: not found in either table
 
 ---
 
@@ -373,12 +373,12 @@ Reads the full cached scan result for a repo.
 
 Writes the full scan result to `StargazerCache`.
 
-**Request body** (new format — client-compressed):
+**Request body** (new format, client-compressed):
 ```ts
 { owner, repo, pointsGz: string, unmappedGz: string, totalCount: number }
 ```
 
-**Request body** (legacy format — server compresses):
+**Request body** (legacy format, server compresses):
 ```ts
 { owner, repo, points: StargazerPoint[], unmapped: UnmappedUser[], totalCount: number }
 ```
@@ -391,9 +391,9 @@ Validates `totalCount ≤ 100,000`. Performs an upsert on `StargazerCache`.
 
 Fetches enriched profile data for a list of stargazers (bio, followers, company). Used to populate detail cards when a user clicks a map point.
 
-**Request headers**: `x-gh-token` (optional — falls back to server `GITHUB_TOKEN`)
+**Request headers**: `x-gh-token` (optional, falls back to server `GITHUB_TOKEN`)
 
-**Request body**: `{ logins: string[] }` — max 200 logins per request
+**Request body**: `{ logins: string[] }`, max 200 logins per request
 
 **Response**: `{ users: UserDetail[] }`
 
@@ -437,7 +437,7 @@ Returns geocoded developer points filtered by programming language.
 
 **Query params**: `?language=typescript` (slug format, e.g. `typescript`, `python`, `c-cpp`)
 
-**Response**: `{ points: GeoPoint[], total: number }` — geocoded users only (`lat IS NOT NULL`), filtered by `languages[]` array.
+**Response**: `{ points: GeoPoint[], total: number }`, geocoded users only (`lat IS NOT NULL`), filtered by `languages[]` array.
 
 ---
 
@@ -472,32 +472,32 @@ Refreshes all materialized views (cron endpoint, runs daily at 03:00 UTC):
 │   ├── app/
 │   │   ├── layout.tsx                         # Root layout, global metadata, JSON-LD, FOUC prevention
 │   │   ├── globals.css                        # @theme tokens (dark + light), popup styles
-│   │   ├── page.tsx                           # Landing page — repo URL input + community maps
+│   │   ├── page.tsx                           # Landing page: repo URL input + community maps
 │   │   ├── [owner]/[repo]/
-│   │   │   ├── page.tsx                       # Map page — chunk loop + progressive rendering + all modals
+│   │   │   ├── page.tsx                       # Map page: chunk loop + progressive rendering + all modals
 │   │   │   └── opengraph-image.tsx            # OG image generation
 │   │   ├── devs/
-│   │   │   ├── page.tsx                       # Dev Maps — language selector + map
+│   │   │   ├── page.tsx                       # Dev Maps: language selector + map
 │   │   │   ├── [language]/page.tsx            # Dev map filtered by language
-│   │   │   └── atlas/page.tsx                 # Language Atlas — choropleth map by country
+│   │   │   └── atlas/page.tsx                 # Language Atlas: choropleth map by country
 │   │   └── api/
-│   │       ├── chunk/route.ts                 # POST — fetch + geocode 100 stargazers
-│   │       ├── repo-info/route.ts             # GET  — repo metadata (GitHub REST)
-│   │       ├── repos/route.ts                 # GET  — community maps list (BadgeCache)
-│   │       ├── stats/[owner]/[repo]/route.ts  # GET  — aggregated repo stats (GitHubUser + StarEvent)
+│   │       ├── chunk/route.ts                 # POST: fetch + geocode 100 stargazers
+│   │       ├── repo-info/route.ts             # GET:  repo metadata (GitHub REST)
+│   │       ├── repos/route.ts                 # GET:  community maps list (BadgeCache)
+│   │       ├── stats/[owner]/[repo]/route.ts  # GET:  aggregated repo stats (GitHubUser + StarEvent)
 │   │       ├── devs/
-│   │       │   ├── route.ts                   # GET  — developer map points by language
-│   │       │   └── atlas/route.ts             # GET  — country × language dominance (MV)
+│   │       │   ├── route.ts                   # GET:  developer map points by language
+│   │       │   └── atlas/route.ts             # GET:  country × language dominance (MV)
 │   │       ├── stargazer-cache/
-│   │       │   ├── route.ts                   # POST — write full scan (gzip+base64)
-│   │       │   └── [owner]/[repo]/route.ts    # GET  — read full scan (200/206/404)
-│   │       ├── user-details/route.ts          # POST — stargazer details (bio, followers)
-│   │       ├── badge-update/route.ts          # POST — upsert BadgeCache
-│   │       ├── badge/[owner]/[repo]/route.ts  # GET  — SVG shield badge
+│   │       │   ├── route.ts                   # POST: write full scan (gzip+base64)
+│   │       │   └── [owner]/[repo]/route.ts    # GET:  read full scan (200/206/404)
+│   │       ├── user-details/route.ts          # POST: stargazer details (bio, followers)
+│   │       ├── badge-update/route.ts          # POST: upsert BadgeCache
+│   │       ├── badge/[owner]/[repo]/route.ts  # GET:  SVG shield badge
 │   │       └── admin/
-│   │           ├── clear-geocache/route.ts    # GET  — truncate geocache (admin)
-│   │           ├── import-geocache/route.ts   # POST — bulk import geocache (admin)
-│   │           └── refresh-grid-mv/route.ts   # GET  — refresh all MVs (Vercel Cron 03:00 UTC)
+│   │           ├── clear-geocache/route.ts    # GET:  truncate geocache (admin)
+│   │           ├── import-geocache/route.ts   # POST: bulk import geocache (admin)
+│   │           └── refresh-grid-mv/route.ts   # GET:  refresh all MVs (Vercel Cron 03:00 UTC)
 │   ├── components/
 │   │   ├── token-modal.tsx                    # GitHub token input modal (PAT override)
 │   │   ├── theme-toggle.tsx                   # Dark/light mode toggle button
@@ -506,15 +506,15 @@ Refreshes all materialized views (cron endpoint, runs daily at 03:00 UTC):
 │   │   ├── footer.tsx                         # Landing page footer with ecosystem links + author credit
 │   │   └── map/
 │   │       ├── stargazer-map.tsx              # MapLibre GL map (client component, React.memo)
-│   │       ├── stargazer-map-dynamic.tsx      # Dynamic import wrapper — ssr: false
-│   │       ├── language-choropleth.tsx        # Choropleth map — language dominance by country
-│   │       └── language-choropleth-dynamic.tsx # Dynamic import wrapper — ssr: false
+│   │       ├── stargazer-map-dynamic.tsx      # Dynamic import wrapper, ssr: false
+│   │       ├── language-choropleth.tsx        # Choropleth map: language dominance by country
+│   │       └── language-choropleth-dynamic.tsx # Dynamic import wrapper, ssr: false
 │   └── lib/
 │       ├── db.ts                              # Prisma + Neon adapter singleton
-│       ├── db-health.ts                       # DB storage check — checkDbHealth(), warns at 80%, skips at 95%
-│       ├── geocoder.ts                        # geocode() + geocodeBatch() — 3-level cascade
-│       ├── github.ts                          # fetchStargazersPage() — GitHub GraphQL
-│       ├── map-style.ts                       # fetchAndPatchStyle() — fetch + patch Jawg tile style (projection, attribution)
+│       ├── db-health.ts                       # DB storage check: checkDbHealth(), warns at 80%, skips at 95%
+│       ├── geocoder.ts                        # geocode() + geocodeBatch(): 3-level cascade
+│       ├── github.ts                          # fetchStargazersPage(): GitHub GraphQL
+│       ├── map-style.ts                       # fetchAndPatchStyle(): fetch + patch Jawg tile style (projection, attribution)
 │       ├── bookmarks.ts                       # Client-side repo bookmarks (localStorage)
 │       ├── user-cache.ts                      # bulkUpsertUsers() + bulkUpsertStarEvents()
 │       ├── countries.ts                       # ISO 3166 country set + isCountry() + normalizeCountry()
@@ -541,23 +541,23 @@ Refreshes all materialized views (cron endpoint, runs daily at 03:00 UTC):
 
 ### Key module responsibilities
 
-**`src/lib/db.ts`** — Creates a single Prisma client instance per process using the Neon adapter. Follows the Next.js singleton pattern to avoid exhausting the connection pool during hot reloads.
+**`src/lib/db.ts`**: Creates a single Prisma client instance per process using the Neon adapter. Follows the Next.js singleton pattern to avoid exhausting the connection pool during hot reloads.
 
-**`src/lib/db-health.ts`** — Queries `pg_database_size` to measure Neon storage usage. Results are cached for 5 minutes in-memory. Exports `checkDbHealth()`, `DB_WARN_PCT` (80), and `DB_CRITICAL_PCT` (95).
+**`src/lib/db-health.ts`**: Queries `pg_database_size` to measure Neon storage usage. Results are cached for 5 minutes in-memory. Exports `checkDbHealth()`, `DB_WARN_PCT` (80), and `DB_CRITICAL_PCT` (95).
 
-**`src/lib/geocoder.ts`** — Owns the entire geocoding pipeline: cache lookup, provider cascade (Jawg → Geoapify → Nominatim), circuit breaker state, and cache writes. `geocode()` handles a single location; `geocodeBatch()` handles an array with appropriate concurrency control.
+**`src/lib/geocoder.ts`**: Owns the entire geocoding pipeline: cache lookup, provider cascade (Jawg → Geoapify → Nominatim), circuit breaker state, and cache writes. `geocode()` handles a single location; `geocodeBatch()` handles an array with appropriate concurrency control.
 
-**`src/lib/user-cache.ts`** — Writes geocoded users and star events to the normalized `GitHubUser`/`StarEvent` tables. Both functions check `db-health.ts` and skip writes if DB storage is critical.
+**`src/lib/user-cache.ts`**: Writes geocoded users and star events to the normalized `GitHubUser`/`StarEvent` tables. Both functions check `db-health.ts` and skip writes if DB storage is critical.
 
-**`src/lib/countries.ts`** — ISO 3166-1 country name set with aliases. `isCountry(s)` checks if a string is a known country; `normalizeCountry(s)` returns a canonical English name.
+**`src/lib/countries.ts`**: ISO 3166-1 country name set with aliases. `isCountry(s)` checks if a string is a known country; `normalizeCountry(s)` returns a canonical English name.
 
-**`src/lib/map-style.ts`** — Single source of truth for Jawg tile style fetching and patching. `fetchAndPatchStyle(url, projection)` fetches the JSON style, patches projection (forced to `projection` param, default `"mercator"`), patches Noto Sans → Open Sans fonts, strips `water_name`/`marine` layers, and adds `utm_source` attribution. In-memory cache keyed by `${url}#${projection}` to avoid globe/mercator collisions.
+**`src/lib/map-style.ts`**: Single source of truth for Jawg tile style fetching and patching. `fetchAndPatchStyle(url, projection)` fetches the JSON style, patches projection (forced to `projection` param, default `"mercator"`), patches Noto Sans → Open Sans fonts, strips `water_name`/`marine` layers, and adds `utm_source` attribution. In-memory cache keyed by `${url}#${projection}` to avoid globe/mercator collisions.
 
-**`src/lib/theme.ts`** — Theme management: `getStoredTheme()` / `setStoredTheme()` (localStorage), `getSystemTheme()` (prefers-color-scheme), `applyTheme()` (applies class to `<html>`). Also exports `MAP_STYLE_DARK` and `MAP_STYLE_LIGHT` tile URL factories for Jawg, and the `MapProjection` type.
+**`src/lib/theme.ts`**: Theme management: `getStoredTheme()` / `setStoredTheme()` (localStorage), `getSystemTheme()` (prefers-color-scheme), `applyTheme()` (applies class to `<html>`). Also exports `MAP_STYLE_DARK` and `MAP_STYLE_LIGHT` tile URL factories for Jawg, and the `MapProjection` type.
 
-**`src/app/[owner]/[repo]/page.tsx`** — The map page owns the chunk loop. It checks the DB cache first; if found, loads directly. Otherwise calls `/api/chunk` sequentially, accumulates `StargazerPoint[]` in state, passes the growing array to `StargazerMapDynamic`, and shows live progress. All modals (stats, share, badge, unmapped drawer, token, stargazers table) are rendered here.
+**`src/app/[owner]/[repo]/page.tsx`**: The map page owns the chunk loop. It checks the DB cache first; if found, loads directly. Otherwise calls `/api/chunk` sequentially, accumulates `StargazerPoint[]` in state, passes the growing array to `StargazerMapDynamic`, and shows live progress. All modals (stats, share, badge, unmapped drawer, token, stargazers table) are rendered here.
 
-**`src/components/map/stargazer-map.tsx`** — Initializes a MapLibre GL map, maintains a GeoJSON source named `"stargazers"`, and updates it via `source.setData()` as new points arrive. Wrapped in `React.memo` to avoid expensive re-initialization on each points update.
+**`src/components/map/stargazer-map.tsx`**: Initializes a MapLibre GL map, maintains a GeoJSON source named `"stargazers"`, and updates it via `source.setData()` as new points arrive. Wrapped in `React.memo` to avoid expensive re-initialization on each points update.
 
 ---
 
@@ -567,13 +567,13 @@ Refreshes all materialized views (cron endpoint, runs daily at 03:00 UTC):
 |---|---|---|---|
 | `DATABASE_URL` | Yes | Server | Neon Postgres connection string |
 | `GITHUB_TOKEN` | Yes | Server | PAT with `read:user` scope. Without it: 60 req/hr unauthenticated limit. |
-| `JAWG_TOKEN_HEADER` | Recommended | Server | Main stargazer geocoding — dedicated Jawg Places instance (`starmapper.jawg.io`). Sent as `x-api-key` header + `access-token` query param. |
+| `JAWG_TOKEN_HEADER` | Recommended | Server | Main stargazer geocoding, dedicated Jawg Places instance (`starmapper.jawg.io`). Sent as `x-api-key` header + `access-token` query param. |
 | `JAWGMAP_ACCESS_TOKEN` | Recommended | Server | Explore page autocomplete + reverse geocoding (`api.jawg.io`). Also used by `batch-scan.ts`. |
 | `GEOAPIFY_APIKEY` | Recommended | Server | Geocoding fallback provider (Geoapify) |
 | `NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN` | Yes (client) | Browser | Used to construct the MapLibre tile style URL |
 | `NEXT_PUBLIC_APP_URL` | No | Server | App base URL for metadata and OG image generation |
 
-Without `JAWG_TOKEN_HEADER` and `GEOAPIFY_APIKEY`, all stargazer geocoding falls through to Nominatim, which is strictly sequential at 1100ms per call — noticeably slower for large repos.
+Without `JAWG_TOKEN_HEADER` and `GEOAPIFY_APIKEY`, all stargazer geocoding falls through to Nominatim, which is strictly sequential at 1100ms per call, noticeably slower for large repos.
 
 ---
 
@@ -615,9 +615,9 @@ There is no cron, queue, or webhook infrastructure. Everything is request-driven
 
 The following are intentionally not built and should not be added without a significant product decision:
 
-- **Authentication or user accounts** — StarMapper is stateless and read-only by design
-- **Star history over time as a primary feature** — storing historical snapshots is a different product (see star-history.com). Note: `StarEvent` table captures star dates as a side-effect of scanning, but no UI surfaces this data yet.
-- **Real-time updates or webhooks** — no infrastructure for push-based data
-- **Standalone stargazer profile pages** — detail cards on the map are in scope; separate routed pages are not
-- **Server-side rate limit queuing** — the client loop handles retries and pacing
-- **Fuzzy or approximate location matching** — Nominatim handles ambiguous strings natively
+- **Authentication or user accounts**: StarMapper is stateless and read-only by design
+- **Star history over time as a primary feature**: storing historical snapshots is a different product (see star-history.com). Note: `StarEvent` table captures star dates as a side-effect of scanning, but no UI surfaces this data yet.
+- **Real-time updates or webhooks**: no infrastructure for push-based data
+- **Standalone stargazer profile pages**: detail cards on the map are in scope; separate routed pages are not
+- **Server-side rate limit queuing**: the client loop handles retries and pacing
+- **Fuzzy or approximate location matching**: Nominatim handles ambiguous strings natively
