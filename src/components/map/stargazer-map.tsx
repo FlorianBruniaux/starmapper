@@ -503,12 +503,11 @@ const StargazerMapInner = ({ points, comparePoints, flyTarget, onFlyDone, onRead
   const [projectionState, setProjectionState] = useState<MapProjection>("mercator");
   // Throttle refs: prevent MapLibre setData from firing on every chunk during progressive loading.
   // Leading call fires immediately; subsequent calls within the window are batched (trailing wins).
-  type PendingData = { main: ReturnType<typeof buildGeoJSON>; heat: ReturnType<typeof buildHeatGeoJSON> };
   const setDataTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const pendingSetDataRef = useRef<PendingData | null>(null);
+  // F11: store a boolean flag instead of pre-computed GeoJSON — compute lazily at setData time
+  const pendingSetDataRef = useRef(false);
   const [mapReady, setMapReady] = useState(false);
-  const geoJSON = useMemo(() => buildGeoJSON(points), [points]);
-  const heatGeoJSON = useMemo(() => buildHeatGeoJSON(points), [points]);
+  // compareGeoJSON kept as useMemo — compare updates are infrequent (user-triggered, not per-chunk)
   const compareGeoJSON = useMemo(() => buildGeoJSON(comparePoints ?? []), [comparePoints]);
 
   useEffect(() => {
@@ -717,29 +716,30 @@ const StargazerMapInner = ({ points, comparePoints, flyTarget, onFlyDone, onRead
     const map = mapRef.current;
     if (!map || !mapReady) return;
 
-    const applyData = (main: ReturnType<typeof buildGeoJSON>, heat: ReturnType<typeof buildHeatGeoJSON>) => {
+    // F11: compute GeoJSON inside the throttle window, not on every points change.
+    // buildGeoJSON only runs on leading edge + trailing edge (every 2s), not per-chunk.
+    const applyFromRefs = () => {
       const src = map.getSource("stargazers") as maplibregl.GeoJSONSource | undefined;
-      if (src) src.setData(main);
+      if (src) src.setData(buildGeoJSON(pointsRef.current));
       const hSrc = map.getSource("stargazers-heat") as maplibregl.GeoJSONSource | undefined;
-      if (hSrc) hSrc.setData(heat);
+      if (hSrc) hSrc.setData(buildHeatGeoJSON(pointsRef.current));
     };
 
     // Throttle: fire immediately on leading edge, batch trailing calls within a 2s window.
     // Prevents MapLibre from rebuilding the clustering index on every chunk during a scan.
     if (setDataTimerRef.current === null) {
-      applyData(geoJSON, heatGeoJSON);
+      applyFromRefs();
       setDataTimerRef.current = setTimeout(() => {
         setDataTimerRef.current = null;
-        const pending = pendingSetDataRef.current;
-        if (pending) {
-          pendingSetDataRef.current = null;
-          applyData(pending.main, pending.heat);
+        if (pendingSetDataRef.current) {
+          pendingSetDataRef.current = false;
+          applyFromRefs();
         }
       }, 2000);
     } else {
-      pendingSetDataRef.current = { main: geoJSON, heat: heatGeoJSON };
+      pendingSetDataRef.current = true;
     }
-  }, [geoJSON, heatGeoJSON, mapReady]);
+  }, [points, mapReady]);
 
   useEffect(() => {
     const map = mapRef.current;
