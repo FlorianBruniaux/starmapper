@@ -11,8 +11,16 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        disallow: ["/api/admin/"],
+        disallow: ["/api/"],
       },
+      // AI crawlers — allow indexing for GEO visibility
+      { userAgent: "GPTBot", allow: "/" },
+      { userAgent: "ChatGPT-User", allow: "/" },
+      { userAgent: "PerplexityBot", allow: "/" },
+      { userAgent: "ClaudeBot", allow: "/" },
+      { userAgent: "Anthropic-ai", allow: "/" },
+      { userAgent: "OAI-SearchBot", allow: "/" },
+      { userAgent: "cohere-ai", allow: "/" },
     ],
     sitemap: `${BASE}/sitemap.xml`,
   };

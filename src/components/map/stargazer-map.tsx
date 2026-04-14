@@ -11,7 +11,7 @@ import { getStoredProjection, setStoredProjection } from "@/lib/theme";
 import type { MapProjection } from "@/lib/theme";
 import { fetchAndPatchStyle } from "@/lib/map-style";
 import { JawgBadge } from "@/components/map/jawg-badge";
-
+import { CLUSTER_RADIUS } from "@/components/map/constants";
 
 type Props = {
   points: StargazerPoint[];
@@ -38,9 +38,6 @@ const JAWG_TOKEN = process.env.NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN ?? "";
 const STYLE_URL = `https://api.jawg.io/styles/jawg-dark.json?access-token=${JAWG_TOKEN}`;
 const CLUSTER_MAX_ZOOM = 20;
 const ENABLE_GLOBE = process.env.NEXT_PUBLIC_ENABLE_GLOBE !== "false";
-
-export const CLUSTER_RADIUS = { min: 20, max: 150, default: 40, step: 10 } as const;
-
 
 // Adds all clustered sources + layers — called at init and on radius rebuild
 const setupClusteredSourcesAndLayers = (
@@ -829,3 +826,6 @@ const StargazerMapInner = ({ points, comparePoints, flyTarget, onFlyDone, onRead
 };
 
 export const StargazerMap = memo(StargazerMapInner);
+// Re-export so callers can import CLUSTER_RADIUS from this module without
+// pulling in the maplibre-gl bundle directly (the value lives in constants.ts).
+export { CLUSTER_RADIUS };

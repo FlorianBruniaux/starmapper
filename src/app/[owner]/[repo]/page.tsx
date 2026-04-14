@@ -4,9 +4,10 @@
 "use client";
 
 import { use, useEffect, useRef, useState, useCallback, useMemo, useDeferredValue, useReducer, startTransition } from "react";
+import NextImage from "next/image";
 import { StargazerMapDynamic } from "@/components/map/stargazer-map-dynamic";
 import { MapFloatingNav } from "@/components/map/map-floating-nav";
-import { CLUSTER_RADIUS } from "@/components/map/stargazer-map";
+import { CLUSTER_RADIUS } from "@/components/map/constants";
 import type { StargazerPoint, ChunkResponse } from "@/app/api/chunk/route";
 import type { MapProjection } from "@/lib/theme";
 import type { RepoStats } from "@/app/api/stats/[owner]/[repo]/route";
@@ -1062,7 +1063,7 @@ export default function MapPage({
           >
             <div className="flex items-center gap-3 mb-6">
               {repoInfo.avatar && (
-                <img src={repoInfo.avatar} alt="" width={40} height={40} className="w-10 h-10 rounded-full" />
+                <NextImage src={repoInfo.avatar} alt="" width={40} height={40} className="w-10 h-10 rounded-full" />
               )}
               <div>
                 <h2 id="prescan-title" className="text-foreground font-semibold">{repoInfo.name}</h2>
@@ -1551,7 +1552,7 @@ export default function MapPage({
                       <td className="px-3 py-2">
                         <div className="flex items-center gap-2">
                           {u.avatarUrl
-                            ? <img src={u.avatarUrl} alt="" width={24} height={24} className="w-6 h-6 rounded-full flex-shrink-0" />
+                            ? <NextImage src={u.avatarUrl} alt="" width={24} height={24} className="w-6 h-6 rounded-full flex-shrink-0" />
                             : <div className="w-6 h-6 rounded-full bg-surface-alt flex-shrink-0" />
                           }
                           <div className="min-w-0">
@@ -1690,7 +1691,7 @@ export default function MapPage({
             {/* Preview card */}
             <div id="share-card" className="mx-5 my-4 bg-background rounded-xl p-6 border border-border">
               <div className="flex items-center gap-3 mb-4">
-                {repoInfo.avatar && <img src={repoInfo.avatar} alt="" width={40} height={40} className="w-10 h-10 rounded-full border border-border flex-shrink-0" />}
+                {repoInfo.avatar && <NextImage src={repoInfo.avatar} alt="" width={40} height={40} className="w-10 h-10 rounded-full border border-border flex-shrink-0" />}
                 <div className="min-w-0">
                   <div className="text-muted text-xs leading-tight">{owner}</div>
                   <div className="text-foreground font-bold text-base leading-tight truncate">{repo}</div>
@@ -2232,7 +2233,7 @@ export default function MapPage({
                       <div key={u.login} className="flex items-center gap-3 py-0.5">
                         <span className="text-muted-subtle text-xs w-5 text-right flex-shrink-0">{i + 1}</span>
                         {u.avatarUrl
-                          ? <img src={u.avatarUrl} alt="" width={32} height={32} className="w-8 h-8 rounded-full flex-shrink-0 ring-1 ring-border" />
+                          ? <NextImage src={u.avatarUrl} alt="" width={32} height={32} className="w-8 h-8 rounded-full flex-shrink-0 ring-1 ring-border" />
                           : <div className="w-8 h-8 rounded-full bg-surface-alt flex-shrink-0 ring-1 ring-border" />
                         }
                         <div className="flex-1 min-w-0">
@@ -2327,7 +2328,7 @@ export default function MapPage({
                   {displayStats.powerStargazers.map((u, i) => (
                     <div key={u.login} className="flex items-center gap-3 py-0.5">
                       <span className="text-muted-subtle text-xs w-5 text-right flex-shrink-0">{i + 1}</span>
-                      <img src={u.avatarUrl} alt="" width={32} height={32} className="w-8 h-8 rounded-full flex-shrink-0 ring-1 ring-border" />
+                      <NextImage src={u.avatarUrl} alt="" width={32} height={32} className="w-8 h-8 rounded-full flex-shrink-0 ring-1 ring-border" />
                       <div className="flex-1 min-w-0">
                         <a
                           href={`https://github.com/${u.login}`}

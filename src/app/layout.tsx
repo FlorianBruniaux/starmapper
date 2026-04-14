@@ -6,7 +6,7 @@ import { Geist } from "next/font/google";
 import "./globals.css";
 import { VitalsReporter } from "@/components/vitals-reporter";
 
-const geist = Geist({ subsets: ["latin"] });
+const geist = Geist({ subsets: ["latin"], variable: "--font-geist-sans", display: "swap" });
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://starmapper.bruniaux.com";
 
@@ -168,7 +168,7 @@ const themeInitScript = `
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className={geist.variable}>
       <head>
         <meta name="color-scheme" content="dark light" />
         {/* Preconnect to tile/geocoding origins — shaves 100-300ms off map LCP */}
@@ -176,6 +176,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://api.jawg.io" crossOrigin="anonymous" />
         <link rel="preconnect" href="https://starmapper.jawg.io" crossOrigin="anonymous" />
         <link rel="preconnect" href="https://avatars.githubusercontent.com" />
+        <link rel="preconnect" href="https://api.github.com" />
         {/* Theme init — must run synchronously before first paint */}
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         <script

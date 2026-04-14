@@ -51,7 +51,7 @@ html.light {
   --color-surface-alt: #e4e8ec;
   --color-foreground: #24292f;
   --color-muted: #57606a;
-  --color-muted-subtle: #8c959f;
+  --color-muted-subtle: #6e7681; /* was #8c959f — 2.9:1 WCAG AA fail → now 4.6:1 */
   --color-border: #c9d1d9;
   --color-border-subtle: #d8dee4;
   --color-accent-blue: #0969da;

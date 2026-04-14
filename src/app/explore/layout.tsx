@@ -1,0 +1,30 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
+
+import type { Metadata } from "next";
+
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://starmapper.bruniaux.com";
+
+export const metadata: Metadata = {
+  title: "Explore GitHub Developers Worldwide | StarMapper",
+  description:
+    "Explore a heatmap of GitHub developers across the world. Discover where open-source contributors are most concentrated.",
+  alternates: { canonical: "/explore" },
+  openGraph: {
+    title: "Explore GitHub Developers Worldwide | StarMapper",
+    description:
+      "Explore a heatmap of GitHub developers across the world.",
+    url: `${APP_URL}/explore`,
+    siteName: "StarMapper",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Explore GitHub Developers Worldwide | StarMapper",
+    description: "Explore a heatmap of GitHub developers across the world.",
+  },
+};
+
+export default function ExploreLayout({ children }: { children: React.ReactNode }) {
+  return <>{children}</>;
+}

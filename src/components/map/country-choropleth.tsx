@@ -181,14 +181,17 @@ export const CountryChoropleth = memo(({ countryData, onCountryClick }: Props) =
         map.setFilter("countries-hover", ["==", ["get", "name"], name]);
         map.setPaintProperty("countries-hover", "fill-opacity", 0.15);
 
+        const tipEl = document.createElement("div");
+        tipEl.className = "choropleth-tip";
+        const strong = document.createElement("strong");
+        strong.textContent = name;
+        const span = document.createElement("span");
+        span.textContent = count > 0 ? `${count.toLocaleString()} developers` : "no data";
+        tipEl.append(strong, span);
+
         tooltipRef.current
           ?.setLngLat(e.lngLat)
-          .setHTML(
-            `<div class="choropleth-tip">
-              <strong>${name}</strong>
-              <span>${count > 0 ? count.toLocaleString() + " developers" : "no data"}</span>
-            </div>`,
-          )
+          .setDOMContent(tipEl)
           .addTo(map);
       });
 
