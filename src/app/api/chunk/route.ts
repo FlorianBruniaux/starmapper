@@ -32,6 +32,28 @@ export type ChunkResponse = {
   latestStarredAt: string | null; // ISO timestamp of most recent star in this chunk
 };
 
+const buildUserWritePayload = (
+  point: StargazerPoint,
+  sg: { followers: number; following: number; publicRepos: number; accountCreatedAt: string | null; linkedinUrl: string | null },
+): UserWritePayload => {
+  const { country, city } = parseLocation(point.location);
+  return {
+    login: point.login,
+    name: point.name,
+    company: point.company,
+    location: point.location,
+    followers: sg.followers,
+    following: sg.following,
+    publicRepos: sg.publicRepos,
+    accountCreatedAt: sg.accountCreatedAt,
+    lat: point.lat,
+    lng: point.lng,
+    linkedinUrl: sg.linkedinUrl,
+    countryNormalized: country,
+    cityNormalized: city,
+  };
+};
+
 // In-memory rate limiter — max 3 concurrent geocoding sessions across all users.
 // Vercel serverless: each instance has its own counter, so this is a per-instance
 // limit. Good enough to prevent a single deploy from hammering Jawg on spikes.
@@ -129,23 +151,7 @@ export const POST = async (req: NextRequest) => {
         const usersToWrite: UserWritePayload[] = pointsToWrite
           .map((p) => {
             const sg = sgByLogin.get(p.login);
-            if (!sg) return null;
-            const { country, city } = parseLocation(p.location);
-            return {
-              login: p.login,
-              name: p.name,
-              company: p.company,
-              location: p.location,
-              followers: sg.followers,
-              following: sg.following,
-              publicRepos: sg.publicRepos,
-              accountCreatedAt: sg.accountCreatedAt,
-              lat: p.lat,
-              lng: p.lng,
-              linkedinUrl: sg.linkedinUrl,
-              countryNormalized: country,
-              cityNormalized: city,
-            };
+            return sg ? buildUserWritePayload(p, sg) : null;
           })
           .filter((u): u is UserWritePayload => u !== null);
         if (usersToWrite.length > 0) {
