@@ -400,10 +400,11 @@ export default function MapPage({
 
         if (!newestStarredAt && chunk!.latestStarredAt) newestStarredAt = chunk!.latestStarredAt;
         setTotal(chunk!.totalCount); // urgent — drives progress bar
-        const newPts = chunk!.points;
-        const newUnmapped = chunk!.unmapped;
-        allPoints.push(...newPts);
-        allUnmapped.push(...newUnmapped);
+        // Spread into new arrays — new references trigger memo() re-render and the throttled
+        // setData effect in StargazerMap. Mutation in place would keep same reference →
+        // memo() bails out → useEffect([points]) never fires → map frozen after chunk 1.
+        allPoints = [...allPoints, ...chunk!.points];
+        allUnmapped = [...allUnmapped, ...chunk!.unmapped];
         startTransition(() => {
           dispatch({ type: "chunk", points: allPoints, unmapped: allUnmapped });
         });

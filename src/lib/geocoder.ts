@@ -186,13 +186,17 @@ const _resolveMultiLocation = async (
     .map((s) => s.trim())
     .filter((s) => isGeocodeableLocation(s));
 
+  // Batch-read all parts in one DB round-trip instead of sequential reads per part.
+  const partKeys = parts.map((p) => p.toLowerCase());
+  const cachedRows = await cacheBulkRead(partKeys);
+  const cacheHits = new Map(cachedRows.map((c) => [c.key, c]));
+
   for (const part of parts) {
     const partKey = part.toLowerCase();
-    // Check if this part is already cached
-    const cached = await cacheRead(partKey);
-    if (cached !== undefined && cached !== null) {
-      if (cached.lat !== null && cached.lng !== null) {
-        const coords: [number, number] = [cached.lat, cached.lng];
+    const hit = cacheHits.get(partKey);
+    if (hit !== undefined) {
+      if (hit.lat !== null && hit.lng !== null) {
+        const coords: [number, number] = [hit.lat, hit.lng];
         await cacheWrite(originalKey, coords[0], coords[1]);
         return coords;
       }

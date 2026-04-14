@@ -331,8 +331,10 @@ const makeGridCellPopup = (bio: string, login: string): HTMLElement => {
   return el;
 };
 
-// Profile fetch dedup — same login = same Promise, avoids duplicate network calls on repeated clicks
+// Profile fetch dedup — same login = same Promise, avoids duplicate network calls on repeated clicks.
+// Capped at 300 entries to prevent unbounded growth during long sessions.
 const profileFetchCache = new Map<string, Promise<{ ownedRepos?: { owner: string; repo: string }[] } | null>>();
+const PROFILE_CACHE_MAX = 300;
 
 // Defense-in-depth: strip any HTML tags from user-controlled strings before
 // passing to the DOM. The popup uses .textContent (already XSS-safe), but this
@@ -420,6 +422,7 @@ const makePopupElement = (props: Record<string, unknown>): HTMLElement => {
   el.appendChild(reposSection);
 
   if (!profileFetchCache.has(login)) {
+    if (profileFetchCache.size >= PROFILE_CACHE_MAX) profileFetchCache.clear();
     profileFetchCache.set(login, fetch(`/api/profile/${encodeURIComponent(login)}`)
       .then((r) => r.ok ? r.json() : null)
       .catch(() => null));
