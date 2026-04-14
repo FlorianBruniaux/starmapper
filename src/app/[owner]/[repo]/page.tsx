@@ -905,6 +905,16 @@ export default function MapPage({
   // Client-side stats take priority; fall back to server stats when no points loaded yet
   const displayStats = stats ?? serverStats;
 
+  // Stable callbacks for StargazerMap — prevents re-mount on every render (memo + shallow compare)
+  const handleFlyDone = useCallback(() => setFlyTarget(null), []);
+  const handleMapReady = useCallback(
+    (controls: { captureCanvas: () => Promise<string | null>; setViewMode: (mode: "clusters" | "heatmap") => void; toggleProjection: () => MapProjection; getProjection: () => MapProjection }) => {
+      mapControlsRef.current = controls;
+      setMapProjection(controls.getProjection());
+    },
+    [setMapProjection],
+  );
+
   return (
     <main id="main" className="relative w-screen h-screen overflow-hidden bg-background">
 
@@ -998,11 +1008,8 @@ export default function MapPage({
         points={filteredMapPoints}
         comparePoints={comparePoints}
         flyTarget={flyTarget}
-        onFlyDone={() => setFlyTarget(null)}
-        onReady={(controls) => {
-          mapControlsRef.current = controls;
-          setMapProjection(controls.getProjection());
-        }}
+        onFlyDone={handleFlyDone}
+        onReady={handleMapReady}
         styleUrl={mapStyleUrl}
         clusterRadius={debouncedClusterRadius}
       />
