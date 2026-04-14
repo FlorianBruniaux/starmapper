@@ -39,7 +39,7 @@ User enters repo URL (landing page)
 
 ### Why Client-Side Chunk Loop
 
-Vercel free tier = 10s max function duration. A 2000-star repo needs ~20 GitHub GraphQL calls. Each `/api/chunk` processes 100 users and stays under 10s. The **browser** orchestrates the loop — no long-running server function needed.
+Vercel Hobby default function duration = 10s, configurable up to 60s (or 300s with Fluid Compute on Node.js). A 2000-star repo needs ~20 GitHub GraphQL calls. Each `/api/chunk` processes 100 users. With Nominatim-only fallback at 1100ms × 100 users = ~110s, the chunk architecture is still necessary even at 60s. The **browser** orchestrates the loop — no long-running server function needed.
 
 ### Rate Limits (CRITICAL)
 
@@ -49,7 +49,7 @@ Vercel free tier = 10s max function duration. A 2000-star repo needs ~20 GitHub 
 | Jawg Places API | No strict limit on free plan | Circuit breaker: 3 errors → 1h cooldown |
 | Geoapify | 3,000 credits/day on free plan | Circuit breaker: 3 errors → 1h cooldown |
 | Nominatim | 1 req/s (polite use policy) | 1100ms delay between calls |
-| Vercel free | 10s max per function | Chunk architecture solves this |
+| Vercel Hobby | 10s default, 60s max (300s with Fluid Compute) | Chunk architecture solves this — Nominatim-only path = ~110s/chunk even à 60s |
 | Vercel free | 4.5MB max request body | Client-side gzip before cache write |
 
 ### Geocache
@@ -453,7 +453,7 @@ pnpm seed:geonames:dry    # Dry-run — preview + stats, no insert
 
 ## IX. Deployment (Vercel Free)
 
-**Constraints**: 10s function timeout → solved by chunk architecture. 4.5MB request body limit → solved by client-side gzip. Neon free: 512MB → monitored via `db-health.ts`.
+**Constraints**: Hobby default 10s timeout (configurable to 60s, or 300s with Fluid Compute) → solved by chunk architecture. 4.5MB request body limit → solved by client-side gzip. Neon free: 512MB → monitored via `db-health.ts`.
 
 ```bash
 vercel --prod

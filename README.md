@@ -164,6 +164,15 @@ Full privacy policy: [starmapper.bruniaux.com/privacy](https://starmapper.brunia
 
 ---
 
+## Sponsors & Acknowledgments
+
+StarMapper is made possible thanks to the generous support of:
+
+- **[JawgMaps](https://www.jawg.io)** — map tiles and a dedicated geocoding instance (`starmapper.jawg.io`) powering the primary location resolution
+- **[Neon](https://neon.tech)** — serverless Postgres hosting the geocache, scan results, and all user data
+
+---
+
 ## Contributing
 
 Open an issue before sending a pull request for anything beyond a typo fix. The project is intentionally minimal — see `CLAUDE.md` section X for what is explicitly out of scope.
