@@ -5,15 +5,25 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { TokenModal, getStoredToken } from "@/components/token-modal";
+import dynamic from "next/dynamic";
+import { getStoredToken } from "@/lib/token";
 import { getBookmarks } from "@/lib/bookmarks";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
-import { SponsorsBlock } from "@/components/sponsors-block";
 import Link from "next/link";
 import { CommandSearch } from "@/components/command-search";
 import type { Bookmark } from "@/lib/bookmarks";
 import type { MappedRepo } from "@/app/api/repos/route";
+
+// Lazy-load heavy UI components not needed on initial render
+const TokenModal = dynamic(
+  () => import("@/components/token-modal").then((m) => ({ default: m.TokenModal })),
+  { ssr: false },
+);
+const SponsorsBlock = dynamic(
+  () => import("@/components/sponsors-block").then((m) => ({ default: m.SponsorsBlock })),
+  { ssr: false },
+);
 
 type Suggestion = { owner: string; repo: string };
 
