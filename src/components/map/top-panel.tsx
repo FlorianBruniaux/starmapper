@@ -109,7 +109,7 @@ export const TopPanel = ({
         {/* Repo identity — centré naturellement avec flex-1 */}
         <div className="flex items-center gap-2 flex-1 justify-center min-w-0">
           {repoInfo?.avatar && (
-            <img src={repoInfo.avatar} alt="" className="size-5 rounded-full flex-shrink-0" />
+            <img src={repoInfo.avatar} alt="" width={20} height={20} className="size-5 rounded-full flex-shrink-0" />
           )}
           <a
             href={`https://github.com/${owner}/${repo}`}
