@@ -3,7 +3,7 @@
 
 "use client";
 
-import { use, useEffect, useRef, useState, useCallback, useMemo, useDeferredValue, useReducer } from "react";
+import { use, useEffect, useRef, useState, useCallback, useMemo, useDeferredValue, useReducer, startTransition } from "react";
 import { StargazerMapDynamic } from "@/components/map/stargazer-map-dynamic";
 import { MapFloatingNav } from "@/components/map/map-floating-nav";
 import { CLUSTER_RADIUS } from "@/components/map/stargazer-map";
@@ -399,12 +399,14 @@ export default function MapPage({
         }
 
         if (!newestStarredAt && chunk!.latestStarredAt) newestStarredAt = chunk!.latestStarredAt;
-        setTotal(chunk!.totalCount);
+        setTotal(chunk!.totalCount); // urgent — drives progress bar
         const newPts = chunk!.points;
         const newUnmapped = chunk!.unmapped;
         allPoints.push(...newPts);
         allUnmapped.push(...newUnmapped);
-        dispatch({ type: "chunk", points: allPoints, unmapped: allUnmapped });
+        startTransition(() => {
+          dispatch({ type: "chunk", points: allPoints, unmapped: allUnmapped });
+        });
         if (!chunk!.nextCursor) break;
         cursor = chunk!.nextCursor;
       }
@@ -519,7 +521,9 @@ export default function MapPage({
       const existing = new Set(current.points.map((p) => p.login));
       const mergedPoints = [...newPoints.filter((p) => !existing.has(p.login)), ...current.points];
       const mergedUnmapped = [...newUnmapped, ...current.unmapped];
-      dispatch({ type: "set", points: mergedPoints, unmapped: mergedUnmapped });
+      startTransition(() => {
+        dispatch({ type: "set", points: mergedPoints, unmapped: mergedUnmapped });
+      });
       setCachedAt(now);
 
       const updatedLatest = newestStarredAt ?? latestStarredAt;
