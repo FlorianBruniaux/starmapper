@@ -6,6 +6,12 @@ import { NextRequest } from "next/server";
 
 // ─── Mocks (must come before importing the route) ─────────────────────────────
 
+// after() throws outside Next.js request scope — replace with synchronous no-op.
+vi.mock("next/server", async (importOriginal) => {
+  const original = await importOriginal<typeof import("next/server")>();
+  return { ...original, after: vi.fn() };
+});
+
 vi.mock("@/lib/github", () => ({
   fetchStargazersPage: vi.fn(),
   GitHubRateLimitError: class GitHubRateLimitError extends Error {
@@ -199,8 +205,9 @@ describe("POST /api/chunk", () => {
 
       expect(body.points).toHaveLength(1);
       expect(body.points[0].login).toBe("jdoe");
+      // Route rounds coords to 2 decimals for privacy (~1.1km precision)
       expect(body.points[0].lat).toBe(52.52);
-      expect(body.points[0].lng).toBe(13.405);
+      expect(body.points[0].lng).toBe(13.41); // 13.405 → Math.round(1340.5)/100 = 13.41
       expect(body.unmapped).toHaveLength(0);
     });
 
@@ -311,9 +318,9 @@ describe("POST /api/chunk", () => {
       const res = await POST(req);
       const body = await res.json();
 
-      // The user should appear in points using cached coords
+      // The user should appear in points using cached coords (rounded to 2 decimals)
       expect(body.points).toHaveLength(1);
-      expect(body.points[0].lat).toBe(48.8566);
+      expect(body.points[0].lat).toBe(48.86); // 48.8566 → Math.round(4885.66)/100 = 48.86
       // geocodeBatch should have been called with an empty locations array (no misses)
       const geocodedLocations = mockGeocodeBatch.mock.calls[0][0] as string[];
       expect(geocodedLocations).toHaveLength(0);

@@ -90,12 +90,12 @@ describe("fetchStargazersPage", () => {
 
       await fetchStargazersPage("owner", "repo", null);
 
-      // The GraphQL variables object must have cursor === null when passed as null.
-      // Critical: the query uses `$cursor: String` (nullable), so null is valid GraphQL.
-      // What we're guarding against is *undefined* being serialized as missing.
+      // When cursor is null (first page), the variable is intentionally omitted from the
+      // GraphQL request. The query declares `$cursor: String` (nullable without !), so
+      // an absent variable resolves to null server-side — same effect, cleaner payload.
       expect(capturedBody.variables).toHaveProperty("owner", "owner");
       expect(capturedBody.variables).toHaveProperty("repo", "repo");
-      expect(capturedBody.variables).toHaveProperty("cursor", null);
+      expect((capturedBody.variables as Record<string, unknown>).cursor).toBeUndefined();
     });
 
     it("passes cursor string when paginating", async () => {
