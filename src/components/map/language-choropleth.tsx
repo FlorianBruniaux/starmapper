@@ -209,23 +209,38 @@ export const LanguageChoropleth = memo(({ countries, onCountryClick }: Props) =>
           : 0;
         const dotColor = props.topLang ? (LANGUAGE_COLORS[props.topLang] ?? "#8b949e") : "#8b949e";
 
+        const tipEl = document.createElement("div");
+        tipEl.className = "choropleth-tip";
+
+        const nameEl = document.createElement("strong");
+        nameEl.textContent = props.name;
+        tipEl.appendChild(nameEl);
+
+        if (props.total > 0) {
+          const langEl = document.createElement("span");
+          langEl.className = "tip-lang";
+          const dot = document.createElement("span");
+          dot.className = "tip-lang-dot";
+          dot.style.background = dotColor;
+          const langText = document.createTextNode(` ${props.topLang} — ${pct}% of local devs`);
+          langEl.appendChild(dot);
+          langEl.appendChild(langText);
+          tipEl.appendChild(langEl);
+
+          const subEl = document.createElement("span");
+          subEl.className = "tip-sub";
+          subEl.textContent = `${props.topCnt.toLocaleString()} / ${props.total.toLocaleString()} developers`;
+          tipEl.appendChild(subEl);
+        } else {
+          const subEl = document.createElement("span");
+          subEl.className = "tip-sub";
+          subEl.textContent = "No data (fewer than 10 developers)";
+          tipEl.appendChild(subEl);
+        }
+
         tooltipRef.current
           ?.setLngLat(e.lngLat)
-          .setHTML(
-            props.total > 0
-              ? `<div class="choropleth-tip">
-                  <strong>${props.name}</strong>
-                  <span class="tip-lang">
-                    <span class="tip-lang-dot" style="background:${dotColor}"></span>
-                    ${props.topLang} — ${pct}% of local devs
-                  </span>
-                  <span class="tip-sub">${props.topCnt.toLocaleString()} / ${props.total.toLocaleString()} developers</span>
-                </div>`
-              : `<div class="choropleth-tip">
-                  <strong>${props.name}</strong>
-                  <span class="tip-sub">No data (fewer than 10 developers)</span>
-                </div>`,
-          )
+          .setDOMContent(tipEl)
           .addTo(map);
       });
 
@@ -281,7 +296,7 @@ export const LanguageChoropleth = memo(({ countries, onCountryClick }: Props) =>
   }, [geoJson]);
 
   return (
-    <div className="relative w-full h-full">
+    <div role="region" aria-label={`Language atlas map — ${countries.length} countries mapped`} className="relative w-full h-full">
       <div ref={containerRef} className="w-full h-full" />
       <JawgBadge />
     </div>

@@ -35,9 +35,9 @@ export const Footer = () => (
 
         {/* Ecosystem */}
         <div>
-          <h3 className="text-foreground text-xs font-semibold uppercase tracking-widest mb-3">
+          <h2 className="text-foreground text-xs font-semibold uppercase tracking-widest mb-3">
             Ecosystem
-          </h3>
+          </h2>
           <ul className="space-y-2">
             {ECOSYSTEM_LINKS.map(({ href, label }) => (
               <li key={href}>
@@ -57,9 +57,9 @@ export const Footer = () => (
 
         {/* Author */}
         <div>
-          <h3 className="text-foreground text-xs font-semibold uppercase tracking-widest mb-3">
+          <h2 className="text-foreground text-xs font-semibold uppercase tracking-widest mb-3">
             Author
-          </h3>
+          </h2>
           <ul className="space-y-2">
             {SOCIAL_LINKS.map(({ href, label }) => (
               <li key={href}>

@@ -73,6 +73,9 @@ const CountryModal = ({
 
       {/* Panel */}
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="country-modal-title"
         className="relative z-10 w-full max-w-sm bg-surface border border-border rounded-2xl
                    shadow-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
@@ -84,7 +87,7 @@ const CountryModal = ({
           {/* Country name + close */}
           <div className="flex items-start justify-between gap-3 mb-4">
             <div>
-              <h2 className="text-lg font-bold text-foreground leading-tight">{selected.country}</h2>
+              <h2 id="country-modal-title" className="text-lg font-bold text-foreground leading-tight">{selected.country}</h2>
               <div className="flex items-center gap-1.5 mt-1">
                 <span
                   className="inline-block rounded-full shrink-0"
@@ -98,7 +101,7 @@ const CountryModal = ({
               onClick={onClose}
               className="p-1.5 rounded-lg text-muted-subtle hover:text-foreground hover:bg-surface-alt
                          transition-colors shrink-0 -mt-0.5"
-              aria-label="Close"
+              aria-label="Close country details"
             >
               <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
                 <path d="M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l3.22-3.22a.749.749 0 0 1 1.275.326.749.749 0 0 1-.215.734L9.06 8l3.22 3.22a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215L8 9.06l-3.22 3.22a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042L6.94 8 3.72 4.78a.75.75 0 0 1 0-1.06Z" />
@@ -204,17 +207,23 @@ export default function LanguageAtlasPage() {
         innerMaxWidth="max-w-7xl"
       />
 
-      <main className="flex-1 w-full max-w-7xl mx-auto px-4 lg:px-6 pt-20 pb-12">
+      <main id="main" className="flex-1 w-full max-w-7xl mx-auto px-4 lg:px-6 pt-20 pb-12">
 
         {/* Hero */}
         <div className="mb-8">
-          <div className="flex items-center gap-2 mb-4">
-            <Link href="/devs" className="text-xs text-muted-subtle hover:text-muted transition-colors">
-              Developer maps
-            </Link>
-            <span className="text-muted-subtle text-xs">/</span>
-            <span className="text-xs text-muted">Language Atlas</span>
-          </div>
+          <nav aria-label="Breadcrumb">
+            <ol className="flex items-center gap-2 mb-4 list-none p-0 m-0">
+              <li>
+                <Link href="/devs" className="text-xs text-muted-subtle hover:text-muted transition-colors">
+                  Developer maps
+                </Link>
+              </li>
+              <li aria-hidden="true" className="text-muted-subtle text-xs">/</li>
+              <li>
+                <span className="text-xs text-muted" aria-current="page">Language Atlas</span>
+              </li>
+            </ol>
+          </nav>
 
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
             <div className="flex-1">
@@ -260,7 +269,7 @@ export default function LanguageAtlasPage() {
           style={{ height: "62vh", minHeight: 340 }}
         >
           {loading ? (
-            <div className="w-full h-full bg-surface animate-pulse flex items-center justify-center">
+            <div className="w-full h-full bg-surface animate-pulse motion-reduce:animate-none flex items-center justify-center">
               <span className="text-muted-subtle text-sm">Loading atlas…</span>
             </div>
           ) : totalCountries === 0 ? (

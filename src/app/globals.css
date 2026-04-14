@@ -9,7 +9,7 @@
   --color-surface-alt: #1c2128;
   --color-foreground: #f0f6fc;
   --color-muted: #8b949e;
-  --color-muted-subtle: #484f58;
+  --color-muted-subtle: #848d97;
   --color-border: #30363d;
   --color-border-subtle: #21262d;
   --color-accent-blue: #58a6ff;
@@ -30,7 +30,7 @@
     --color-surface-alt: #e4e8ec;
     --color-foreground: #24292f;
     --color-muted: #57606a;
-    --color-muted-subtle: #8c959f;
+    --color-muted-subtle: #57606a;
     --color-border: #c9d1d9;
     --color-border-subtle: #d8dee4;
     --color-accent-blue: #0969da;
@@ -71,7 +71,7 @@ html.dark {
   --color-surface-alt: #1c2128;
   --color-foreground: #f0f6fc;
   --color-muted: #8b949e;
-  --color-muted-subtle: #484f58;
+  --color-muted-subtle: #848d97;
   --color-border: #30363d;
   --color-border-subtle: #21262d;
   --color-accent-blue: #58a6ff;
@@ -135,8 +135,8 @@ button:disabled, [role="button"][aria-disabled="true"] {
   border-radius: 2px;
 }
 
-/* MapLibre elements get no outline (canvas/controls handle their own focus) */
-.maplibregl-map *:focus-visible {
+/* MapLibre canvas gets no outline (non-interactive canvas element) */
+.maplibregl-map canvas:focus-visible {
   outline: none;
 }
 

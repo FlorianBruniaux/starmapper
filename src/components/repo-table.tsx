@@ -26,7 +26,7 @@ const timeAgo = (iso: string): string => {
 };
 
 const SortIcon = ({ active, dir }: { active: boolean; dir: SortDir }) => (
-  <span className={`ml-1 transition-opacity ${active ? "opacity-100" : "opacity-40"}`}>
+  <span aria-hidden="true" className={`ml-1 transition-opacity ${active ? "opacity-100" : "opacity-40"}`}>
     {active && dir === "asc" ? "↑" : "↓"}
   </span>
 );
@@ -47,6 +47,7 @@ const ColHeader = ({
   onSort: (col: SortCol) => void;
 }) => (
   <th
+    scope="col"
     className={`py-2.5 px-4 text-xs uppercase tracking-wider text-muted-subtle font-medium cursor-pointer select-none hover:text-muted transition-colors ${align === "right" ? "text-right" : "text-left"}`}
     onClick={() => onSort(col)}
     onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSort(col); } }}
@@ -91,10 +92,10 @@ export const RepoTable = ({ repos }: { repos: MappedRepo[] }) => {
         <caption className="sr-only">Community stargazer maps, sortable by column</caption>
         <thead>
           <tr className="border-b border-border-subtle">
-            <th className="py-2.5 px-4 text-xs uppercase tracking-wider text-muted-subtle font-medium text-left">
+            <th scope="col" className="py-2.5 px-4 text-xs uppercase tracking-wider text-muted-subtle font-medium text-left">
               Repo
             </th>
-            <th className="py-2.5 px-4 text-xs uppercase tracking-wider text-muted-subtle font-medium text-left hidden sm:table-cell">
+            <th scope="col" className="py-2.5 px-4 text-xs uppercase tracking-wider text-muted-subtle font-medium text-left hidden sm:table-cell">
               Main language
             </th>
             <ColHeader label="Stars" col="totalCount" active={sortCol === "totalCount"} dir={sortDir} onSort={handleSort} />

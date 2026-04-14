@@ -169,6 +169,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <meta name="color-scheme" content="dark light" />
         {/* Theme init — must run synchronously before first paint */}
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         <script

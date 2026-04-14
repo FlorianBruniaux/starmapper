@@ -1,4 +1,4 @@
-# Plan d'action — Slow Queries StarMapper
+# Plan d'action Slow Queries StarMapper
 
 **Date** : 2026-04-01
 **Source** : Neon query performance data (20+ entrées, top slow queries analysées)
@@ -9,19 +9,19 @@
 
 | Pattern Neon | Avg ms | Calls | Source |
 |---|---|---|---|
-| `IN ($1...$10000) OFFSET $10001` | 467ms | 8 | `/api/stats` — `findMany(10k)` génère IN clause massive |
-| `COUNT(*) FROM star_event WHERE $2=$3 OFFSET $1` | 944ms | 4 | `/api/explore/power` — `countRows` recalculé à chaque appel |
-| `GROUP BY location ORDER BY count DESC` | 365ms | 9 | `/api/explore/locations` — `take: 5000` + agrégation JS |
-| Power stargazers CTE `INNER JOIN repo_logins` | 520ms | 6 | `/api/stats/[owner]/[repo]` — hash join sur full table |
-| Global-map grid `GROUP BY ROUND(lat,0)` | 1000ms | 2 | `/api/explore/global-map` — expression non indexable |
+| `IN ($1...$10000) OFFSET $10001` | 467ms | 8 | `/api/stats` : `findMany(10k)` génère IN clause massive |
+| `COUNT(*) FROM star_event WHERE $2=$3 OFFSET $1` | 944ms | 4 | `/api/explore/power` : `countRows` recalculé à chaque appel |
+| `GROUP BY location ORDER BY count DESC` | 365ms | 9 | `/api/explore/locations` : `take: 5000` + agrégation JS |
+| Power stargazers CTE `INNER JOIN repo_logins` | 520ms | 6 | `/api/stats/[owner]/[repo]` : hash join sur full table |
+| Global-map grid `GROUP BY ROUND(lat,0)` | 1000ms | 2 | `/api/explore/global-map` : expression non indexable |
 
 ---
 
-## Phase 1 — Quick wins sans migration (XS, < 2h)
+## Phase 1 : Quick wins sans migration (XS, < 2h)
 
-### Fix 1.1 — Cache du COUNT dans `/api/explore/power`
+### Fix 1.1 : Cache du COUNT dans `/api/explore/power`
 
-**Problème** : `SELECT COUNT(*) AS total FROM (SELECT 1 FROM star_event GROUP BY login HAVING COUNT(*) > 1) subq` — full table scan à chaque appel, y compris sur les pages avec cursor.
+**Problème** : `SELECT COUNT(*) AS total FROM (SELECT 1 FROM star_event GROUP BY login HAVING COUNT(*) > 1) subq`, full table scan à chaque appel, y compris sur les pages avec cursor.
 
 **Fix** : ne calculer `countRows` que sur page 1 sans cursor. Ajouter un cache module-level avec TTL 5min pour éviter le scan sur chaque pagination.
 
@@ -43,7 +43,7 @@ const getTotalPowerUsers = async (): Promise<number> => {
 - Impact : **-944ms** par appel avec cursor (disparition du COUNT scan)
 - Risque rollback : nul
 
-### Fix 1.2 — Réduire `take: 5000` dans `/api/explore/locations`
+### Fix 1.2 : Réduire `take: 5000` dans `/api/explore/locations`
 
 **Problème** : 5 000 lignes transférées vers Node.js pour `parseLocation()` JS, alors que les 300 top locations couvrent ~95% des cas (loi de puissance).
 
@@ -51,13 +51,13 @@ const getTotalPowerUsers = async (): Promise<number> => {
 
 - Fichier : `src/app/api/explore/locations/route.ts`
 - Impact : **-70%** sur la query (-250ms environ)
-- Risque rollback : faible — les villes rares en fin de liste disparaissent
+- Risque rollback : faible (les villes rares en fin de liste disparaissent)
 
 ---
 
-## Phase 2 — Index ciblés (S, 2-4h + `prisma db push`)
+## Phase 2 : Index ciblés (S, 2-4h + `prisma db push`)
 
-### Fix 2.1 — Index covering `(owner, repo, login)` sur `star_event`
+### Fix 2.1 : Index covering `(owner, repo, login)` sur `star_event`
 
 **Problème** : le CTE `SELECT DISTINCT login FROM star_event WHERE owner=$1 AND repo=$2` fait un heap fetch car l'index `(owner, repo)` ne couvre pas `login`. Sans le covering index, PostgreSQL doit lire les rows de `star_event` pour récupérer `login`.
 
@@ -74,11 +74,11 @@ npx prisma db push
 
 - Impact sur SQ-4 : **-60 à 80%** (index-only scan du CTE)
 - Impact sur SQ-1 : **-20 à 30%** (scan initial plus rapide)
-- Risque rollback : très faible — `DROP INDEX` si problème
+- Risque rollback : très faible (`DROP INDEX` si problème)
 
-### Fix 2.2 — Index fonctionnel partiel pour le grid global-map
+### Fix 2.2 : Index fonctionnel partiel pour le grid global-map
 
-**Problème** : `GROUP BY ROUND(lat::numeric, 0), ROUND(lng::numeric, 0)` — expression non indexable via l'index `(lat, lng)` existant.
+**Problème** : `GROUP BY ROUND(lat::numeric, 0), ROUND(lng::numeric, 0)`, expression non indexable via l'index `(lat, lng)` existant.
 
 **Fix** : migration SQL raw (Prisma ne gère pas les index fonctionnels) :
 
@@ -89,13 +89,13 @@ WHERE lat IS NOT NULL AND lng IS NOT NULL;
 ```
 
 - Impact sur SQ-5 : **-50 à 70%** si le planner utilise l'index
-- Risque rollback : faible — `DROP INDEX CONCURRENTLY idx_github_user_grid`
+- Risque rollback : faible (`DROP INDEX CONCURRENTLY idx_github_user_grid`)
 
 ---
 
-## Phase 3 — Refactoring query architecture (M–L, 4-8h)
+## Phase 3 : Refactoring query architecture (M-L, 4-8h)
 
-### Fix 3.1 — Agréger directement en SQL dans `/api/stats`
+### Fix 3.1 : Agréger directement en SQL dans `/api/stats`
 
 **Problème** : `findMany({ take: 10_000 })` → charge 10k rows → IN clause massive → agrégation JS en mémoire. C'est l'origine du pattern `IN ($1...$10000)`.
 
@@ -140,11 +140,11 @@ ORDER BY u.followers DESC
 LIMIT 60;
 ```
 
-- Impact : **disparition de l'IN clause** — réduction de ~90% du temps query SQ-1
-- Effort : M — 5-6 queries + refactoriser l'assemblage du `RepoStats`
-- Risque rollback : moyen — valider avec un assert `total ≈ total_ancien` sur un repo connu
+- Impact : **disparition de l'IN clause**, réduction de ~90% du temps query SQ-1
+- Effort : M (5-6 queries + refactoriser l'assemblage du `RepoStats`)
+- Risque rollback : moyen, valider avec un assert `total ≈ total_ancien` sur un repo connu
 
-### Fix 3.2 — Colonnes dénormalisées `countryNormalized` / `cityNormalized`
+### Fix 3.2 : Colonnes dénormalisées `countryNormalized` / `cityNormalized`
 
 **Problème** : `parseLocation()` est une fonction JS qui ne peut pas être poussée en SQL, forçant le transfert de milliers de strings brutes.
 
@@ -163,14 +163,14 @@ model GitHubUser {
 - Adapter `/api/explore/locations` pour utiliser `GROUP BY countryNormalized`
 
 - Impact sur SQ-3 : **-80%** (une query `GROUP BY countryNormalized LIMIT 50` au lieu de 5k rows)
-- Effort : L — migration + backfill + adaptation pipeline + routes
-- Risque rollback : élevé — colonnes nullable, backfill progressif, rollback = `DROP COLUMN`
+- Effort : L (migration + backfill + adaptation pipeline + routes)
+- Risque rollback : élevé, colonnes nullable, backfill progressif, rollback = `DROP COLUMN`
 
 ---
 
-## Phase 4 — Optimisations avancées (L, optionnel selon résultats Phase 1-3)
+## Phase 4 : Optimisations avancées (L, optionnel selon résultats Phase 1-3)
 
-### Fix 4.1 — Materialized view pour `/api/explore/global-map`
+### Fix 4.1 : Materialized view pour `/api/explore/global-map`
 
 Si le Fix 2.2 (index fonctionnel) ne suffit pas et que SQ-5 reste > 500ms :
 
@@ -195,10 +195,10 @@ Refresh déclenché après chaque batch d'enrichissement géographique :
 REFRESH MATERIALIZED VIEW CONCURRENTLY github_user_grid_mv;
 ```
 
-- Impact : **-99%** — la route devient un `SELECT * FROM github_user_grid_mv` < 5ms
-- Effort : L — mv + refresh hook + documentation sur la staleness intentionnelle
+- Impact : **-99%**, la route devient un `SELECT * FROM github_user_grid_mv` < 5ms
+- Effort : L (mv + refresh hook + documentation sur la staleness intentionnelle)
 
-### Fix 4.2 — Réutiliser la mv power dans `/api/stats`
+### Fix 4.2 : Réutiliser la mv power dans `/api/stats`
 
 Si le Fix 4.1 est en place, le bloc power stargazers dans `/api/stats` peut consulter la même vue agrégée au lieu de recalculer le CTE.
 
@@ -208,13 +208,13 @@ Si le Fix 4.1 est en place, le bloc power stargazers dans `/api/stats` peut cons
 
 ```
 Semaine 1
-  [1h]  Fix 1.1 — Cache COUNT power users
-  [30m] Fix 1.2 — take: 5000 → 300 locations
-  [1h]  Fix 2.1 — Index (owner, repo, login) + prisma db push
-  [30m] Fix 2.2 — Index fonctionnel grid via psql direct
+  [1h]  Fix 1.1 : Cache COUNT power users
+  [30m] Fix 1.2 : take: 5000 → 300 locations
+  [1h]  Fix 2.1 : Index (owner, repo, login) + prisma db push
+  [30m] Fix 2.2 : Index fonctionnel grid via psql direct
 
 Semaine 2
-  [6h]  Fix 3.1 — Réécriture SQL /api/stats (si bench Phase 1 insuffisant)
+  [6h]  Fix 3.1 : Réécriture SQL /api/stats (si bench Phase 1 insuffisant)
 
 Semaine 3+
   Fix 3.2 / 4.1 / 4.2 selon mesures post-Phase 1-2

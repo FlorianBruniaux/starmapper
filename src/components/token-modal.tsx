@@ -83,6 +83,7 @@ export const TokenModal = ({ onClose }: Props) => {
             href="https://github.com/settings/tokens/new?description=StarMapper&scopes="
             target="_blank"
             rel="noopener noreferrer"
+            aria-label="Create a public-only GitHub token (opens in new tab)"
             className="text-accent-blue hover:underline"
           >
             public-only token
@@ -92,10 +93,11 @@ export const TokenModal = ({ onClose }: Props) => {
         </p>
 
         <div>
-          <label className="block text-foreground text-xs font-medium mb-1.5">
+          <label htmlFor="gh-token-input" className="block text-foreground text-xs font-medium mb-1.5">
             Personal Access Token
           </label>
           <input
+            id="gh-token-input"
             type="password"
             value={value}
             onChange={(e) => { setValue(e.target.value); setSaved(false); }}
@@ -109,16 +111,19 @@ export const TokenModal = ({ onClose }: Props) => {
       {/* Footer */}
       <div className="flex items-center justify-between px-6 py-4 border-t border-border-subtle gap-3">
         <button
+          type="button"
           onClick={handleRemove}
           className="text-muted hover:text-accent-red text-sm transition-colors"
         >
           Remove token
         </button>
         <button
+          type="button"
           onClick={handleSave}
           className="px-5 py-2 rounded-lg text-sm font-medium bg-accent-green-emphasis hover:opacity-90 text-white transition-opacity"
+          aria-live="polite"
         >
-          {saved ? "Saved ✓" : "Save"}
+          {saved ? <>Saved <span aria-hidden="true">✓</span></> : "Save"}
         </button>
       </div>
     </Modal>

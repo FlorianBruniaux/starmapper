@@ -46,9 +46,9 @@ Prérequis : bundle size à évaluer, compat MapLibre GL à tester.
 
 ## Distribution / open source
 
-- **Extension Chrome** — bouton sur chaque page GitHub `/repo`, ouvre le map sans quitter GitHub. C'est le vrai multiplicateur d'usage (cf. star-history.com).
-- **Embeddable widget** — `<iframe src="starmapper.bruniaux.com/embed/owner/repo">` pour les READMEs. Carte interactive intégrable.
-- **CLI** — `npx starmapper owner/repo` → génère un `map.html` standalone. Pour les devs qui veulent un artefact offline.
+- **Extension Chrome** : bouton sur chaque page GitHub `/repo`, ouvre le map sans quitter GitHub. C'est le vrai multiplicateur d'usage (cf. star-history.com).
+- **Embeddable widget** : `<iframe src="starmapper.bruniaux.com/embed/owner/repo">` pour les READMEs. Carte interactive intégrable.
+- **CLI** : `npx starmapper owner/repo` → génère un `map.html` standalone. Pour les devs qui veulent un artefact offline.
 
 ---
 
@@ -97,8 +97,8 @@ Page dédiée par utilisateur GitHub. Le "reverse lookup" : au lieu de "qui star
 
 ## Si monétisation un jour
 
-- **Trending page** — "Ces repos recrutent des stars à Paris cette semaine." Trafic organique.
-- **Alertes email** — "10 nouveaux stargazers cette semaine, 3 de chez Microsoft". Rétention + upsell naturel.
+- **Trending page** : "Ces repos recrutent des stars à Paris cette semaine." Trafic organique.
+- **Alertes email** : "10 nouveaux stargazers cette semaine, 3 de chez Microsoft". Rétention + upsell naturel.
 
 ---
 

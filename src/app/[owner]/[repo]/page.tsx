@@ -891,14 +891,26 @@ export default function MapPage({
   const displayStats = stats ?? serverStats;
 
   return (
-    <div id="main" className="relative w-screen h-screen overflow-hidden bg-background">
+    <main id="main" className="relative w-screen h-screen overflow-hidden bg-background">
+
+      {/* Global screen-reader live region for scan progress, errors, and status changes */}
+      <div role="status" aria-live="polite" aria-atomic="true" className="sr-only">
+        {status === "loading" && total > 0 && `${processed.toLocaleString()} of ${total.toLocaleString()} stargazers loaded`}
+        {status === "done" && `Scan complete: ${processed.toLocaleString()} stargazers loaded`}
+        {status === "error" && error ? `Error: ${error}` : null}
+      </div>
 
       {tokenOpen && <TokenModal onClose={handleTokenClose} />}
 
       {/* GitHub rate limit modal */}
       {repoRateLimited && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-surface border border-border rounded-xl p-6 w-full max-w-sm mx-4 shadow-xl">
+          <div
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="rate-limited-title"
+            className="bg-surface border border-border rounded-xl p-6 w-full max-w-sm mx-4 shadow-xl"
+          >
             <div className="flex items-start gap-3 mb-4">
               <div className="size-9 shrink-0 flex items-center justify-center rounded-lg bg-accent-orange/10">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" className="text-accent-orange" aria-hidden="true">
@@ -906,7 +918,7 @@ export default function MapPage({
                 </svg>
               </div>
               <div>
-                <p className="text-foreground font-semibold text-sm mb-1">GitHub rate limit reached</p>
+                <h2 id="rate-limited-title" className="text-foreground font-semibold text-sm mb-1">GitHub rate limit reached</h2>
                 <p className="text-muted text-xs leading-relaxed">
                   The GitHub API limit has been hit. Add a personal access token to unlock higher limits and continue.
                 </p>
@@ -933,7 +945,12 @@ export default function MapPage({
       {/* Repo not found modal */}
       {repoNotFound && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-surface border border-border rounded-xl p-6 w-full max-w-sm mx-4 shadow-xl">
+          <div
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="not-found-title"
+            className="bg-surface border border-border rounded-xl p-6 w-full max-w-sm mx-4 shadow-xl"
+          >
             <div className="flex items-start gap-3 mb-4">
               <div className="size-9 shrink-0 flex items-center justify-center rounded-lg bg-accent-red/10">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" className="text-accent-red" aria-hidden="true">
@@ -941,7 +958,7 @@ export default function MapPage({
                 </svg>
               </div>
               <div>
-                <p className="text-foreground font-semibold text-sm mb-1">Repository not found</p>
+                <h2 id="not-found-title" className="text-foreground font-semibold text-sm mb-1">Repository not found</h2>
                 <p className="text-muted text-xs leading-relaxed">
                   <span className="text-foreground font-medium">{owner}/{repo}</span> doesn&apos;t exist on GitHub or isn&apos;t accessible. Check the URL and try again.
                 </p>
@@ -1011,13 +1028,18 @@ export default function MapPage({
       {/* Pre-scan overlay (no cache) */}
       {status === "idle" && cacheCheckDone && repoInfo && estimate && (
         <div className="absolute inset-0 z-30 flex items-center justify-center bg-background/85 backdrop-blur-sm">
-          <div className="bg-surface border border-border rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="prescan-title"
+            className="bg-surface border border-border rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl"
+          >
             <div className="flex items-center gap-3 mb-6">
               {repoInfo.avatar && (
                 <img src={repoInfo.avatar} alt="" className="w-10 h-10 rounded-full" />
               )}
               <div>
-                <div className="text-foreground font-semibold">{repoInfo.name}</div>
+                <h2 id="prescan-title" className="text-foreground font-semibold">{repoInfo.name}</h2>
                 {repoInfo.description && (
                   <div className="text-muted text-xs mt-0.5 line-clamp-1">{repoInfo.description}</div>
                 )}
@@ -1098,14 +1120,19 @@ export default function MapPage({
       {/* Rate limit overlay */}
       {status === "waiting" && (
         <div className="absolute inset-0 z-30 flex items-center justify-center bg-background/75 backdrop-blur-sm">
-          <div className="bg-surface border border-border rounded-2xl p-8 max-w-sm w-full mx-4 shadow-2xl text-center">
-            <div className="flex justify-center mb-5">
-              <svg className="animate-spin w-10 h-10 text-accent-blue" viewBox="0 0 24 24" fill="none">
+          <div
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="rate-wait-title"
+            className="bg-surface border border-border rounded-2xl p-8 max-w-sm w-full mx-4 shadow-2xl text-center"
+          >
+            <div className="flex justify-center mb-5" aria-hidden="true">
+              <svg className="animate-spin motion-reduce:animate-none w-10 h-10 text-accent-blue" viewBox="0 0 24 24" fill="none">
                 <circle className="opacity-20" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
                 <path className="opacity-80" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
               </svg>
             </div>
-            <h2 className="text-foreground font-semibold text-base mb-1">
+            <h2 id="rate-wait-title" className="text-foreground font-semibold text-base mb-1">
               {waitReason === "github" ? "GitHub quota reached" : "Server busy"}
             </h2>
             <p className="text-muted text-sm mb-5">
@@ -1113,10 +1140,23 @@ export default function MapPage({
                 ? "GitHub API rate limit hit. Resuming automatically when quota resets in"
                 : "Too many scans running at once. Resuming automatically in"}
             </p>
-            <div className="text-5xl font-bold text-accent-blue tabular-nums mb-5">{retryIn}</div>
-            <div className="w-full bg-surface-alt rounded-full h-1 overflow-hidden">
+            <div
+              className="text-5xl font-bold text-accent-blue tabular-nums mb-5"
+              aria-live="polite"
+              aria-atomic="true"
+            >
+              {retryIn}
+            </div>
+            <div
+              role="progressbar"
+              aria-valuenow={retryTotal > 0 ? retryTotal - retryIn : 0}
+              aria-valuemin={0}
+              aria-valuemax={retryTotal}
+              aria-label="Time until retry"
+              className="w-full bg-surface-alt rounded-full h-1 overflow-hidden"
+            >
               <div
-                className="bg-accent-blue h-full rounded-full transition-all duration-1000"
+                className="bg-accent-blue h-full rounded-full transition-all duration-1000 motion-reduce:transition-none"
                 style={{ width: retryTotal > 0 ? `${((retryTotal - retryIn) / retryTotal) * 100}%` : "0%" }}
               />
             </div>
@@ -1183,7 +1223,7 @@ export default function MapPage({
               </span>
               <span className="ml-2 text-2xs text-muted-subtle">— no location set on their GitHub profile</span>
             </div>
-            <button onClick={() => setDrawerOpen(false)} className="text-muted hover:text-foreground text-lg leading-none">✕</button>
+            <button onClick={() => setDrawerOpen(false)} aria-label="Close unmapped list" className="text-muted hover:text-foreground text-lg leading-none"><span aria-hidden="true">✕</span></button>
           </div>
           <div className="overflow-y-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
             {[...unmapped].sort((a, b) => b.followers - a.followers).map((u) => (
@@ -1200,6 +1240,7 @@ export default function MapPage({
                   <a
                     href={`https://github.com/${u.login}`}
                     target="_blank"
+                    rel="noopener noreferrer"
                     className="text-accent-blue font-medium hover:underline block truncate"
                   >
                     @{u.login}
@@ -1209,7 +1250,7 @@ export default function MapPage({
                       <span className="text-muted-subtle truncate text-2xs">{u.name}</span>
                     )}
                     {u.followers >= 1000 && (
-                      <span className="flex-shrink-0 text-2xs text-accent-orange font-medium">⚡ {(u.followers / 1000).toFixed(1)}k</span>
+                      <span className="flex-shrink-0 text-2xs text-accent-orange font-medium"><span aria-hidden="true">⚡</span> {(u.followers / 1000).toFixed(1)}k</span>
                     )}
                     {u.followers > 0 && u.followers < 1000 && (
                       <span className="flex-shrink-0 text-2xs text-muted-subtle">{u.followers.toLocaleString()}</span>
@@ -1273,7 +1314,7 @@ export default function MapPage({
                     : allStargazers.length.toLocaleString()}
                 </span>
               </h2>
-              <button onClick={() => setAllOpen(false)} className="text-muted hover:text-foreground text-lg leading-none">✕</button>
+              <button onClick={() => setAllOpen(false)} aria-label="Close all stargazers" className="text-muted hover:text-foreground text-lg leading-none"><span aria-hidden="true">✕</span></button>
             </div>
 
             {/* Search */}
@@ -1283,6 +1324,7 @@ export default function MapPage({
                 value={allSearch}
                 onChange={(e) => setAllSearch(e.target.value)}
                 placeholder="Search by username, name or location…"
+                aria-label="Search stargazers"
                 className="w-full bg-background border border-border rounded-lg px-3 py-2 text-xs text-foreground placeholder-muted-subtle focus:outline-none focus:border-accent-blue"
               />
             </div>
@@ -1291,11 +1333,13 @@ export default function MapPage({
             <div className="px-5 py-2.5 border-b border-border-subtle flex-shrink-0 flex flex-wrap items-center gap-3">
               {/* Followers filter */}
               <div className="flex items-center gap-2 min-w-0">
-                <span className="text-2xs text-muted whitespace-nowrap">Min followers</span>
-                <div className="flex gap-1">
+                <span id="filter-followers-label" className="text-2xs text-muted whitespace-nowrap">Min followers</span>
+                <div role="radiogroup" aria-labelledby="filter-followers-label" className="flex gap-1">
                   {[0, 10, 100, 500, 1000].map((v) => (
                     <button
                       key={v}
+                      role="radio"
+                      aria-checked={filterFollowers === v}
                       onClick={() => setFilterFollowers(v)}
                       className={`px-2 py-0.5 rounded text-2xs transition-colors ${
                         filterFollowers === v
@@ -1313,11 +1357,13 @@ export default function MapPage({
 
               {/* Mapped filter */}
               <div className="flex items-center gap-2">
-                <span className="text-2xs text-muted whitespace-nowrap">Location</span>
-                <div className="flex gap-1">
+                <span id="filter-location-label" className="text-2xs text-muted whitespace-nowrap">Location</span>
+                <div role="radiogroup" aria-labelledby="filter-location-label" className="flex gap-1">
                   {(["all", "mapped", "unmapped"] as const).map((v) => (
                     <button
                       key={v}
+                      role="radio"
+                      aria-checked={filterMapped === v}
                       onClick={() => setFilterMapped(v)}
                       className={`px-2 py-0.5 rounded text-2xs transition-colors ${
                         filterMapped === v
@@ -1325,7 +1371,7 @@ export default function MapPage({
                           : "bg-surface-alt text-muted hover:text-foreground"
                       }`}
                     >
-                      {v === "all" ? "All" : v === "mapped" ? "📍 On map" : "No location"}
+                      {v === "all" ? "All" : v === "mapped" ? <><span aria-hidden="true">📍</span> On map</> : "No location"}
                     </button>
                   ))}
                 </div>
@@ -1335,11 +1381,13 @@ export default function MapPage({
 
               {/* Date filter */}
               <div className="flex items-center gap-2">
-                <span className="text-2xs text-muted whitespace-nowrap">Starred</span>
-                <div className="flex gap-1">
+                <span id="filter-starred-label" className="text-2xs text-muted whitespace-nowrap">Starred</span>
+                <div role="radiogroup" aria-labelledby="filter-starred-label" className="flex gap-1">
                   {(["all", "30d", "90d", "1y"] as const).map((v) => (
                     <button
                       key={v}
+                      role="radio"
+                      aria-checked={filterDate === v}
                       onClick={() => setFilterDate(v)}
                       className={`px-2 py-0.5 rounded text-2xs transition-colors ${
                         filterDate === v ? "bg-accent-blue text-white" : "bg-surface-alt text-muted hover:text-foreground"
@@ -1356,6 +1404,7 @@ export default function MapPage({
                 value={filterCompany}
                 onChange={(e) => setFilterCompany(e.target.value)}
                 placeholder="Company…"
+                aria-label="Filter by company"
                 className="bg-background border border-border rounded px-2 py-0.5 text-2xs text-foreground placeholder-muted-subtle focus:outline-none focus:border-accent-blue w-24"
               />
 
@@ -1395,7 +1444,7 @@ export default function MapPage({
               {isSearchPending && (
                 <div className="sticky top-0 left-0 right-0 z-20 flex items-center justify-center py-1 bg-surface/80 backdrop-blur-sm">
                   <div className="flex items-center gap-2 text-2xs text-muted-subtle">
-                    <svg className="animate-spin w-3 h-3" viewBox="0 0 24 24" fill="none">
+                    <svg className="animate-spin motion-reduce:animate-none w-3 h-3" aria-hidden="true" viewBox="0 0 24 24" fill="none">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
                     </svg>
@@ -1417,35 +1466,35 @@ export default function MapPage({
                         />
                       </th>
                     )}
-                    <th className="px-3 py-2.5 text-left text-muted font-medium w-6 text-right">#</th>
-                    <th className="px-3 py-2.5 text-left text-muted font-medium">
+                    <th scope="col" className="px-3 py-2.5 text-left text-muted font-medium w-6 text-right">#</th>
+                    <th scope="col" aria-sort={allSort.key === "login" ? (allSort.dir === 1 ? "ascending" : "descending") : "none"} className="px-3 py-2.5 text-left text-muted font-medium">
                       <button onClick={() => toggleSort("login")} className="flex items-center gap-1 hover:text-foreground">
-                        User {allSort.key === "login" ? (allSort.dir === 1 ? "↑" : "↓") : <span className="opacity-30">↕</span>}
+                        User <span aria-hidden="true">{allSort.key === "login" ? (allSort.dir === 1 ? "↑" : "↓") : <span className="opacity-30">↕</span>}</span>
                       </button>
                     </th>
-                    <th className="px-3 py-2.5 text-right text-muted font-medium">
+                    <th scope="col" aria-sort={allSort.key === "followers" ? (allSort.dir === -1 ? "descending" : "ascending") : "none"} className="px-3 py-2.5 text-right text-muted font-medium">
                       <button onClick={() => toggleSort("followers")} className="flex items-center gap-1 hover:text-foreground ml-auto">
-                        {allSort.key === "followers" ? (allSort.dir === -1 ? "↑" : "↓") : <span className="opacity-30">↕</span>} Followers
+                        <span aria-hidden="true">{allSort.key === "followers" ? (allSort.dir === -1 ? "↑" : "↓") : <span className="opacity-30">↕</span>}</span> Followers
                       </button>
                     </th>
-                    <th className="px-3 py-2.5 text-left text-muted font-medium hidden sm:table-cell">
+                    <th scope="col" aria-sort={allSort.key === "location" ? (allSort.dir === 1 ? "ascending" : "descending") : "none"} className="px-3 py-2.5 text-left text-muted font-medium hidden sm:table-cell">
                       <button onClick={() => toggleSort("location")} className="flex items-center gap-1 hover:text-foreground">
-                        Location {allSort.key === "location" ? (allSort.dir === 1 ? "↑" : "↓") : <span className="opacity-30">↕</span>}
+                        Location <span aria-hidden="true">{allSort.key === "location" ? (allSort.dir === 1 ? "↑" : "↓") : <span className="opacity-30">↕</span>}</span>
                       </button>
                     </th>
-                    <th className="px-3 py-2.5 text-left text-muted font-medium hidden md:table-cell">
+                    <th scope="col" aria-sort={allSort.key === "starredAt" ? (allSort.dir === -1 ? "descending" : "ascending") : "none"} className="px-3 py-2.5 text-left text-muted font-medium hidden md:table-cell">
                       <button onClick={() => toggleSort("starredAt")} className="flex items-center gap-1 hover:text-foreground">
-                        Starred {allSort.key === "starredAt" ? (allSort.dir === -1 ? "↑" : "↓") : <span className="opacity-30">↕</span>}
+                        Starred <span aria-hidden="true">{allSort.key === "starredAt" ? (allSort.dir === -1 ? "↑" : "↓") : <span className="opacity-30">↕</span>}</span>
                       </button>
                     </th>
-                    <th className="px-3 py-2.5 text-left text-muted font-medium hidden lg:table-cell">
+                    <th scope="col" aria-sort={allSort.key === "company" ? (allSort.dir === 1 ? "ascending" : "descending") : "none"} className="px-3 py-2.5 text-left text-muted font-medium hidden lg:table-cell">
                       <button onClick={() => toggleSort("company")} className="flex items-center gap-1 hover:text-foreground">
-                        Company {allSort.key === "company" ? (allSort.dir === 1 ? "↑" : "↓") : <span className="opacity-30">↕</span>}
+                        Company <span aria-hidden="true">{allSort.key === "company" ? (allSort.dir === 1 ? "↑" : "↓") : <span className="opacity-30">↕</span>}</span>
                       </button>
                     </th>
-                    <th className="px-3 py-2.5 text-left text-muted font-medium hidden xl:table-cell">Links</th>
-                    <th className="px-3 py-2.5 w-8"></th>
-                    <th className="px-4 py-2.5 text-center text-muted font-medium">Map</th>
+                    <th scope="col" className="px-3 py-2.5 text-left text-muted font-medium hidden xl:table-cell">Links</th>
+                    <th scope="col" className="px-3 py-2.5 w-8"></th>
+                    <th scope="col" className="px-4 py-2.5 text-center text-muted font-medium">Map</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1483,6 +1532,7 @@ export default function MapPage({
                             <a
                               href={`https://github.com/${u.login}`}
                               target="_blank"
+                              rel="noopener noreferrer"
                               onClick={(e) => e.stopPropagation()}
                               className="text-accent-blue font-medium hover:underline"
                             >
@@ -1542,10 +1592,10 @@ export default function MapPage({
                               const pt = points.find((p) => p.login === u.login);
                               if (pt) { setFlyTarget({ lat: pt.lat, lng: pt.lng, login: pt.login }); setAllOpen(false); }
                             }}
-                            title="Fly to on map"
+                            aria-label={`Fly to ${u.login} on map`}
                             className="text-muted-subtle hover:text-accent-blue transition-colors text-xs"
                           >
-                            🗺
+                            <span aria-hidden="true">🗺</span>
                           </button>
                         )}
                       </td>
@@ -1599,7 +1649,7 @@ export default function MapPage({
                 <h2 className="text-foreground font-semibold text-sm">Star Growth</h2>
                 <p className="text-muted text-2xs mt-0.5">{growthData.length} weeks · {(points.length + unmapped.length).toLocaleString()} total stars</p>
               </div>
-              <button onClick={() => setGrowthOpen(false)} className="text-muted hover:text-foreground text-lg leading-none">✕</button>
+              <button onClick={() => setGrowthOpen(false)} aria-label="Close star growth" className="text-muted hover:text-foreground text-lg leading-none"><span aria-hidden="true">✕</span></button>
             </div>
             <div className="px-5 py-5">
               <GrowthChart data={growthData} />
@@ -1647,7 +1697,7 @@ export default function MapPage({
                 </div>
               )}
               <div className="mt-4 pt-3 border-t border-border-subtle flex items-center justify-between">
-                <span className="text-2xs text-muted-subtle">🌍 starmapper.bruniaux.com</span>
+                <span className="text-2xs text-muted-subtle"><span aria-hidden="true">🌍</span> starmapper.bruniaux.com</span>
                 <span className="text-2xs text-muted-subtle">+ live map in download</span>
               </div>
             </div>
@@ -1820,7 +1870,7 @@ export default function MapPage({
                   <div className="absolute inset-0 z-10 rounded-xl bg-background border border-border flex flex-col p-4 gap-3">
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-medium text-foreground">Your LinkedIn post</span>
-                      <button onClick={() => setLiPanelOpen(false)} className="text-muted hover:text-foreground text-lg leading-none">×</button>
+                      <button onClick={() => setLiPanelOpen(false)} aria-label="Close LinkedIn post" className="text-muted hover:text-foreground text-lg leading-none"><span aria-hidden="true">×</span></button>
                     </div>
                     <textarea
                       value={liDraft}
@@ -1899,54 +1949,81 @@ export default function MapPage({
                 />
               </div>
               {/* Tabs */}
-              <div className="flex gap-1 bg-surface-alt rounded-lg p-1">
+              <div role="tablist" aria-label="Badge type" className="flex gap-1 bg-surface-alt rounded-lg p-1">
                 <button
+                  role="tab"
+                  id="badge-tab-map"
+                  aria-selected={badgeTab === "map"}
+                  aria-controls="badge-panel-map"
+                  tabIndex={badgeTab === "map" ? 0 : -1}
                   onClick={() => setBadgeTab("map")}
+                  onKeyDown={(e) => { if (e.key === "ArrowRight") { setBadgeTab("shield"); } }}
                   className={`flex-1 text-xs py-1.5 rounded-md transition-colors font-medium ${badgeTab === "map" ? "bg-surface text-foreground" : "text-muted hover:text-foreground"}`}
                 >
                   Map image
                 </button>
                 <button
+                  role="tab"
+                  id="badge-tab-shield"
+                  aria-selected={badgeTab === "shield"}
+                  aria-controls="badge-panel-shield"
+                  tabIndex={badgeTab === "shield" ? 0 : -1}
                   onClick={() => setBadgeTab("shield")}
+                  onKeyDown={(e) => { if (e.key === "ArrowLeft") { setBadgeTab("map"); } }}
                   className={`flex-1 text-xs py-1.5 rounded-md transition-colors font-medium ${badgeTab === "shield" ? "bg-surface text-foreground" : "text-muted hover:text-foreground"}`}
                 >
                   Shield badge
                 </button>
               </div>
-              {badgeTab === "map" ? (
-                <div>
-                  <p className="text-muted text-xs leading-relaxed mb-2">
-                    Embeds the map image in your README — switches between dark and light theme automatically.
-                  </p>
-                  <div className="bg-background border border-border rounded-lg px-3 py-2.5">
-                    <code className="text-muted text-xs break-all select-all leading-relaxed whitespace-pre-wrap">
-                      {typeof window !== "undefined"
-                        ? `## StarMapper\n\n<a href="${window.location.origin}/${owner}/${repo}">\n  <picture>\n    <source media="(prefers-color-scheme: dark)" srcset="${window.location.origin}/api/map-image/${owner}/${repo}?theme=dark" />\n    <source media="(prefers-color-scheme: light)" srcset="${window.location.origin}/api/map-image/${owner}/${repo}?theme=light" />\n    <img alt="StarMapper" src="${window.location.origin}/api/map-image/${owner}/${repo}" />\n  </picture>\n</a>`
-                        : ""}
-                    </code>
+              <div
+                role="tabpanel"
+                id="badge-panel-map"
+                aria-labelledby="badge-tab-map"
+                hidden={badgeTab !== "map"}
+              >
+                {badgeTab === "map" && (
+                  <div>
+                    <p className="text-muted text-xs leading-relaxed mb-2">
+                      Embeds the map image in your README — switches between dark and light theme automatically.
+                    </p>
+                    <div className="bg-background border border-border rounded-lg px-3 py-2.5">
+                      <code className="text-muted text-xs break-all select-all leading-relaxed whitespace-pre-wrap">
+                        {typeof window !== "undefined"
+                          ? `## StarMapper\n\n<a href="${window.location.origin}/${owner}/${repo}">\n  <picture>\n    <source media="(prefers-color-scheme: dark)" srcset="${window.location.origin}/api/map-image/${owner}/${repo}?theme=dark" />\n    <source media="(prefers-color-scheme: light)" srcset="${window.location.origin}/api/map-image/${owner}/${repo}?theme=light" />\n    <img alt="StarMapper" src="${window.location.origin}/api/map-image/${owner}/${repo}" />\n  </picture>\n</a>`
+                          : ""}
+                      </code>
+                    </div>
                   </div>
-                </div>
-              ) : (
-                <div>
-                  <p className="text-muted text-xs leading-relaxed mb-2">
-                    Classic shield badge for Markdown READMEs.
-                  </p>
-                  <div className="flex justify-center py-2">
-                    <img
-                      src={`/api/badge/${owner}/${repo}`}
-                      alt="StarMapper badge"
-                      className="h-5"
-                    />
+                )}
+              </div>
+              <div
+                role="tabpanel"
+                id="badge-panel-shield"
+                aria-labelledby="badge-tab-shield"
+                hidden={badgeTab !== "shield"}
+              >
+                {badgeTab === "shield" && (
+                  <div>
+                    <p className="text-muted text-xs leading-relaxed mb-2">
+                      Classic shield badge for Markdown READMEs.
+                    </p>
+                    <div className="flex justify-center py-2">
+                      <img
+                        src={`/api/badge/${owner}/${repo}`}
+                        alt="StarMapper badge"
+                        className="h-5"
+                      />
+                    </div>
+                    <div className="bg-background border border-border rounded-lg px-3 py-2.5 mt-2">
+                      <code className="text-muted text-xs break-all select-all leading-relaxed">
+                        {typeof window !== "undefined"
+                          ? `[![StarMapper](${window.location.origin}/api/badge/${owner}/${repo})](${window.location.origin}/${owner}/${repo})`
+                          : ""}
+                      </code>
+                    </div>
                   </div>
-                  <div className="bg-background border border-border rounded-lg px-3 py-2.5 mt-2">
-                    <code className="text-muted text-xs break-all select-all leading-relaxed">
-                      {typeof window !== "undefined"
-                        ? `[![StarMapper](${window.location.origin}/api/badge/${owner}/${repo})](${window.location.origin}/${owner}/${repo})`
-                        : ""}
-                    </code>
-                  </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
             <div className="px-5 pb-4">
               <button
@@ -2007,7 +2084,7 @@ export default function MapPage({
                   </svg>
                   Copy MD
                 </button>
-                <button onClick={() => setStatsOpen(false)} className="text-muted hover:text-foreground text-lg leading-none">✕</button>
+                <button onClick={() => setStatsOpen(false)} aria-label="Close stats" className="text-muted hover:text-foreground text-lg leading-none"><span aria-hidden="true">✕</span></button>
               </div>
             </div>
 
@@ -2054,18 +2131,27 @@ export default function MapPage({
             </div>
 
             {/* Tabs */}
-            <div className="flex border-b border-border-subtle flex-shrink-0">
-              {(["top", "countries", "cities", "companies", "power"] as const).map((tab) => (
+            <div role="tablist" aria-label="Stats view" className="flex border-b border-border-subtle flex-shrink-0">
+              {(["top", "countries", "cities", "companies", "power"] as const).map((tab, idx, arr) => (
                 <button
                   key={tab}
+                  role="tab"
+                  id={`stats-tab-${tab}`}
+                  aria-selected={statsTab === tab}
+                  aria-controls={`stats-panel-${tab}`}
+                  tabIndex={statsTab === tab ? 0 : -1}
                   onClick={() => { setStatsTab(tab); setStatsFilter(""); }}
+                  onKeyDown={(e) => {
+                    if (e.key === "ArrowRight") { const next = arr[(idx + 1) % arr.length]; setStatsTab(next); setStatsFilter(""); }
+                    if (e.key === "ArrowLeft") { const prev = arr[(idx - 1 + arr.length) % arr.length]; setStatsTab(prev); setStatsFilter(""); }
+                  }}
                   className={`flex-1 py-2.5 text-xs font-medium transition-colors ${
                     statsTab === tab
                       ? "text-accent-blue border-b-2 border-accent-blue -mb-px"
                       : "text-muted hover:text-foreground"
                   }`}
                 >
-                  {tab === "top" ? "Top Stars" : tab === "countries" ? "Countries" : tab === "cities" ? "Cities" : tab === "companies" ? "Companies" : "⚡ Power"}
+                  {tab === "top" ? "Top Stars" : tab === "countries" ? "Countries" : tab === "cities" ? "Cities" : tab === "companies" ? "Companies" : <><span aria-hidden="true">⚡</span> Power</>}
                 </button>
               ))}
             </div>
@@ -2077,31 +2163,41 @@ export default function MapPage({
                   value={statsFilter}
                   onChange={(e) => setStatsFilter(e.target.value)}
                   placeholder={`Filter ${statsTab}…`}
+                  aria-label={`Filter ${statsTab}`}
                   className="w-full bg-background border border-border rounded-lg px-3 py-1.5 text-xs text-foreground placeholder-muted-subtle focus:outline-none focus:border-accent-blue"
                 />
               </div>
             )}
 
-            {/* List */}
-            <div className="overflow-y-auto flex-1 px-5 py-3">
+            {/* List — tabpanel */}
+            <div
+              role="tabpanel"
+              id={`stats-panel-${statsTab}`}
+              aria-labelledby={`stats-tab-${statsTab}`}
+              className="overflow-y-auto flex-1 px-5 py-3"
+            >
               {statsTab === "top" && (
                 <div>
                   {/* Sort toggle */}
                   <div className="flex items-center gap-1 mb-3">
-                    <span className="text-muted-subtle text-2xs uppercase tracking-wide mr-1">Sort:</span>
-                    {(["followers", "repos"] as const).map((s) => (
-                      <button
-                        key={s}
-                        onClick={() => setStatsTopSort(s)}
-                        className={`px-2 py-0.5 rounded text-2xs font-medium transition-colors ${
-                          statsTopSort === s
-                            ? "bg-accent-blue/20 text-accent-blue"
-                            : "text-muted hover:text-foreground"
-                        }`}
-                      >
-                        {s === "followers" ? "Followers" : "Public repos"}
-                      </button>
-                    ))}
+                    <span id="stats-sort-label" className="text-muted-subtle text-2xs uppercase tracking-wide mr-1">Sort:</span>
+                    <div role="radiogroup" aria-labelledby="stats-sort-label" className="flex gap-1">
+                      {(["followers", "repos"] as const).map((s) => (
+                        <button
+                          key={s}
+                          role="radio"
+                          aria-checked={statsTopSort === s}
+                          onClick={() => setStatsTopSort(s)}
+                          className={`px-2 py-0.5 rounded text-2xs font-medium transition-colors ${
+                            statsTopSort === s
+                              ? "bg-accent-blue/20 text-accent-blue"
+                              : "text-muted hover:text-foreground"
+                          }`}
+                        >
+                          {s === "followers" ? "Followers" : "Public repos"}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                   <div className="space-y-2.5">
                     {[...displayStats.topUsers]
@@ -2118,6 +2214,7 @@ export default function MapPage({
                             <a
                               href={`https://github.com/${u.login}`}
                               target="_blank"
+                              rel="noopener noreferrer"
                               className="text-accent-blue text-xs font-medium hover:underline"
                             >
                               @{u.login}
@@ -2196,7 +2293,7 @@ export default function MapPage({
                 <div className="space-y-2.5">
                   {displayStats.powerStargazers.length === 0 && (
                     <div className="text-center text-muted-subtle text-xs py-8">
-                      <div className="text-2xl mb-2">⚡</div>
+                      <div className="text-2xl mb-2" aria-hidden="true">⚡</div>
                       <div>No power stargazers yet.</div>
                       <div className="mt-1 text-2xs">Appears after multiple repos are scanned.</div>
                     </div>
@@ -2209,6 +2306,7 @@ export default function MapPage({
                         <a
                           href={`https://github.com/${u.login}`}
                           target="_blank"
+                          rel="noopener noreferrer"
                           className="text-accent-blue text-xs font-medium hover:underline"
                         >
                           @{u.login}
@@ -2227,7 +2325,7 @@ export default function MapPage({
             </div>
       </Modal>
       )}
-    </div>
+    </main>
   );
 }
 

@@ -201,7 +201,7 @@ export default function DevsLanguagePage({ params }: Props) {
             </Link>
             <span className="text-border-subtle shrink-0 select-none" aria-hidden="true">/</span>
             {loading && !displayName ? (
-              <span className="h-6 w-24 bg-surface-alt rounded animate-pulse" />
+              <span className="h-6 w-24 bg-surface-alt rounded animate-pulse motion-reduce:animate-none" />
             ) : (
               <LanguageSwitcher
                 currentSlug={slug}
@@ -217,7 +217,7 @@ export default function DevsLanguagePage({ params }: Props) {
           data && data.totalMapped > 0
             ? <MappedBadge count={data.totalMapped} />
             : loading
-              ? <span className="h-6 w-24 bg-surface-alt rounded-full animate-pulse shrink-0" />
+              ? <span className="h-6 w-24 bg-surface-alt rounded-full animate-pulse motion-reduce:animate-none shrink-0" />
               : undefined
         }
         projectionButton={
@@ -228,6 +228,7 @@ export default function DevsLanguagePage({ params }: Props) {
             }}
             className="hidden md:flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-border text-muted hover:text-foreground hover:border-accent-blue transition-colors"
             title={mapProjection === "globe" ? "Switch to flat map" : "Switch to globe"}
+            aria-label={mapProjection === "globe" ? "Switch to 2D flat map" : "Switch to 3D globe"}
           >
             {mapProjection === "globe" ? (
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -249,15 +250,15 @@ export default function DevsLanguagePage({ params }: Props) {
       />
 
       {/* ── Main: map + sidebar ────────────────────────────────────────────── */}
-      <div className="flex flex-1 min-h-0 pt-14">
+      <main id="main" className="flex flex-1 min-h-0 pt-14">
         {/* Map */}
         <div className="flex-1 relative">
           {loading ? (
             <div className="flex flex-col items-center justify-center h-full gap-4 bg-surface-alt">
               {/* Animated globe placeholder */}
               <div className="relative size-16">
-                <div className="absolute inset-0 rounded-full border-2 border-border animate-pulse" />
-                <div className="absolute inset-2 rounded-full border border-border-subtle animate-pulse
+                <div className="absolute inset-0 rounded-full border-2 border-border animate-pulse motion-reduce:animate-none" />
+                <div className="absolute inset-2 rounded-full border border-border-subtle animate-pulse motion-reduce:animate-none
                                 [animation-delay:150ms]" />
                 <svg
                   width="32" height="32" viewBox="0 0 24 24" fill="none"
@@ -371,7 +372,7 @@ export default function DevsLanguagePage({ params }: Props) {
             )}
           </aside>
         )}
-      </div>
+      </main>
 
       {tokenOpen && <TokenModal onClose={handleTokenClose} />}
     </div>

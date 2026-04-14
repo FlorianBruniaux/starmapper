@@ -167,6 +167,8 @@ export default function HomePage() {
                   className="flex-1 bg-surface border border-border rounded-lg px-4 py-3 text-foreground placeholder-muted-subtle focus:outline-none focus:border-accent-blue text-sm transition-colors"
                   autoFocus
                   aria-label="GitHub repository URL or username"
+                  aria-invalid={!!error}
+                  aria-describedby={error ? "repo-input-error" : undefined}
                 />
                 <button
                   type="submit"
@@ -177,12 +179,14 @@ export default function HomePage() {
               </div>
 
               {/* Username hint */}
-              {parseUsername(input) && (
-                <p className="text-xs text-muted-subtle text-left">
-                  Looks like a username — will scan all repos for{" "}
-                  <span className="text-foreground font-medium">{parseUsername(input)}</span>
-                </p>
-              )}
+              <p className="text-xs text-muted-subtle text-left" aria-live="polite" aria-atomic="true">
+                {parseUsername(input) && (
+                  <>
+                    Looks like a username — will scan all repos for{" "}
+                    <span className="text-foreground font-medium">{parseUsername(input)}</span>
+                  </>
+                )}
+              </p>
 
               {/* Compare input */}
               {showCompare && (
@@ -207,7 +211,7 @@ export default function HomePage() {
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-subtle hover:text-muted transition-colors"
                     aria-label="Remove compare"
                   >
-                    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
                       <path d="M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l3.22-3.22a.749.749 0 0 1 1.275.326.749.749 0 0 1-.215.734L9.06 8l3.22 3.22a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215L8 9.06l-3.22 3.22a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042L6.94 8 3.72 4.78a.75.75 0 0 1 0-1.06Z" />
                     </svg>
                   </button>
@@ -215,7 +219,7 @@ export default function HomePage() {
               )}
 
               {error && (
-                <p className="text-accent-red text-xs text-left" role="alert">
+                <p id="repo-input-error" className="text-accent-red text-xs text-left" role="alert">
                   {error}
                 </p>
               )}
@@ -283,9 +287,9 @@ export default function HomePage() {
 
         {/* ── How it works ── */}
         <section className="w-full max-w-7xl mx-auto px-4 lg:px-6 py-12">
-          <p className="text-muted-subtle text-2xs uppercase tracking-widest mb-6 text-center">
+          <h2 className="text-muted-subtle text-2xs uppercase tracking-widest mb-6 text-center">
             How it works
-          </p>
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {[
               {
@@ -347,9 +351,9 @@ export default function HomePage() {
         {repos.length > 0 && (
           <section className="w-full max-w-7xl mx-auto px-4 lg:px-6 pb-12">
             <div className="flex items-center justify-between mb-4">
-              <p className="text-muted-subtle text-2xs uppercase tracking-widest">
+              <h2 className="text-muted-subtle text-2xs uppercase tracking-widest">
                 Community maps
-              </p>
+              </h2>
               <Link
                 href="/repos"
                 className="flex items-center gap-1.5 text-xs font-medium text-foreground bg-surface border border-border hover:border-accent-blue hover:text-accent-blue px-3 py-1.5 rounded-lg transition-colors"
@@ -398,7 +402,7 @@ export default function HomePage() {
 
         {/* ── FAQ ── */}
         <section className="w-full max-w-7xl mx-auto px-4 lg:px-6 pb-16">
-          <p className="text-muted-subtle text-2xs uppercase tracking-widest mb-4">FAQ</p>
+          <h2 className="text-muted-subtle text-2xs uppercase tracking-widest mb-4">FAQ</h2>
           <div className="flex flex-col divide-y divide-border-subtle border border-border-subtle rounded-lg overflow-hidden">
             {[
               {

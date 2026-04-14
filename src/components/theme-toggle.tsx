@@ -42,6 +42,7 @@ export const ThemeToggle = ({ className = "" }: Props) => {
     <button
       onClick={toggle}
       aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+      aria-pressed={theme === "dark"}
       title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
       className={`flex items-center justify-center size-8 rounded-lg border border-border
         text-muted hover:text-foreground hover:border-accent-blue

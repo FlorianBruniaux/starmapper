@@ -392,9 +392,9 @@ const makePopupElement = (props: Record<string, unknown>): HTMLElement => {
   const meta = document.createElement("div");
   meta.style.cssText = "font-size:12px;color:var(--color-muted);line-height:1.9";
   const lines: string[] = [];
-  if (company) lines.push(`🏢 ${company}`);
-  if (location) lines.push(`📍 ${location}`);
-  if (props.followers) lines.push(`👥 ${Number(props.followers).toLocaleString()} followers`);
+  if (company) lines.push(company);
+  if (location) lines.push(location);
+  if (props.followers) lines.push(`${Number(props.followers).toLocaleString()} followers`);
   meta.textContent = lines.join(" · ");
   if (lines.length) el.appendChild(meta);
 
@@ -413,6 +413,7 @@ const makePopupElement = (props: Record<string, unknown>): HTMLElement => {
   const reposSection = document.createElement("div");
   reposSection.style.cssText = "margin-top:8px;border-top:1px solid var(--color-border-subtle);padding-top:8px";
   const reposLoading = document.createElement("div");
+  reposLoading.setAttribute("aria-live", "polite");
   reposLoading.style.cssText = "font-size:11px;color:var(--color-muted-subtle)";
   reposLoading.textContent = "Loading tracked repos…";
   reposSection.appendChild(reposLoading);
@@ -785,7 +786,7 @@ const StargazerMapInner = ({ points, comparePoints, flyTarget, onFlyDone, onRead
   }, [styleUrl, mapReady]);
 
   return (
-    <div className="relative w-full h-full">
+    <div role="region" aria-label={`Stargazer map — ${points.length.toLocaleString()} developers mapped`} className="relative w-full h-full">
       <div ref={containerRef} className="w-full h-full" />
       <JawgBadge />
       {showProjectionToggle && ENABLE_GLOBE && (
