@@ -83,7 +83,6 @@ model StarEvent {
   user      GitHubUser @relation(fields: [login], references: [login])
 
   @@unique([login, owner, repo])
-  @@index([login])
   @@index([owner, repo, login])
   @@map("star_event")
 }
