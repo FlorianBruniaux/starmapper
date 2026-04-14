@@ -86,6 +86,7 @@
     "react-dom": "19.2.4",
     "topojson-client": "^3.1.0",
     "world-atlas": "^2.0.2",
+    "web-vitals": "^4",
     "zod": "^4.3.6"
   },
   "devDependencies": {
