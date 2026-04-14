@@ -21,6 +21,7 @@ const isJawgAvailable = (): boolean => {
   if (jawgErrorCount < ERROR_THRESHOLD) return true;
   if (Date.now() - jawgCircuitOpenAt > CIRCUIT_RESET_MS) {
     jawgErrorCount = 0;
+    jawgCircuitOpenAt = 0;
     return true;
   }
   return false;
@@ -38,6 +39,7 @@ const isGeoapifyAvailable = (): boolean => {
   if (geoapifyErrorCount < ERROR_THRESHOLD) return true;
   if (Date.now() - geoapifyCircuitOpenAt > CIRCUIT_RESET_MS) {
     geoapifyErrorCount = 0;
+    geoapifyCircuitOpenAt = 0;
     return true;
   }
   return false;
@@ -347,7 +349,7 @@ export async function geocodeBatch(
     for (let i = 0; i < misses.length; i++) {
       const result = await resolveLocation(misses[i]);
       missResults.push(result);
-      if (i < misses.length - 1) await sleep(300);
+      if (i < misses.length - 1) await sleep(1100);
     }
   }
 

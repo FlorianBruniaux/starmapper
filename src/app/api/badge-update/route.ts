@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { validateOwnerRepo } from "@/lib/api-validation";
 import { jsonError } from "@/lib/api-helpers";
+import { verifyToken, COOKIE_NAME } from "@/lib/api-token";
 
 export const POST = async (req: NextRequest) => {
   try {
@@ -22,6 +23,15 @@ export const POST = async (req: NextRequest) => {
       return jsonError("invalid_params", 400);
     }
     const lang: string | null = typeof language === "string" && language.length > 0 ? language : null;
+
+    // SM token anti-scraping check — skipped when SM_TOKEN_SECRET is not configured
+    const SM_SECRET = process.env.SM_TOKEN_SECRET ?? "";
+    if (SM_SECRET) {
+      const smToken = req.cookies.get(COOKIE_NAME)?.value;
+      if (!await verifyToken(smToken, SM_SECRET)) {
+        return jsonError("forbidden", 403);
+      }
+    }
 
     // Plausibility check: reject updates that deviate >50% from existing badge data.
     // Prevents arbitrary overwrites with fabricated star counts.
