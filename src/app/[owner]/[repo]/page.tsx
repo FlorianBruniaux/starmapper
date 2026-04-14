@@ -670,6 +670,9 @@ export default function MapPage({
     })),
   ], [points, unmapped]);
 
+  // Deferred list — filter/sort recomputation runs at lower priority during scan (INP: F10)
+  const deferredAllStargazers = useDeferredValue(allStargazers);
+
   const filteredMapPoints = useMemo(() => {
     if (followerMapFilter === "all") return points;
     if (followerMapFilter === "high") return points.filter((p) => p.followers >= 500);
@@ -702,7 +705,7 @@ export default function MapPage({
 
   const filteredStargazers = useMemo(() => {
     const q = deferredSearch.toLowerCase();
-    let list = allStargazers;
+    let list = deferredAllStargazers;
     if (q) list = list.filter((u) =>
       u.login.toLowerCase().includes(q) ||
       (u.name?.toLowerCase().includes(q) ?? false) ||
@@ -734,7 +737,7 @@ export default function MapPage({
       const lb = b.location ?? "";
       return la.localeCompare(lb) * allSort.dir;
     });
-  }, [allStargazers, deferredSearch, allSort, filterFollowers, filterMapped, filterDate, filterCompany, filterCountry, filterCity]);
+  }, [deferredAllStargazers, deferredSearch, allSort, filterFollowers, filterMapped, filterDate, filterCompany, filterCountry, filterCity]);
 
   const countryOptions = useMemo(() => {
     const counts = new Map<string, number>();
@@ -1424,7 +1427,7 @@ export default function MapPage({
               {/* Company filter */}
               <input
                 value={filterCompany}
-                onChange={(e) => setFilterCompany(e.target.value)}
+                onChange={(e) => startTransition(() => setFilterCompany(e.target.value))}
                 placeholder="Company…"
                 aria-label="Filter by company"
                 className="bg-background border border-border rounded px-2 py-0.5 text-2xs text-foreground placeholder-muted-subtle focus:outline-none focus:border-accent-blue w-24"
@@ -1433,7 +1436,7 @@ export default function MapPage({
               {/* Country filter */}
               <FilterCombobox
                 value={filterCountry}
-                onChange={setFilterCountry}
+                onChange={(v) => startTransition(() => setFilterCountry(v))}
                 options={countryOptions}
                 placeholder="Country…"
               />
@@ -1441,7 +1444,7 @@ export default function MapPage({
               {/* City filter */}
               <FilterCombobox
                 value={filterCity}
-                onChange={setFilterCity}
+                onChange={(v) => startTransition(() => setFilterCity(v))}
                 options={cityOptions}
                 placeholder="City…"
               />
