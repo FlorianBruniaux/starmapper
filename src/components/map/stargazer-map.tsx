@@ -707,6 +707,7 @@ const StargazerMapInner = ({ points, comparePoints, flyTarget, onFlyDone, onRead
     return () => {
       cancelled = true;
       hasInitializedRef.current = false;
+      if (setDataTimerRef.current) { clearTimeout(setDataTimerRef.current); setDataTimerRef.current = null; }
       if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; }
     };
   }, []);

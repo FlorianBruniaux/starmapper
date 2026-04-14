@@ -1,15 +1,19 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { geocode } from "@/lib/geocoder";
+import { requireAdminAuth } from "@/lib/api-helpers";
 
 export type RecalculateLocationResult =
   | { lat: number; lng: number }
   | { unmapped: true };
 
-export const POST = async (req: Request): Promise<NextResponse<RecalculateLocationResult | { error: string }>> => {
+export const POST = async (req: NextRequest) => {
+  const authError = requireAdminAuth(req);
+  if (authError) return authError;
+
   let login: string;
   try {
     const body = await req.json();

@@ -75,7 +75,7 @@ export const fetchStargazersPage = async (
       "Content-Type": "application/json",
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
-    body: JSON.stringify({ query, variables: { owner, repo, cursor } }),
+    body: JSON.stringify({ query, variables: cursor ? { owner, repo, cursor } : { owner, repo } }),
   });
 
   if (!res.ok && (res.status === 403 || res.status === 429)) {

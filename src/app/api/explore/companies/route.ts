@@ -30,7 +30,7 @@ export const GET = async (req: NextRequest) => {
   const { searchParams } = new URL(req.url);
   const page    = Math.min(20, Math.max(1, parseInt(searchParams.get("page")  ?? "1",  10)));
   const size    = Math.min(50, Math.max(1, parseInt(searchParams.get("size") ?? "30", 10)));
-  const country = searchParams.get("country") ?? "";
+  const country = (searchParams.get("country") ?? "").substring(0, 100).replace(/[^\p{L}\p{N}\s'.,()-]/gu, "");
 
   type RawRow = { company: string; cnt: number };
 

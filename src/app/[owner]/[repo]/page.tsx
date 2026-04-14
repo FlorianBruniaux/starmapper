@@ -532,6 +532,26 @@ export default function MapPage({
         scannedAt: now,
         latestStarredAt: updatedLatest,
       });
+
+      // Persist refreshed data to DB cache (fire-and-forget)
+      if (mergedPoints.length > 0) {
+        (async () => {
+          try {
+            type SlimPoint = Omit<StargazerPoint, "bio" | "avatarUrl">;
+            const slim: SlimPoint[] = mergedPoints.map(({ bio: _b, avatarUrl: _av, ...rest }) => rest);
+            const [pointsGz, unmappedGz] = await Promise.all([
+              compressToBase64(slim),
+              compressToBase64(mergedUnmapped),
+            ]);
+            await fetch("/api/stargazer-cache", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ owner, repo, pointsGz, unmappedGz, totalCount: latestTotalCount, latestStarredAt: updatedLatest, ts: now }),
+            });
+          } catch { /* fire-and-forget, non-critical */ }
+        })();
+      }
+
       setStatus("cached");
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Unknown error");
@@ -877,7 +897,7 @@ export default function MapPage({
 
       {/* GitHub rate limit modal */}
       {repoRateLimited && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="bg-surface border border-border rounded-xl p-6 w-full max-w-sm mx-4 shadow-xl">
             <div className="flex items-start gap-3 mb-4">
               <div className="size-9 shrink-0 flex items-center justify-center rounded-lg bg-accent-orange/10">
@@ -912,7 +932,7 @@ export default function MapPage({
 
       {/* Repo not found modal */}
       {repoNotFound && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="bg-surface border border-border rounded-xl p-6 w-full max-w-sm mx-4 shadow-xl">
             <div className="flex items-start gap-3 mb-4">
               <div className="size-9 shrink-0 flex items-center justify-center rounded-lg bg-accent-red/10">

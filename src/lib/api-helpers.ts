@@ -5,6 +5,7 @@
 // Eliminates duplicated error responses, admin auth checks, and token extraction.
 
 import { NextRequest, NextResponse } from "next/server";
+import { safeEqual } from "@/lib/api-token";
 
 /** Standardised JSON error response. */
 export const jsonError = (message: string, status: number) =>
@@ -40,7 +41,7 @@ export const requireAdminAuth = (req: NextRequest): NextResponse | null => {
   }
 
   const secret = process.env.ADMIN_SECRET;
-  if (!secret || req.headers.get("x-admin-secret") !== secret) {
+  if (!secret || !safeEqual(req.headers.get("x-admin-secret") ?? "", secret)) {
     logAdminAudit(req, "denied_secret");
     return jsonError("Unauthorized", 401);
   }
