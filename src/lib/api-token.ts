@@ -24,12 +24,18 @@ const toHex = (buf: ArrayBuffer): string =>
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
 
-/** Constant-time string comparison — prevents HMAC timing attacks. */
+/**
+ * Constant-time string comparison — prevents HMAC timing attacks.
+ * Always iterates maxLen chars regardless of input lengths, so the loop
+ * duration does not reveal which string is shorter.
+ */
 export const safeEqual = (a: string, b: string): boolean => {
-  if (a.length !== b.length) return false;
+  const maxLen = Math.max(a.length, b.length);
   let diff = 0;
-  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
-  return diff === 0;
+  for (let i = 0; i < maxLen; i++) {
+    diff |= (a.charCodeAt(i) || 0) ^ (b.charCodeAt(i) || 0);
+  }
+  return diff === 0 && a.length === b.length;
 };
 
 const importKey = (secret: string): Promise<CryptoKey> =>

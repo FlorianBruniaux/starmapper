@@ -57,10 +57,12 @@ claudedocs/
 # Seed script output
 scripts/geocache-preview.json
 
-# Batch scan generated repo lists (runtime artifacts)
-scripts/repos-all.json
-scripts/repos-from-users.json
-scripts/repos-trending.json
+# Batch scan input/output lists (runtime artifacts — all variants)
+scripts/repos-*.json
+
+# Internal notes and audit docs (not for public repo)
+REPRISE.md
+research-*.md
 
 # ESLint cache
 .eslintcache

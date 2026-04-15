@@ -71,7 +71,10 @@ export const sanitizeError = (err: unknown): string => {
     .replace(/postgres(ql)?:\/\/[^\s]*/gi, "[db-url-redacted]")
     .replace(/Bearer\s+[A-Za-z0-9_\-.]+/g, "Bearer [redacted]")
     .replace(/token=[A-Za-z0-9_\-.]+/gi, "token=[redacted]")
-    .replace(/ghp_[A-Za-z0-9]+/g, "[gh-token-redacted]");
+    .replace(/ghp_[A-Za-z0-9]+/g, "[gh-token-redacted]")
+    .replace(/github_pat_[A-Za-z0-9_]+/g, "[gh-token-redacted]")
+    .replace(/gho_[A-Za-z0-9]+/g, "[gh-token-redacted]")
+    .replace(/ghs_[A-Za-z0-9]+/g, "[gh-token-redacted]");
 };
 
 /** Safe server-side error logger that never leaks secrets. */

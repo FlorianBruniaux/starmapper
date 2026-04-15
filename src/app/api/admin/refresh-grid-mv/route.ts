@@ -9,6 +9,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAdminAuth, jsonError, logError } from "@/lib/api-helpers";
+import { safeEqual } from "@/lib/api-token";
 
 export const POST = async (req: NextRequest) => {
   const authError = requireAdminAuth(req);
@@ -21,7 +22,7 @@ export const POST = async (req: NextRequest) => {
 export const GET = async (req: NextRequest) => {
   const cronSecret = process.env.CRON_SECRET;
   const authHeader = req.headers.get("authorization");
-  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
+  if (!cronSecret || !safeEqual(authHeader ?? "", `Bearer ${cronSecret}`)) {
     return jsonError("Unauthorized", 401);
   }
 
