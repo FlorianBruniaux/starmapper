@@ -1,27 +1,96 @@
 # StarMapper
 
-[![StarMapper](https://starmapper.bruniaux.com/api/badge/florianbruniaux/starmapper)](https://starmapper.bruniaux.com/florianbruniaux/starmapper)
+<p align="center">
+  <a href="https://starmapper.bruniaux.com"><img src="https://img.shields.io/badge/Live_Demo-starmapper.bruniaux.com-58a6ff?style=for-the-badge" alt="Live Demo"/></a>
+  <a href="https://starmapper.bruniaux.com/florianbruniaux/starmapper"><img src="https://starmapper.bruniaux.com/api/badge/florianbruniaux/starmapper" alt="StarMapper badge"/></a>
+</p>
 
-See who stars your repo, on a map.
+<p align="center">
+  <a href="./LICENSE"><img src="https://img.shields.io/badge/License-AGPL--3.0-blue.svg" alt="License: AGPL-3.0"/></a>
+  <a href="https://nextjs.org"><img src="https://img.shields.io/badge/Next.js-16.2-black?logo=next.js" alt="Next.js"/></a>
+  <a href="https://www.typescriptlang.org"><img src="https://img.shields.io/badge/TypeScript-5-3178c6?logo=typescript&logoColor=white" alt="TypeScript"/></a>
+  <a href="https://maplibre.org"><img src="https://img.shields.io/badge/MapLibre_GL-5.x-396cb2" alt="MapLibre GL"/></a>
+  <a href="https://neon.tech"><img src="https://img.shields.io/badge/Neon-Postgres-00e599?logo=postgresql&logoColor=white" alt="Neon"/></a>
+</p>
+
+> **See who stars your repo, on a map.**
 
 Enter any GitHub repository URL and StarMapper fetches all stargazers, geocodes their locations, and renders an interactive world map with native clustering. Results load progressively as chunks arrive, so large repos (2000+ stars) work without any timeout issues.
 
-<!-- screenshot -->
+---
+
+<!-- Add a screenshot here once the UI is stable: docs/assets/screenshot.png -->
+
+---
+
+## Table of Contents
+
+- [Features](#features)
+- [How It Works](#how-it-works)
+- [Quick Start](#quick-start)
+- [Environment Variables](#environment-variables)
+- [Tech Stack](#tech-stack)
+- [Development Commands](#development-commands)
+- [Privacy & Data](#privacy--data)
+- [Sponsors & Acknowledgments](#sponsors--acknowledgments)
+- [Contributing](#contributing)
+- [About the Author](#about-the-author)
+- [License](#license)
+
+---
 
 ## Features
 
-- Interactive world map with GeoJSON clustering (MapLibre GL)
-- Progressive loading via client-side chunk loop, no serverless timeout limit
-- 3-level geocoding cascade: Jawg (primary), Geoapify (fallback), Nominatim (ultimate fallback)
-- Geocache pre-seeded with ~51k GeoNames entries (>99% of locations resolve without any API call)
-- **Language Atlas**: choropleth map showing the most popular language per country (`/devs/atlas`)
-- **Dev Maps by language**: filter the developer map by programming language (`/devs/[language]`)
-- Community maps table on the landing page (sortable, paginated)
+### Map & Visualization
+
+- Interactive world map with native GeoJSON clustering (MapLibre GL 5.x)
+- Progressive loading, with points appearing on the map as chunks arrive
+- Stargazer detail cards on click (bio, followers, company)
 - Dark / light mode toggle
-- Embeddable SVG badge showing mapped count and country stats
-- Optional GitHub token input for higher rate limits
-- Stargazer detail cards (bio, followers, company) on click
+- Embeddable SVG badge with mapped count and country stats
+
+### Data & Geocoding
+
+- 3-tier geocoding cascade: Jawg (primary) → Geoapify (fallback) → Nominatim (ultimate fallback)
+- Shared geocache pre-seeded with ~51k GeoNames entries. Over 99% of real locations resolve without any external API call
+- Full scan results cached per repo; subsequent visitors get an instant map with no re-scan
+
+### Developer Maps (bonus features)
+
+- **Language Atlas** (`/devs/atlas`), a choropleth map showing the dominant language per country
+- **Dev Maps by language** (`/devs/[language]`), filtered by programming language
+
+### UX
+
+- Community maps table on the landing page (sortable, paginated)
+- Optional GitHub token input to raise rate limits from 60 to 5000 req/hour
 - Collapsible sidebar on mobile
+
+---
+
+## How It Works
+
+Vercel's free tier caps serverless functions at 10 seconds per request. A 2000-star repo needs ~20 sequential GitHub GraphQL calls, plus geocoding. Instead of one long server call, StarMapper has the **browser** orchestrate a loop of `POST /api/chunk` requests. Each chunk processes 100 stargazers and returns in under 10 seconds, and the browser renders incoming points as they arrive.
+
+```
+Browser                          /api/chunk (Server)
+  |                                      |
+  |--- POST { owner, repo } ------------>|
+  |                                      |--- GitHub GraphQL (100 users)
+  |                                      |--- 3-tier geocoding + cache lookup
+  |<-- { points[], nextCursor, total } --|
+  |                                      |
+  |--- POST { ..., cursor } ------------>|   (repeat until nextCursor === null)
+  |
+  → MapLibre GL renders points as they arrive
+  → POST /api/stargazer-cache (gzip + write full scan to DB)
+```
+
+This keeps every server function well under the timeout, while the geocache (pre-seeded with ~51k cities) ensures most locations resolve instantly without hitting any geocoding API.
+
+Full details: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
+
+---
 
 ## Quick Start
 
@@ -30,7 +99,7 @@ Enter any GitHub repository URL and StarMapper fetches all stargazers, geocodes 
 ### 1. Clone and install
 
 ```bash
-git clone https://github.com/your-username/starmapper.git
+git clone https://github.com/FlorianBruniaux/starmapper.git
 cd starmapper
 pnpm install
 ```
@@ -41,7 +110,7 @@ pnpm install
 cp .env.example .env.local
 ```
 
-Then fill in your values in `.env.local`. See [Environment Variables](#environment-variables) for descriptions of each.
+Fill in your values (see [Environment Variables](#environment-variables) below).
 
 ### 3. Initialize the database
 
@@ -49,9 +118,17 @@ Then fill in your values in `.env.local`. See [Environment Variables](#environme
 npx prisma db push
 ```
 
-This creates the `geocache` and `badge_cache` tables on your Neon database. No migration files are generated; `db push` is the intended workflow.
+This creates all required tables on your Neon database. No migration files are generated; `db push` is the intended workflow for this project.
 
-### 4. Start the dev server
+### 4. (Optional) Pre-seed the geocache
+
+```bash
+pnpm seed:geonames
+```
+
+Inserts ~51k GeoNames entries (cities with population > 15k + country names). Without this step, first-time geocoding is slower since every location goes through the API cascade. The operation is idempotent, safe to run multiple times.
+
+### 5. Start the dev server
 
 ```bash
 pnpm dev
@@ -59,32 +136,30 @@ pnpm dev
 
 Open [http://localhost:3000](http://localhost:3000), enter any public GitHub repo URL, and the map loads.
 
+---
+
 ## Environment Variables
 
 | Variable | Required | Description |
 |---|---|---|
 | `DATABASE_URL` | Yes | Postgres connection string (Neon, Docker, Railway, Supabase…) |
-| `DATABASE_DRIVER` | No | `neon` (default, Vercel) or `standard` (plain PostgreSQL) |
+| `DATABASE_DRIVER` | No | `neon` (default, for Vercel) or `standard` (plain TCP PostgreSQL) |
 | `GITHUB_TOKEN` | Yes | GitHub PAT with `read:user` scope |
-| `JAWG_TOKEN_HEADER` | Recommended | Main stargazer geocoding token for the dedicated Jawg Places instance (`starmapper.jawg.io`, provided by JawgMaps). Create a **new dedicated token** from the Jawg dashboard (not the default one). Sent as `x-api-key` header + `access-token` query param for usage stats (see note below). |
-| `JAWGMAP_ACCESS_TOKEN` | Recommended | Jawg token for explore page autocomplete + reverse geocoding (`api.jawg.io`) |
+| `JAWG_TOKEN_HEADER` | Recommended | Token for the dedicated Jawg Places geocoding instance (`starmapper.jawg.io`). Requires a **new dedicated token** from the Jawg dashboard, not the default account token. |
+| `JAWGMAP_ACCESS_TOKEN` | Recommended | Jawg token for explore autocomplete + reverse geocoding (`api.jawg.io`) |
 | `NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN` | Yes (client) | Jawg token for client-side MapLibre tile URL (map rendering only) |
 | `GEOAPIFY_APIKEY` | Recommended | Geocoding fallback when Jawg fails |
 | `NEXT_PUBLIC_APP_URL` | No | App base URL, used for OG metadata and Nominatim User-Agent |
 | `ADMIN_SECRET` | No | Secret header for `/api/admin/*` routes; if unset, admin routes return 401 |
-| `DB_STORAGE_LIMIT_MB` | No | DB storage cap in MB for health guard (default: 512, Neon Launch: 10240) |
+| `DB_STORAGE_LIMIT_MB` | No | DB storage cap in MB for health guard (default: 512, Neon Launch plan: 10240) |
 
-Without `JAWG_TOKEN_HEADER` and `GEOAPIFY_APIKEY`, stargazer geocoding falls back to Nominatim only (rate-limited to 1 req/s). Thanks to GeoNames pre-seeding, this matters far less in practice (most locations already cached).
+**Without `JAWG_TOKEN_HEADER` and `GEOAPIFY_APIKEY`**, geocoding falls back to Nominatim only, rate-limited to 1 request/second. With the GeoNames pre-seed in place, this rarely matters since most locations are already cached.
 
-> **Note on Jawg geocoding**: Batch geocoding is not permitted on the standard Jawg API. `JAWG_TOKEN_HEADER` targets a dedicated Jawg Places instance (`starmapper.jawg.io`) provided by JawgMaps specifically for StarMapper; requests include both an `x-api-key` header and an `access-token` query param (the query param is used for JawgMaps usage stats; the token must be a new dedicated one, not the default account token). It is separate from the map tile token and scoped to geocoding only.
+**Without `GITHUB_TOKEN`**, GitHub's unauthenticated rate limit applies (60 req/hour), which blocks any repo with more than ~6000 stars.
 
-Without `GITHUB_TOKEN`, GitHub's unauthenticated rate limit applies (60 requests/hour), which will block any repo above roughly 6000 stars.
+> **Note on Jawg geocoding**: Batch geocoding is not permitted on the standard Jawg API. `JAWG_TOKEN_HEADER` targets a dedicated Jawg Places instance (`starmapper.jawg.io`) provided by JawgMaps specifically for StarMapper. It is separate from the map tile token and scoped to geocoding only. Requests include both an `x-api-key` header and an `access-token` query param (the query param is used for JawgMaps internal usage tracking).
 
-## Architecture
-
-Vercel's free tier caps serverless functions at 10 seconds. Rather than running one long server call, StarMapper has the browser orchestrate a loop of `POST /api/chunk` requests, each processing 100 stargazers and returning in well under 10 seconds. The browser accumulates points progressively and renders them on the map as they arrive.
-
-Full architecture documentation: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
+---
 
 ## Tech Stack
 
@@ -94,9 +169,11 @@ Full architecture documentation: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
 | Language | TypeScript 5 |
 | Map | MapLibre GL 5.x |
 | Database | Neon Postgres via Prisma 7.5 + `@prisma/adapter-neon` |
-| Geocoding | Jawg, Geoapify, Nominatim |
+| Geocoding | Jawg Places, Geoapify, Nominatim (cascaded) |
 | Styling | Tailwind CSS v4 (`@theme inline`) |
 | Deployment | Vercel (free tier compatible) |
+
+---
 
 ## Development Commands
 
@@ -104,27 +181,33 @@ Full architecture documentation: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
 pnpm dev                  # Dev server with Turbopack
 pnpm build                # Production build
 pnpm typecheck            # tsc --noEmit
+
 pnpm test                 # Run unit tests (vitest)
 pnpm test:watch           # Watch mode
 pnpm test:coverage        # Coverage report
 
 npx prisma db push        # Apply schema changes to Neon
-npx prisma studio         # GUI to browse geocache and badge_cache
+npx prisma studio         # GUI to browse tables
 npx prisma generate       # Regenerate Prisma client after schema edits
 
-# Geocache seeding (one-shot, idempotent)
-pnpm seed:geonames:dry    # Preview keys that would be inserted
-pnpm seed:geonames        # Insert ~51k GeoNames entries into geocache
+# Geocache seeding
+pnpm seed:geonames:dry    # Preview, no insert
+pnpm seed:geonames        # Insert ~51k GeoNames entries (idempotent)
 
-# Language backfill (Language Atlas data)
-pnpm backfill:languages --from-cache   # Pre-fill from star_event + badge_cache (no API)
-pnpm backfill:languages --token-index 0  # Fill remaining via GitHub API (parallelizable)
+# Language Atlas backfill
+pnpm backfill:languages --from-cache     # Fill from existing cache (no API)
+pnpm backfill:languages --token-index 0  # Fill remaining via GitHub API
 
 # DB sync (local Docker → Neon prod)
 pnpm db:sync              # Push github_user, star_event, badge_cache, stargazer_cache + refresh MVs
 ```
 
+---
+
 ## Privacy & Data
+
+<details>
+<summary><strong>What data is collected, what we do with it, and your rights</strong></summary>
 
 ### What data is collected
 
@@ -135,7 +218,7 @@ StarMapper accesses **publicly available data** from the GitHub API, the same da
 - Self-declared location field (e.g. "Paris, France")
 - Star date
 
-No private data is ever accessed. No email addresses. No repository data beyond the public stargazer list.
+No private data is ever accessed. No email addresses. No repository content or commit history.
 
 ### What we do with it
 
@@ -148,19 +231,19 @@ Location text is geocoded into coordinates (via Jawg → Geoapify → Nominatim)
 - No user accounts, no email collection
 - No monetisation of any kind (this is a free, non-commercial side project)
 
-### This project makes no money
+### Data retention
 
-StarMapper is a free, open-source tool built by one developer. No revenue, no investors, no sponsorship. The geocoding cache and scan results are stored on a Neon free-tier Postgres database (512 MB). Data is automatically purged after 12 months.
+StarMapper runs on a Neon free-tier Postgres database (512 MB). Geocoding cache entries and scan results are automatically purged after 12 months.
 
 ### Your rights
 
-If you want your profile data removed:
-
-**Option 1 (immediate):** Remove or clear your location in your [GitHub profile settings](https://github.com/settings/profile). The next scan that includes you will use your updated profile.
+**Option 1 (immediate):** Remove or clear your location in your [GitHub profile settings](https://github.com/settings/profile). The next scan that includes you will use the updated profile.
 
 **Option 2 (full deletion):** Email `florian@bruniaux.com` with the subject "GDPR Data Deletion Request" and your GitHub username. Done within 30 days.
 
 Full privacy policy: [starmapper.bruniaux.com/privacy](https://starmapper.bruniaux.com/privacy)
+
+</details>
 
 ---
 
@@ -169,19 +252,39 @@ Full privacy policy: [starmapper.bruniaux.com/privacy](https://starmapper.brunia
 StarMapper is made possible thanks to the generous support of:
 
 - **[JawgMaps](https://www.jawg.io)** for map tiles and a dedicated geocoding instance (`starmapper.jawg.io`) powering the primary location resolution
-- **[Neon](https://neon.tech)** for serverless Postgres hosting the geocache, scan results, and all user data
+- **[Neon](https://neon.tech)** for serverless Postgres hosting the geocache, scan results, and all user-level data
 
 ---
 
 ## Contributing
 
-Open an issue before sending a pull request for anything beyond a typo fix. The project is intentionally minimal; see `CLAUDE.md` section X for what is explicitly out of scope.
+Open an issue before sending a pull request for anything beyond a typo fix. The project is intentionally minimal; `CLAUDE.md` section X lists what is explicitly out of scope.
 
 By submitting a pull request, you certify that your contribution complies with the [Developer Certificate of Origin v1.1](https://developercertificate.org/). Add a `Signed-off-by` line to your commits (`git commit -s`).
 
+---
+
+## About the Author
+
+**Florian Bruniaux**, developer and builder based in France. Heavy Claude Code user.
+
+I build open-source dev tools and share what actually works from my own practice. StarMapper started as a weekend experiment to visualize my own repo's audience, kept evolving, and ended up being useful to others too.
+
+Other projects you might find useful:
+
+| Project | What it is |
+|---|---|
+| [claude-code-ultimate-guide](https://github.com/FlorianBruniaux/claude-code-ultimate-guide) | 24K+ lines covering Claude Code: architecture, security (24 CVEs tracked), TDD/SDD/BDD workflows, 271 quiz questions, 228 templates |
+| [claude-cowork-guide](https://github.com/FlorianBruniaux/claude-cowork-guide) | Claude for non-coders: writers, ops managers, people who want async workflows without writing code |
+| [cc-copilot-bridge](https://github.com/FlorianBruniaux/cc-copilot-bridge) | Route Claude Code through GitHub Copilot Pro+ for flat-rate billing ($10/month instead of per-token) |
+
+GitHub: [github.com/FlorianBruniaux](https://github.com/FlorianBruniaux) · Email: florian@bruniaux.com
+
+---
+
 ## License
 
-[AGPL-3.0-only](./LICENSE), free to use, fork, and self-host. If you modify StarMapper™ and run it as a public service, you must publish your source changes under the same license.
+[AGPL-3.0-only](./LICENSE), free to use, fork, and self-host. If you modify StarMapper and run it as a public service, you must publish your source changes under the same license.
 
 To report a license violation: florian@bruniaux.com
 

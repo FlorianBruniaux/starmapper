@@ -29,9 +29,6 @@ importers:
       next:
         specifier: 16.2.3
         version: 16.2.3(@babel/core@7.29.0)(react-dom@19.2.4(react@19.2.5))(react@19.2.5)
-      prisma:
-        specifier: ^7.7.0
-        version: 7.7.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.5))(react@19.2.5)(typescript@5.9.3)
       react:
         specifier: 19.2.5
         version: 19.2.5
@@ -93,6 +90,9 @@ importers:
       pg:
         specifier: ^8.20.0
         version: 8.20.0
+      prisma:
+        specifier: ^7.7.0
+        version: 7.7.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.5))(react@19.2.5)(typescript@5.9.3)
       tailwindcss:
         specifier: ^4
         version: 4.2.2
