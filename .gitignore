@@ -70,3 +70,6 @@ research-*.md
 # ESLint cache
 .eslintcache
 .worktrees/
+
+# Serena — tout ignoré
+.serena/
