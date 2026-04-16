@@ -4,16 +4,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { geocode } from "@/lib/geocoder";
-import { requireAdminAuth } from "@/lib/api-helpers";
 
 export type RecalculateLocationResult =
   | { lat: number; lng: number }
   | { unmapped: true };
 
 export const POST = async (req: NextRequest) => {
-  const authError = requireAdminAuth(req);
-  if (authError) return authError;
-
   let login: string;
   try {
     const body = await req.json();
