@@ -54,6 +54,9 @@ next-env.d.ts
 # Local Claude docs (non-versioned)
 claudedocs/
 
+# Local MCP config (user-specific paths)
+.mcp.json
+
 # Seed script output
 scripts/geocache-preview.json
 
