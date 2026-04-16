@@ -66,7 +66,11 @@ const appOrigin = (): string => {
  */
 const classifyRoute = (method: string, pathname: string): Tier => {
   // Public embeddables — cross-origin by design, no restrictions
-  if (pathname.startsWith("/api/badge/") || pathname.startsWith("/api/map-image/")) {
+  if (
+    pathname.startsWith("/api/badge/") ||
+    pathname.startsWith("/api/map-image/") ||
+    pathname.startsWith("/api/geo/")
+  ) {
     return "public";
   }
 
@@ -168,7 +172,7 @@ const withCors = (res: NextResponse, isPublic: boolean): NextResponse => {
   const origin = isPublic ? "*" : (appOrigin() || "");
   if (origin) res.headers.set("Access-Control-Allow-Origin", origin);
   res.headers.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  res.headers.set("Access-Control-Allow-Headers", "Content-Type, x-gh-token, x-admin-secret");
+  res.headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization, x-gh-token, x-admin-secret");
   if (!isPublic) res.headers.set("Access-Control-Max-Age", "86400");
   return res;
 };
@@ -179,7 +183,10 @@ export const middleware = async (req: NextRequest): Promise<NextResponse> => {
 
   // ── CORS preflight ────────────────────────────────────────────────────────
   if (method === "OPTIONS" && pathname.startsWith("/api/")) {
-    const isPublic = pathname.startsWith("/api/badge/") || pathname.startsWith("/api/map-image/");
+    const isPublic =
+      pathname.startsWith("/api/badge/") ||
+      pathname.startsWith("/api/map-image/") ||
+      pathname.startsWith("/api/geo/");
     return withCors(new NextResponse(null, { status: 204 }), isPublic);
   }
 

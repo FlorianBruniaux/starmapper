@@ -1,6 +1,6 @@
 # StarMapper Roadmap
 
-*Last updated: 2026-04-16 — v0.3.1*
+*Last updated: 2026-04-16 — v0.3.2*
 
 ---
 
@@ -17,12 +17,11 @@
 - **Explore page** — `/explore` leaderboard: top stargazers by followers and public repos, top companies, top locations, filterable by country and company. Cross-repo funnel.
 - **Heatmap mode** — toggle dots vs heat density on the map. Implemented as a native MapLibre `heatmap` layer (`stargazer-map.tsx:100-113`), toggled from the dock.
 - **Multi-repo compare** — overlay two repos on the same map to see audience overlap. Browser orchestrates a parallel chunk scan for the second repo (`page.tsx:602-638`), rendered as a distinct color layer.
+- **Public GeoJSON API** — `GET /api/geo/[owner]/[repo]` with API key auth. Aggregate countries + cities only (RGPD-safe). Rate-limited via Upstash. Keys provisioned manually via `scripts/generate-api-key.ts`.
 
 ---
 
 ## Quick wins (1-2h each)
-
-- **Public GeoJSON API** — `GET /api/geo/[owner]/[repo]` returns the GeoJSON for a cached scan. For researchers, journalists, developers who want to build on top of it.
 
 ---
 
@@ -53,10 +52,8 @@
 
 ## Priority order
 
-1. **Animated timelapse** — frontend only, `starredAt` data already stored, high social ROI
-2. **Public GeoJSON API** — 0.5 day, unlocks third-party use cases
-3. **Profile `/profile/[login]`** — SEO and new acquisition funnel (API shell exists)
-4. **Chrome extension** — biggest distribution lever
+1. **Profile `/profile/[login]`** — SEO and new acquisition funnel (API shell exists)
+2. **Chrome extension** — biggest distribution lever
 
 ---
 

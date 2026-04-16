@@ -99,3 +99,15 @@ model DeletionLog {
   @@index([requestedAt(sort: Desc)])
   @@map("deletion_log")
 }
+
+model ApiKey {
+  key        String    @id @default(uuid())
+  email      String
+  name       String
+  note       String?
+  createdAt  DateTime  @default(now())
+  revokedAt  DateTime?
+  lastUsedAt DateTime?
+
+  @@map("api_key")
+}
