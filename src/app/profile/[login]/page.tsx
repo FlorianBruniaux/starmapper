@@ -121,6 +121,8 @@ export default function ProfilePage({ params }: Props) {
   const [nearby, setNearby] = useState<NearbyResponse | null>(null);
   const [showAllOwned, setShowAllOwned] = useState(false);
   const [showAllStarred, setShowAllStarred] = useState(false);
+  const [pinnedLogins, setPinnedLogins] = useState<Set<string>>(new Set());
+  const [mapFlyTarget, setMapFlyTarget] = useState<{ lat: number; lng: number; login: string; zoom?: number } | null>(null);
 
   // Token modal
   const [tokenOpen, setTokenOpen] = useState(false);
@@ -184,7 +186,7 @@ export default function ProfilePage({ params }: Props) {
     return () => ctrl.abort();
   }, [profile, login]);
 
-  // Build a single synthetic StargazerPoint for the mini-map
+  // Build a single synthetic StargazerPoint for the profile user
   const miniMapPoints: StargazerPoint[] =
     profile?.lat && profile?.lng
       ? [{
@@ -201,6 +203,38 @@ export default function ProfilePage({ params }: Props) {
           linkedinUrl: null,
         }]
       : [];
+
+  // Pinned nearby users added as extra map points
+  const pinnedPoints: StargazerPoint[] = nearby?.users
+    .filter((u) => pinnedLogins.has(u.login))
+    .map((u) => ({
+      login: u.login,
+      name: u.name,
+      bio: u.cityNormalized ?? null,
+      company: u.company,
+      location: u.cityNormalized ?? null,
+      followers: u.followers,
+      avatarUrl: `https://github.com/${u.login}.png`,
+      lat: u.lat,
+      lng: u.lng,
+      starredAt: null,
+      linkedinUrl: null,
+    })) ?? [];
+
+  const allMapPoints = [...miniMapPoints, ...pinnedPoints];
+
+  const togglePin = (u: NearbyResponse["users"][number]) => {
+    setPinnedLogins((prev) => {
+      const next = new Set(prev);
+      if (next.has(u.login)) {
+        next.delete(u.login);
+      } else {
+        next.add(u.login);
+        setMapFlyTarget({ lat: u.lat, lng: u.lng, login: u.login, zoom: 7 });
+      }
+      return next;
+    });
+  };
 
   // ── Not found ─────────────────────────────────────────────────────────────
   if (loadState === "not-found") {
@@ -475,52 +509,69 @@ export default function ProfilePage({ params }: Props) {
           <section className="mb-2" aria-labelledby="nearby-heading">
             <SectionHeader title="Developers nearby" count={nearby.total} id="nearby-heading" />
             <ul className="flex flex-col gap-1.5" role="list">
-              {nearby.users.slice(0, 10).map((u) => (
-                <li key={u.login}>
-                  <Link
-                    href={`/profile/${u.login}`}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-border
-                               bg-surface hover:border-accent-blue/50 hover:bg-surface-alt
-                               transition-colors group"
-                  >
-                    {/* avatar + trackedRepos badge overlay */}
-                    <div className="relative shrink-0">
-                      <img
-                        src={`https://github.com/${u.login}.png`}
-                        alt=""
-                        className="size-9 rounded-full border border-border"
-                        width={36}
-                        height={36}
-                      />
-                      {u.trackedRepos > 1 && (
-                        <span className="absolute -bottom-0.5 -right-0.5 min-w-4 h-4 px-0.5
-                                         flex items-center justify-center
-                                         text-2xs font-semibold tabular-nums leading-none
-                                         bg-accent-blue text-background rounded-full border border-background">
-                          {u.trackedRepos}
+              {nearby.users.slice(0, 10).map((u) => {
+                const isPinned = pinnedLogins.has(u.login);
+                return (
+                  <li key={u.login}>
+                    <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-border
+                                    bg-surface hover:border-accent-blue/50 hover:bg-surface-alt
+                                    transition-colors group">
+                      {/* avatar — links to profile */}
+                      <Link href={`/profile/${u.login}`} className="relative shrink-0">
+                        <img
+                          src={`https://github.com/${u.login}.png`}
+                          alt=""
+                          className="size-9 rounded-full border border-border"
+                          width={36}
+                          height={36}
+                        />
+                        {u.trackedRepos > 1 && (
+                          <span className="absolute -bottom-0.5 -right-0.5 min-w-4 h-4 px-0.5
+                                           flex items-center justify-center
+                                           text-2xs font-semibold tabular-nums leading-none
+                                           bg-accent-blue text-background rounded-full border border-background">
+                            {u.trackedRepos}
+                          </span>
+                        )}
+                      </Link>
+                      {/* name + city — links to profile */}
+                      <Link href={`/profile/${u.login}`} className="flex flex-col min-w-0 flex-1">
+                        <span className="text-sm text-foreground group-hover:text-accent-blue
+                                         transition-colors font-medium truncate leading-snug">
+                          {u.name ?? u.login}
                         </span>
-                      )}
+                        {u.cityNormalized && (
+                          <span className="text-xs text-muted truncate">{u.cityNormalized}</span>
+                        )}
+                      </Link>
+                      {/* distance + followers */}
+                      <div className="flex flex-col items-end shrink-0 gap-0.5">
+                        <span className="text-xs font-medium text-muted tabular-nums">
+                          {u.distanceKm < 1 ? "<1" : u.distanceKm.toFixed(0)} km
+                        </span>
+                        <span className="text-2xs text-muted-subtle tabular-nums">
+                          {formatCount(u.followers)} followers
+                        </span>
+                      </div>
+                      {/* pin on map */}
+                      <button
+                        onClick={() => togglePin(u)}
+                        title={isPinned ? "Unpin from map" : "Pin on map"}
+                        aria-label={isPinned ? `Unpin ${u.login} from map` : `Pin ${u.login} on map`}
+                        className={`shrink-0 p-1.5 rounded-md transition-colors
+                          ${isPinned
+                            ? "text-accent-blue bg-accent-blue/10 hover:bg-accent-blue/20"
+                            : "text-muted-subtle hover:text-foreground hover:bg-surface-alt opacity-0 group-hover:opacity-100"
+                          }`}
+                      >
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                          <path d="M8 0a5.53 5.53 0 0 0-5.5 5.5C2.5 9.5 8 16 8 16s5.5-6.5 5.5-10.5A5.53 5.53 0 0 0 8 0zm0 7.5a2 2 0 1 1 0-4 2 2 0 0 1 0 4z"/>
+                        </svg>
+                      </button>
                     </div>
-                    <div className="flex flex-col min-w-0 flex-1">
-                      <span className="text-sm text-foreground group-hover:text-accent-blue
-                                       transition-colors font-medium truncate leading-snug">
-                        {u.name ?? u.login}
-                      </span>
-                      {u.cityNormalized && (
-                        <span className="text-xs text-muted truncate">{u.cityNormalized}</span>
-                      )}
-                    </div>
-                    <div className="flex flex-col items-end shrink-0 gap-0.5">
-                      <span className="text-xs font-medium text-muted tabular-nums">
-                        {u.distanceKm < 1 ? "<1" : u.distanceKm.toFixed(0)} km
-                      </span>
-                      <span className="text-2xs text-muted-subtle tabular-nums">
-                        {formatCount(u.followers)} followers
-                      </span>
-                    </div>
-                  </Link>
-                </li>
-              ))}
+                  </li>
+                );
+              })}
             </ul>
           </section>
         )}
@@ -546,7 +597,11 @@ export default function ProfilePage({ params }: Props) {
         {/* ── Right: full-height map ──────────────────────────────────── */}
         {hasMap && (
           <div className="flex-1 relative">
-            <StargazerMapDynamic points={miniMapPoints} />
+            <StargazerMapDynamic
+              points={allMapPoints}
+              flyTarget={mapFlyTarget}
+              onFlyDone={() => setMapFlyTarget(null)}
+            />
           </div>
         )}
       </div>{/* end two-column flex container */}
