@@ -3,6 +3,8 @@
 -- Refresh: included in /api/admin/refresh-grid-mv (daily cron).
 -- Run once per DB instance (local Docker + Neon prod).
 
+SET statement_timeout = 0;
+
 CREATE MATERIALIZED VIEW user_repo_count_mv AS
 SELECT login, COUNT(*) AS repo_count
 FROM star_event
