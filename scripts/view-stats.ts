@@ -231,9 +231,19 @@ const runGlobalMode = async () => {
   const today = new Date();
   today.setUTCHours(0, 0, 0, 0);
 
-  const typeWhere = TYPE ? `AND type = '${TYPE}'` : "";
+  const trendRows = TYPE
+    ? await prisma.$queryRaw<DayRow[]>`
+        SELECT date, SUM(count)::bigint AS total
+        FROM page_view WHERE date >= ${since} AND type = ${TYPE}
+        GROUP BY date ORDER BY date ASC
+      `
+    : await prisma.$queryRaw<DayRow[]>`
+        SELECT date, SUM(count)::bigint AS total
+        FROM page_view WHERE date >= ${since}
+        GROUP BY date ORDER BY date ASC
+      `;
 
-  const [repoRows, profileRows, trendRows, todayRows, grandTotal] = await Promise.all([
+  const [repoRows, profileRows, todayRows, grandTotal] = await Promise.all([
     TYPE === "profile" ? Promise.resolve([]) : prisma.$queryRaw<TopRow[]>`
       SELECT slug, type, SUM(count)::bigint AS total
       FROM page_view WHERE type = 'repo'
@@ -244,13 +254,6 @@ const runGlobalMode = async () => {
       FROM page_view WHERE type = 'profile'
       GROUP BY slug, type ORDER BY total DESC LIMIT ${TOP}
     `,
-    prisma.$queryRaw<DayRow[]>(
-      typeWhere
-        ? `SELECT date, SUM(count)::bigint AS total FROM page_view WHERE date >= $1 AND type = $2 GROUP BY date ORDER BY date ASC` as unknown as TemplateStringsArray
-        : `SELECT date, SUM(count)::bigint AS total FROM page_view WHERE date >= $1 GROUP BY date ORDER BY date ASC` as unknown as TemplateStringsArray,
-      since,
-      ...(TYPE ? [TYPE] : []),
-    ),
     prisma.$queryRaw<Array<{ type: string; total: bigint }>>`
       SELECT type, SUM(count)::bigint AS total
       FROM page_view WHERE date = ${today}
