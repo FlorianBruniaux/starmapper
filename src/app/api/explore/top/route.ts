@@ -85,7 +85,12 @@ export const GET = async (req: NextRequest) => {
             select: { login: true, name: true, followers: true, company: true, publicRepos: true, lat: true, lng: true, countryNormalized: true },
           }),
       // Avoid full table COUNT on unfiltered requests — use pg_class estimate (microseconds vs 2s).
-      isFiltered
+      // country-only filter: country_stats_mv has the pre-aggregated count (<5ms vs 7s full scan).
+      isFiltered && country && !search
+        ? prisma.$queryRaw<{ cnt: bigint }[]>`
+            SELECT cnt FROM country_stats_mv WHERE LOWER(country) = LOWER(${country})
+          `.then((rows) => Number(rows[0]?.cnt ?? 0))
+        : isFiltered
         ? prisma.gitHubUser.count({ where })
         : prisma.$queryRaw<{ n: bigint }[]>`
             SELECT reltuples::bigint AS n FROM pg_class WHERE relname = 'github_user'

@@ -67,7 +67,9 @@ export const GET = async (req: NextRequest) => {
   if (skip >= MAX_RESULTS) return jsonError("invalid_params", 400);
 
   try {
-    // Main query: bounding box + Haversine + tracked repo count
+    // Main query: bounding box + Haversine + tracked repo count.
+    // user_repo_count_mv replaces the expensive LEFT JOIN star_event + COUNT(DISTINCT) (11.9M rows).
+    // Falls back to 0 for users not in the MV (not yet refreshed or no star events).
     const rows = await prisma.$queryRaw<{
       login: string;
       name: string | null;
@@ -99,9 +101,9 @@ export const GET = async (req: NextRequest) => {
               + sin(radians(${lat})) * sin(radians(u.lat)))
             ))::numeric, 1
           )::float                                    AS distance_km,
-          COUNT(DISTINCT s.owner || '/' || s.repo)    AS tracked_repos
+          COALESCE(rc.repo_count, 0)                  AS tracked_repos
         FROM github_user u
-        LEFT JOIN star_event s ON s.login = u.login
+        LEFT JOIN user_repo_count_mv rc ON rc.login = u.login
         WHERE
           u.lat BETWEEN ${minLat} AND ${maxLat}
           AND u.lng BETWEEN ${minLng} AND ${maxLng}
@@ -114,8 +116,6 @@ export const GET = async (req: NextRequest) => {
               + sin(radians(${lat})) * sin(radians(u.lat)))
             )
           ) <= ${radius}
-        GROUP BY u.login, u.name, u.followers, u.company,
-                 u."cityNormalized", u."countryNormalized", u.lat, u.lng
       )
       SELECT *, COUNT(*) OVER() AS total_count
       FROM nearby
