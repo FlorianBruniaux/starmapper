@@ -1318,9 +1318,7 @@ export default function MapPage({
                 </div>
                 <div className="min-w-0 flex-1">
                   <a
-                    href={`https://github.com/${u.login}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    href={`/profile/${u.login}`}
                     className="text-accent-blue font-medium hover:underline block truncate"
                   >
                     @{u.login}
@@ -1638,9 +1636,7 @@ export default function MapPage({
                           }
                           <div className="min-w-0">
                             <a
-                              href={`https://github.com/${u.login}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
+                              href={`/profile/${u.login}`}
                               onClick={(e) => e.stopPropagation()}
                               className="text-accent-blue font-medium hover:underline"
                             >
@@ -2320,9 +2316,7 @@ export default function MapPage({
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5 flex-wrap">
                             <a
-                              href={`https://github.com/${u.login}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
+                              href={`/profile/${u.login}`}
                               className="text-accent-blue text-xs font-medium hover:underline"
                             >
                               @{u.login}
@@ -2412,9 +2406,7 @@ export default function MapPage({
                       <NextImage src={u.avatarUrl} alt="" width={32} height={32} className="w-8 h-8 rounded-full flex-shrink-0 ring-1 ring-border" />
                       <div className="flex-1 min-w-0">
                         <a
-                          href={`https://github.com/${u.login}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                          href={`/profile/${u.login}`}
                           className="text-accent-blue text-xs font-medium hover:underline"
                         >
                           @{u.login}

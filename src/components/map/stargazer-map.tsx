@@ -376,8 +376,14 @@ const makePopupElement = (props: Record<string, unknown>): HTMLElement => {
   link.style.cssText = "color:var(--color-accent-blue);text-decoration:none;font-size:13px";
   link.textContent = `@${login}`;
 
+  const profileLink = document.createElement("a");
+  profileLink.href = `/profile/${login}`;
+  profileLink.style.cssText = "color:var(--color-muted);text-decoration:none;font-size:11px;margin-left:6px;font-weight:500";
+  profileLink.textContent = "View profile →";
+
   nameBlock.appendChild(nameEl);
   nameBlock.appendChild(link);
+  nameBlock.appendChild(profileLink);
   header.appendChild(nameBlock);
   el.appendChild(header);
 

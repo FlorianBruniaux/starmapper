@@ -850,9 +850,7 @@ export default function ExplorePage() {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-1.5">
                               <a
-                                href={`https://github.com/${u.login}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
+                                href={`/profile/${u.login}`}
                                 className="text-accent-blue text-sm font-medium hover:underline truncate"
                               >
                                 @{u.login}
@@ -951,9 +949,7 @@ export default function ExplorePage() {
                               />
                               <div className="flex-1 min-w-0">
                                 <a
-                                  href={`https://github.com/${u.login}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
+                                  href={`/profile/${u.login}`}
                                   className="text-accent-blue text-sm font-medium hover:underline"
                                 >
                                   @{u.login}
@@ -1155,9 +1151,7 @@ export default function ExplorePage() {
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-center gap-1.5">
                                     <a
-                                      href={`https://github.com/${u.login}`}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
+                                      href={`/profile/${u.login}`}
                                       className="text-accent-blue text-sm font-medium hover:underline truncate"
                                     >
                                       @{u.login}
