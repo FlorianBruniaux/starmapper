@@ -265,6 +265,15 @@ export default function MapPage({
     setStoredUsernameState(getStoredUsername());
   }, []);
 
+  // Track repo view — fire-and-forget
+  useEffect(() => {
+    fetch("/api/track", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type: "repo", slug: `${owner}/${repo}` }),
+    }).catch(() => {});
+  }, [owner, repo]);
+
   // Load repo info
   useEffect(() => {
     const t = getStoredToken();

@@ -26,6 +26,7 @@ export type ProfileResponse = {
   countryNormalized: string | null;
   cityNormalized: string | null;
   languages: string[];
+  linkedinUrl: string | null;
   ownedRepos: ProfileRepo[];
   starredRepos: ProfileRepo[];
   starredCount: number;
@@ -58,6 +59,7 @@ export const GET = async (
         countryNormalized: true,
         cityNormalized: true,
         languages: true,
+        linkedinUrl: true,
       },
     });
 
@@ -98,6 +100,7 @@ export const GET = async (
         countryNormalized: null,
         cityNormalized: null,
         languages: [],
+        linkedinUrl: null,
         ownedRepos,
         starredRepos: [],
         starredCount: 0,
@@ -183,6 +186,7 @@ export const GET = async (
       countryNormalized: user.countryNormalized,
       cityNormalized: user.cityNormalized,
       languages: user.languages,
+      linkedinUrl: user.linkedinUrl,
       ownedRepos,
       starredRepos,
       starredCount,

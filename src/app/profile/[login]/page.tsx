@@ -3,7 +3,7 @@
 
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Header } from "@/components/header";
 import { StargazerMapDynamic } from "@/components/map/stargazer-map-dynamic";
@@ -16,6 +16,15 @@ import type { StargazerPoint } from "@/app/api/chunk/route";
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
+
+const obfuscateEmail = (email: string): string => {
+  const at = email.indexOf("@");
+  if (at < 0) return email;
+  const local = email.slice(0, at);
+  const domain = email.slice(at + 1);
+  const visible = local.slice(0, Math.min(2, local.length));
+  return `${visible}${"*".repeat(Math.max(3, local.length - visible.length))}@${domain}`;
+};
 
 const timeAgo = (iso: string): string => {
   const diff = Date.now() - new Date(iso).getTime();
@@ -117,10 +126,12 @@ type Props = {
 export default function ProfilePage({ params }: Props) {
   const [login, setLogin] = useState("");
   const [profile, setProfile] = useState<ProfileResponse | null>(null);
-  const [loadState, setLoadState] = useState<"loading" | "not-found" | "error" | "loaded">("loading");
+  const [loadState, setLoadState] = useState<"loading" | "fetching-live" | "not-found" | "error" | "loaded">("loading");
   const [nearby, setNearby] = useState<NearbyResponse | null>(null);
   const [showAllOwned, setShowAllOwned] = useState(false);
   const [showAllStarred, setShowAllStarred] = useState(false);
+  const [refreshState, setRefreshState] = useState<"idle" | "loading" | "cooldown">("idle");
+  const [refreshCooldownMin, setRefreshCooldownMin] = useState(0);
   const [pinnedLogins, setPinnedLogins] = useState<Set<string>>(new Set());
   const [mapFlyTarget, setMapFlyTarget] = useState<{ lat: number; lng: number; login: string; zoom?: number } | null>(null);
 
@@ -128,10 +139,81 @@ export default function ProfilePage({ params }: Props) {
   const [tokenOpen, setTokenOpen] = useState(false);
   const [hasToken, setHasToken] = useState(false);
 
+  // Contact dropdown
+  const [contactOpen, setContactOpen] = useState(false);
+  const [contactDetails, setContactDetails] = useState<{ email: string | null; twitter: string | null; blog: string | null } | null>(null);
+  const [contactLoading, setContactLoading] = useState(false);
+  const [emailCopied, setEmailCopied] = useState(false);
+
   const handleTokenClose = useCallback(() => {
     setTokenOpen(false);
     setHasToken(!!getStoredToken());
   }, []);
+
+  const handleRefresh = useCallback(async () => {
+    if (refreshState === "loading" || refreshState === "cooldown") return;
+    setRefreshState("loading");
+
+    try {
+      const token = getStoredToken();
+      const headers: Record<string, string> = {};
+      if (token) headers["x-gh-token"] = token;
+
+      const res = await fetch(`/api/profile/${encodeURIComponent(login)}/refresh`, {
+        method: "POST",
+        headers,
+      });
+
+      if (res.status === 429) {
+        const data = await res.json() as { retryAfterSec?: number };
+        const minutes = Math.ceil((data.retryAfterSec ?? 3600) / 60);
+        setRefreshCooldownMin(minutes);
+        setRefreshState("cooldown");
+        return;
+      }
+
+      if (!res.ok) { setRefreshState("idle"); return; }
+
+      // Re-fetch profile to reflect updated data
+      const profileRes = await fetch(`/api/profile/${encodeURIComponent(login)}`);
+      if (profileRes.ok) {
+        const data = await profileRes.json() as ProfileResponse;
+        setProfile(data);
+      }
+      setRefreshState("idle");
+    } catch {
+      setRefreshState("idle");
+    }
+  }, [login, refreshState]);
+
+  const handleContactOpen = useCallback(async () => {
+    setContactOpen((prev) => !prev);
+    if (contactDetails !== null || contactLoading) return;
+    setContactLoading(true);
+    try {
+      const token = getStoredToken();
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) headers["x-gh-token"] = token;
+      const res = await fetch("/api/user-details", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ logins: [login] }),
+      });
+      if (res.ok) {
+        const { users } = await res.json() as { users: Array<{ email: string | null; twitter_username: string | null; blog: string | null }> };
+        const u = users[0];
+        setContactDetails(u
+          ? { email: u.email, twitter: u.twitter_username, blog: u.blog }
+          : { email: null, twitter: null, blog: null });
+      } else {
+        setContactDetails({ email: null, twitter: null, blog: null });
+      }
+    } catch {
+      setContactDetails({ email: null, twitter: null, blog: null });
+    } finally {
+      setContactLoading(false);
+    }
+  }, [login, contactDetails, contactLoading]);
 
   // Resolve async params
   useEffect(() => {
@@ -152,8 +234,31 @@ export default function ProfilePage({ params }: Props) {
     const ctrl = new AbortController();
     fetch(`/api/profile/${encodeURIComponent(login)}`, { signal: ctrl.signal })
       .then(async (res) => {
-        if (res.status === 404) { setLoadState("not-found"); return; }
-        if (!res.ok) { setLoadState("error"); return; }
+        if (!res.ok) {
+          if (res.status === 404) {
+            // Not in StarMapper yet — try to fetch live from GitHub
+            setLoadState("fetching-live");
+            const token = getStoredToken();
+            const headers: Record<string, string> = {};
+            if (token) headers["x-gh-token"] = token;
+            const refreshRes = await fetch(
+              `/api/profile/${encodeURIComponent(login)}/refresh`,
+              { method: "POST", headers, signal: ctrl.signal },
+            );
+            if (!refreshRes.ok) { setLoadState("not-found"); return; }
+            const profileRes = await fetch(
+              `/api/profile/${encodeURIComponent(login)}`,
+              { signal: ctrl.signal },
+            );
+            if (!profileRes.ok) { setLoadState("not-found"); return; }
+            const data = await profileRes.json() as ProfileResponse;
+            setProfile(data);
+            setLoadState("loaded");
+          } else {
+            setLoadState("error");
+          }
+          return;
+        }
         const data = await res.json() as ProfileResponse;
         setProfile(data);
         setLoadState("loaded");
@@ -163,6 +268,16 @@ export default function ProfilePage({ params }: Props) {
       });
 
     return () => ctrl.abort();
+  }, [login]);
+
+  // Track profile view — fire-and-forget, no await
+  useEffect(() => {
+    if (!login) return;
+    fetch("/api/track", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type: "profile", slug: login.toLowerCase() }),
+    }).catch(() => {});
   }, [login]);
 
   // Fetch nearby — non-blocking, only if profile has coords
@@ -236,6 +351,20 @@ export default function ProfilePage({ params }: Props) {
     });
   };
 
+  // ── Fetching live from GitHub ──────────────────────────────────────────────
+  if (loadState === "fetching-live") {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen gap-4 bg-background text-foreground px-4">
+        <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor"
+          className="text-muted animate-spin" aria-hidden="true">
+          <path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+          <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+        </svg>
+        <p className="text-muted text-sm">Fetching <span className="text-foreground font-medium">{login}</span> from GitHub…</p>
+      </div>
+    );
+  }
+
   // ── Not found ─────────────────────────────────────────────────────────────
   if (loadState === "not-found") {
     return (
@@ -248,12 +377,12 @@ export default function ProfilePage({ params }: Props) {
               <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
             </svg>
           </div>
-          <p className="text-foreground font-semibold">User not tracked yet</p>
+          <p className="text-foreground font-semibold">User not found on GitHub</p>
           <p className="text-muted text-sm max-w-xs">
             <code className="font-mono bg-surface border border-border px-1.5 py-0.5 rounded text-xs">
               {login}
             </code>{" "}
-            hasn&apos;t been seen on any StarMapper scan yet.
+            doesn&apos;t exist on GitHub or couldn&apos;t be fetched.
           </p>
         </div>
         <Link href="/" className="flex items-center gap-1.5 text-accent-blue text-sm hover:underline">
@@ -276,8 +405,28 @@ export default function ProfilePage({ params }: Props) {
     );
   }
 
+  const [starredLang, setStarredLang] = useState<string | null>(null);
+  const [starredSort, setStarredSort] = useState<"date" | "stars" | "mapped">("date");
+
+  const starredLangs = useMemo(() => {
+    const langs = new Set<string>();
+    for (const r of profile?.starredRepos ?? []) if (r.language) langs.add(r.language);
+    return [...langs].sort();
+  }, [profile?.starredRepos]);
+
+  const starredFiltered = useMemo(() => {
+    let repos = profile?.starredRepos ?? [];
+    if (starredLang) repos = repos.filter((r) => r.language === starredLang);
+    return [...repos].sort((a, b) => {
+      if (starredSort === "stars") return b.totalCount - a.totalCount;
+      if (starredSort === "mapped")
+        return (b.mappedCount / Math.max(b.totalCount, 1)) - (a.mappedCount / Math.max(a.totalCount, 1));
+      return new Date(b.starredAt ?? 0).getTime() - new Date(a.starredAt ?? 0).getTime();
+    });
+  }, [profile?.starredRepos, starredLang, starredSort]);
+
   const ownedVisible = showAllOwned ? profile?.ownedRepos : profile?.ownedRepos.slice(0, 12);
-  const starredVisible = showAllStarred ? profile?.starredRepos : profile?.starredRepos.slice(0, 12);
+  const starredVisible = showAllStarred ? starredFiltered : starredFiltered.slice(0, 12);
   const hasMap = !!(profile?.lat && profile?.lng);
 
   // ── Main render ───────────────────────────────────────────────────────────
@@ -352,19 +501,194 @@ export default function ProfilePage({ params }: Props) {
               width={80}
               height={80}
             />
-            <div className="flex flex-col gap-1.5 min-w-0 pt-0.5">
-              <div className="flex items-baseline gap-2 flex-wrap">
-                <h1 className="text-foreground font-semibold text-xl leading-tight">
-                  {profile.name ?? profile.login}
-                </h1>
-                {profile.name && (
-                  <span className="text-muted text-sm">{profile.login}</span>
-                )}
-                {profile.partial && (
-                  <span className="text-2xs font-medium px-1.5 py-0.5 rounded-full border border-border text-muted-subtle">
-                    Repo owner · limited data
-                  </span>
-                )}
+            <div className="flex flex-col gap-1.5 min-w-0 pt-0.5 flex-1">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-baseline gap-2 flex-wrap min-w-0">
+                  <h1 className="text-foreground font-semibold text-xl leading-tight">
+                    {profile.name ?? profile.login}
+                  </h1>
+                  {profile.name && (
+                    <span className="text-muted text-sm">{profile.login}</span>
+                  )}
+                  {profile.partial && (
+                    <span className="text-2xs font-medium px-1.5 py-0.5 rounded-full border border-border text-muted-subtle">
+                      Repo owner · limited data
+                    </span>
+                  )}
+                </div>
+                {/* Actions — top right of profile card */}
+                <div className="flex items-center gap-2 shrink-0">
+                  <a
+                    href={`https://github.com/${profile.login}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title="View on GitHub"
+                    aria-label="View on GitHub"
+                    className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md border
+                               border-border text-muted hover:text-foreground hover:border-accent-blue/50 transition-colors"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                      <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/>
+                    </svg>
+                    GitHub
+                  </a>
+                  <button
+                    onClick={handleRefresh}
+                    disabled={refreshState !== "idle"}
+                    title={
+                      refreshState === "cooldown"
+                        ? `Updated recently — try again in ${refreshCooldownMin}min`
+                        : "Refresh profile from GitHub"
+                    }
+                    aria-label="Refresh profile data from GitHub"
+                    className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md border
+                                transition-colors disabled:cursor-not-allowed
+                                ${refreshState === "cooldown"
+                                  ? "border-border text-muted-subtle"
+                                  : "border-border text-muted hover:text-foreground hover:border-accent-blue/50"
+                                }`}
+                  >
+                    <svg
+                      width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"
+                      className={refreshState === "loading" ? "animate-spin" : ""}
+                    >
+                      <path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+                      <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+                    </svg>
+                    {refreshState === "loading" ? "Refreshing…" : refreshState === "cooldown" ? `${refreshCooldownMin}min` : "Refresh"}
+                  </button>
+                  {/* LinkedIn chip — only shown when URL is valid */}
+                  {profile.linkedinUrl?.startsWith("https://") && (
+                    <a
+                      href={profile.linkedinUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title="View LinkedIn profile"
+                      aria-label="View LinkedIn profile"
+                      className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md border
+                                 border-border text-muted hover:text-foreground hover:border-accent-blue/50 transition-colors"
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                        <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                      </svg>
+                      LinkedIn
+                    </a>
+                  )}
+                  {/* Contact dropdown */}
+                  <div className="relative">
+                    <button
+                      onClick={handleContactOpen}
+                      title="Contact channels"
+                      aria-label="Open contact channels"
+                      className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md border
+                                 border-border text-muted hover:text-foreground hover:border-accent-blue/50 transition-colors"
+                    >
+                      <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                        <path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4zm2-1a1 1 0 0 0-1 1v.217l7 4.2 7-4.2V4a1 1 0 0 0-1-1H2zm13 2.383-4.708 2.825L15 11.105V5.383zm-.034 6.876-5.64-3.471L8 9.583l-1.326-.795-5.64 3.47A1 1 0 0 0 2 13h12a1 1 0 0 0 .966-.741zM1 11.105l4.708-2.897L1 5.383v5.722z"/>
+                      </svg>
+                      Contact
+                    </button>
+                    {contactOpen && (
+                      <>
+                        <div className="fixed inset-0 z-10" onClick={() => setContactOpen(false)} />
+                        <div className="absolute right-0 top-full mt-1 z-20 w-56 rounded-lg border border-border bg-surface shadow-lg py-1 overflow-hidden">
+                          <a
+                            href={`https://github.com/${profile.login}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={() => setContactOpen(false)}
+                            className="flex items-center gap-2.5 px-3 py-2 text-sm text-muted hover:text-foreground hover:bg-surface-alt transition-colors"
+                          >
+                            <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                              <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/>
+                            </svg>
+                            GitHub profile
+                          </a>
+                          {profile.linkedinUrl?.startsWith("https://") && (
+                            <a
+                              href={profile.linkedinUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={() => setContactOpen(false)}
+                              className="flex items-center gap-2.5 px-3 py-2 text-sm text-muted hover:text-foreground hover:bg-surface-alt transition-colors"
+                            >
+                              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                              </svg>
+                              LinkedIn
+                            </a>
+                          )}
+                          {contactLoading && (
+                            <div className="flex items-center gap-2 px-3 py-2 text-xs text-muted-subtle">
+                              <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor" className="animate-spin" aria-hidden="true">
+                                <path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+                                <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+                              </svg>
+                              Looking up…
+                            </div>
+                          )}
+                          {!contactLoading && contactDetails && (
+                            <>
+                              {contactDetails.email && (
+                                <button
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(contactDetails.email!).catch(() => {});
+                                    setEmailCopied(true);
+                                    setTimeout(() => setEmailCopied(false), 1500);
+                                  }}
+                                  className="flex items-center gap-2.5 px-3 py-2 text-sm text-muted hover:text-foreground hover:bg-surface-alt transition-colors w-full text-left"
+                                  title="Click to copy email"
+                                >
+                                  <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" className="shrink-0">
+                                    <path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4zm2-1a1 1 0 0 0-1 1v.217l7 4.2 7-4.2V4a1 1 0 0 0-1-1H2zm13 2.383-4.708 2.825L15 11.105V5.383zm-.034 6.876-5.64-3.471L8 9.583l-1.326-.795-5.64 3.47A1 1 0 0 0 2 13h12a1 1 0 0 0 .966-.741zM1 11.105l4.708-2.897L1 5.383v5.722z"/>
+                                  </svg>
+                                  <span className="flex-1 font-mono text-xs">{obfuscateEmail(contactDetails.email)}</span>
+                                  <span className={`text-xs transition-opacity ${emailCopied ? "opacity-100 text-accent-green" : "opacity-0"}`}>
+                                    Copied!
+                                  </span>
+                                </button>
+                              )}
+                              {contactDetails.twitter && (
+                                <a
+                                  href={`https://twitter.com/${contactDetails.twitter}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  onClick={() => setContactOpen(false)}
+                                  className="flex items-center gap-2.5 px-3 py-2 text-sm text-muted hover:text-foreground hover:bg-surface-alt transition-colors"
+                                >
+                                  <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                                  </svg>
+                                  @{contactDetails.twitter}
+                                </a>
+                              )}
+                              {contactDetails.blog && (
+                                <a
+                                  href={contactDetails.blog}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  onClick={() => setContactOpen(false)}
+                                  className="flex items-center gap-2.5 px-3 py-2 text-sm text-muted hover:text-foreground hover:bg-surface-alt transition-colors"
+                                >
+                                  <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                                    <path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1.002 1.002 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4.018 4.018 0 0 1-.128-1.287z"/>
+                                    <path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243z"/>
+                                  </svg>
+                                  Website
+                                </a>
+                              )}
+                              {!contactDetails.email && !contactDetails.twitter && !contactDetails.blog && !profile.linkedinUrl?.startsWith("https://") && (
+                                <p className="px-3 py-2 text-xs text-muted-subtle">
+                                  No other public contact info. Try GitHub directly.
+                                </p>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
               </div>
               {!profile.partial && (profile.company || profile.location) && (
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted">
@@ -500,19 +824,67 @@ export default function ProfilePage({ params }: Props) {
               </p>
             ) : (
               <>
+                {/* Filter + sort controls */}
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mb-3">
+                  {/* Language filter chips */}
+                  {starredLangs.length > 1 && (
+                    <div className="flex flex-wrap gap-1">
+                      <button
+                        onClick={() => { setStarredLang(null); setShowAllStarred(false); }}
+                        className={`text-2xs font-medium px-2 py-0.5 rounded-full border transition-colors
+                          ${starredLang === null
+                            ? "border-accent-blue/50 text-accent-blue bg-accent-blue/10"
+                            : "border-border text-muted hover:text-foreground"}`}
+                      >
+                        All
+                      </button>
+                      {starredLangs.map((lang) => (
+                        <button
+                          key={lang}
+                          onClick={() => { setStarredLang(starredLang === lang ? null : lang); setShowAllStarred(false); }}
+                          className={`text-2xs font-medium px-2 py-0.5 rounded-full border transition-colors
+                            ${starredLang === lang
+                              ? "border-accent-blue/50 text-accent-blue bg-accent-blue/10"
+                              : "border-border text-muted hover:text-foreground"}`}
+                        >
+                          {lang}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {/* Sort buttons */}
+                  <div className="flex items-center gap-0.5 ml-auto">
+                    {(["date", "stars", "mapped"] as const).map((opt) => (
+                      <button
+                        key={opt}
+                        onClick={() => setStarredSort(opt)}
+                        className={`text-2xs px-2 py-1 rounded transition-colors
+                          ${starredSort === opt
+                            ? "bg-surface-alt text-foreground"
+                            : "text-muted hover:text-foreground"}`}
+                      >
+                        {opt === "date" ? "Recent" : opt === "stars" ? "Stars" : "Mapped %"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {starredVisible?.map((r) => (
+                  {starredVisible.map((r) => (
                     <RepoCard key={`${r.owner}/${r.repo}`} repo={r} />
                   ))}
                 </div>
-                {profile.starredRepos.length > 12 && (
+                {starredFiltered.length === 0 && (
+                  <p className="text-muted text-sm mt-2">No repos match this filter.</p>
+                )}
+                {starredFiltered.length > 12 && (
                   <button
                     onClick={() => setShowAllStarred((v) => !v)}
                     className="mt-3 text-sm text-accent-blue hover:underline"
                   >
                     {showAllStarred
                       ? "Show less"
-                      : `Show all ${profile.starredRepos.length} results`}
+                      : `Show all ${starredFiltered.length} results`}
                   </button>
                 )}
               </>
@@ -520,22 +892,6 @@ export default function ProfilePage({ params }: Props) {
           </section>
         )}
 
-        {/* ── Footer link to GitHub ─────────────────────────────────────── */}
-        {profile && (
-          <div className="pt-4 border-t border-border">
-            <a
-              href={`https://github.com/${profile.login}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-foreground transition-colors"
-            >
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-                <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/>
-              </svg>
-              View on GitHub
-            </a>
-          </div>
-        )}
         </div>{/* end left panel */}
 
         {/* ── Right: developers nearby (independently scrollable) ──────── */}

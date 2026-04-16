@@ -100,6 +100,18 @@ model DeletionLog {
   @@map("deletion_log")
 }
 
+model PageView {
+  type  String
+  slug  String
+  date  DateTime @db.Date
+  count Int      @default(0)
+
+  @@id([type, slug, date])
+  @@index([slug])
+  @@index([type, date])
+  @@map("page_view")
+}
+
 model ApiKey {
   key        String    @id @default(uuid())
   email      String
