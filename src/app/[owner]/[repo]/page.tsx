@@ -23,6 +23,7 @@ import { compressToBase64 } from "@/lib/compress-client";
 import { TopPanel } from "@/components/map/top-panel";
 import { Dock } from "@/components/map/dock";
 import { TimelapseBar } from "@/components/map/timelapse-bar";
+import type { TimelapseSpeed } from "@/components/map/timelapse-bar";
 import { formatEstimate, timeAgo } from "@/lib/format";
 import type { TimeEstimate } from "@/lib/format";
 
@@ -223,6 +224,7 @@ export default function MapPage({
   const [timelapseActive, setTimelapseActive] = useState(false);
   const [timelapseIndex, setTimelapseIndex] = useState(0);
   const [timelapseAutoPlay, setTimelapseAutoPlay] = useState(false);
+  const [timelapseSpeed, setTimelapseSpeed] = useState<TimelapseSpeed>(800);
 
   // Compare repo state
   const [compareOwner, setCompareOwner] = useState<string | null>(null);
@@ -682,27 +684,38 @@ export default function MapPage({
   const deferredAllStargazers = useDeferredValue(allStargazers);
 
   // Month buckets for timelapse — sorted YYYY-MM strings derived from starredAt
-  const monthBuckets = useMemo(() => {
-    const months = new Set(
-      points.filter((p) => p.starredAt).map((p) => p.starredAt!.slice(0, 7)),
+  // Returns the YYYY-MM-DD of the Monday of the week containing dateStr (YYYY-MM-DD)
+  const getWeekMonday = (dateStr: string): string => {
+    const d = new Date(dateStr + "T00:00:00Z");
+    const day = d.getUTCDay(); // 0=Sun, 1=Mon, …
+    d.setUTCDate(d.getUTCDate() - (day === 0 ? 6 : day - 1));
+    return d.toISOString().slice(0, 10);
+  };
+
+  // Weekly buckets — one entry per week (Monday YYYY-MM-DD) that has at least 1 star
+  const weekBuckets = useMemo(() => {
+    const weeks = new Set(
+      points
+        .filter((p) => p.starredAt)
+        .map((p) => getWeekMonday(p.starredAt!.slice(0, 10))),
     );
-    return [...months].sort();
+    return [...weeks].sort();
   }, [points]);
 
-  // Auto-play: advance one month every 400ms, stop at last
+  // Auto-play: advance one week per interval, stop at last
   useEffect(() => {
     if (!timelapseAutoPlay || !timelapseActive) return;
     const t = setInterval(() => {
       setTimelapseIndex((i) => {
-        if (i >= monthBuckets.length - 1) {
+        if (i >= weekBuckets.length - 1) {
           setTimelapseAutoPlay(false);
           return i;
         }
         return i + 1;
       });
-    }, 400);
+    }, timelapseSpeed);
     return () => clearInterval(t);
-  }, [timelapseAutoPlay, timelapseActive, monthBuckets.length]);
+  }, [timelapseAutoPlay, timelapseActive, weekBuckets.length, timelapseSpeed]);
 
   const filteredMapPoints = useMemo(() => {
     let result = points;
@@ -710,13 +723,17 @@ export default function MapPage({
     else if (followerMapFilter === "mid") result = result.filter((p) => p.followers >= 100 && p.followers < 500);
     else if (followerMapFilter === "low") result = result.filter((p) => p.followers < 100);
 
-    if (timelapseActive && monthBuckets.length > 0) {
-      const cutoff = monthBuckets[timelapseIndex] ?? monthBuckets[0];
-      result = result.filter((p) => !p.starredAt || p.starredAt.slice(0, 7) <= cutoff);
+    if (timelapseActive && weekBuckets.length > 0) {
+      // Show stars up to and including the Sunday of the current week
+      const monday = weekBuckets[timelapseIndex] ?? weekBuckets[0];
+      const d = new Date(monday + "T00:00:00Z");
+      d.setUTCDate(d.getUTCDate() + 6); // Sunday
+      const cutoff = d.toISOString().slice(0, 10);
+      result = result.filter((p) => !p.starredAt || p.starredAt.slice(0, 10) <= cutoff);
     }
 
     return result;
-  }, [points, followerMapFilter, timelapseActive, timelapseIndex, monthBuckets]);
+  }, [points, followerMapFilter, timelapseActive, timelapseIndex, weekBuckets]);
 
   // Cheap boolean — used by Dock to show/hide the growth button
   const hasGrowthData = useMemo(
@@ -1362,22 +1379,24 @@ export default function MapPage({
           setGrowthOpen={setGrowthOpen}
           setBadgeOpen={setBadgeOpen}
           setShareOpen={setShareOpen}
-          hasTimelapse={monthBuckets.length > 1}
+          hasTimelapse={weekBuckets.length > 1}
           timelapseActive={timelapseActive}
           setTimelapseActive={setTimelapseActive}
         />
       )}
 
       {/* Timelapse control bar */}
-      {timelapseActive && monthBuckets.length > 1 && (
+      {timelapseActive && weekBuckets.length > 1 && (
         <TimelapseBar
-          monthBuckets={monthBuckets}
+          weekBuckets={weekBuckets}
           currentIndex={timelapseIndex}
           autoPlay={timelapseAutoPlay}
+          speed={timelapseSpeed}
           visibleCount={filteredMapPoints.length}
           onIndexChange={setTimelapseIndex}
+          onSpeedChange={setTimelapseSpeed}
           onAutoPlayToggle={() => {
-            if (timelapseIndex >= monthBuckets.length - 1) {
+            if (timelapseIndex >= weekBuckets.length - 1) {
               setTimelapseIndex(0);
               setTimelapseAutoPlay(true);
             } else {

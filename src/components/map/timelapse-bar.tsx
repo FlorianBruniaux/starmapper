@@ -3,40 +3,53 @@
 
 "use client";
 
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const MONTHS_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-const formatMonthBucket = (bucket: string): string => {
-  const [year, month] = bucket.split("-");
-  return `${MONTHS[parseInt(month, 10) - 1]} ${year}`;
+// weekBucket = YYYY-MM-DD of the Monday of that week
+const formatWeekBucket = (bucket: string): string => {
+  const d = new Date(bucket + "T00:00:00Z");
+  return `${MONTHS_SHORT[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
 };
 
+export const TIMELAPSE_SPEEDS = [
+  { label: "Slow", ms: 1200 },
+  { label: "Normal", ms: 800 },
+  { label: "Fast", ms: 300 },
+] as const;
+
+export type TimelapseSpeed = (typeof TIMELAPSE_SPEEDS)[number]["ms"];
+
 type Props = {
-  monthBuckets: string[];
+  weekBuckets: string[];   // YYYY-MM-DD (Monday of each week with at least 1 star)
   currentIndex: number;
   autoPlay: boolean;
+  speed: TimelapseSpeed;
   visibleCount: number;
   onIndexChange: (i: number) => void;
   onAutoPlayToggle: () => void;
+  onSpeedChange: (ms: TimelapseSpeed) => void;
   onClose: () => void;
 };
 
 export const TimelapseBar = ({
-  monthBuckets,
+  weekBuckets,
   currentIndex,
   autoPlay,
+  speed,
   visibleCount,
   onIndexChange,
   onAutoPlayToggle,
+  onSpeedChange,
   onClose,
 }: Props) => {
-  if (monthBuckets.length === 0) return null;
+  if (weekBuckets.length === 0) return null;
 
-  const currentLabel = formatMonthBucket(monthBuckets[currentIndex] ?? monthBuckets[0]);
-  const isLast = currentIndex >= monthBuckets.length - 1;
+  const currentLabel = formatWeekBucket(weekBuckets[currentIndex] ?? weekBuckets[0]);
+  const isLast = currentIndex >= weekBuckets.length - 1;
 
   return (
     <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-10 pointer-events-auto">
-      <div className="bg-background/95 border border-border rounded-xl px-4 py-3 backdrop-blur-md shadow-lg flex flex-col gap-2 w-72">
+      <div className="bg-background/95 border border-border rounded-xl px-4 py-3 backdrop-blur-md shadow-lg flex flex-col gap-2 w-80">
 
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -52,7 +65,7 @@ export const TimelapseBar = ({
           </button>
         </div>
 
-        {/* Month label + star count */}
+        {/* Week label + star count */}
         <div className="flex items-baseline justify-between">
           <span className="text-sm font-semibold text-foreground">{currentLabel}</span>
           <span className="text-xs text-muted tabular-nums">{visibleCount.toLocaleString()} stars</span>
@@ -62,49 +75,71 @@ export const TimelapseBar = ({
         <input
           type="range"
           min={0}
-          max={monthBuckets.length - 1}
+          max={weekBuckets.length - 1}
           step={1}
           value={currentIndex}
           onChange={(e) => onIndexChange(Number(e.target.value))}
           className="sm-slider w-full"
-          aria-label="Timelapse month"
+          aria-label="Timelapse week"
         />
 
-        {/* Controls */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1 text-2xs text-muted-subtle">
-            <span>{formatMonthBucket(monthBuckets[0])}</span>
-            <span className="mx-1">→</span>
-            <span>{formatMonthBucket(monthBuckets[monthBuckets.length - 1])}</span>
+        {/* Controls row */}
+        <div className="flex items-center justify-between gap-2">
+          {/* Date range */}
+          <div className="flex items-center gap-1 text-2xs text-muted-subtle min-w-0 truncate">
+            <span>{formatWeekBucket(weekBuckets[0])}</span>
+            <span>→</span>
+            <span>{formatWeekBucket(weekBuckets[weekBuckets.length - 1])}</span>
           </div>
-          <button
-            onClick={onAutoPlayToggle}
-            disabled={isLast && !autoPlay}
-            aria-label={autoPlay ? "Pause timelapse" : "Play timelapse"}
-            className={`flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-md transition-colors ${
-              autoPlay
-                ? "bg-accent-blue/15 text-accent-blue"
-                : isLast
-                  ? "text-muted-subtle cursor-not-allowed"
-                  : "text-muted hover:text-foreground hover:bg-surface"
-            }`}
-          >
-            {autoPlay ? (
-              <>
-                <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-                  <path d="M4 3h2.5v10H4V3zm5.5 0H12v10H9.5V3z" />
-                </svg>
-                Pause
-              </>
-            ) : (
-              <>
-                <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-                  <path d="M3.5 2.5l10 5.5-10 5.5V2.5z" />
-                </svg>
-                Play
-              </>
-            )}
-          </button>
+
+          <div className="flex items-center gap-1 flex-shrink-0">
+            {/* Speed selector */}
+            <div className="flex rounded-md border border-border overflow-hidden">
+              {TIMELAPSE_SPEEDS.map(({ label, ms }) => (
+                <button
+                  key={ms}
+                  onClick={() => onSpeedChange(ms)}
+                  className={`text-2xs px-1.5 py-0.5 transition-colors ${
+                    speed === ms
+                      ? "bg-surface-alt text-foreground"
+                      : "text-muted-subtle hover:text-muted"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {/* Play / Pause */}
+            <button
+              onClick={onAutoPlayToggle}
+              disabled={isLast && !autoPlay}
+              aria-label={autoPlay ? "Pause timelapse" : "Play timelapse"}
+              className={`flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-md transition-colors ${
+                autoPlay
+                  ? "bg-accent-blue/15 text-accent-blue"
+                  : isLast
+                    ? "text-muted-subtle cursor-not-allowed"
+                    : "text-muted hover:text-foreground hover:bg-surface"
+              }`}
+            >
+              {autoPlay ? (
+                <>
+                  <svg width="9" height="9" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                    <path d="M4 3h2.5v10H4V3zm5.5 0H12v10H9.5V3z" />
+                  </svg>
+                  Pause
+                </>
+              ) : (
+                <>
+                  <svg width="9" height="9" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                    <path d="M3.5 2.5l10 5.5-10 5.5V2.5z" />
+                  </svg>
+                  Play
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </div>
     </div>
