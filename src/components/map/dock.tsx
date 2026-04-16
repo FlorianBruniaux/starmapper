@@ -37,6 +37,10 @@ type Props = {
   setGrowthOpen: (v: boolean) => void;
   setBadgeOpen: (v: boolean) => void;
   setShareOpen: (v: boolean) => void;
+  // Timelapse
+  hasTimelapse: boolean;
+  timelapseActive: boolean;
+  setTimelapseActive: (v: boolean) => void;
 };
 
 export const Dock = ({
@@ -48,6 +52,7 @@ export const Dock = ({
   clusterRadius, setClusterRadius,
   sidebarOpen, setSidebarOpen,
   setStatsOpen, setAllOpen, setGrowthOpen, setBadgeOpen, setShareOpen,
+  hasTimelapse, timelapseActive, setTimelapseActive,
 }: Props) => {
   return (
     <>
@@ -229,6 +234,27 @@ export const Dock = ({
           </svg>
           <span>History</span>
         </a>
+
+        {/* Timelapse button */}
+        {hasTimelapse && (
+          <button
+            onClick={() => {
+              setTimelapseActive(!timelapseActive);
+            }}
+            className={`bg-background/90 border rounded-lg
+              px-3 py-2.5 text-xs backdrop-blur-md transition-all flex items-center gap-2 ${
+              timelapseActive
+                ? "border-accent-blue/60 text-accent-blue bg-accent-blue/10"
+                : "border-border text-muted hover:text-foreground hover:border-accent-blue/50"
+            }`}
+            title="Replay stars over time"
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" className="flex-shrink-0" aria-hidden="true">
+              <path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Zm7-3.25v3.67l2.069 1.238a.75.75 0 0 1-.756 1.292l-2.421-1.45A.75.75 0 0 1 7 9.75v-5a.75.75 0 0 1 1.5 0Z"/>
+            </svg>
+            <span>Timelapse</span>
+          </button>
+        )}
 
         {/* Badge button */}
         <button

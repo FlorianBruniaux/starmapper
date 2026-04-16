@@ -22,6 +22,7 @@ import { MAP_STYLE_DARK, MAP_STYLE_LIGHT } from "@/lib/theme";
 import { compressToBase64 } from "@/lib/compress-client";
 import { TopPanel } from "@/components/map/top-panel";
 import { Dock } from "@/components/map/dock";
+import { TimelapseBar } from "@/components/map/timelapse-bar";
 import { formatEstimate, timeAgo } from "@/lib/format";
 import type { TimeEstimate } from "@/lib/format";
 
@@ -217,6 +218,11 @@ export default function MapPage({
   const runningRef = useRef(false);
   const pendingScanRef = useRef(false);
   const pendingRefreshRef = useRef(false);
+
+  // Timelapse state
+  const [timelapseActive, setTimelapseActive] = useState(false);
+  const [timelapseIndex, setTimelapseIndex] = useState(0);
+  const [timelapseAutoPlay, setTimelapseAutoPlay] = useState(false);
 
   // Compare repo state
   const [compareOwner, setCompareOwner] = useState<string | null>(null);
@@ -675,12 +681,42 @@ export default function MapPage({
   // Deferred list — filter/sort recomputation runs at lower priority during scan (INP: F10)
   const deferredAllStargazers = useDeferredValue(allStargazers);
 
+  // Month buckets for timelapse — sorted YYYY-MM strings derived from starredAt
+  const monthBuckets = useMemo(() => {
+    const months = new Set(
+      points.filter((p) => p.starredAt).map((p) => p.starredAt!.slice(0, 7)),
+    );
+    return [...months].sort();
+  }, [points]);
+
+  // Auto-play: advance one month every 400ms, stop at last
+  useEffect(() => {
+    if (!timelapseAutoPlay || !timelapseActive) return;
+    const t = setInterval(() => {
+      setTimelapseIndex((i) => {
+        if (i >= monthBuckets.length - 1) {
+          setTimelapseAutoPlay(false);
+          return i;
+        }
+        return i + 1;
+      });
+    }, 400);
+    return () => clearInterval(t);
+  }, [timelapseAutoPlay, timelapseActive, monthBuckets.length]);
+
   const filteredMapPoints = useMemo(() => {
-    if (followerMapFilter === "all") return points;
-    if (followerMapFilter === "high") return points.filter((p) => p.followers >= 500);
-    if (followerMapFilter === "mid") return points.filter((p) => p.followers >= 100 && p.followers < 500);
-    return points.filter((p) => p.followers < 100);
-  }, [points, followerMapFilter]);
+    let result = points;
+    if (followerMapFilter === "high") result = result.filter((p) => p.followers >= 500);
+    else if (followerMapFilter === "mid") result = result.filter((p) => p.followers >= 100 && p.followers < 500);
+    else if (followerMapFilter === "low") result = result.filter((p) => p.followers < 100);
+
+    if (timelapseActive && monthBuckets.length > 0) {
+      const cutoff = monthBuckets[timelapseIndex] ?? monthBuckets[0];
+      result = result.filter((p) => !p.starredAt || p.starredAt.slice(0, 7) <= cutoff);
+    }
+
+    return result;
+  }, [points, followerMapFilter, timelapseActive, timelapseIndex, monthBuckets]);
 
   // Cheap boolean — used by Dock to show/hide the growth button
   const hasGrowthData = useMemo(
@@ -1326,6 +1362,32 @@ export default function MapPage({
           setGrowthOpen={setGrowthOpen}
           setBadgeOpen={setBadgeOpen}
           setShareOpen={setShareOpen}
+          hasTimelapse={monthBuckets.length > 1}
+          timelapseActive={timelapseActive}
+          setTimelapseActive={setTimelapseActive}
+        />
+      )}
+
+      {/* Timelapse control bar */}
+      {timelapseActive && monthBuckets.length > 1 && (
+        <TimelapseBar
+          monthBuckets={monthBuckets}
+          currentIndex={timelapseIndex}
+          autoPlay={timelapseAutoPlay}
+          visibleCount={filteredMapPoints.length}
+          onIndexChange={setTimelapseIndex}
+          onAutoPlayToggle={() => {
+            if (timelapseIndex >= monthBuckets.length - 1) {
+              setTimelapseIndex(0);
+              setTimelapseAutoPlay(true);
+            } else {
+              setTimelapseAutoPlay((v) => !v);
+            }
+          }}
+          onClose={() => {
+            setTimelapseActive(false);
+            setTimelapseAutoPlay(false);
+          }}
         />
       )}
 
