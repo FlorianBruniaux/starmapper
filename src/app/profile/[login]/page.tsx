@@ -275,7 +275,7 @@ export default function ProfilePage({ params }: Props) {
           id="main"
           className={
             hasMap
-              ? "w-[480px] shrink-0 overflow-y-auto border-r border-border-subtle px-5 py-6 pb-12"
+              ? "flex-[2] overflow-y-auto border-r border-border-subtle px-5 py-6 pb-12"
               : "w-full max-w-3xl mx-auto px-4 py-8 pb-16"
           }
         >
