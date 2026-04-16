@@ -115,10 +115,10 @@ export default function HomePage() {
     }
     const username = parseUsername(input);
     if (username) {
-      router.push(`/${username}`);
+      router.push(`/profile/${username}`);
       return;
     }
-    setError("Enter a GitHub repo (owner/repo) or a username to scan all repos");
+    setError("Enter a GitHub repo (owner/repo) or a username");
   };
 
   const handleSuggestion = (b: Suggestion) => {
