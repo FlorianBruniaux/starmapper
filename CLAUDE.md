@@ -306,6 +306,12 @@ Never send raw `points` arrays for large repos — the JSON payload will exceed 
 
 `src/lib/user-cache.ts` calls `checkDbHealth()` before every write. If the DB is unavailable or storage exceeds 95% of the 512MB Neon free limit, writes are silently skipped. This is intentional — user-level cache is non-critical.
 
+### Neon DDL Constraints
+
+**`CREATE INDEX CONCURRENTLY` is incompatible with Neon storage** — triggers `PANIC: [NEON_SMGR] Page evicted with zero LSN`. Always use regular `CREATE INDEX` (without `CONCURRENTLY`) for DDL on Neon.
+
+**Statement timeout** — Neon applies a session-level statement timeout that cancels long DDL operations (index builds, MV creation). Always prefix DDL scripts with `SET statement_timeout = 0;`.
+
 ### Materialized Views — One-Time Setup Required
 
 Five MVs are not managed by Prisma and must be created manually on any new DB instance. `pnpm db:sync` creates/refreshes them automatically when syncing from local Docker.
@@ -359,7 +365,28 @@ CREATE UNIQUE INDEX company_stats_mv_company_idx ON company_stats_mv (company);
 -- or: pnpm create:country-language-mv:prod
 ```
 
-All 5 MVs are refreshed daily via `/api/admin/refresh-grid-mv` (Vercel Cron, 03:00 UTC). Routes using MVs fall back to direct table scans if a MV is missing.
+**`user_repo_count_mv`** — per-user repo count (replaces expensive `LEFT JOIN star_event + COUNT(DISTINCT)` in nearby query, 6s → ~200ms):
+```sql
+-- pnpm create:user-repo-count-mv:prod
+SET statement_timeout = 0;
+CREATE MATERIALIZED VIEW user_repo_count_mv AS
+  SELECT login, COUNT(*) AS repo_count FROM star_event GROUP BY login;
+CREATE UNIQUE INDEX user_repo_count_mv_login_idx ON user_repo_count_mv (login);
+```
+
+All 6 MVs are refreshed daily via `/api/admin/refresh-grid-mv` (Vercel Cron, 03:00 UTC). Routes using MVs fall back to direct table scans if a MV is missing.
+
+### GIN Trigram Indexes — One-Time Setup Required
+
+Required for `ILIKE '%search%'` on `login` and `name` (explore/top search). Without them: full seq scan on 4.3M rows (~6s). With them: ~50ms.
+
+```sql
+-- pnpm create:trgm-indexes:prod
+SET statement_timeout = 0;
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+CREATE INDEX IF NOT EXISTS github_user_login_trgm_idx ON github_user USING gin (login gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS github_user_name_trgm_idx  ON github_user USING gin (name  gin_trgm_ops);
+```
 
 ---
 
@@ -444,6 +471,19 @@ pnpm typecheck            # Full tsc --noEmit
 npx prisma db push        # Sync schema to Neon (no migration files)
 npx prisma studio         # GUI to inspect tables
 npx prisma generate       # Regenerate Prisma client after schema change
+
+# DB Sync
+pnpm db:sync                                      # local Docker → Neon prod (upsert, never overwrites)
+pnpm db:sync:from-neon                            # Neon prod → local Docker (all tables)
+pnpm db:sync:from-neon -- --repo facebook/react   # Neon prod → local, one repo only (~30s)
+pnpm db:sync:from-neon -- --limit 100000          # Neon prod → local, top 100k users by followers
+pnpm db:sync:from-neon -- --tables badge_cache,stargazer_cache  # metadata only
+
+# One-time DB setup (run once per DB instance — local + Neon prod)
+pnpm create:trgm-indexes:prod       # GIN trigram indexes on login+name (ILIKE search, 6s→50ms)
+pnpm create:user-repo-count-mv:prod # MV per-user repo count (nearby query, 6s→200ms)
+pnpm create:trgm-indexes            # same for local Docker
+pnpm create:user-repo-count-mv      # same for local Docker
 
 # Scripts
 pnpm seed:geonames        # Seed geocache from GeoNames (idempotent)
