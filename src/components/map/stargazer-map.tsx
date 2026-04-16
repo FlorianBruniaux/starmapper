@@ -376,14 +376,8 @@ const makePopupElement = (props: Record<string, unknown>): HTMLElement => {
   link.style.cssText = "color:var(--color-accent-blue);text-decoration:none;font-size:13px";
   link.textContent = `@${login}`;
 
-  const profileLink = document.createElement("a");
-  profileLink.href = `/profile/${login}`;
-  profileLink.style.cssText = "color:var(--color-muted);text-decoration:none;font-size:11px;margin-left:6px;font-weight:500";
-  profileLink.textContent = "View profile →";
-
   nameBlock.appendChild(nameEl);
   nameBlock.appendChild(link);
-  nameBlock.appendChild(profileLink);
   header.appendChild(nameBlock);
   el.appendChild(header);
 
@@ -413,6 +407,34 @@ const makePopupElement = (props: Record<string, unknown>): HTMLElement => {
     liLink.textContent = "LinkedIn →";
     el.appendChild(liLink);
   }
+
+  // View profile button
+  const profileBtn = document.createElement("a");
+  profileBtn.href = `/profile/${login}`;
+  profileBtn.style.cssText = [
+    "display:block",
+    "margin-top:10px",
+    "padding:5px 10px",
+    "border-radius:6px",
+    "border:1px solid var(--color-border)",
+    "background:var(--color-surface-alt)",
+    "color:var(--color-foreground)",
+    "text-decoration:none",
+    "font-size:12px",
+    "font-weight:500",
+    "text-align:center",
+    "transition:border-color 0.15s,background 0.15s",
+  ].join(";");
+  profileBtn.textContent = "View StarMapper profile →";
+  profileBtn.addEventListener("mouseenter", () => {
+    profileBtn.style.borderColor = "var(--color-accent-blue)";
+    profileBtn.style.background = "var(--color-surface)";
+  });
+  profileBtn.addEventListener("mouseleave", () => {
+    profileBtn.style.borderColor = "var(--color-border)";
+    profileBtn.style.background = "var(--color-surface-alt)";
+  });
+  el.appendChild(profileBtn);
 
   // Tracked repos — lazy-loaded
   const reposSection = document.createElement("div");
