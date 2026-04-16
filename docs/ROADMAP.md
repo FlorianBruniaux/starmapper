@@ -1,6 +1,6 @@
 # StarMapper Roadmap
 
-*Last updated: 2026-04-16 — v0.3.2*
+*Last updated: 2026-04-16 — v0.3.3*
 
 ---
 
@@ -17,6 +17,7 @@
 - **Explore page** — `/explore` leaderboard: top stargazers by followers and public repos, top companies, top locations, filterable by country and company. Cross-repo funnel.
 - **Heatmap mode** — toggle dots vs heat density on the map. Implemented as a native MapLibre `heatmap` layer (`stargazer-map.tsx:100-113`), toggled from the dock.
 - **Multi-repo compare** — overlay two repos on the same map to see audience overlap. Browser orchestrates a parallel chunk scan for the second repo (`page.tsx:602-638`), rendered as a distinct color layer.
+- **Animated timelapse** — weekly buckets replay on the map, speed selector (0.5×→4×). Data source: `starredAt` from `star_event`. Controls in the dock.
 - **Public GeoJSON API** — `GET /api/geo/[owner]/[repo]` with API key auth. Aggregate countries + cities only (RGPD-safe). Rate-limited via Upstash. Keys provisioned manually via `scripts/generate-api-key.ts`.
 
 ---
@@ -34,8 +35,6 @@
 
 - **Watch mode** — poll every few minutes during a launch, display "+3 new stars in Paris" with a pulsing badge. Useful during launches and spikes.
 
-- **Animated timelapse** — replay the arrival of stars over time on the map. `StarEvent.starredAt` is already stored. Visually compelling and shareable.
-
 - **Jawg Places JS integration** — replace the `/api/explore/autocomplete` + `/api/explore/geocode` proxy routes with the official Jawg Places JS client-side library. Instant suggestions without a round-trip, less server code. Prerequisite: evaluate bundle size, test MapLibre GL compat.
 
 ---
@@ -52,8 +51,9 @@
 
 ## Priority order
 
-1. **Profile `/profile/[login]`** — SEO and new acquisition funnel (API shell exists)
-2. **Chrome extension** — biggest distribution lever
+1. **Profile v1 `/profile/[login]`** — SEO + nouvelle acquisition funnel. API shell existe déjà (`src/app/api/profile/[login]/route.ts`). Page par utilisateur GitHub : repos starreés, mini-map, followers/company.
+2. **Profile v2** — reverse-lookup complet via `star_event WHERE login`, après validation v1
+3. **Chrome extension** — plus gros levier de distribution. Manifest V3, content script sur pages GitHub. À démarrer après Profile.
 
 ---
 
