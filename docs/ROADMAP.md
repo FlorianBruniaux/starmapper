@@ -1,6 +1,6 @@
 # StarMapper Roadmap
 
-*Last updated: 2026-04-16 — v0.3.4*
+*Last updated: 2026-04-17 — v0.3.5*
 
 ---
 
@@ -19,7 +19,10 @@
 - **Multi-repo compare** — overlay two repos on the same map to see audience overlap. Browser orchestrates a parallel chunk scan for the second repo (`page.tsx:602-638`), rendered as a distinct color layer.
 - **Animated timelapse** — weekly buckets replay on the map, speed selector (0.5×→4×). Data source: `starredAt` from `star_event`. Controls in the dock.
 - **Public GeoJSON API** — `GET /api/geo/[owner]/[repo]` with API key auth. Aggregate countries + cities only (RGPD-safe). Rate-limited via Upstash. Keys provisioned manually via `scripts/generate-api-key.ts`.
-- **Profile page `/profile/[login]`** — Combined v1+v2. Profile card (avatar, name, company, location, followers, language pills), 2/3 content + 1/3 map split layout. Reverse lookup: starred repos on StarMapper ordered by recency. Owned repos grid. Developers nearby with pin-on-map. Partial profile fallback for repo owners not tracked as stargazers. All `@login` links across the app (map popup, Explore, Stats panel) point to profile pages. "Wrong location?" now works for all users.
+- **Profile page `/profile/[login]`** — Combined v1+v2+v3. Profile card (avatar, name, company, location, followers, language pills), 2/3 content + 1/3 map split layout. Reverse lookup: starred repos on StarMapper ordered by recency with language filter chips + sort (date/stars/mapped %). Owned repos grid. Developers nearby with pin-on-map. Partial profile fallback for repo owners not tracked as stargazers. All `@login` links across the app (map popup, Explore, Stats panel) point to profile pages.
+- **Profile refresh** — "Refresh" button re-fetches from GitHub API (1h cooldown). Auto-fetch on 404: visiting `/profile/[login]` for a user not yet in StarMapper triggers a live GitHub fetch and creates the profile on the fly.
+- **Contact dropdown** — "Contact" button on profile pages aggregates all public channels: GitHub always present, LinkedIn chip if stored in DB, email/twitter/blog fetched on-demand from GitHub REST (token-gated). Email displayed obfuscated (`fl*****@domain.com`) with click-to-copy — no `mailto:` in DOM, blocks HTML scrapers and archival crawlers.
+- **Page view tracking** — `POST /api/track` records daily view counts per repo and profile (`page_view` table). Fire-and-forget from both `/[owner]/[repo]` and `/profile/[login]` pages. `pnpm stats:views` CLI with `--user`, `--slug`, `--days`, `--top` flags for querying stats.
 
 ---
 
@@ -28,6 +31,8 @@
 ---
 
 ## Medium term
+
+- **In-platform ping (v2 contact)** — Allow devs to send a message to another dev directly via StarMapper. Requires GitHub OAuth, `users`/`messages`/`contact_preferences` DB tables, email delivery (Resend/Postmark), opt-in, anti-spam, unsubscribe. On hold — pending signal (need 10+ "I wanted to contact someone but couldn't") and explicit product decision (StarMapper goes social?).
 
 - **Watch mode** — poll every few minutes during a launch, display "+3 new stars in Paris" with a pulsing badge. Useful during launches and spikes.
 

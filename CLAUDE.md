@@ -92,6 +92,16 @@ Vercel Hobby default function duration = 10s, configurable up to 60s (or 300s wi
 
 **Write path**: `src/lib/user-cache.ts` exports `bulkUpsertUsers()` and `bulkUpsertStarEvents()`. Both check `db-health.ts` before writing — if DB usage exceeds 95%, writes are skipped to prevent storage overflow.
 
+### PageView (Analytics)
+
+**Purpose**: Track daily page views per repo and profile for internal analytics. Private — not exposed in UI, queryable via `pnpm stats:views`.
+
+**Schema**: `page_view` — composite PK `(type, slug, date)` → `count Int`. `type` = `"repo"` or `"profile"`. `slug` = `"owner/repo"` or `"login"`. `date` = UTC day (Date only, no time).
+
+**Write path**: `POST /api/track` — atomic upsert (`INSERT ... ON CONFLICT DO UPDATE SET count = count + 1`). Called fire-and-forget from both `/[owner]/[repo]/page.tsx` and `/profile/[login]/page.tsx` on mount.
+
+**Read path**: `pnpm stats:views [--user login] [--slug owner/repo] [--days N] [--top N]` — terminal output with bar charts.
+
 ### Additional Endpoints
 
 ```
@@ -141,6 +151,18 @@ GET /api/devs/atlas
 GET /api/devs?language=<slug>
   Returns: { points: GeoPoint[], total: number }
   Note: reads github_user filtered by language (from languages[]), geocoded users only
+
+POST /api/profile/[login]/refresh
+  Header: x-gh-token (optional)
+  Returns: RefreshResponse { ok: true; updatedAt: string } | { error: string; retryAfterSec?: number }
+  Note: re-fetches from GitHub REST + GraphQL, geocodes if location changed. Cooldown 1h (fetchedAt).
+        If user not in DB → creates them on the fly (used by profile page auto-fetch on 404).
+
+POST /api/track
+  Body: { type: "repo" | "profile", slug: string }
+  Returns: { ok: true }
+  Note: atomic daily upsert on page_view table (count += 1). Fire-and-forget from client.
+        Never returns errors — silently succeeds even if DB write fails.
 ```
 
 ---
@@ -202,7 +224,7 @@ GET /api/devs?language=<slug>
 │       ├── language-colors.ts                 # LANGUAGE_COLORS map (24 languages → hex)
 │       └── theme.ts                           # getStoredTheme() / applyTheme() — dark/light
 ├── prisma/
-│   └── schema.prisma                          # GeoCache + BadgeCache + StargazerCache + GitHubUser + StarEvent
+│   └── schema.prisma                          # GeoCache + BadgeCache + StargazerCache + GitHubUser + StarEvent + PageView
 ├── scripts/
 │   ├── batch-scan.ts                          # Batch-scan repos from a JSON list (uses starmapper.jawg.io)
 │   ├── backfill-languages.ts                  # Backfill languages[] on github_user (--from-cache or GitHub API)
@@ -426,6 +448,12 @@ npx prisma generate       # Regenerate Prisma client after schema change
 # Scripts
 pnpm seed:geonames        # Seed geocache from GeoNames (idempotent)
 pnpm seed:geonames:dry    # Dry-run — preview + stats, no insert
+
+# Analytics
+pnpm stats:views                   # Global overview (last 7 days, top 20)
+pnpm stats:views --user <login>    # Profile + all repos for a user
+pnpm stats:views --slug <slug>     # Specific repo or profile
+pnpm stats:views --days 30 --top 5 # Custom window + limit
 ```
 
 ---
@@ -474,5 +502,5 @@ vercel --prod
 
 ---
 
-*Last updated: 2026-04-10*
-*Version: 0.3.0*
+*Last updated: 2026-04-17*
+*Version: 0.3.5*
