@@ -244,10 +244,11 @@ export default function ProfilePage({ params }: Props) {
 
   const ownedVisible = showAllOwned ? profile?.ownedRepos : profile?.ownedRepos.slice(0, 12);
   const starredVisible = showAllStarred ? profile?.starredRepos : profile?.starredRepos.slice(0, 12);
+  const hasMap = !!(profile?.lat && profile?.lng);
 
   // ── Main render ───────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground flex flex-col">
       <Header
         sticky
         showNav
@@ -266,7 +267,18 @@ export default function ProfilePage({ params }: Props) {
         }
       />
 
-      <main id="main" className="max-w-3xl mx-auto px-4 pt-20 pb-16">
+      {/* Two-column when map available, centered single column otherwise */}
+      <div className={hasMap ? "flex flex-1 overflow-hidden" : "flex flex-1"}>
+
+        {/* ── Left / main content panel ─────────────────────────────── */}
+        <div
+          id="main"
+          className={
+            hasMap
+              ? "w-[480px] shrink-0 overflow-y-auto border-r border-border-subtle px-5 py-6 pb-12"
+              : "w-full max-w-3xl mx-auto px-4 py-8 pb-16"
+          }
+        >
 
         {/* ── Profile card ─────────────────────────────────────────────── */}
         {loadState === "loading" ? (
@@ -392,13 +404,6 @@ export default function ProfilePage({ params }: Props) {
                 ))}
               </div>
             </div>
-          </div>
-        )}
-
-        {/* ── Mini-map ─────────────────────────────────────────────────── */}
-        {profile && miniMapPoints.length > 0 && (
-          <div className="mb-8 rounded-xl overflow-hidden border border-border" style={{ height: "280px" }}>
-            <StargazerMapDynamic points={miniMapPoints} />
           </div>
         )}
 
@@ -536,7 +541,15 @@ export default function ProfilePage({ params }: Props) {
             </a>
           </div>
         )}
-      </main>
+        </div>{/* end left panel */}
+
+        {/* ── Right: full-height map ──────────────────────────────────── */}
+        {hasMap && (
+          <div className="flex-1 relative">
+            <StargazerMapDynamic points={miniMapPoints} />
+          </div>
+        )}
+      </div>{/* end two-column flex container */}
 
       {tokenOpen && <TokenModal onClose={handleTokenClose} />}
     </div>
