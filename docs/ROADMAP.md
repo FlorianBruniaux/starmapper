@@ -15,14 +15,12 @@
 - **Language Atlas** — `/devs/atlas`, choropleth map showing the dominant language per country. Based on starred and contributed repos. Early preview bandeau while backfill is running.
 - **Dev Maps by language** — `/devs` + `/devs/[language]`, developer map filtered by programming language.
 - **Explore page** — `/explore` leaderboard: top stargazers by followers and public repos, top companies, top locations, filterable by country and company. Cross-repo funnel.
+- **Heatmap mode** — toggle dots vs heat density on the map. Implemented as a native MapLibre `heatmap` layer (`stargazer-map.tsx:100-113`), toggled from the dock.
+- **Multi-repo compare** — overlay two repos on the same map to see audience overlap. Browser orchestrates a parallel chunk scan for the second repo (`page.tsx:602-638`), rendered as a distinct color layer.
 
 ---
 
 ## Quick wins (1-2h each)
-
-- **Heatmap mode** — toggle dots vs heat density. More readable on large repos (50k+ stars). MapLibre supports `heatmap` layer natively, minimal code.
-
-- **Multi-repo compare** — overlay two repos on the same map to see audience overlap. star-history.com does this for graphs, nobody does it geographically. Strong differentiator.
 
 - **Public GeoJSON API** — `GET /api/geo/[owner]/[repo]` returns the GeoJSON for a cached scan. For researchers, journalists, developers who want to build on top of it.
 
@@ -55,11 +53,10 @@
 
 ## Priority order
 
-1. **Heatmap mode** — native MapLibre, low effort, visible improvement
-2. **Multi-repo** — strong differentiator vs every competitor
-3. **Profile `/profile/[login]`** — SEO and new acquisition funnel
-4. **Public GeoJSON API** — enables third-party use cases
-5. **Chrome extension** — biggest distribution lever
+1. **Animated timelapse** — frontend only, `starredAt` data already stored, high social ROI
+2. **Public GeoJSON API** — 0.5 day, unlocks third-party use cases
+3. **Profile `/profile/[login]`** — SEO and new acquisition funnel (API shell exists)
+4. **Chrome extension** — biggest distribution lever
 
 ---
 
