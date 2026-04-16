@@ -1,6 +1,6 @@
 # StarMapper Roadmap
 
-*Last updated: 2026-04-16 — v0.3.3*
+*Last updated: 2026-04-16 — v0.3.4*
 
 ---
 
@@ -19,6 +19,7 @@
 - **Multi-repo compare** — overlay two repos on the same map to see audience overlap. Browser orchestrates a parallel chunk scan for the second repo (`page.tsx:602-638`), rendered as a distinct color layer.
 - **Animated timelapse** — weekly buckets replay on the map, speed selector (0.5×→4×). Data source: `starredAt` from `star_event`. Controls in the dock.
 - **Public GeoJSON API** — `GET /api/geo/[owner]/[repo]` with API key auth. Aggregate countries + cities only (RGPD-safe). Rate-limited via Upstash. Keys provisioned manually via `scripts/generate-api-key.ts`.
+- **Profile page `/profile/[login]`** — Combined v1+v2. Profile card (avatar, name, company, location, followers, language pills), 2/3 content + 1/3 map split layout. Reverse lookup: starred repos on StarMapper ordered by recency. Owned repos grid. Developers nearby with pin-on-map. Partial profile fallback for repo owners not tracked as stargazers. All `@login` links across the app (map popup, Explore, Stats panel) point to profile pages. "Wrong location?" now works for all users.
 
 ---
 
@@ -27,11 +28,6 @@
 ---
 
 ## Medium term
-
-- **Profile page `/profile/[login]`** — Dedicated page per GitHub user. The reverse lookup: instead of "who stars this repo?", it's "which repos does this person star?". Shows all StarMapper repos they starred, a mini-map if geocoded, followers/company/account age, and "people nearby" from the same city or company. Every login becomes an indexable page — serious SEO surface (thousands of pages).
-
-  Endpoint: `GET /api/profile/[login]` reading `github_user` + `star_event WHERE login`.
-  Risk: data freshness (`followers` is from the last scan date), privacy link to GitHub source.
 
 - **Watch mode** — poll every few minutes during a launch, display "+3 new stars in Paris" with a pulsing badge. Useful during launches and spikes.
 
@@ -51,9 +47,9 @@
 
 ## Priority order
 
-1. **Profile v1 `/profile/[login]`** — SEO + nouvelle acquisition funnel. API shell existe déjà (`src/app/api/profile/[login]/route.ts`). Page par utilisateur GitHub : repos starreés, mini-map, followers/company.
-2. **Profile v2** — reverse-lookup complet via `star_event WHERE login`, après validation v1
-3. **Chrome extension** — plus gros levier de distribution. Manifest V3, content script sur pages GitHub. À démarrer après Profile.
+1. **Chrome extension** — plus gros levier de distribution. Manifest V3, content script sur pages GitHub.
+2. **Watch mode** — poll during launches, pulsing badge on new stars.
+3. **Jawg Places JS** — replace autocomplete proxy routes with client-side library.
 
 ---
 
