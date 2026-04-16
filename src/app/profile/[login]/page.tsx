@@ -301,14 +301,30 @@ export default function ProfilePage({ params }: Props) {
         }
       />
 
-      {/* Two-column when map available, centered single column otherwise */}
-      <div className={hasMap ? "flex flex-1 overflow-hidden" : "flex flex-1"}>
+      {/* ── Map — full width at top (or placeholder while loading) ──────── */}
+      {(hasMap || loadState === "loading") && (
+        <div className="h-80 shrink-0 border-b border-border-subtle relative">
+          {hasMap ? (
+            <StargazerMapDynamic
+              points={allMapPoints}
+              flyTarget={mapFlyTarget}
+              onFlyDone={() => setMapFlyTarget(null)}
+              showProjectionToggle
+            />
+          ) : (
+            <div className="w-full h-full bg-surface-alt animate-pulse motion-reduce:animate-none" />
+          )}
+        </div>
+      )}
 
-        {/* ── Left / main content panel ─────────────────────────────── */}
+      {/* ── Content: two independently scrollable columns ──────────────── */}
+      <div className={(hasMap || loadState === "loading") ? "flex flex-1 overflow-hidden" : "flex flex-1"}>
+
+        {/* Left: profile card + repos */}
         <div
           id="main"
           className={
-            hasMap
+            (hasMap || loadState === "loading")
               ? "flex-[2] overflow-y-auto border-r border-border-subtle px-5 py-6 pb-12"
               : "w-full max-w-3xl mx-auto px-4 py-8 pb-16"
           }
@@ -504,78 +520,6 @@ export default function ProfilePage({ params }: Props) {
           </section>
         )}
 
-        {/* ── People nearby ────────────────────────────────────────────── */}
-        {nearby && nearby.users.length > 0 && (
-          <section className="mb-2" aria-labelledby="nearby-heading">
-            <SectionHeader title="Developers nearby" count={nearby.total} id="nearby-heading" />
-            <ul className="flex flex-col gap-1.5" role="list">
-              {nearby.users.slice(0, 10).map((u) => {
-                const isPinned = pinnedLogins.has(u.login);
-                return (
-                  <li key={u.login}>
-                    <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-border
-                                    bg-surface hover:border-accent-blue/50 hover:bg-surface-alt
-                                    transition-colors group">
-                      {/* avatar — links to profile */}
-                      <Link href={`/profile/${u.login}`} className="relative shrink-0">
-                        <img
-                          src={`https://github.com/${u.login}.png`}
-                          alt=""
-                          className="size-9 rounded-full border border-border"
-                          width={36}
-                          height={36}
-                        />
-                        {u.trackedRepos > 1 && (
-                          <span className="absolute -bottom-0.5 -right-0.5 min-w-4 h-4 px-0.5
-                                           flex items-center justify-center
-                                           text-2xs font-semibold tabular-nums leading-none
-                                           bg-accent-blue text-background rounded-full border border-background">
-                            {u.trackedRepos}
-                          </span>
-                        )}
-                      </Link>
-                      {/* name + city — links to profile */}
-                      <Link href={`/profile/${u.login}`} className="flex flex-col min-w-0 flex-1">
-                        <span className="text-sm text-foreground group-hover:text-accent-blue
-                                         transition-colors font-medium truncate leading-snug">
-                          {u.name ?? u.login}
-                        </span>
-                        {u.cityNormalized && (
-                          <span className="text-xs text-muted truncate">{u.cityNormalized}</span>
-                        )}
-                      </Link>
-                      {/* distance + followers */}
-                      <div className="flex flex-col items-end shrink-0 gap-0.5">
-                        <span className="text-xs font-medium text-muted tabular-nums">
-                          {u.distanceKm < 1 ? "<1" : u.distanceKm.toFixed(0)} km
-                        </span>
-                        <span className="text-2xs text-muted-subtle tabular-nums">
-                          {formatCount(u.followers)} followers
-                        </span>
-                      </div>
-                      {/* pin on map */}
-                      <button
-                        onClick={() => togglePin(u)}
-                        title={isPinned ? "Unpin from map" : "Pin on map"}
-                        aria-label={isPinned ? `Unpin ${u.login} from map` : `Pin ${u.login} on map`}
-                        className={`shrink-0 p-1.5 rounded-md transition-colors
-                          ${isPinned
-                            ? "text-accent-blue bg-accent-blue/10 hover:bg-accent-blue/20"
-                            : "text-muted-subtle hover:text-foreground hover:bg-surface-alt opacity-0 group-hover:opacity-100"
-                          }`}
-                      >
-                        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-                          <path d="M8 0a5.53 5.53 0 0 0-5.5 5.5C2.5 9.5 8 16 8 16s5.5-6.5 5.5-10.5A5.53 5.53 0 0 0 8 0zm0 7.5a2 2 0 1 1 0-4 2 2 0 0 1 0 4z"/>
-                        </svg>
-                      </button>
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          </section>
-        )}
-
         {/* ── Footer link to GitHub ─────────────────────────────────────── */}
         {profile && (
           <div className="pt-4 border-t border-border">
@@ -594,14 +538,88 @@ export default function ProfilePage({ params }: Props) {
         )}
         </div>{/* end left panel */}
 
-        {/* ── Right: full-height map ──────────────────────────────────── */}
-        {hasMap && (
-          <div className="flex-1 relative">
-            <StargazerMapDynamic
-              points={allMapPoints}
-              flyTarget={mapFlyTarget}
-              onFlyDone={() => setMapFlyTarget(null)}
-            />
+        {/* ── Right: developers nearby (independently scrollable) ──────── */}
+        {(hasMap || loadState === "loading") && (
+          <div className="flex-1 overflow-y-auto px-5 py-6 pb-12">
+            {nearby === null ? (
+              /* loading skeleton */
+              <div className="animate-pulse motion-reduce:animate-none space-y-2">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="h-3.5 w-36 bg-surface-alt rounded" />
+                  <div className="h-3.5 w-6 bg-surface-alt rounded-full" />
+                </div>
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="h-14 rounded-lg bg-surface border border-border" />
+                ))}
+              </div>
+            ) : nearby.users.length === 0 ? (
+              <p className="text-muted text-sm pt-2">No developers found nearby.</p>
+            ) : (
+              <section aria-labelledby="nearby-heading">
+                <SectionHeader title="Developers nearby" count={nearby.total} id="nearby-heading" noBorder />
+                <ul className="flex flex-col gap-1.5" role="list">
+                  {nearby.users.slice(0, 10).map((u) => {
+                    const isPinned = pinnedLogins.has(u.login);
+                    return (
+                      <li key={u.login}>
+                        <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-border
+                                        bg-surface hover:border-accent-blue/50 hover:bg-surface-alt
+                                        transition-colors group">
+                          <Link href={`/profile/${u.login}`} className="relative shrink-0">
+                            <img
+                              src={`https://github.com/${u.login}.png`}
+                              alt=""
+                              className="size-9 rounded-full border border-border"
+                              width={36}
+                              height={36}
+                            />
+                            {u.trackedRepos > 1 && (
+                              <span className="absolute -bottom-0.5 -right-0.5 min-w-4 h-4 px-0.5
+                                               flex items-center justify-center
+                                               text-2xs font-semibold tabular-nums leading-none
+                                               bg-accent-blue text-background rounded-full border border-background">
+                                {u.trackedRepos}
+                              </span>
+                            )}
+                          </Link>
+                          <Link href={`/profile/${u.login}`} className="flex flex-col min-w-0 flex-1">
+                            <span className="text-sm text-foreground group-hover:text-accent-blue
+                                             transition-colors font-medium truncate leading-snug">
+                              {u.name ?? u.login}
+                            </span>
+                            {u.cityNormalized && (
+                              <span className="text-xs text-muted truncate">{u.cityNormalized}</span>
+                            )}
+                          </Link>
+                          <div className="flex flex-col items-end shrink-0 gap-0.5">
+                            <span className="text-xs font-medium text-muted tabular-nums">
+                              {u.distanceKm < 1 ? "<1" : u.distanceKm.toFixed(0)} km
+                            </span>
+                            <span className="text-2xs text-muted-subtle tabular-nums">
+                              {formatCount(u.followers)} followers
+                            </span>
+                          </div>
+                          <button
+                            onClick={() => togglePin(u)}
+                            title={isPinned ? "Unpin from map" : "Pin on map"}
+                            aria-label={isPinned ? `Unpin ${u.login} from map` : `Pin ${u.login} on map`}
+                            className={`shrink-0 p-1.5 rounded-md transition-colors
+                              ${isPinned
+                                ? "text-accent-blue bg-accent-blue/10 hover:bg-accent-blue/20"
+                                : "text-muted-subtle hover:text-foreground hover:bg-surface-alt opacity-0 group-hover:opacity-100"
+                              }`}
+                          >
+                            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                              <path d="M8 0a5.53 5.53 0 0 0-5.5 5.5C2.5 9.5 8 16 8 16s5.5-6.5 5.5-10.5A5.53 5.53 0 0 0 8 0zm0 7.5a2 2 0 1 1 0-4 2 2 0 0 1 0 4z"/>
+                            </svg>
+                          </button>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </section>
+            )}
           </div>
         )}
       </div>{/* end two-column flex container */}
