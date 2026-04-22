@@ -20,15 +20,34 @@ type SignalRow = {
   label: string;
   tooltip: string;
   rawValue: string;
-  contribution: string | null;
+  weight: string;
+  signalScore: number | null;
   status: "ok" | "warn" | "na";
 };
 
 const fmtPct = (n: number) => `${(n * 100).toFixed(1)}%`;
 
+const lerp = (v: number, lo: number, hi: number, outLo: number, outHi: number) =>
+  outLo + ((v - lo) / (hi - lo)) * (outHi - outLo);
+
+const clamp = (v: number) => Math.max(0, Math.min(100, v));
+
+const normFork = (v: number) => {
+  if (v >= 0.10) return 100;
+  if (v <= 0.02) return 0;
+  if (v >= 0.07) return clamp(lerp(v, 0.07, 0.10, 50, 100));
+  return clamp(lerp(v, 0.02, 0.07, 0, 50));
+};
+
+const normWatcher = (v: number) => {
+  if (v >= 0.005) return 100;
+  if (v <= 0.0001) return 0;
+  if (v >= 0.001) return clamp(lerp(v, 0.001, 0.005, 50, 100));
+  return clamp(lerp(v, 0.0001, 0.001, 0, 50));
+};
+
 const buildSignals = (organic: RepoOrganic): SignalRow[] => {
-  const rows: SignalRow[] = [];
-  const { score, totalCount, forksCount, watchersCount } = organic;
+  const { totalCount, forksCount, watchersCount } = organic;
 
   const FORK_TOOLTIP =
     "Repos with organic traction accumulate forks as developers build on them. " +
@@ -45,21 +64,26 @@ const buildSignals = (organic: RepoOrganic): SignalRow[] => {
     "A healthy repo has < 10% zero-follower stargazers. " +
     "Computed from users StarMapper has enriched — requires sufficient sample size (≥ 30 users).";
 
+  const rows: SignalRow[] = [];
+
   if (forksCount !== null && totalCount > 0) {
     const ratio = forksCount / totalCount;
+    const score = totalCount >= 5000 ? normFork(ratio) : null;
     rows.push({
       label: "Fork / star ratio",
       tooltip: FORK_TOOLTIP,
-      rawValue: `${fmtPct(ratio)} (${forksCount.toLocaleString()} forks / ${totalCount.toLocaleString()} ★)`,
-      contribution: score !== null ? `weight 70%` : null,
-      status: ratio >= 0.07 ? "ok" : "warn",
+      rawValue: `${fmtPct(ratio)} — ${forksCount.toLocaleString()} forks / ${totalCount.toLocaleString()} ★`,
+      weight: "70%",
+      signalScore: score,
+      status: totalCount < 5000 ? "na" : ratio >= 0.07 ? "ok" : "warn",
     });
   } else {
     rows.push({
       label: "Fork / star ratio",
       tooltip: FORK_TOOLTIP,
-      rawValue: totalCount < 5000 ? `Gated — repo has < 5 000 stars` : "No data",
-      contribution: null,
+      rawValue: totalCount < 5000 ? "Gated — repo has < 5 000 stars" : "No data",
+      weight: "70%",
+      signalScore: null,
       status: "na",
     });
   }
@@ -69,8 +93,9 @@ const buildSignals = (organic: RepoOrganic): SignalRow[] => {
     rows.push({
       label: "Watcher / star ratio",
       tooltip: WATCHER_TOOLTIP,
-      rawValue: `${fmtPct(ratio)} (${watchersCount.toLocaleString()} watchers)`,
-      contribution: score !== null ? `weight 10%` : null,
+      rawValue: `${fmtPct(ratio)} — ${watchersCount.toLocaleString()} watchers`,
+      weight: "5%",
+      signalScore: normWatcher(ratio),
       status: ratio >= 0.005 ? "ok" : "warn",
     });
   } else {
@@ -78,7 +103,8 @@ const buildSignals = (organic: RepoOrganic): SignalRow[] => {
       label: "Watcher / star ratio",
       tooltip: WATCHER_TOOLTIP,
       rawValue: "No data",
-      contribution: null,
+      weight: "5%",
+      signalScore: null,
       status: "na",
     });
   }
@@ -87,31 +113,31 @@ const buildSignals = (organic: RepoOrganic): SignalRow[] => {
     label: "Zero-follower stargazers",
     tooltip: ZF_TOOLTIP,
     rawValue: "Computed from enriched users in our DB",
-    contribution: score !== null ? `weight 20%` : null,
+    weight: "25%",
+    signalScore: null,
     status: "ok",
   });
 
   return rows;
 };
 
-const TIER_COLOR: Record<string, string> = {
-  healthy:      "text-accent-green",
-  moderate:     "text-orange-400",
-  suspicious:   "text-accent-red",
-  insufficient: "text-muted",
+const TIER_CONFIG: Record<string, { color: string; bg: string; bar: string; label: string }> = {
+  healthy:      { color: "text-accent-green",  bg: "bg-accent-green/10",  bar: "bg-accent-green",  label: "Healthy" },
+  moderate:     { color: "text-orange-400",    bg: "bg-orange-400/10",    bar: "bg-orange-400",    label: "Moderate" },
+  suspicious:   { color: "text-accent-red",    bg: "bg-accent-red/10",    bar: "bg-accent-red",    label: "Suspicious" },
+  insufficient: { color: "text-muted",         bg: "bg-surface-alt",      bar: "bg-muted",         label: "Insufficient data" },
 };
 
-const TIER_LABEL: Record<string, string> = {
-  healthy:      "Healthy",
-  moderate:     "Moderate",
-  suspicious:   "Suspicious",
-  insufficient: "Insufficient data",
-};
-
-const STATUS_DOT: Record<string, string> = {
-  ok: "bg-accent-green",
+const STATUS_COLOR: Record<string, string> = {
+  ok:   "bg-accent-green",
   warn: "bg-orange-400",
-  na: "bg-muted",
+  na:   "bg-muted/40",
+};
+
+const SIGNAL_BAR_COLOR: Record<string, string> = {
+  ok:   "bg-accent-green",
+  warn: "bg-orange-400",
+  na:   "bg-muted/30",
 };
 
 export const OrganicScoreModal = ({ open, onClose, organic, owner, repo, onRecalculated }: Props) => {
@@ -119,8 +145,7 @@ export const OrganicScoreModal = ({ open, onClose, organic, owner, repo, onRecal
   const [recalcError, setRecalcError] = useState<string | null>(null);
 
   const signals = buildSignals(organic);
-  const tierColor = TIER_COLOR[organic.tier] ?? "text-muted";
-  const tierLabel = TIER_LABEL[organic.tier] ?? organic.tier;
+  const cfg = TIER_CONFIG[organic.tier] ?? TIER_CONFIG.insufficient;
 
   const handleRecalculate = async () => {
     setRecalculating(true);
@@ -141,46 +166,73 @@ export const OrganicScoreModal = ({ open, onClose, organic, owner, repo, onRecal
 
   const disputeUrl = `https://github.com/fbruniaux/starmapper/issues/new?labels=score-dispute&title=${encodeURIComponent(`Score dispute: ${owner}/${repo}`)}&body=${encodeURIComponent(`**Repo:** ${owner}/${repo}\n**Score:** ${organic.score ?? "—"} (${organic.tier})\n\n**Reason:**\n<!-- Explain why you think this score is incorrect -->`)}`;
 
+  const scoreVal = organic.score ?? 0;
+  const scorePct = Math.min(100, Math.max(0, scoreVal));
+
   return (
     <Modal open={open} onClose={onClose} title="Organic Score" maxWidth="max-w-lg">
-      <div className="px-6 py-4 space-y-4">
-        {/* Experimental badge */}
-        <div className="flex items-center gap-2">
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-orange-500/15 text-orange-400 border border-orange-500/30 text-2xs font-medium uppercase tracking-wide">
-            Experimental
-          </span>
-          <span className="text-2xs text-muted">Scores may be inaccurate — feedback welcome</span>
-        </div>
+      <div className="px-5 py-4 space-y-4">
 
         {/* Score header */}
-        <div className="flex items-center gap-3">
-          <span className={`text-4xl font-bold tabular-nums ${tierColor}`}>
-            {organic.score !== null ? organic.score : "—"}
-          </span>
-          <div>
-            <div className={`font-semibold text-sm ${tierColor}`}>{tierLabel}</div>
-            <div className="text-xs text-muted">out of 100</div>
+        <div className={`rounded-xl p-4 ${cfg.bg} border border-border-subtle`}>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-baseline gap-2">
+              <span className={`text-5xl font-bold tabular-nums leading-none ${cfg.color}`}>
+                {organic.score !== null ? organic.score : "—"}
+              </span>
+              <div>
+                <div className={`text-base font-semibold ${cfg.color}`}>{cfg.label}</div>
+                <div className="text-xs text-muted">out of 100</div>
+              </div>
+            </div>
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-orange-500/15 text-orange-400 border border-orange-500/25 text-2xs font-semibold uppercase tracking-wide">
+              Experimental
+            </span>
+          </div>
+          {/* Score bar */}
+          <div className="h-1.5 w-full bg-border rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all duration-500 ${cfg.bar}`}
+              style={{ width: `${scorePct}%` }}
+            />
           </div>
         </div>
 
-        {/* Signals table */}
-        <div className="space-y-2">
+        {/* Signals */}
+        <div className="space-y-3">
           {signals.map((s) => (
-            <div key={s.label} className="flex items-start gap-2 text-sm">
-              <span className={`mt-1.5 size-2 rounded-full flex-shrink-0 ${STATUS_DOT[s.status]}`} />
-              <div className="flex-1 min-w-0">
-                <span className="text-foreground font-medium">{s.label}</span>
-                {s.contribution && (
-                  <span className="ml-2 text-xs text-muted">({s.contribution})</span>
-                )}
-                <span className="relative inline-block ml-1.5 align-middle group/tip">
-                  <span className="text-muted hover:text-foreground cursor-help text-xs">ⓘ</span>
-                  <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 rounded-md bg-surface border border-border px-3 py-2 text-xs text-foreground leading-relaxed shadow-lg opacity-0 group-hover/tip:opacity-100 transition-opacity duration-150 z-50 whitespace-normal">
-                    {s.tooltip}
+            <div key={s.label} className="group">
+              <div className="flex items-center justify-between gap-2 mb-1">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <span className={`size-1.5 rounded-full flex-shrink-0 ${STATUS_COLOR[s.status]}`} />
+                  <span className="text-sm font-medium text-foreground truncate">{s.label}</span>
+                  {/* Tooltip */}
+                  <span className="relative inline-flex flex-shrink-0 group/tip">
+                    <span className="text-muted hover:text-foreground cursor-help text-xs leading-none">ⓘ</span>
+                    <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 rounded-lg bg-surface border border-border px-3 py-2 text-xs text-foreground leading-relaxed shadow-xl opacity-0 group-hover/tip:opacity-100 transition-opacity duration-150 z-50 whitespace-normal">
+                      {s.tooltip}
+                    </span>
                   </span>
-                </span>
-                <div className="text-muted text-xs mt-0.5 truncate">{s.rawValue}</div>
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  {s.signalScore !== null && (
+                    <span className={`text-xs font-semibold tabular-nums ${s.status === "ok" ? "text-accent-green" : s.status === "warn" ? "text-orange-400" : "text-muted"}`}>
+                      {Math.round(s.signalScore)}/100
+                    </span>
+                  )}
+                  <span className="text-2xs text-muted border border-border-subtle rounded px-1.5 py-0.5 tabular-nums font-medium">
+                    w {s.weight}
+                  </span>
+                </div>
               </div>
+              {/* Signal bar */}
+              <div className="ml-3 mb-1 h-1 w-full bg-border rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all duration-500 ${SIGNAL_BAR_COLOR[s.status]}`}
+                  style={{ width: s.signalScore !== null ? `${s.signalScore}%` : s.status === "na" ? "0%" : "50%" }}
+                />
+              </div>
+              <p className="ml-3 text-xs text-muted">{s.rawValue}</p>
             </div>
           ))}
         </div>
@@ -189,22 +241,31 @@ export const OrganicScoreModal = ({ open, onClose, organic, owner, repo, onRecal
         {(organic.openIssuesCount !== null || organic.latestReleaseTag) && (
           <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted border-t border-border-subtle pt-3">
             {organic.openIssuesCount !== null && (
-              <span>{organic.openIssuesCount.toLocaleString()} open issues &amp; PRs</span>
+              <span className="flex items-center gap-1">
+                <svg className="size-3 text-muted/60" fill="none" viewBox="0 0 16 16" stroke="currentColor" strokeWidth="1.5">
+                  <circle cx="8" cy="8" r="6.25"/>
+                  <path d="M8 5v3.5M8 11v.5" strokeLinecap="round"/>
+                </svg>
+                {organic.openIssuesCount.toLocaleString()} open issues &amp; PRs
+              </span>
             )}
             {organic.latestReleaseTag && organic.latestReleaseUrl && (
               <a
                 href={organic.latestReleaseUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hover:text-foreground transition-colors"
+                className="flex items-center gap-1 hover:text-foreground transition-colors"
               >
-                Latest release: {organic.latestReleaseTag}
+                <svg className="size-3 text-muted/60" fill="none" viewBox="0 0 16 16" stroke="currentColor" strokeWidth="1.5">
+                  <path d="M8 2l1.5 3 3.5.5-2.5 2.5.5 3.5L8 10l-3 1.5.5-3.5L3 5.5 6.5 5z" strokeLinejoin="round"/>
+                </svg>
+                {organic.latestReleaseTag}
                 {organic.latestReleaseAt && (
-                  <span className="ml-1 text-muted">
-                    ({new Date(organic.latestReleaseAt).toLocaleDateString()})
-                  </span>
+                  <span className="text-muted/70">({new Date(organic.latestReleaseAt).toLocaleDateString()})</span>
                 )}
-                <span className="ml-1">↗</span>
+                <svg className="size-2.5 text-muted/60" fill="none" viewBox="0 0 10 10" stroke="currentColor" strokeWidth="1.5">
+                  <path d="M2 8L8 2M5 2h3v3" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
               </a>
             )}
           </div>
@@ -212,24 +273,39 @@ export const OrganicScoreModal = ({ open, onClose, organic, owner, repo, onRecal
 
         {/* Disclaimer */}
         <p className="text-xs text-muted leading-relaxed border-t border-border-subtle pt-3">
-          This score is a heuristic based on 3 public signals. It is not an accusation of fraud.
+          Heuristic based on 3 public signals — not an accusation of fraud.
           Repos with viral growth or niche communities may score lower despite being organic.
           {organic.computedAt && (
-            <span className="block mt-1">
+            <span className="block mt-0.5 text-muted/70">
               Computed {new Date(organic.computedAt).toLocaleDateString()}.
             </span>
           )}
         </p>
 
         {/* Actions */}
-        <div className="flex flex-wrap items-center gap-3 border-t border-border-subtle pt-3">
+        <div className="flex flex-wrap items-center gap-2 border-t border-border-subtle pt-3">
           <button
             onClick={handleRecalculate}
             disabled={recalculating}
-            title="Re-fetch live data from GitHub and recompute the score (1× per hour)"
-            className="text-xs px-3 py-1.5 rounded-md border border-border text-muted hover:text-foreground hover:border-accent-blue/50 transition-colors disabled:opacity-50"
+            title="Re-fetch live data from GitHub and recompute (1× per hour)"
+            className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md border border-border text-muted hover:text-foreground hover:border-accent-blue/50 transition-colors disabled:opacity-50"
           >
-            {recalculating ? "Recalculating…" : "Recompute"}
+            {recalculating ? (
+              <>
+                <svg className="size-3 animate-spin" fill="none" viewBox="0 0 16 16" stroke="currentColor" strokeWidth="2">
+                  <path d="M8 2a6 6 0 100 12A6 6 0 008 2z" strokeDasharray="20" strokeDashoffset="15"/>
+                </svg>
+                Recalculating…
+              </>
+            ) : (
+              <>
+                <svg className="size-3" fill="none" viewBox="0 0 16 16" stroke="currentColor" strokeWidth="1.5">
+                  <path d="M3 8a5 5 0 005 5 5 5 0 004.33-2.5M13 8a5 5 0 00-5-5 5 5 0 00-4.33 2.5" strokeLinecap="round"/>
+                  <path d="M11 2.5L13 5l-2.5 1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                Recompute
+              </>
+            )}
           </button>
           <a
             href={disputeUrl}
@@ -245,7 +321,7 @@ export const OrganicScoreModal = ({ open, onClose, organic, owner, repo, onRecal
         </div>
 
         {/* Links */}
-        <div className="flex gap-3 text-xs">
+        <div className="flex gap-3 text-xs border-t border-border-subtle pt-3">
           <a
             href="https://arxiv.org/abs/2412.13459"
             target="_blank"

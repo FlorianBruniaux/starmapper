@@ -99,20 +99,20 @@ export default function CalibrationPage() {
                 <tr className="border-b border-border-subtle">
                   <td className="px-4 py-2.5 text-foreground font-medium">Fork / Star ratio</td>
                   <td className="px-4 py-2.5 text-muted">stars ≥ 5 000</td>
-                  <td className="px-4 py-2.5 text-muted font-mono text-xs">≥ 15% → 100 · 5% → 50 · ≤ 2% → 0</td>
+                  <td className="px-4 py-2.5 text-muted font-mono text-xs">≥ 10% → 100 · 7% → 50 · ≤ 2% → 0</td>
                   <td className="px-4 py-2.5 text-right text-foreground font-semibold">70%</td>
                 </tr>
                 <tr className="border-b border-border-subtle">
                   <td className="px-4 py-2.5 text-foreground font-medium">Watcher / Star ratio</td>
                   <td className="px-4 py-2.5 text-muted">always</td>
-                  <td className="px-4 py-2.5 text-muted font-mono text-xs">≥ 2% → 100 · 0.5% → 50 · ≤ 0.1% → 0</td>
-                  <td className="px-4 py-2.5 text-right text-foreground font-semibold">10%</td>
+                  <td className="px-4 py-2.5 text-muted font-mono text-xs">≥ 0.5% → 100 · 0.1% → 50 · ≤ 0.01% → 0</td>
+                  <td className="px-4 py-2.5 text-right text-foreground font-semibold">5%</td>
                 </tr>
                 <tr>
                   <td className="px-4 py-2.5 text-foreground font-medium">% zero-follower stargazers</td>
                   <td className="px-4 py-2.5 text-muted">sample ≥ 30</td>
                   <td className="px-4 py-2.5 text-muted font-mono text-xs">≤ 10% → 100 · 30% → 50 · ≥ 60% → 0</td>
-                  <td className="px-4 py-2.5 text-right text-foreground font-semibold">20%</td>
+                  <td className="px-4 py-2.5 text-right text-foreground font-semibold">25%</td>
                 </tr>
               </tbody>
             </table>

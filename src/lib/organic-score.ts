@@ -30,14 +30,12 @@ export type OrganicResult = {
 };
 
 // Calibrated paliers — see docs/organic-score-calibration.md
-// Fork/star: ≥0.10 → 100, 0.07 → 50, ≤0.02 → 0
-// Watcher/star: ≥0.005 → 100, 0.001 → 50, ≤0.0001 → 0
-//   Recalibrated 2026-04-22: original [2%, 0.5%, 0.1%] calibrated on AI frameworks only.
-//   CLI tools (linux/linux, RTK) have structurally lower watcher ratios (0.1-0.5%) due to:
-//   - GitHub 2020 change: star no longer auto-subscribes to notifications
-//   - CLI users install via Homebrew/Cargo, never revisit the GitHub page
-//   - New paliers validated against all existing suspicious corpus tests.
-// Zero-follower %: ≤10 → 100, 30 → 50, ≥60 → 0
+// Fork/star (w=70%): ≥0.10 → 100, 0.07 → 50, ≤0.02 → 0
+// Watcher/star (w=5%): ≥0.005 → 100, 0.001 → 50, ≤0.0001 → 0
+//   Paliers recalibrated 2026-04-22 (original [2%,0.5%,0.1%] was AI-framework only).
+//   Weight reduced 2026-04-22: 10%→5% — signal barely discriminates in practice,
+//   most repos (healthy AND suspicious) score 75-100. See corpus analysis.
+// Zero-follower % (w=25%): ≤10 → 100, 30 → 50, ≥60 → 0
 
 const lerp = (v: number, lo: number, hi: number, outLo: number, outHi: number): number =>
   outLo + ((v - lo) / (hi - lo)) * (outHi - outLo);
@@ -66,8 +64,8 @@ const normZeroFollowerPct = (v: number): number => {
 };
 
 const WEIGHT_FORK   = 70;
-const WEIGHT_WATCH  = 10;
-const WEIGHT_ZF     = 20;
+const WEIGHT_WATCH  = 5;   // reduced from 10 — signal barely discriminates (most repos 75-100 regardless)
+const WEIGHT_ZF     = 25;
 
 const GATE_FORK_MIN_STARS = 5000;
 const GATE_ZF_MIN_SAMPLE  = 30;
