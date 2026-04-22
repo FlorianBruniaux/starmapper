@@ -36,6 +36,14 @@ export type RepoStats = {
   enrichedUserCount: number;
   isCapped: boolean;
   organic: RepoOrganic | null;
+  isPartial?: boolean;
+};
+
+const isNeonTimeout = (err: unknown): boolean => {
+  if (err instanceof Error) {
+    return err.message.includes("57014") || err.message.includes("canceling statement due to statement timeout");
+  }
+  return false;
 };
 
 export const GET = async (
@@ -50,81 +58,118 @@ export const GET = async (
   const key = normalizeOwnerRepo(owner, repo);
 
   try {
-    // 1. Aggregate totals in SQL — replaces findMany(10k) that generated IN($1…$10000)
-    const [totals] = await prisma.$queryRaw<{
-      total: bigint;
-      mapped: bigint;
-      avg_followers: number;
-      enriched: bigint;
-      bots: bigint;
-    }[]>`
-      SELECT
-        COUNT(*)                                                                                             AS total,
-        COUNT(*) FILTER (WHERE u.lat IS NOT NULL AND u.lng IS NOT NULL)                                     AS mapped,
-        COALESCE(AVG(u.followers)::int, 0)                                                                  AS avg_followers,
-        COUNT(*) FILTER (WHERE u."dataVersion" >= 1)                                                        AS enriched,
-        COUNT(*) FILTER (WHERE u."dataVersion" >= 1 AND u.followers < 5 AND u.following < 5 AND u."publicRepos" < 2) AS bots
-      FROM star_event se
-      JOIN github_user u USING (login)
-      WHERE se.owner = ${key.owner} AND se.repo = ${key.repo}
-    `;
-
-    if (!totals || Number(totals.total) === 0) {
-      return jsonError("no_data", 404);
-    }
-
-    const total = Number(totals.total);
-    const mappedCount = Number(totals.mapped);
-    const enrichedUserCount = Number(totals.enriched);
-    const botCount = Number(totals.bots);
-    const avgFollowers = Math.round(totals.avg_followers ?? 0);
-
-    // Queries 2-4 are independent — run in parallel to save ~2 × Neon round-trip latency
-    // Note: topUsers (individual profiles) has been moved to /api/stats/[owner]/[repo]/top-users
-    // (strict-get tier with sm-token check) to prevent unauthenticated PII scraping.
-    // Fetch badge_cache for organic score (precomputed by badge-update)
+    // 1. badge_cache first — fast lookup, used as fallback when aggregation timeouts
     const badgeRow = await prisma.badgeCache.findUnique({
       where: { owner_repo: key },
-      select: { organicScore: true, organicTier: true, organicComputedAt: true, forksCount: true, watchersCount: true, totalCount: true, openIssuesCount: true, latestReleaseTag: true, latestReleaseUrl: true, latestReleaseAt: true },
+      select: {
+        organicScore: true, organicTier: true, organicComputedAt: true,
+        forksCount: true, watchersCount: true, totalCount: true,
+        mappedCount: true, countryCount: true,
+        openIssuesCount: true,
+        latestReleaseTag: true, latestReleaseUrl: true, latestReleaseAt: true,
+      },
     });
 
-    const [locationRows, companyRows, crossRepoGroups] = await Promise.all([
-      // 2. Top locations (raw strings) — parseLocation in Node on max 200 rows
-      prisma.$queryRaw<{ location: string; cnt: bigint }[]>`
-        SELECT u.location, COUNT(*) AS cnt
+    // 2. Aggregate totals via JOIN — slow on large repos; catch Neon timeout
+    let total = 0, mappedCount = 0, avgFollowers = 0, enrichedUserCount = 0, botCount = 0;
+    let joinTimedOut = false;
+
+    try {
+      const [totals] = await prisma.$queryRaw<{
+        total: bigint;
+        mapped: bigint;
+        avg_followers: number;
+        enriched: bigint;
+        bots: bigint;
+      }[]>`
+        SELECT
+          COUNT(*)                                                                                             AS total,
+          COUNT(*) FILTER (WHERE u.lat IS NOT NULL AND u.lng IS NOT NULL)                                     AS mapped,
+          COALESCE(AVG(u.followers)::int, 0)                                                                  AS avg_followers,
+          COUNT(*) FILTER (WHERE u."dataVersion" >= 1)                                                        AS enriched,
+          COUNT(*) FILTER (WHERE u."dataVersion" >= 1 AND u.followers < 5 AND u.following < 5 AND u."publicRepos" < 2) AS bots
         FROM star_event se
         JOIN github_user u USING (login)
         WHERE se.owner = ${key.owner} AND se.repo = ${key.repo}
-          AND u.location IS NOT NULL
-        GROUP BY u.location
-        ORDER BY cnt DESC
-        LIMIT 200
-      `,
-      // 3. Top companies
-      prisma.$queryRaw<{ company: string; cnt: bigint }[]>`
-        SELECT u.company, COUNT(*) AS cnt
-        FROM star_event se
-        JOIN github_user u USING (login)
-        WHERE se.owner = ${key.owner} AND se.repo = ${key.repo}
-          AND u.company IS NOT NULL
-        GROUP BY u.company
-        ORDER BY cnt DESC
-        LIMIT 50
-      `,
-      // 4. Power stargazers — CTE + INNER JOIN (avoids correlated subquery O(n²))
-      prisma.$queryRaw<{ login: string; cnt: bigint }[]>`
-        WITH repo_logins AS (
-          SELECT DISTINCT login FROM star_event WHERE owner = ${key.owner} AND repo = ${key.repo}
-        )
-        SELECT se.login, COUNT(*) AS cnt
-        FROM star_event se
-        INNER JOIN repo_logins USING (login)
-        GROUP BY se.login
-        HAVING COUNT(*) > 1
-        ORDER BY cnt DESC
-        LIMIT 20
-      `,
-    ]);
+      `;
+
+      if (!totals || Number(totals.total) === 0) {
+        // No star_event rows — fall through to badge_cache or 404
+        if (!badgeRow) return jsonError("no_data", 404);
+        joinTimedOut = true;
+      } else {
+        total = Number(totals.total);
+        mappedCount = Number(totals.mapped);
+        enrichedUserCount = Number(totals.enriched);
+        botCount = Number(totals.bots);
+        avgFollowers = Math.round(totals.avg_followers ?? 0);
+      }
+    } catch (err) {
+      if (isNeonTimeout(err)) {
+        joinTimedOut = true;
+        logError("stats/totals timeout", { owner: key.owner, repo: key.repo });
+      } else {
+        throw err;
+      }
+    }
+
+    // Fallback: use badge_cache totals when JOIN timed out
+    if (joinTimedOut) {
+      if (!badgeRow) return jsonError("no_data", 404);
+      total = badgeRow.totalCount;
+      mappedCount = badgeRow.mappedCount ?? 0;
+    }
+
+    // 3. Location + company + power queries — also JOIN-heavy; catch timeout independently
+    let locationRows: { location: string; cnt: bigint }[] = [];
+    let companyRows: { company: string; cnt: bigint }[] = [];
+    let crossRepoGroups: { login: string; cnt: bigint }[] = [];
+
+    if (!joinTimedOut) {
+      try {
+        [locationRows, companyRows, crossRepoGroups] = await Promise.all([
+          prisma.$queryRaw<{ location: string; cnt: bigint }[]>`
+            SELECT u.location, COUNT(*) AS cnt
+            FROM star_event se
+            JOIN github_user u USING (login)
+            WHERE se.owner = ${key.owner} AND se.repo = ${key.repo}
+              AND u.location IS NOT NULL
+            GROUP BY u.location
+            ORDER BY cnt DESC
+            LIMIT 200
+          `,
+          prisma.$queryRaw<{ company: string; cnt: bigint }[]>`
+            SELECT u.company, COUNT(*) AS cnt
+            FROM star_event se
+            JOIN github_user u USING (login)
+            WHERE se.owner = ${key.owner} AND se.repo = ${key.repo}
+              AND u.company IS NOT NULL
+            GROUP BY u.company
+            ORDER BY cnt DESC
+            LIMIT 50
+          `,
+          prisma.$queryRaw<{ login: string; cnt: bigint }[]>`
+            WITH repo_logins AS (
+              SELECT DISTINCT login FROM star_event WHERE owner = ${key.owner} AND repo = ${key.repo}
+            )
+            SELECT se.login, COUNT(*) AS cnt
+            FROM star_event se
+            INNER JOIN repo_logins USING (login)
+            GROUP BY se.login
+            HAVING COUNT(*) > 1
+            ORDER BY cnt DESC
+            LIMIT 20
+          `,
+        ]);
+      } catch (err) {
+        if (isNeonTimeout(err)) {
+          logError("stats/location timeout", { owner: key.owner, repo: key.repo });
+          // Keep empty arrays — partial response
+        } else {
+          throw err;
+        }
+      }
+    }
 
     const countryCount = new Map<string, number>();
     const cityCount = new Map<string, number>();
@@ -137,11 +182,7 @@ export const GET = async (
 
     const companyCount = new Map(companyRows.map(({ company, cnt }) => [company, Number(cnt)] as [string, number]));
 
-    // topUsers is intentionally omitted from this public endpoint.
-    // Individual profiles (login, followers, location) are served by /top-users (strict-get).
-    // The map page computes topUsers client-side from scan points — no API fetch needed.
-
-    // Fetch user details for power stargazers (logins list is small — max 20)
+    // Fetch user details for power stargazers (small list — max 20)
     const powerLogins = crossRepoGroups.map((g) => g.login);
     const powerUsers = powerLogins.length > 0
       ? await prisma.gitHubUser.findMany({
@@ -176,21 +217,27 @@ export const GET = async (
         }
       : null;
 
+    // Use badge_cache countryCount when available and our computed one is empty (timeout)
+    const finalCountryCount = countryCount.size > 0
+      ? countryCount.size
+      : (badgeRow?.countryCount ?? 0);
+
     const stats: RepoStats = {
       totalStars: total,
       mappedCount,
       mappingRate: total > 0 ? Math.round((mappedCount / total) * 100) : 0,
       avgFollowers,
-      countryCount: countryCount.size,
+      countryCount: finalCountryCount,
       topCountries: [...countryCount.entries()].sort((a, b) => b[1] - a[1]),
       topCities: [...cityCount.entries()].sort((a, b) => b[1] - a[1]).slice(0, 30),
       topCompanies: [...companyCount.entries()].sort((a, b) => b[1] - a[1]).slice(0, 30),
-      topUsers: [], // served by /top-users (strict-get) — not exposed on this public endpoint
+      topUsers: [],
       powerStargazers,
       botCount,
       enrichedUserCount,
-      isCapped: false, // no longer capped — aggregation done in SQL
+      isCapped: false,
       organic,
+      ...(joinTimedOut ? { isPartial: true } : {}),
     };
 
     return NextResponse.json(stats, {

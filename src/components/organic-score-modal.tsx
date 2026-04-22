@@ -256,7 +256,7 @@ export const OrganicScoreModal = ({ open, onClose, organic, owner, repo, onRecal
           </a>
           <span className="text-muted">·</span>
           <a
-            href="https://github.com/fbruniaux/starmapper/blob/main/docs/organic-score-calibration.md"
+            href="/organic-score/calibration"
             target="_blank"
             rel="noopener noreferrer"
             className="text-accent-blue hover:underline"
