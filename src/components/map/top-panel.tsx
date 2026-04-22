@@ -9,6 +9,11 @@ import type { StargazerPoint } from "@/app/api/chunk/route";
 import type { TimeEstimate } from "@/lib/format";
 import { formatEstimate, timeAgo } from "@/lib/format";
 import { isCountry, normalizeCountry } from "@/lib/countries";
+import type { RepoOrganic } from "@/app/api/stats/[owner]/[repo]/route";
+import { OrganicScorePill } from "@/components/organic-score-pill";
+import { OrganicScoreModal } from "@/components/organic-score-modal";
+
+const ORGANIC_ENABLED = process.env.NEXT_PUBLIC_ORGANIC_SCORE_ENABLED === "true";
 
 type RepoInfo = {
   name: string;
@@ -61,6 +66,7 @@ type Props = {
   setFindStatus: (v: FindStatus) => void;
   findUser: () => void;
   findStatus: FindStatus;
+  organic?: RepoOrganic | null;
 };
 
 export const TopPanel = ({
@@ -72,9 +78,14 @@ export const TopPanel = ({
   storedUsername, onSetUsername, findMe,
   error,
   findInput, setFindInput, setFindStatus, findUser, findStatus,
+  organic,
 }: Props) => {
   const [askingUsername, setAskingUsername] = useState(false);
   const [usernameInput, setUsernameInput] = useState("");
+  const [organicModalOpen, setOrganicModalOpen] = useState(false);
+  const [organicOverride, setOrganicOverride] = useState<RepoOrganic | null>(null);
+  const activeOrganic = organicOverride ?? organic ?? null;
+  const showOrganic = ORGANIC_ENABLED && total > 0;
   const mappingPct = total > 0 ? Math.round((points.length / total) * 100) : 0;
   const locationCount = new Set(
     points
@@ -83,6 +94,7 @@ export const TopPanel = ({
   ).size;
 
   return (
+    <>
     <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10
       bg-background/90 border border-border rounded-xl
       px-4 py-3 backdrop-blur-md shadow-2xl min-w-80 w-max max-w-sm">
@@ -149,7 +161,7 @@ export const TopPanel = ({
 
       {/* ── Stats grid ────────────────────────────────────────────────────── */}
       <div className="mt-3 border border-border-subtle rounded-lg overflow-hidden">
-        <div className="grid grid-cols-3 divide-x divide-border-subtle">
+        <div className={`grid divide-x divide-border-subtle ${showOrganic ? "grid-cols-4" : "grid-cols-3"}`}>
           {/* Mapped */}
           <div className="flex flex-col items-center py-2 px-3">
             <div className="text-xl font-bold text-foreground tabular-nums leading-tight">
@@ -173,6 +185,22 @@ export const TopPanel = ({
             </div>
             <div className="text-2xs text-muted uppercase tracking-wide mt-0.5">Countries</div>
           </div>
+
+          {/* Organic score tile — pending pill when no data, score pill when computed */}
+          {showOrganic && (
+            <div className="flex flex-col items-center py-2 px-3">
+              {activeOrganic ? (
+                <OrganicScorePill
+                  score={activeOrganic.score}
+                  tier={activeOrganic.tier}
+                  onClick={() => setOrganicModalOpen(true)}
+                />
+              ) : (
+                <OrganicScorePill pending totalStars={total} />
+              )}
+              <div className="text-2xs text-muted uppercase tracking-wide mt-0.5">Organic</div>
+            </div>
+          )}
         </div>
 
         {/* No location row — séparé, visuellement déprioritisé */}
@@ -423,5 +451,18 @@ export const TopPanel = ({
         </div>
       </div>
     </div>
+
+    {/* Organic score detail modal */}
+    {showOrganic && activeOrganic && (
+      <OrganicScoreModal
+        open={organicModalOpen}
+        onClose={() => setOrganicModalOpen(false)}
+        organic={activeOrganic}
+        owner={owner}
+        repo={repo}
+        onRecalculated={setOrganicOverride}
+      />
+    )}
+    </>
   );
 };

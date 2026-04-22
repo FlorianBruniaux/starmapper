@@ -6,6 +6,20 @@ import { prisma } from "@/lib/db";
 import { parseLocation } from "@/lib/location-parser";
 import { normalizeOwnerRepo, OWNER_REPO_RE } from "@/lib/api-validation";
 import { jsonError, logError } from "@/lib/api-helpers";
+import type { OrganicTier } from "@/lib/organic-score";
+
+export type RepoOrganic = {
+  score: number | null;
+  tier: OrganicTier;
+  computedAt: string | null;
+  forksCount: number | null;
+  watchersCount: number | null;
+  totalCount: number;
+  openIssuesCount: number | null;
+  latestReleaseTag: string | null;
+  latestReleaseUrl: string | null;
+  latestReleaseAt: string | null;
+};
 
 export type RepoStats = {
   totalStars: number;
@@ -21,6 +35,7 @@ export type RepoStats = {
   botCount: number;
   enrichedUserCount: number;
   isCapped: boolean;
+  organic: RepoOrganic | null;
 };
 
 export const GET = async (
@@ -67,6 +82,12 @@ export const GET = async (
     // Queries 2-4 are independent — run in parallel to save ~2 × Neon round-trip latency
     // Note: topUsers (individual profiles) has been moved to /api/stats/[owner]/[repo]/top-users
     // (strict-get tier with sm-token check) to prevent unauthenticated PII scraping.
+    // Fetch badge_cache for organic score (precomputed by badge-update)
+    const badgeRow = await prisma.badgeCache.findUnique({
+      where: { owner_repo: key },
+      select: { organicScore: true, organicTier: true, organicComputedAt: true, forksCount: true, watchersCount: true, totalCount: true, openIssuesCount: true, latestReleaseTag: true, latestReleaseUrl: true, latestReleaseAt: true },
+    });
+
     const [locationRows, companyRows, crossRepoGroups] = await Promise.all([
       // 2. Top locations (raw strings) — parseLocation in Node on max 200 rows
       prisma.$queryRaw<{ location: string; cnt: bigint }[]>`
@@ -140,6 +161,21 @@ export const GET = async (
       };
     });
 
+    const organic: RepoOrganic | null = badgeRow?.organicTier
+      ? {
+          score:            badgeRow.organicScore,
+          tier:             badgeRow.organicTier as OrganicTier,
+          computedAt:       badgeRow.organicComputedAt?.toISOString() ?? null,
+          forksCount:       badgeRow.forksCount,
+          watchersCount:    badgeRow.watchersCount,
+          totalCount:       badgeRow.totalCount,
+          openIssuesCount:  badgeRow.openIssuesCount ?? null,
+          latestReleaseTag: badgeRow.latestReleaseTag ?? null,
+          latestReleaseUrl: badgeRow.latestReleaseUrl ?? null,
+          latestReleaseAt:  badgeRow.latestReleaseAt?.toISOString() ?? null,
+        }
+      : null;
+
     const stats: RepoStats = {
       totalStars: total,
       mappedCount,
@@ -154,6 +190,7 @@ export const GET = async (
       botCount,
       enrichedUserCount,
       isCapped: false, // no longer capped — aggregation done in SQL
+      organic,
     };
 
     return NextResponse.json(stats, {

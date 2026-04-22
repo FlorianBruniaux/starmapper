@@ -32,6 +32,8 @@
 
 ## Medium term
 
+- **Starred-by-user map** — depuis `/profile/[login]`, afficher une carte agrégée des stargazers de TOUS les repos starrés par ce user (qui sont déjà scannés dans StarMapper). Route `GET /api/profile/[login]/starred-map` ; UI comme onglet supplémentaire sur la page profil. Scope : 1-2 j. Limite : fonctionne uniquement sur les repos déjà indexés. Valeur : "où vivent les gens qui aiment ce que j'aime" — boucle virale personnelle. Recherche Perplexity (2026-04-17) : aucun outil existant ne croise stars-user × géographie.
+
 - **In-platform ping (v2 contact)** — Allow devs to send a message to another dev directly via StarMapper. Requires GitHub OAuth, `users`/`messages`/`contact_preferences` DB tables, email delivery (Resend/Postmark), opt-in, anti-spam, unsubscribe. On hold — pending signal (need 10+ "I wanted to contact someone but couldn't") and explicit product decision (StarMapper goes social?).
 
 - **Watch mode** — poll every few minutes during a launch, display "+3 new stars in Paris" with a pulsing badge. Useful during launches and spikes.
@@ -58,7 +60,12 @@
 
 ---
 
+## Trending
+
+- **Trending map `/trending`** — carte agrégée des stargazers des 20-50 repos trending du moment. Source : GitHub Search API (sort by stars, recently updated) ou trendshift.io (scraping léger, `robots.txt`-safe). Cron Vercel quotidien pour maintenir la liste fraîche. Filtres par langage + topic. Scope : 2-3 j. Point ouvert : scraping trendshift (riche, fragile) vs GitHub Search API (robuste, scoring à reconstruire). Note : GitHub Trending officiel est gelé depuis nov 2025 ; trendshift.io est devenu la référence de facto. Aucun outil existant n'y ajoute la géographie. Valeur : trafic SEO + point d'entrée récurrent.
+
+---
+
 ## If monetization ever
 
-- **Trending page** — "These repos are gaining stars in Berlin this week." Organic traffic.
 - **Email alerts** — "10 new stargazers this week, 3 from Microsoft." Retention and natural upsell.

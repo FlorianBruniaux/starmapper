@@ -143,6 +143,13 @@ POST /api/badge-update
 GET /api/admin/clear-geocache   — admin: truncate geocache table
 POST /api/admin/import-geocache — admin: bulk-import geocache entries
 
+GET /api/trending
+  Returns: TrendingResponse { repos: TrendingRepo[], mapPoints: StargazerPoint[], meta: { total } }
+  Cache: public, 1h CDN (s-maxage=3600)
+  Note: reads trending_repos_mv — returns 503 with error:"trending_mv_empty" if MV missing.
+        mapPoints = aggregate of top 10 repos' stargazer_cache (deduped by login).
+        TrendingRepo.hasMap = true if repo has a stargazer_cache entry.
+
 GET /api/devs/atlas
   Returns: AtlasDominantData { countries: CountryDominant[], meta: { generatedAt, minDevsThreshold } }
   Cache: public, 6h CDN
@@ -374,7 +381,14 @@ CREATE MATERIALIZED VIEW user_repo_count_mv AS
 CREATE UNIQUE INDEX user_repo_count_mv_login_idx ON user_repo_count_mv (login);
 ```
 
-All 6 MVs are refreshed daily via `/api/admin/refresh-grid-mv` (Vercel Cron, 03:00 UTC). Routes using MVs fall back to direct table scans if a MV is missing.
+**`trending_repos_mv`** — top repos by star velocity (powers `/trending` + `GET /api/trending`):
+```sql
+-- pnpm create:trending-mv:prod
+-- see scripts/create-trending-mv.sql
+-- Also creates star_event_starred_at_idx index on star_event("starredAt")
+```
+
+All 7 MVs are refreshed daily via `/api/admin/refresh-grid-mv` (Vercel Cron, 03:00 UTC). Routes using MVs fall back gracefully if a MV is missing (503 for trending, direct table scan for others).
 
 ### GIN Trigram Indexes — One-Time Setup Required
 

@@ -5,7 +5,7 @@
 // Centralises the regex that was duplicated across 7 route files.
 
 export const OWNER_REPO_RE = /^[a-zA-Z0-9._-]{1,100}$/;
-export const LOGIN_RE = /^[a-zA-Z0-9_-]{1,100}$/;
+export const LOGIN_RE = /^[a-zA-Z0-9_-]{1,39}$/;
 
 /** Returns normalised `{ owner, repo }` or `null` if either value is invalid. */
 export const validateOwnerRepo = (

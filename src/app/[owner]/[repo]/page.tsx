@@ -10,7 +10,7 @@ import { MapFloatingNav } from "@/components/map/map-floating-nav";
 import { CLUSTER_RADIUS } from "@/components/map/constants";
 import type { StargazerPoint, ChunkResponse } from "@/app/api/chunk/route";
 import type { MapProjection } from "@/lib/theme";
-import type { RepoStats } from "@/app/api/stats/[owner]/[repo]/route";
+import type { RepoStats, RepoOrganic } from "@/app/api/stats/[owner]/[repo]/route";
 import { TokenModal, getStoredToken, getStoredUsername, setStoredUsername } from "@/components/token-modal";
 import { Modal } from "@/components/modal";
 import { saveBookmark } from "@/lib/bookmarks";
@@ -51,6 +51,8 @@ type RepoInfo = {
   stars: number;
   language: string | null;
   avatar: string | null;
+  forksCount: number;
+  watchersCount: number;
 };
 
 type LocalCache = {
@@ -169,6 +171,7 @@ export default function MapPage({
   const [lastDbScan, setLastDbScan] = useState<string | null>(null);
   const [latestStarredAt, setLatestStarredAt] = useState<string | null>(null);
   const [serverStats, setServerStats] = useState<RepoStats | null>(null);
+  const [organicData, setOrganicData] = useState<RepoOrganic | null>(null);
   const [statsOpen, setStatsOpen] = useState(false);
   const [statsTab, setStatsTab] = useState<"countries" | "cities" | "top" | "companies" | "power">("top");
   const [statsFilter, setStatsFilter] = useState("");
@@ -316,8 +319,14 @@ export default function MapPage({
         mappedCount: cache.points.length,
         countryCount: countrySet.size,
         totalCount: cache.totalCount,
+        ...(repoInfo?.forksCount !== undefined && { forksCount: repoInfo.forksCount }),
+        ...(repoInfo?.watchersCount !== undefined && { watchersCount: repoInfo.watchersCount }),
       }),
-    }).catch(() => {});
+    })
+      .then(() => fetch(`/api/stats/${owner}/${repo}`))
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => { if (data) setServerStats(data); })
+      .catch(() => {});
   }, [owner, repo]);
 
   // Check DB cache on mount — falls back to badge_cache metadata (last scan date)
@@ -357,6 +366,14 @@ export default function MapPage({
     fetch(`/api/stats/${owner}/${repo}`)
       .then((r) => r.ok ? r.json() : null)
       .then((data: RepoStats | null) => { if (data) setServerStats(data); })
+      .catch(() => {});
+  }, [owner, repo]);
+
+  // Fetch organic score independently — reads badge_cache directly, no star_event dependency
+  useEffect(() => {
+    fetch(`/api/organic-score/${owner}/${repo}`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((data: { organic: RepoOrganic } | null) => { if (data?.organic) setOrganicData(data.organic); })
       .catch(() => {});
   }, [owner, repo]);
 
@@ -458,8 +475,14 @@ export default function MapPage({
           countryCount: countrySet.size,
           totalCount: allPoints.length + allUnmapped.length,
           language: repoInfo?.language ?? null,
+          ...(repoInfo?.forksCount !== undefined && { forksCount: repoInfo.forksCount }),
+          ...(repoInfo?.watchersCount !== undefined && { watchersCount: repoInfo.watchersCount }),
         }),
-      }).catch(() => {});
+      })
+        .then(() => fetch(`/api/stats/${owner}/${repo}`))
+        .then((r) => r.ok ? r.json() : null)
+        .then((data) => { if (data) setServerStats(data); })
+        .catch(() => {});
 
       // Save to DB cache (shared across users, fire-and-forget).
       // Compress client-side first to stay under Vercel's 4.5MB request body limit —
@@ -1288,6 +1311,7 @@ export default function MapPage({
         setFindStatus={setFindStatus}
         findUser={findUser}
         findStatus={findStatus}
+        organic={organicData ?? serverStats?.organic}
       />
 
       {/* Legend — compare mode indicator only */}

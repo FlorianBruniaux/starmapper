@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 
 // Refreshes all materialized views: github_user_grid_mv, country_stats_mv,
-// power_users_mv, company_stats_mv.
+// power_users_mv, company_stats_mv, trending_repos_mv.
 // Runs 1x/day via Vercel Cron (see vercel.json). Also callable manually via admin auth.
 // CONCURRENTLY = does not block reads during refresh.
 
@@ -39,6 +39,7 @@ const runRefresh = async () => {
       prisma.$executeRaw`REFRESH MATERIALIZED VIEW CONCURRENTLY company_stats_mv`,
       prisma.$executeRaw`REFRESH MATERIALIZED VIEW CONCURRENTLY country_language_stats_mv`,
       prisma.$executeRaw`REFRESH MATERIALIZED VIEW CONCURRENTLY user_repo_count_mv`,
+      prisma.$executeRaw`REFRESH MATERIALIZED VIEW CONCURRENTLY trending_repos_mv`,
     ]);
     return NextResponse.json({ ok: true, durationMs: Date.now() - start });
   } catch (err) {
