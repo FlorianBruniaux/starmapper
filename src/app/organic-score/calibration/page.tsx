@@ -169,6 +169,69 @@ export default function CalibrationPage() {
           </p>
         </section>
 
+        {/* Methodology vs StarScout */}
+        <section className="mb-8">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted mb-3">Methodology vs. StarScout</h2>
+          <p className="text-sm text-muted mb-3">
+            StarMapper uses the 3 most accessible public signals. StarScout (CMU, 98% precision / 85% recall) relies on additional
+            signals that require full dataset access.
+          </p>
+          <div className="border border-border rounded-lg overflow-x-auto">
+            <table className="w-full text-sm min-w-[560px]">
+              <thead>
+                <tr className="border-b border-border bg-surface">
+                  <th className="text-left px-4 py-2.5 font-medium text-muted">Signal</th>
+                  <th className="text-center px-4 py-2.5 font-medium text-muted">StarMapper</th>
+                  <th className="text-center px-4 py-2.5 font-medium text-muted">StarScout</th>
+                  <th className="text-left px-4 py-2.5 font-medium text-muted">Notes</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="border-b border-border-subtle">
+                  <td className="px-4 py-2.5 text-foreground">Fork / star ratio</td>
+                  <td className="px-4 py-2.5 text-center text-accent-green">✓ 70%</td>
+                  <td className="px-4 py-2.5 text-center text-accent-green">✓</td>
+                  <td className="px-4 py-2.5 text-muted text-xs">Strongest simple heuristic per paper</td>
+                </tr>
+                <tr className="border-b border-border-subtle">
+                  <td className="px-4 py-2.5 text-foreground">% zero-follower stargazers</td>
+                  <td className="px-4 py-2.5 text-center text-accent-green">✓ 25%</td>
+                  <td className="px-4 py-2.5 text-center text-orange-400">partial</td>
+                  <td className="px-4 py-2.5 text-muted text-xs">Paper notes fake accounts can look normal — catches obvious fakes only</td>
+                </tr>
+                <tr className="border-b border-border-subtle">
+                  <td className="px-4 py-2.5 text-foreground">Watcher / star ratio</td>
+                  <td className="px-4 py-2.5 text-center text-orange-400">✓ 5%</td>
+                  <td className="px-4 py-2.5 text-center text-muted">—</td>
+                  <td className="px-4 py-2.5 text-muted text-xs">Weakly discriminating in practice — weight kept low</td>
+                </tr>
+                <tr className="border-b border-border-subtle">
+                  <td className="px-4 py-2.5 text-foreground">Clustering (account overlap across repos)</td>
+                  <td className="px-4 py-2.5 text-center text-muted">—</td>
+                  <td className="px-4 py-2.5 text-center text-accent-green">✓</td>
+                  <td className="px-4 py-2.5 text-muted text-xs">Key signal in StarScout — requires full graph analysis</td>
+                </tr>
+                <tr className="border-b border-border-subtle">
+                  <td className="px-4 py-2.5 text-foreground">Temporal burst (stars in short window)</td>
+                  <td className="px-4 py-2.5 text-center text-muted">—</td>
+                  <td className="px-4 py-2.5 text-center text-accent-green">✓</td>
+                  <td className="px-4 py-2.5 text-muted text-xs">Requires star timestamp history at scale</td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-2.5 text-foreground">Account age + activity pattern</td>
+                  <td className="px-4 py-2.5 text-center text-muted">—</td>
+                  <td className="px-4 py-2.5 text-center text-accent-green">✓</td>
+                  <td className="px-4 py-2.5 text-muted text-xs">Detects sophisticated fakes — not available from public API alone</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p className="text-xs text-muted mt-2">
+            StarMapper reaches ~85% accuracy on labelled corpus. StarScout reaches 98% precision using the full signal set.
+            The gap is structural — not a calibration issue.
+          </p>
+        </section>
+
         {/* Caveats */}
         <section className="mb-8">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-muted mb-3">Caveats</h2>
