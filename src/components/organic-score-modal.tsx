@@ -73,7 +73,7 @@ const buildSignals = (organic: RepoOrganic): SignalRow[] => {
       label: "Fork / star ratio",
       tooltip: FORK_TOOLTIP,
       rawValue: `${fmtPct(ratio)} — ${forksCount.toLocaleString()} forks / ${totalCount.toLocaleString()} ★`,
-      weight: "70%",
+      weight: "40%",
       signalScore: score,
       status: totalCount < 5000 ? "na" : ratio >= 0.07 ? "ok" : "warn",
     });
@@ -113,7 +113,7 @@ const buildSignals = (organic: RepoOrganic): SignalRow[] => {
     label: "Zero-follower stargazers",
     tooltip: ZF_TOOLTIP,
     rawValue: "Computed from enriched users in our DB",
-    weight: "25%",
+    weight: "55%",
     signalScore: null,
     status: "ok",
   });
