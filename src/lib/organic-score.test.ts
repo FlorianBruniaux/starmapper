@@ -4,8 +4,10 @@
 import { describe, it, expect } from "vitest";
 import { computeOrganicScore } from "./organic-score";
 
-// Golden cases from calibration — docs/organic-score-calibration.md (2026-04-21)
-// Expected scores computed with weights fork=70%, watcher=10%, zero-follower=20%
+// Golden cases from calibration — probe-star-burst.ts run 2026-04-22
+// Weights: fork=40%, watcher=5%, zero-follower=55%
+// Rationale: ZF is strongest discriminator when sample ≥ 30; fork weight reduced to avoid
+// penalising CLI tools (low fork/star by nature) — confirmed by corpus analysis.
 
 describe("computeOrganicScore", () => {
   // ── Healthy corpus ────────────────────────────────────────────────────────
@@ -50,19 +52,21 @@ describe("computeOrganicScore", () => {
     expect(result.score).toBeGreaterThanOrEqual(80);
   });
 
-  it("rtk-ai/rtk — CLI tool: moderate (not suspicious) despite low watcher ratio", () => {
-    // CLI tools structurally have low watcher/star ratio (users install via Homebrew/Cargo, never revisit GitHub).
-    // Watcher thresholds recalibrated 2026-04-22 to avoid flagging legitimate CLI repos as suspicious.
+  it("rtk-ai/rtk — CLI tool: healthy despite low fork/star ratio, strong ZF signal", () => {
+    // Weight rebalance 2026-04-22: fork 70%→40%, ZF 25%→55%.
+    // RTK has fork/★ = 0.058 (low for CLI tools — users install via Homebrew/Cargo, don't fork)
+    // but excellent ZF signal (7.4% zero-followers, n=5284). ZF now carries enough weight to score healthy.
     const result = computeOrganicScore({
-      starsCount:         25_450,
-      forksCount:         1_847,    // fork/★ = 0.073
-      watchersCount:      80,       // watcher/★ = 0.003 — structurally low for CLI tools
-      zeroFollowerCount:  null,
-      sampleSize:         null,
+      starsCount:         32_308,
+      forksCount:         1_880,    // fork/★ = 0.058
+      watchersCount:      84,       // watcher/★ = 0.0026
+      zeroFollowerCount:  390,      // zf% = 7.4% — very healthy (n=5284)
+      sampleSize:         5_284,
     });
-    expect(result.tier).not.toBe("suspicious");
+    expect(result.tier).toBe("healthy");
     expect(result.score).not.toBeNull();
-    expect(result.score!).toBeGreaterThanOrEqual(50);
+    expect(result.score!).toBeGreaterThanOrEqual(70);
+    expect(result.activeSignals).toContain("zero_follower_pct");
   });
 
   // ── Suspicious corpus ─────────────────────────────────────────────────────

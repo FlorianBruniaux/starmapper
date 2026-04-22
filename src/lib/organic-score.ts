@@ -63,9 +63,9 @@ const normZeroFollowerPct = (v: number): number => {
   return clamp(lerp(v, 30, 60, 50, 0));
 };
 
-const WEIGHT_FORK   = 70;
-const WEIGHT_WATCH  = 5;   // reduced from 10 — signal barely discriminates (most repos 75-100 regardless)
-const WEIGHT_ZF     = 25;
+const WEIGHT_FORK   = 40;  // reduced from 70 — fork signal too dominant, penalised CLI tools with low fork/star
+const WEIGHT_WATCH  = 5;
+const WEIGHT_ZF     = 55;  // increased from 25 — ZF is the strongest discriminator when sample is sufficient
 
 const GATE_FORK_MIN_STARS = 5000;
 const GATE_ZF_MIN_SAMPLE  = 30;
@@ -137,8 +137,8 @@ export const computeOrganicScore = (input: OrganicSignals): OrganicResult => {
   const score = Math.round(rawScore);
 
   const tier: OrganicTier =
-    score >= 80 ? "healthy" :
-    score >= 50 ? "moderate" :
+    score >= 70 ? "healthy" :
+    score >= 45 ? "moderate" :
     "suspicious";
 
   return {
