@@ -20,7 +20,7 @@ const CONCURRENCY = 5;
 const RETRY_LIMIT = 1;
 const GATE_MIN_STARS = 5000;
 
-const pool = new Pool({ connectionString: process.env.DATABASE_URL_LOCAL || process.env.DATABASE_URL });
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter: new PrismaPg(pool) });
 
 type GhRepo = {
