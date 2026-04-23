@@ -128,6 +128,18 @@ export const bulkUpsertStarEvents = async (
   }
 };
 
+export const getOrCreateGitHubUserMinimal = async (login: string): Promise<void> => {
+  try {
+    await prisma.gitHubUser.upsert({
+      where: { login },
+      update: {},
+      create: { login, dataVersion: 0, source: "news", fetchedAt: new Date() },
+    });
+  } catch (err) {
+    logError("user-cache/getOrCreateGitHubUserMinimal", err);
+  }
+};
+
 export const bulkReadUsers = async (
   logins: string[],
 ): Promise<Map<string, { lat: number | null; lng: number | null; location: string | null; fetchedAt: Date; dataVersion: number }>> => {

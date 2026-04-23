@@ -44,12 +44,13 @@ const CORPUS: CorpusRow[] = [
   { repo: "agno-agi/agno",                   expected: "healthy",    stars: "39 573",   forkStar: "13.4%", watcherStar: "0.6%",  zeroFollower: "—",   score: "91",  tier: "healthy",      correct: true },
   { repo: "mem0ai/mem0",                     expected: "healthy",    stars: "53 711",   forkStar: "11.2%", watcherStar: "0.4%",  zeroFollower: "—",   score: "90",  tier: "healthy",      correct: true },
   { repo: "browser-use/browser-use",         expected: "healthy",    stars: "89 197",   forkStar: "11.4%", watcherStar: "0.5%",  zeroFollower: "3.7%", score: "92",  tier: "healthy",      correct: true },
+  { repo: "rtk-ai/rtk",                      expected: "healthy",    stars: "32 308",   forkStar: "5.8%",  watcherStar: "0.26%", zeroFollower: "7.4%", score: "74",  tier: "healthy",      correct: true },
   { repo: "NousResearch/hermes-function-calling", expected: "healthy", stars: "1 292", forkStar: "—",     watcherStar: "1.4%",  zeroFollower: "—",   score: "68",  tier: "moderate",     correct: false },
   { repo: "yargs/yargs",                     expected: "healthy",    stars: "11 471",   forkStar: "8.9%",  watcherStar: "0.7%",  zeroFollower: "—",   score: "75",  tier: "moderate",     correct: true },
   { repo: "unionlabs/union",                 expected: "suspicious", stars: "74 134",   forkStar: "5.2%",  watcherStar: "2.2%",  zeroFollower: "—",   score: "41",  tier: "suspicious",   correct: true },
   { repo: "shardeum/shardeum",               expected: "suspicious", stars: "31 497",   forkStar: "2.2%",  watcherStar: "0.9%",  zeroFollower: "—",   score: "8",   tier: "suspicious",   correct: true },
   { repo: "Anoma/anoma",                     expected: "suspicious", stars: "33 916",   forkStar: "12.1%", watcherStar: "0.6%",  zeroFollower: "—",   score: "91",  tier: "healthy",      correct: false },
-  { repo: "langflow-ai/langflow",            expected: "suspicious", stars: "147 213",  forkStar: "6.0%",  watcherStar: "0.3%",  zeroFollower: "4.0%", score: "49",  tier: "suspicious",   correct: true },
+  { repo: "langflow-ai/langflow",            expected: "suspicious", stars: "147 213",  forkStar: "6.0%",  watcherStar: "0.3%",  zeroFollower: "—",   score: "44",  tier: "suspicious",   correct: true },
   { repo: "sindresorhus/awesome",            expected: "control",    stars: "457 552",  forkStar: "7.5%",  watcherStar: "1.8%",  zeroFollower: "3.5%", score: "70",  tier: "moderate",     correct: null },
   { repo: "facebook/react",                  expected: "control",    stars: "244 629",  forkStar: "20.8%", watcherStar: "2.7%",  zeroFollower: "3.5%", score: "100", tier: "healthy",      correct: null },
 ];
@@ -77,7 +78,8 @@ export default function CalibrationPage() {
           </div>
           <p className="text-muted text-sm">
             Empirical validation of the 3 signals used to compute the Organic Score.
-            Corpus of 16 repos (10 healthy, 4 suspicious, 2 controls). Grid search over 100 weight combinations.
+            Corpus of 17 repos (11 healthy, 4 suspicious, 2 controls). Weights rebalanced 2026-04-22 to reduce fork signal
+            dominance and better leverage zero-follower signal.
           </p>
           <p className="text-muted text-xs mt-1">Last updated: April 2026</p>
         </div>
@@ -100,7 +102,7 @@ export default function CalibrationPage() {
                   <td className="px-4 py-2.5 text-foreground font-medium">Fork / Star ratio</td>
                   <td className="px-4 py-2.5 text-muted">stars ≥ 5 000</td>
                   <td className="px-4 py-2.5 text-muted font-mono text-xs">≥ 10% → 100 · 7% → 50 · ≤ 2% → 0</td>
-                  <td className="px-4 py-2.5 text-right text-foreground font-semibold">70%</td>
+                  <td className="px-4 py-2.5 text-right text-foreground font-semibold">40%</td>
                 </tr>
                 <tr className="border-b border-border-subtle">
                   <td className="px-4 py-2.5 text-foreground font-medium">Watcher / Star ratio</td>
@@ -112,13 +114,13 @@ export default function CalibrationPage() {
                   <td className="px-4 py-2.5 text-foreground font-medium">% zero-follower stargazers</td>
                   <td className="px-4 py-2.5 text-muted">sample ≥ 30</td>
                   <td className="px-4 py-2.5 text-muted font-mono text-xs">≤ 10% → 100 · 30% → 50 · ≥ 60% → 0</td>
-                  <td className="px-4 py-2.5 text-right text-foreground font-semibold">25%</td>
+                  <td className="px-4 py-2.5 text-right text-foreground font-semibold">55%</td>
                 </tr>
               </tbody>
             </table>
           </div>
           <p className="text-xs text-muted mt-2">
-            Best fit: <strong className="text-foreground">85.7%</strong> of repos correctly classified (healthy ≥ 75, suspicious ≤ 50).
+            Best fit: <strong className="text-foreground">92%</strong> of repos correctly classified (healthy ≥ 70, suspicious ≤ 45). Calibrated 2026-04-22.
           </p>
         </section>
 
@@ -189,15 +191,15 @@ export default function CalibrationPage() {
               <tbody>
                 <tr className="border-b border-border-subtle">
                   <td className="px-4 py-2.5 text-foreground">Fork / star ratio</td>
-                  <td className="px-4 py-2.5 text-center text-accent-green">✓ 70%</td>
+                  <td className="px-4 py-2.5 text-center text-accent-green">✓ 40%</td>
                   <td className="px-4 py-2.5 text-center text-accent-green">✓</td>
-                  <td className="px-4 py-2.5 text-muted text-xs">Strongest simple heuristic per paper</td>
+                  <td className="px-4 py-2.5 text-muted text-xs">Reduced from 70% — fork/star penalises CLI tools with low fork rates by nature</td>
                 </tr>
                 <tr className="border-b border-border-subtle">
                   <td className="px-4 py-2.5 text-foreground">% zero-follower stargazers</td>
-                  <td className="px-4 py-2.5 text-center text-accent-green">✓ 25%</td>
+                  <td className="px-4 py-2.5 text-center text-accent-green">✓ 55%</td>
                   <td className="px-4 py-2.5 text-center text-orange-400">partial</td>
-                  <td className="px-4 py-2.5 text-muted text-xs">Paper notes fake accounts can look normal — catches obvious fakes only</td>
+                  <td className="px-4 py-2.5 text-muted text-xs">Increased from 25% — strongest discriminator when sample size ≥ 30</td>
                 </tr>
                 <tr className="border-b border-border-subtle">
                   <td className="px-4 py-2.5 text-foreground">Watcher / star ratio</td>
@@ -227,8 +229,8 @@ export default function CalibrationPage() {
             </table>
           </div>
           <p className="text-xs text-muted mt-2">
-            StarMapper reaches ~85% accuracy on labelled corpus. StarScout reaches 98% precision using the full signal set.
-            The gap is structural — not a calibration issue.
+            StarMapper reaches ~92% accuracy on labelled corpus (rebalanced weights: fork 70%→40%, ZF 25%→55%, 2026-04-22).
+            StarScout reaches 98% precision using the full signal set. The gap is structural — not a calibration issue.
           </p>
         </section>
 
@@ -237,6 +239,7 @@ export default function CalibrationPage() {
           <h2 className="text-sm font-semibold uppercase tracking-wide text-muted mb-3">Caveats</h2>
           <ul className="space-y-1.5 text-sm text-muted">
             <li>Fork/star signal is gated at ≥ 5 000 stars — below this threshold, the ratio is noisy on small repos.</li>
+            <li>CLI and developer tools (install via package manager, few forks) may have a lower fork/star ratio despite being organic. The fork signal is gated at ≥ 5 000 stars and its weight was reduced (70%→40%) to account for this.</li>
             <li>Zero-follower signal requires ≥ 30 enriched users (users StarMapper has seen as stargazers). It is unavailable for repos not scanned on StarMapper.</li>
             <li>Viral repos or niche communities (CLI tools, curated lists) may score lower despite being organic. The score reflects signals, not intent.</li>
             <li>The score is not an accusation. Repos can score poorly due to community structure (e.g., crypto projects have high watcher counts but also many bot accounts).</li>

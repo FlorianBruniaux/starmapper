@@ -241,12 +241,12 @@ export const OrganicScoreModal = ({ open, onClose, organic, owner, repo, onRecal
         {(organic.openIssuesCount !== null || organic.latestReleaseTag) && (
           <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted border-t border-border-subtle pt-3">
             {organic.openIssuesCount !== null && (
-              <span className="flex items-center gap-1">
+              <span className="flex items-center gap-1.5">
                 <svg className="size-3 text-muted/60" fill="none" viewBox="0 0 16 16" stroke="currentColor" strokeWidth="1.5">
                   <circle cx="8" cy="8" r="6.25"/>
                   <path d="M8 5v3.5M8 11v.5" strokeLinecap="round"/>
                 </svg>
-                {organic.openIssuesCount.toLocaleString()} open issues &amp; PRs
+                {`${organic.openIssuesCount.toLocaleString()} issues & PRs`}
               </span>
             )}
             {organic.latestReleaseTag && organic.latestReleaseUrl && (
@@ -272,73 +272,72 @@ export const OrganicScoreModal = ({ open, onClose, organic, owner, repo, onRecal
         )}
 
         {/* Disclaimer */}
-        <p className="text-xs text-muted leading-relaxed border-t border-border-subtle pt-3">
+        <p className="text-xs text-muted/80 leading-relaxed border-t border-border-subtle pt-3">
           Heuristic based on 3 public signals — not an accusation of fraud.
           Repos with viral growth or niche communities may score lower despite being organic.
           {organic.computedAt && (
-            <span className="block mt-0.5 text-muted/70">
-              Computed {new Date(organic.computedAt).toLocaleDateString()}.
-            </span>
+            <>{" "}<span className="text-muted/60">Computed {new Date(organic.computedAt).toLocaleDateString()}.</span></>
           )}
         </p>
 
-        {/* Actions */}
-        <div className="flex flex-wrap items-center gap-2 border-t border-border-subtle pt-3">
-          <button
-            onClick={handleRecalculate}
-            disabled={recalculating}
-            title="Re-fetch live data from GitHub and recompute (1× per hour)"
-            className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md border border-border text-muted hover:text-foreground hover:border-accent-blue/50 transition-colors disabled:opacity-50"
-          >
-            {recalculating ? (
-              <>
-                <svg className="size-3 animate-spin" fill="none" viewBox="0 0 16 16" stroke="currentColor" strokeWidth="2">
-                  <path d="M8 2a6 6 0 100 12A6 6 0 008 2z" strokeDasharray="20" strokeDashoffset="15"/>
-                </svg>
-                Recalculating…
-              </>
-            ) : (
-              <>
-                <svg className="size-3" fill="none" viewBox="0 0 16 16" stroke="currentColor" strokeWidth="1.5">
-                  <path d="M3 8a5 5 0 005 5 5 5 0 004.33-2.5M13 8a5 5 0 00-5-5 5 5 0 00-4.33 2.5" strokeLinecap="round"/>
-                  <path d="M11 2.5L13 5l-2.5 1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                Recompute
-              </>
+        {/* Footer: actions + links */}
+        <div className="border-t border-border-subtle pt-3 space-y-2.5">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+            <button
+              onClick={handleRecalculate}
+              disabled={recalculating}
+              title="Re-fetch live data from GitHub and recompute (1× per hour)"
+              className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md border border-border text-muted hover:text-foreground hover:border-accent-blue/50 transition-colors disabled:opacity-50"
+            >
+              {recalculating ? (
+                <>
+                  <svg className="size-3 animate-spin" fill="none" viewBox="0 0 16 16" stroke="currentColor" strokeWidth="2">
+                    <path d="M8 2a6 6 0 100 12A6 6 0 008 2z" strokeDasharray="20" strokeDashoffset="15"/>
+                  </svg>
+                  Recalculating…
+                </>
+              ) : (
+                <>
+                  <svg className="size-3" fill="none" viewBox="0 0 16 16" stroke="currentColor" strokeWidth="1.5">
+                    <path d="M3 8a5 5 0 005 5 5 5 0 004.33-2.5M13 8a5 5 0 00-5-5 5 5 0 00-4.33 2.5" strokeLinecap="round"/>
+                    <path d="M11 2.5L13 5l-2.5 1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  Recompute
+                </>
+              )}
+            </button>
+            <span className="text-border-subtle select-none">·</span>
+            <a
+              href={disputeUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-muted hover:text-foreground transition-colors"
+            >
+              Dispute or request removal →
+            </a>
+            {recalcError && (
+              <span className="text-xs text-accent-red">{recalcError}</span>
             )}
-          </button>
-          <a
-            href={disputeUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs text-muted hover:text-foreground transition-colors"
-          >
-            Dispute or request removal →
-          </a>
-          {recalcError && (
-            <span className="text-xs text-accent-red">{recalcError}</span>
-          )}
-        </div>
-
-        {/* Links */}
-        <div className="flex gap-3 text-xs border-t border-border-subtle pt-3">
-          <a
-            href="https://arxiv.org/abs/2412.13459"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-accent-blue hover:underline"
-          >
-            CMU/StarScout paper
-          </a>
-          <span className="text-muted">·</span>
-          <a
-            href="/organic-score/calibration"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-accent-blue hover:underline"
-          >
-            Calibration data
-          </a>
+          </div>
+          <div className="flex items-center gap-2 text-xs">
+            <a
+              href="https://arxiv.org/abs/2412.13459"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-accent-blue/70 hover:text-accent-blue transition-colors"
+            >
+              CMU/StarScout paper
+            </a>
+            <span className="text-muted/40">·</span>
+            <a
+              href="/organic-score/calibration"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-accent-blue/70 hover:text-accent-blue transition-colors"
+            >
+              Calibration data
+            </a>
+          </div>
         </div>
       </div>
     </Modal>
