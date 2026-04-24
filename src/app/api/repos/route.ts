@@ -14,6 +14,8 @@ export type MappedRepo = {
   mappedPercent: number;
   language: string | null;
   updatedAt: string;
+  organicScore: number | null;
+  organicTier: string | null;
 };
 
 export type ReposResponse = {
@@ -28,7 +30,21 @@ export const GET = async (req: Request) => {
     const limit = limitParam ? Math.min(parseInt(limitParam, 10), 10000) : 10000;
 
     const [rows, total] = await Promise.all([
-      prisma.badgeCache.findMany({ orderBy: { updatedAt: "desc" }, take: limit }),
+      prisma.badgeCache.findMany({
+        orderBy: { updatedAt: "desc" },
+        take: limit,
+        select: {
+          owner: true,
+          repo: true,
+          mappedCount: true,
+          countryCount: true,
+          totalCount: true,
+          language: true,
+          updatedAt: true,
+          organicScore: true,
+          organicTier: true,
+        },
+      }),
       prisma.badgeCache.count(),
     ]);
 
@@ -41,6 +57,8 @@ export const GET = async (req: Request) => {
       mappedPercent: r.totalCount > 0 ? Math.round((r.mappedCount / r.totalCount) * 100) : 0,
       language: r.language ?? null,
       updatedAt: r.updatedAt.toISOString(),
+      organicScore: r.organicScore ?? null,
+      organicTier: r.organicTier ?? null,
     }));
 
     return NextResponse.json({ repos, total } satisfies ReposResponse, {

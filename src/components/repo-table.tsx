@@ -9,7 +9,7 @@ import type { MappedRepo } from "@/app/api/repos/route";
 
 const PAGE_SIZE = 20;
 
-type SortCol = "totalCount" | "mappedPercent" | "countryCount" | "updatedAt";
+type SortCol = "totalCount" | "mappedPercent" | "countryCount" | "updatedAt" | "organicScore";
 type SortDir = "asc" | "desc";
 
 const formatCount = (n: number) =>
@@ -23,6 +23,13 @@ const timeAgo = (iso: string): string => {
   if (days < 30) return `${days}d ago`;
   const months = Math.floor(days / 30);
   return `${months}mo ago`;
+};
+
+const TIER_TEXT: Record<string, string> = {
+  healthy:      "text-accent-green",
+  moderate:     "text-orange-400",
+  suspicious:   "text-accent-red",
+  insufficient: "text-muted",
 };
 
 const SortIcon = ({ active, dir }: { active: boolean; dir: SortDir }) => (
@@ -78,6 +85,9 @@ export const RepoTable = ({ repos }: { repos: MappedRepo[] }) => {
     return [...repos].sort((a, b) => {
       const va = a[sortCol];
       const vb = b[sortCol];
+      if (va === null && vb === null) return 0;
+      if (va === null) return 1;
+      if (vb === null) return -1;
       const cmp = typeof va === "string" ? va.localeCompare(vb as string) : (va as number) - (vb as number);
       return sortDir === "desc" ? -cmp : cmp;
     });
@@ -101,6 +111,7 @@ export const RepoTable = ({ repos }: { repos: MappedRepo[] }) => {
             <ColHeader label="Stars" col="totalCount" active={sortCol === "totalCount"} dir={sortDir} onSort={handleSort} />
             <ColHeader label="Mapped" col="mappedPercent" active={sortCol === "mappedPercent"} dir={sortDir} onSort={handleSort} />
             <ColHeader label="Countries" col="countryCount" active={sortCol === "countryCount"} dir={sortDir} onSort={handleSort} />
+            <ColHeader label="Score" col="organicScore" active={sortCol === "organicScore"} dir={sortDir} onSort={handleSort} />
             <ColHeader label="Last scan" col="updatedAt" active={sortCol === "updatedAt"} dir={sortDir} onSort={handleSort} />
           </tr>
         </thead>
@@ -158,6 +169,15 @@ export const RepoTable = ({ repos }: { repos: MappedRepo[] }) => {
               </td>
               <td className="py-3 px-4 text-right text-xs tabular-nums text-muted">
                 {r.countryCount}
+              </td>
+              <td className="py-3 px-4 text-right tabular-nums">
+                {r.organicScore !== null && r.organicTier ? (
+                  <span className={`text-xs font-semibold ${TIER_TEXT[r.organicTier] ?? "text-muted"}`}>
+                    {r.organicScore}
+                  </span>
+                ) : (
+                  <span className="text-xs text-muted-subtle">—</span>
+                )}
               </td>
               <td className="py-3 px-4 text-right text-xs whitespace-nowrap text-muted-subtle" title={r.updatedAt}>
                 {timeAgo(r.updatedAt)}
