@@ -44,6 +44,7 @@ const ColHeader = ({
   active,
   dir,
   align = "right",
+  tooltip,
   onSort,
 }: {
   label: string;
@@ -51,6 +52,7 @@ const ColHeader = ({
   active: boolean;
   dir: SortDir;
   align?: "left" | "right";
+  tooltip?: string;
   onSort: (col: SortCol) => void;
 }) => (
   <th
@@ -61,8 +63,15 @@ const ColHeader = ({
     tabIndex={0}
     aria-sort={active ? (dir === "asc" ? "ascending" : "descending") : "none"}
   >
-    {label}
-    <SortIcon active={active} dir={dir} />
+    <span className="relative inline-flex items-center gap-1 group/tip">
+      {label}
+      <SortIcon active={active} dir={dir} />
+      {tooltip && (
+        <span className="pointer-events-none absolute bottom-full right-0 mb-2 w-56 rounded-lg bg-surface border border-border px-3 py-2 text-xs text-foreground leading-relaxed shadow-xl opacity-0 group-hover/tip:opacity-100 transition-opacity duration-150 z-50 whitespace-normal font-normal normal-case tracking-normal">
+          {tooltip}
+        </span>
+      )}
+    </span>
   </th>
 );
 
@@ -108,11 +117,16 @@ export const RepoTable = ({ repos }: { repos: MappedRepo[] }) => {
             <th scope="col" className="py-2.5 px-4 text-xs uppercase tracking-wider text-muted-subtle font-medium text-left hidden sm:table-cell">
               Main language
             </th>
-            <ColHeader label="Stars" col="totalCount" active={sortCol === "totalCount"} dir={sortDir} onSort={handleSort} />
-            <ColHeader label="Mapped" col="mappedPercent" active={sortCol === "mappedPercent"} dir={sortDir} onSort={handleSort} />
-            <ColHeader label="Countries" col="countryCount" active={sortCol === "countryCount"} dir={sortDir} onSort={handleSort} />
-            <ColHeader label="Score" col="organicScore" active={sortCol === "organicScore"} dir={sortDir} onSort={handleSort} />
-            <ColHeader label="Last scan" col="updatedAt" active={sortCol === "updatedAt"} dir={sortDir} onSort={handleSort} />
+            <ColHeader label="Stars" col="totalCount" active={sortCol === "totalCount"} dir={sortDir} onSort={handleSort}
+              tooltip="Total GitHub star count at the time of the last scan." />
+            <ColHeader label="Mapped" col="mappedPercent" active={sortCol === "mappedPercent"} dir={sortDir} onSort={handleSort}
+              tooltip="% of stargazers whose location was resolved to GPS coordinates. Depends on how many users filled in a location on their GitHub profile." />
+            <ColHeader label="Countries" col="countryCount" active={sortCol === "countryCount"} dir={sortDir} onSort={handleSort}
+              tooltip="Number of distinct countries represented in the stargazer base." />
+            <ColHeader label="Score" col="organicScore" active={sortCol === "organicScore"} dir={sortDir} onSort={handleSort}
+              tooltip="Organic Score (0–100). Experimental heuristic estimating whether the star count reflects real usage or was inflated. Based on fork ratio, watcher ratio, and % zero-follower accounts. Only computed for repos with 5 000+ stars." />
+            <ColHeader label="Last scan" col="updatedAt" active={sortCol === "updatedAt"} dir={sortDir} onSort={handleSort}
+              tooltip="When StarMapper last fetched and geocoded this repo's stargazers." />
           </tr>
         </thead>
         <tbody>
