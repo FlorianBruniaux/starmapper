@@ -73,3 +73,11 @@ research-*.md
 
 # Serena — tout ignoré
 .serena/
+
+# Cyber-defense pipeline output (analysis artifacts)
+cyber-defense-*.json
+cyber-defense-report.md
+
+# Analysis/audit artifacts
+dep-scope-report.md
+vercel-logs.txt
