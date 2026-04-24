@@ -68,6 +68,26 @@ Enter any GitHub repository URL and StarMapper fetches all stargazers, geocodes 
 
 ---
 
+## Organic Score
+
+StarMapper computes an **Organic Score** (0-100) for any mapped repository — a heuristic that estimates whether a star count reflects real usage or was inflated through paid star-farming services.
+
+The score is based on three public signals available through the GitHub API:
+
+| Signal | Weight | What it measures |
+|---|---|---|
+| Fork/Star ratio | 40% | Organic repos accumulate forks as developers build on them |
+| Watcher/Star ratio | 5% | GitHub watchers explicitly subscribe — a deliberate action since 2020 |
+| Zero-follower stargazers | 55% | Star-farming services use newly-created accounts with no social graph |
+
+Scores map to four tiers: **Healthy** (75-100), **Moderate** (50-74), **Suspicious** (0-49), and **Insufficient data**.
+
+> **This is a heuristic, not a verdict.** A suspicious score doesn't prove fraud — it means the signals are anomalous. Repos with viral growth, niche communities, or structurally low fork rates can score lower despite being fully organic. Read the full methodology before drawing conclusions.
+
+Full methodology, calibration data, limitations, and disclaimer: [`docs/organic-score.md`](docs/organic-score.md)
+
+---
+
 ## How It Works
 
 Vercel's free tier caps serverless functions at 10 seconds per request. A 2000-star repo needs ~20 sequential GitHub GraphQL calls, plus geocoding. Instead of one long server call, StarMapper has the **browser** orchestrate a loop of `POST /api/chunk` requests. Each chunk processes 100 stargazers and returns in under 10 seconds, and the browser renders incoming points as they arrive.
