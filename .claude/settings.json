@@ -72,6 +72,11 @@
             "type": "command",
             "command": ".claude/hooks/ts-lint-feedback.sh",
             "timeout": 15
+          },
+          {
+            "type": "command",
+            "command": ".claude/hooks/banner-reminder.sh",
+            "timeout": 5
           }
         ]
       }

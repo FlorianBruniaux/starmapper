@@ -209,6 +209,7 @@ POST /api/track
 │   │           ├── import-geocache/route.ts   # POST — bulk import geocache (admin)
 │   │           └── refresh-grid-mv/route.ts   # GET  — refresh all materialized views (cron)
 │   ├── components/
+│   │   ├── announcement-banner.tsx            # Dismissible top banner for new features (localStorage per BANNER_ID)
 │   │   ├── token-modal.tsx                    # GitHub token input modal (PAT override)
 │   │   ├── theme-toggle.tsx                   # Dark/light mode toggle button
 │   │   ├── filter-combobox.tsx                # Reusable combobox for country/city filters
@@ -252,6 +253,20 @@ POST /api/track
 ---
 
 ## IV. Known Gotchas (PRIORITY #3 — read before touching anything)
+
+### AnnouncementBanner — BANNER_ID lifecycle
+
+`src/components/announcement-banner.tsx` shows a dismissible top banner. Dismissal is stored in `localStorage` keyed by `BANNER_ID`. To make the banner reappear for users who already dismissed it (i.e., when announcing a new feature), **bump `BANNER_ID`** to a new unique string.
+
+```ts
+// Inside announcement-banner.tsx
+const BANNER_ID = "announce-explore-v1"; // bump → "announce-explore-v2" for next announcement
+const LINKS: LinkItem[] = [              // update links/labels to match the new feature
+  { label: "...", href: "..." },
+];
+```
+
+A `PostToolUse` hook (`banner-reminder.sh`) fires automatically when a new `page.tsx` or `route.ts` is created as a reminder to update this file if the new feature is worth announcing.
 
 ### Prisma 7 + Neon Adapter Pattern
 

@@ -114,14 +114,14 @@ const ReposBadge = ({ login, count }: { login: string; count: number }) => {
     <div ref={ref} className="relative flex-shrink-0">
       <button
         onClick={() => setOpen((v) => !v)}
-        className={`text-2xs px-1.5 py-px rounded border transition-colors tabular-nums ${
+        className={`text-xs px-1.5 py-0.5 rounded border transition-colors tabular-nums ${
           open
             ? "border-accent-blue text-accent-blue bg-accent-blue/10"
             : "border-border-subtle text-muted hover:text-foreground hover:border-border"
         }`}
         title="View GitHub repos"
       >
-        {resolvedCount > 0 ? `${resolvedCount} repos` : "repos"}
+        {resolvedCount} repos
       </button>
 
       {open && (
@@ -132,7 +132,7 @@ const ReposBadge = ({ login, count }: { login: string; count: number }) => {
               href={`https://github.com/${login}?tab=repositories`}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-2xs text-muted hover:text-accent-blue transition-colors"
+              className="text-xs text-muted hover:text-accent-blue transition-colors"
             >
               View all →
             </a>
@@ -159,14 +159,14 @@ const ReposBadge = ({ login, count }: { login: string; count: number }) => {
                           {r.name}
                         </span>
                         {r.language && (
-                          <span className="text-2xs text-muted-subtle flex-shrink-0">{r.language}</span>
+                          <span className="text-xs text-muted-subtle flex-shrink-0">{r.language}</span>
                         )}
                       </div>
                       {r.description && (
-                        <div className="text-2xs text-muted truncate mt-px">{r.description}</div>
+                        <div className="text-xs text-muted truncate mt-px">{r.description}</div>
                       )}
                     </div>
-                    <span className="text-2xs text-muted-subtle flex-shrink-0 tabular-nums mt-0.5">
+                    <span className="text-xs text-muted-subtle flex-shrink-0 tabular-nums mt-0.5">
                       ★ {(r.stars ?? 0).toLocaleString()}
                     </span>
                   </a>
@@ -179,6 +179,27 @@ const ReposBadge = ({ login, count }: { login: string; count: number }) => {
     </div>
   );
 };
+
+// ---------- User list skeleton ----------
+const UserListSkeleton = () => (
+  <div className="space-y-1" aria-busy="true" aria-label="Loading users">
+    {Array.from({ length: 8 }).map((_, i) => (
+      <div key={i} className="flex items-center gap-3 px-2 py-2 rounded-lg" aria-hidden="true">
+        <div className="w-5 h-3 rounded bg-surface-alt animate-pulse flex-shrink-0" />
+        <div className="w-8 h-8 rounded-full bg-surface-alt animate-pulse flex-shrink-0" />
+        <div className="flex-1 min-w-0 space-y-1.5">
+          <div className="h-3 rounded bg-surface-alt animate-pulse" style={{ width: `${55 + (i % 3) * 10}%` }} />
+          <div className="h-2.5 rounded bg-surface-alt animate-pulse opacity-60" style={{ width: `${35 + (i % 4) * 8}%` }} />
+        </div>
+        <div className="flex items-center gap-1.5 flex-shrink-0">
+          <div className="w-14 h-4 rounded bg-surface-alt animate-pulse" />
+          <div className="w-8 h-3 rounded bg-surface-alt animate-pulse" />
+          <div className="w-9 h-6 rounded bg-surface-alt animate-pulse" />
+        </div>
+      </div>
+    ))}
+  </div>
+);
 
 // ---------- Location autocomplete input ----------
 const LocationInput = ({
@@ -752,25 +773,42 @@ export default function ExplorePage() {
             <div className="bg-surface border border-border rounded-xl overflow-hidden">
 
               {/* Tab bar */}
-              <div className="flex border-b border-border-subtle overflow-x-auto">
-                {(["top", "power", "companies", "countries", "cities", "nearby"] as Tab[]).map((t) => (
-                  <button
-                    key={t}
-                    onClick={() => handleTabChange(t)}
-                    className={`flex-shrink-0 flex-1 py-3 text-xs font-medium transition-colors whitespace-nowrap px-2 ${
-                      tab === t
-                        ? "text-accent-blue border-b-2 border-accent-blue -mb-px bg-accent-blue/5"
-                        : "text-muted hover:text-foreground"
-                    }`}
-                  >
-                    {t === "top"       ? "Top Stars"
-                     : t === "power"   ? "⚡ Power"
-                     : t === "companies" ? "Companies"
-                     : t === "countries" ? "Countries"
-                     : t === "cities"  ? "Cities"
-                     : "📍 Around Me"}
-                  </button>
-                ))}
+              <div className="relative">
+                <div className="flex border-b border-border-subtle overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  {(["top", "power", "companies", "countries", "cities", "nearby"] as Tab[]).map((t) => (
+                    <button
+                      key={t}
+                      onClick={() => handleTabChange(t)}
+                      className={`flex-shrink-0 flex-1 py-3 text-xs font-medium transition-colors whitespace-nowrap px-2 ${
+                        tab === t
+                          ? "text-accent-blue border-b-2 border-accent-blue -mb-px bg-accent-blue/5"
+                          : "text-muted hover:text-foreground"
+                      }`}
+                    >
+                      {t === "top" ? "Top Stars"
+                       : t === "power" ? (
+                        <span className="inline-flex items-center justify-center gap-1">
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                          </svg>
+                          Power
+                        </span>
+                       ) : t === "companies" ? "Companies"
+                       : t === "countries" ? "Countries"
+                       : t === "cities" ? "Cities"
+                       : (
+                        <span className="inline-flex items-center justify-center gap-1">
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
+                            <circle cx="12" cy="10" r="3"/>
+                          </svg>
+                          Around Me
+                        </span>
+                       )}
+                    </button>
+                  ))}
+                </div>
+                <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-surface to-transparent" aria-hidden="true" />
               </div>
 
               {/* Filter bar — hidden on "nearby" tab (has its own search) */}
@@ -791,7 +829,7 @@ export default function ExplorePage() {
                       onChange={(e) => setSearchInput(e.target.value)}
                       placeholder="Search login or name…"
                       className={`flex-1 bg-background border border-border rounded text-xs text-foreground
-                        placeholder:text-muted-subtle px-2 py-0.5 focus:outline-none
+                        placeholder:text-muted-subtle px-3 py-2 h-9 focus:outline-none
                         focus:ring-1 focus:ring-accent-blue/40 focus:border-accent-blue transition-colors
                         ${showCountryFilter ? "max-w-xs" : ""}`}
                     />
@@ -813,7 +851,9 @@ export default function ExplorePage() {
                   top: topData, power: powerData, companies: companiesData,
                   countries: countriesData, cities: citiesData,
                 }[tab as Exclude<Tab, "nearby">] && (
-                  <div className="text-center text-muted-subtle text-sm py-12">Loading…</div>
+                  (tab === "top" || tab === "power") ? <UserListSkeleton /> : (
+                    <div className="text-center text-muted-subtle text-sm py-12">Loading…</div>
+                  )
                 )}
                 {/* Search in-flight loader (re-fetch with existing data) */}
                 {tab === "top" && topLoading && topData && (
@@ -836,7 +876,11 @@ export default function ExplorePage() {
                         return (
                         <div
                           key={u.login}
-                          className={`group flex items-center gap-3 px-2 py-2 rounded-lg transition-colors
+                          onClick={(e) => {
+                            if ((e.target as Element).closest("button, a")) return;
+                            window.location.href = `/profile/${u.login}`;
+                          }}
+                          className={`group flex items-center gap-3 px-2 py-2 min-h-11 rounded-lg transition-colors cursor-pointer
                             ${isActive ? "bg-accent-blue/8 ring-1 ring-accent-blue/20" : "hover:bg-surface-alt"}`}
                         >
                           <span className="text-muted-subtle text-xs w-5 text-right flex-shrink-0 tabular-nums">
@@ -844,7 +888,7 @@ export default function ExplorePage() {
                           </span>
                           <img
                             src={u.avatarUrl}
-                            alt=""
+                            alt={`Avatar of ${u.login}`}
                             className="w-8 h-8 rounded-full flex-shrink-0 ring-1 ring-border"
                           />
                           <div className="flex-1 min-w-0">
@@ -856,7 +900,7 @@ export default function ExplorePage() {
                                 @{u.login}
                               </a>
                               {u.company && (
-                                <span className="text-2xs text-muted bg-surface-alt border border-border-subtle rounded px-1.5 py-px truncate max-w-24 flex-shrink-0">
+                                <span className="text-xs text-muted bg-surface-alt border border-border-subtle rounded px-1.5 py-px truncate max-w-24 flex-shrink-0 leading-5">
                                   {u.company.replace(/^@/, "")}
                                 </span>
                               )}
@@ -865,7 +909,7 @@ export default function ExplorePage() {
                               <div className="text-muted-subtle text-xs truncate leading-tight">{u.name}</div>
                             )}
                           </div>
-                          <div className="flex items-center gap-1.5 flex-shrink-0 w-28 justify-end">
+                          <div className="flex items-center gap-1.5 flex-shrink-0 justify-end">
                             <ReposBadge login={u.login} count={u.publicRepos} />
                             <span className="text-muted-subtle text-xs tabular-nums w-10 text-right">
                               {u.followers >= 1000
@@ -886,13 +930,13 @@ export default function ExplorePage() {
                               title={!hasCoors ? "No location data" : isActive ? "Unpin from map" : "Show on map"}
                               aria-label={isActive ? "Unpin from map" : `Show ${u.login} on map`}
                               disabled={!hasCoors}
-                              className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-2xs font-medium
-                                border transition-all duration-150 min-h-5
+                              className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium
+                                border transition-all duration-150
                                 ${!hasCoors
-                                  ? "border-transparent text-muted-subtle/30 cursor-default"
+                                  ? "invisible"
                                   : isActive
                                     ? "border-accent-blue text-accent-blue bg-accent-blue/10"
-                                    : "border-transparent text-muted-subtle opacity-0 group-hover:opacity-100 group-hover:border-border-subtle hover:text-accent-blue hover:border-accent-blue/50 hover:bg-accent-blue/5"
+                                    : "border-border text-muted hover:text-accent-blue hover:border-accent-blue/60 hover:bg-accent-blue/5"
                                 }`}
                             >
                               <svg width="9" height="9" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
@@ -921,7 +965,9 @@ export default function ExplorePage() {
                 {tab === "power" && (
                   <>
                     <div className="flex items-start gap-2 bg-accent-orange/5 border border-accent-orange/20 rounded-lg px-3 py-2.5 mb-4">
-                      <span className="text-accent-orange text-sm mt-px shrink-0">⚡</span>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-accent-orange flex-shrink-0 mt-px" aria-hidden="true">
+                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                      </svg>
                       <p className="text-xs text-muted leading-relaxed">
                         Developers who starred the most repos tracked on StarMapper. The count shows how many
                         of the{" "}
@@ -932,19 +978,30 @@ export default function ExplorePage() {
                       <>
                         {powerData.items.length === 0 && (
                           <div className="text-center text-muted-subtle text-sm py-12">
-                            <div className="text-3xl mb-2">⚡</div>
+                            <div className="flex justify-center mb-2">
+                              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-muted-subtle" aria-hidden="true">
+                                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                              </svg>
+                            </div>
                             No power stargazers yet. Appears after multiple repos are scanned.
                           </div>
                         )}
                         <div className="space-y-1">
                           {powerData.items.map((u, i) => (
-                            <div key={u.login} className="group flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-surface-alt transition-colors">
+                            <div
+                              key={u.login}
+                              onClick={(e) => {
+                                if ((e.target as Element).closest("button, a")) return;
+                                window.location.href = `/profile/${u.login}`;
+                              }}
+                              className="group flex items-center gap-3 px-2 py-2 min-h-11 rounded-lg hover:bg-surface-alt transition-colors cursor-pointer"
+                            >
                               <span className="text-muted-subtle text-xs w-5 text-right flex-shrink-0 tabular-nums">
                                 {(pages.power - 1) * PAGE_SIZE + i + 1}
                               </span>
                               <img
                                 src={u.avatarUrl}
-                                alt=""
+                                alt={`Avatar of ${u.login}`}
                                 className="w-8 h-8 rounded-full flex-shrink-0 ring-1 ring-border"
                               />
                               <div className="flex-1 min-w-0">
@@ -1085,7 +1142,12 @@ export default function ExplorePage() {
                     {/* Empty state — no search yet */}
                     {!nearbyCoords && !nearbyError && (
                       <div className="text-center py-10 space-y-2">
-                        <div className="text-3xl">📍</div>
+                        <div className="flex justify-center mb-1">
+                          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-muted-subtle" aria-hidden="true">
+                            <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
+                            <circle cx="12" cy="10" r="3"/>
+                          </svg>
+                        </div>
                         <p className="text-sm text-muted">
                           Enter a location to discover GitHub developers nearby.
                         </p>
@@ -1129,7 +1191,11 @@ export default function ExplorePage() {
                         {/* No results */}
                         {nearbyData.users.length === 0 && (
                           <div className="text-center py-8 space-y-1">
-                            <div className="text-2xl">🌍</div>
+                            <div className="flex justify-center mb-1">
+                              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-muted-subtle" aria-hidden="true">
+                                <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                              </svg>
+                            </div>
                             <p className="text-sm text-muted">No developers found in this area.</p>
                             <p className="text-xs text-muted-subtle">Try a larger radius or a different location.</p>
                           </div>
@@ -1139,13 +1205,20 @@ export default function ExplorePage() {
                         {nearbyData.users.length > 0 && (
                           <div className="space-y-1">
                             {nearbyData.users.map((u, i) => (
-                              <div key={u.login} className="group flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-surface-alt transition-colors">
+                              <div
+                                key={u.login}
+                                onClick={(e) => {
+                                  if ((e.target as Element).closest("button, a")) return;
+                                  window.location.href = `/profile/${u.login}`;
+                                }}
+                                className="group flex items-center gap-3 px-2 py-2 min-h-11 rounded-lg hover:bg-surface-alt transition-colors cursor-pointer"
+                              >
                                 <span className="text-muted-subtle text-xs w-5 text-right flex-shrink-0 tabular-nums">
                                   {(pages.nearby - 1) * PAGE_SIZE + i + 1}
                                 </span>
                                 <img
                                   src={`https://github.com/${u.login}.png`}
-                                  alt=""
+                                  alt={`Avatar of ${u.login}`}
                                   className="w-8 h-8 rounded-full flex-shrink-0 ring-1 ring-border"
                                 />
                                 <div className="flex-1 min-w-0">
@@ -1157,7 +1230,7 @@ export default function ExplorePage() {
                                       @{u.login}
                                     </a>
                                     {u.company && (
-                                      <span className="text-2xs text-muted bg-surface-alt border border-border-subtle rounded px-1.5 py-px truncate max-w-24 flex-shrink-0">
+                                      <span className="text-xs text-muted bg-surface-alt border border-border-subtle rounded px-1.5 py-px truncate max-w-24 flex-shrink-0 leading-5">
                                         {u.company.replace(/^@/, "")}
                                       </span>
                                     )}
@@ -1171,7 +1244,7 @@ export default function ExplorePage() {
                                     </div>
                                   )}
                                 </div>
-                                <div className="flex items-center gap-1.5 flex-shrink-0 w-28 justify-end">
+                                <div className="flex items-center gap-1.5 flex-shrink-0 justify-end">
                                   <ReposBadge login={u.login} count={u.trackedRepos} />
                                   <span className="text-muted-subtle text-xs tabular-nums w-10 text-right">
                                     {u.distanceKm} km
@@ -1202,12 +1275,12 @@ export default function ExplorePage() {
                                           }
                                         }}
                                         disabled={!hasCoors}
-                                        className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-2xs font-medium border transition-all duration-150 min-h-5
+                                        className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium border transition-all duration-150
                                           ${!hasCoors
-                                            ? "border-transparent text-muted-subtle/30 cursor-default"
+                                            ? "invisible"
                                             : isActive
                                             ? "border-accent-blue text-accent-blue bg-accent-blue/10"
-                                            : "border-transparent text-muted-subtle opacity-0 group-hover:opacity-100 hover:border-border hover:text-foreground"
+                                            : "border-border text-muted hover:text-accent-blue hover:border-accent-blue/60 hover:bg-accent-blue/5"
                                           }`}
                                       >
                                         <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill={isActive ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

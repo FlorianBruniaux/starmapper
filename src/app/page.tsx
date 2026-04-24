@@ -9,6 +9,7 @@ import dynamic from "next/dynamic";
 import { getStoredToken } from "@/lib/token";
 import { getBookmarks } from "@/lib/bookmarks";
 import { Header } from "@/components/header";
+import { AnnouncementBanner } from "@/components/announcement-banner";
 import { Footer } from "@/components/footer";
 import Link from "next/link";
 import { CommandSearch } from "@/components/command-search";
@@ -142,14 +143,16 @@ export default function HomePage() {
         />
       )}
 
+      <AnnouncementBanner />
       <Header
+        sticky
         showNav
         showToken
         hasToken={hasToken}
         onTokenClick={() => setTokenOpen(true)}
       />
 
-      <main id="main" className="min-h-screen bg-background flex flex-col pt-14">
+      <main id="main" className="min-h-screen bg-background flex flex-col">
 
         {/* ── Hero + Search ── */}
         <section className="w-full flex flex-col items-center px-6 pt-16 pb-12 lg:pt-24 lg:pb-16">
