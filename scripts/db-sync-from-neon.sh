@@ -63,7 +63,7 @@ import_table() {
   local ON_CONFLICT="$3"
 
   echo "[$TABLE]"
-  psql "$NEON_URL" -c "\copy ($QUERY) TO '$TMPDIR/$TABLE.csv' CSV HEADER"
+  psql "$NEON_URL" -c "SET statement_timeout = 0" -c "\copy ($QUERY) TO '$TMPDIR/$TABLE.csv' CSV HEADER"
   local ROWS
   ROWS=$(( $(wc -l < "$TMPDIR/$TABLE.csv") - 1 ))
   echo "  exported $ROWS rows from Neon"
