@@ -5,6 +5,88 @@ Versioning : Semantic Versioning (MAJOR.MINOR.PATCH)
 
 ---
 
+## [0.3.5] — 2026-04-24
+
+### Nouvelles fonctionnalités
+
+- **Announcement banner** — Bandeau dismissible en haut de la home pour annoncer les nouveautés. Dismissal stocké en localStorage par `BANNER_ID` ; bumper l'ID pour le faire réapparaître sur la prochaine annonce. Header home passé en `sticky` pour s'empiler naturellement sous le bandeau.
+- **Hook banner-reminder** — `PostToolUse` hook qui détecte la création d'une nouvelle `page.tsx` ou `route.ts` et rappelle de mettre à jour `AnnouncementBanner`.
+
+### Corrections
+
+- **Bouton Map explore** — Le bouton "Map" était caché (`opacity-0`) pour les users *avec* coordonnées, et visible (gris) pour ceux *sans*. Inversé : bouton toujours visible et cliquable pour les users géolocalisés, `invisible` (espace préservé) pour les autres.
+- **Compteur Countries = 0** — `country_stats_mv` créée à vide (aucun `countryNormalized` au moment de la création), puis jamais rafraîchie après le backfill. Ajout des commandes `create:country-stats-mv` / `create:country-stats-mv:prod` pour créer et rafraîchir la MV.
+- **Tooltips colonnes repos** — Les tooltips des headers de colonnes sortables étaient cachés derrière la barre de recherche. Positionnement corrigé.
+
+### Technique
+
+- **Script `starmapper-update.sh`** — Meta-script qui chaîne tous les backfills en séquence (`repo-metrics` + `repo-languages`). Commandes `update:prod`, `update:local`, `update:local:force`.
+- **Scripts `backfill:repo-metrics:local` / `:local:force`** — Variantes locales (Docker) du backfill repo-metrics avec `DATABASE_DRIVER=standard`.
+
+---
+
+## [0.3.4] — 2026-04-22
+
+### Nouvelles fonctionnalités
+
+- **Organic Score** — Score de popularité "organique" par repo (0–100), calculé à partir de signaux d'activité indépendants des stars : forks, zero-dependency forks, watchers, issues ouvertes, PRs ouvertes. Pondération : ZF 55% / forks 40% / watchers 5%. Score affiché via `OrganicScorePill` récupéré indépendamment du reste de la page.
+- **Colonne organic score dans repos list** — Colonne sortable sur la landing, colorée par tier (🟢 great / 🟡 good / 🟠 moderate / ⚫ low), avec modal de détail au clic (breakdown des signaux + comparaison StarScout).
+- **`openPRsCount` dans `BadgeCache`** — Séparation issues / PRs dans le modèle (avant : champ `openIssuesCount` mixte). Modal organic score affiche les deux badges séparément et cliquables (liens vers GitHub).
+- **Page calibration organic score** — `/api/admin/calibrate-organic-score` — page de debug pour comparer les scores sur un échantillon réel, accessible localement.
+
+### Corrections
+
+- **Timeout Neon** — `stats/[owner]/[repo]` levait une timeout Neon sur les grosses tables. Fallback gracieux : retourne les données partielles disponibles sans planter.
+- **Backfill prod** — `backfill-repo-metrics.ts` utilisait `DATABASE_URL_LOCAL` au lieu de `DATABASE_URL` sur les commandes `:prod`. Corrigé + `NEXT_PUBLIC_ORGANIC_SCORE_ENABLED=true` forcé.
+
+### Technique
+
+- **Rééquilibrages poids** — Deux passes de calibration : watcher 10%→5%, fork 70%→40%, zero-fork 25%→55%. Résultats plus discriminants sur les repos réels.
+- **Docs méthodologie** — `docs/organic-score.md` : comparaison StarScout vs StarMapper, formule de normalisation, limites connues.
+
+---
+
+## [0.3.3] — 2026-04-16
+
+### Nouvelles fonctionnalités
+
+- **Page profil développeur** — `/profile/[login]` : layout deux colonnes (panneau scrollable 2/3 + carte sticky 1/3). Données : bio, followers, repos, langages, star events trackés, contribution par pays. Profil partiel si user absent de la DB (refresh déclenché automatiquement).
+- **Entrées profil** — Clic sur avatar/login dans les popups carte, dans `explore/top`, `explore/power`, `explore/nearby`. Bouton "View StarMapper profile →" dans le popup stargazer.
+- **Profil : nearby developers** — Section "Nearby developers" sur la page profil : liste + pins sur la carte des devs géolocalisés à moins de Xkm.
+- **Profil : contact dropdown** — Menu déroulant avec liens LinkedIn (obfusqué), email (obfusqué), GitHub — protégés contre le scraping.
+- **Profil : view tracking** — `POST /api/track` déclenché au chargement ; compteur de vues journalier par profil dans `page_view`.
+- **GeoJSON API gated** — `GET /api/geo/[owner]/[repo]` : endpoint agrégé retournant les points GeoJSON d'un scan, protégé par API key HMAC. Utilisable par des outils tiers.
+- **Timelapse** — Rejouer l'historique d'acquisition d'étoiles par mois/semaine avec sélecteur de vitesse. Basé sur `star_event.starredAt`.
+
+### Performances
+
+- **Core Web Vitals audit** — Multiple passes : `startTransition` autour des dispatches chunk loop, `useDeferredValue` sur le filtre stargazers, `useCallback` sur les handlers carte, gating des memos coûteux, lazy-load `TokenModal` + `SponsorsBlock`, `width/height` sur les avatars (CLS).
+- **ETag + CDN** — Two-step ETag sur `stargazer-cache`, TTL CDN optimisé, index login superflu supprimé.
+- **GeoJSON in throttled window** — Calcul du GeoJSON dans la fenêtre `setData` throttlée pour éviter les frames bloquées.
+
+### Technique
+
+- **`CircuitBreaker` class** — Extraction depuis `geocoder.ts` vers une classe réutilisable. Tests unitaires ajoutés.
+- **Refactor cache** — `compressToGzBase64` centralisé dans `compression.ts`. `buildUserWritePayload` extrait dans le chunk route.
+- **Pre-open-source hardening** — Audit secrets, `.gitignore` renforcé, timing attacks réduits.
+
+---
+
+## [0.3.2] — 2026-04-14
+
+### Performances
+
+- **DB optimisations Neon** — `db:sync:from-neon` : variantes `--repo`, `--limit`, `--tables` pour sync partiel. `SET statement_timeout=0` ajouté en tête de tous les scripts DDL (index + MV). Slow query logger Prisma activé.
+- **MVs additionnelles** — `user_repo_count_mv` (per-user repo count, nearby query 6s→200ms). Index GIN trigram sur `login` + `name` (ILIKE search 6s→50ms).
+
+### Technique
+
+- **Tests** — Suite CircuitBreaker (pré-extraction). Corrections des stubs `chunk route` + `github` qui échouaient silencieusement.
+- **SEO / a11y / perf audit** — Robots, sitemap, structured data, focus management, aria labels manquants, bundle size.
+- **Sécurité** — Pre-open-source hardening : secrets exclus du dépôt, `.gitignore` durci, timing side-channels réduits.
+
+---
+
 ## [0.3.1] — 2026-04-13
 
 ### Corrections

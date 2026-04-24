@@ -7,12 +7,13 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 
 // Bump this ID whenever you want the banner to reappear for users who dismissed it.
-const BANNER_ID = "announce-explore-v1";
+const BANNER_ID = "announce-explore-v2";
 
 type LinkItem = { label: string; href: string };
 
 const LINKS: LinkItem[] = [
   { label: "Stargazer Intelligence", href: "/explore" },
+  { label: "Dev Profiles", href: "/profile/karpathy" },
   { label: "Language Atlas", href: "/devs/atlas" },
   { label: "Dev Maps", href: "/devs" },
 ];
