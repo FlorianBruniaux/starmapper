@@ -22,6 +22,10 @@ export const POST = async (
   _req: NextRequest,
   { params }: { params: Promise<{ owner: string; repo: string }> },
 ) => {
+  if (process.env.NEXT_PUBLIC_ORGANIC_SCORE_ENABLED !== "true") {
+    return jsonError("feature_disabled", 404);
+  }
+
   const { owner: rawOwner, repo: rawRepo } = await params;
   if (!OWNER_REPO_RE.test(rawOwner) || !OWNER_REPO_RE.test(rawRepo)) {
     return jsonError("invalid_params", 400);
