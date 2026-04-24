@@ -16,6 +16,7 @@ export type RepoOrganic = {
   watchersCount: number | null;
   totalCount: number;
   openIssuesCount: number | null;
+  openPRsCount: number | null;
   latestReleaseTag: string | null;
   latestReleaseUrl: string | null;
   latestReleaseAt: string | null;
@@ -66,6 +67,7 @@ export const GET = async (
         forksCount: true, watchersCount: true, totalCount: true,
         mappedCount: true, countryCount: true,
         openIssuesCount: true,
+        openPRsCount: true,
         latestReleaseTag: true, latestReleaseUrl: true, latestReleaseAt: true,
       },
     });
@@ -211,6 +213,7 @@ export const GET = async (
           watchersCount:    badgeRow.watchersCount,
           totalCount:       badgeRow.totalCount,
           openIssuesCount:  badgeRow.openIssuesCount ?? null,
+          openPRsCount:     badgeRow.openPRsCount ?? null,
           latestReleaseTag: badgeRow.latestReleaseTag ?? null,
           latestReleaseUrl: badgeRow.latestReleaseUrl ?? null,
           latestReleaseAt:  badgeRow.latestReleaseAt?.toISOString() ?? null,

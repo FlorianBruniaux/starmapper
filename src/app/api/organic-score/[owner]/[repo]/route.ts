@@ -35,6 +35,7 @@ export const GET = async (
         watchersCount:     true,
         totalCount:        true,
         openIssuesCount:   true,
+        openPRsCount:      true,
         latestReleaseTag:  true,
         latestReleaseUrl:  true,
         latestReleaseAt:   true,
@@ -42,6 +43,29 @@ export const GET = async (
     });
 
     if (!row?.organicTier) return jsonError("not_found", 404);
+
+    let openPRsCount = row.openPRsCount ?? null;
+    if (openPRsCount === null && row.openIssuesCount !== null) {
+      try {
+        const token = process.env.GITHUB_TOKEN;
+        const headers = {
+          Accept: "application/vnd.github.v3+json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        };
+        const prRes = await fetch(
+          `https://api.github.com/search/issues?q=repo:${key.owner}/${key.repo}+type:pr+state:open&per_page=1`,
+          { headers },
+        );
+        if (prRes.ok) {
+          const prData = await prRes.json() as { total_count: number };
+          openPRsCount = prData.total_count;
+          await prisma.badgeCache.update({
+            where: { owner_repo: key },
+            data: { openPRsCount },
+          });
+        }
+      } catch { /* non-critical — proceed without split */ }
+    }
 
     const organic: RepoOrganic = {
       score:            row.organicScore,
@@ -51,6 +75,7 @@ export const GET = async (
       watchersCount:    row.watchersCount,
       totalCount:       row.totalCount,
       openIssuesCount:  row.openIssuesCount ?? null,
+      openPRsCount,
       latestReleaseTag: row.latestReleaseTag ?? null,
       latestReleaseUrl: row.latestReleaseUrl ?? null,
       latestReleaseAt:  row.latestReleaseAt?.toISOString() ?? null,

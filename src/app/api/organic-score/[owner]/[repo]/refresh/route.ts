@@ -45,13 +45,20 @@ export const POST = async (
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     };
 
-    const [ghRes, releaseRes] = await Promise.all([
+    const [ghRes, releaseRes, prSearchRes] = await Promise.all([
       fetch(`https://api.github.com/repos/${key.owner}/${key.repo}`, { headers: ghHeaders }),
       fetch(`https://api.github.com/repos/${key.owner}/${key.repo}/releases/latest`, { headers: ghHeaders }),
+      fetch(
+        `https://api.github.com/search/issues?q=repo:${key.owner}/${key.repo}+type:pr+state:open&per_page=1`,
+        { headers: ghHeaders },
+      ),
     ]);
     if (!ghRes.ok) return jsonError("github_error", 502);
     const meta = await ghRes.json() as GhRepo;
     const release: GhRelease | null = releaseRes.ok ? await releaseRes.json() as GhRelease : null;
+    const prData: { total_count: number } | null =
+      prSearchRes.ok ? await prSearchRes.json() as { total_count: number } : null;
+    const openPRsCount = prData?.total_count ?? null;
 
     let zfRow: { zero_count: bigint; sample_size: bigint } | null = null;
     try {
@@ -91,6 +98,7 @@ export const POST = async (
         organicTier:       result.tier,
         organicComputedAt: now,
         openIssuesCount:   meta.open_issues_count,
+        openPRsCount,
         latestReleaseTag:  release?.tag_name ?? null,
         latestReleaseUrl:  release?.html_url ?? null,
         latestReleaseAt,
@@ -105,6 +113,7 @@ export const POST = async (
       watchersCount:    meta.subscribers_count,
       totalCount:       meta.stargazers_count,
       openIssuesCount:  meta.open_issues_count,
+      openPRsCount,
       latestReleaseTag: release?.tag_name ?? null,
       latestReleaseUrl: release?.html_url ?? null,
       latestReleaseAt:  latestReleaseAt?.toISOString() ?? null,
