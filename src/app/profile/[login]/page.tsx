@@ -12,6 +12,7 @@ import { LANGUAGE_COLORS } from "@/lib/language-colors";
 import type { ProfileResponse, ProfileRepo } from "@/app/api/profile/[login]/route";
 import type { NearbyResponse } from "@/app/api/explore/nearby/route";
 import type { StargazerPoint } from "@/app/api/chunk/route";
+import { NewsTimeline } from "@/components/news-timeline";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -503,18 +504,20 @@ export default function ProfilePage({ params }: Props) {
             />
             <div className="flex flex-col gap-1.5 min-w-0 pt-0.5 flex-1">
               <div className="flex items-start justify-between gap-2">
-                <div className="flex items-baseline gap-2 flex-wrap min-w-0">
-                  <h1 className="text-foreground font-semibold text-xl leading-tight">
-                    {profile.name ?? profile.login}
-                  </h1>
-                  {profile.name && (
-                    <span className="text-muted text-sm">{profile.login}</span>
-                  )}
-                  {profile.partial && (
-                    <span className="text-2xs font-medium px-1.5 py-0.5 rounded-full border border-border text-muted-subtle">
-                      Repo owner · limited data
-                    </span>
-                  )}
+                <div className="min-w-0">
+                  <div className="flex items-baseline gap-2 flex-wrap min-w-0">
+                    <h1 className="text-foreground font-semibold text-xl leading-tight">
+                      {profile.name ?? profile.login}
+                    </h1>
+                    {profile.name && (
+                      <span className="text-muted text-sm">{profile.login}</span>
+                    )}
+                    {profile.partial && (
+                      <span className="text-2xs font-medium px-1.5 py-0.5 rounded-full border border-border text-muted-subtle">
+                        Repo owner · limited data
+                      </span>
+                    )}
+                  </div>
                 </div>
                 {/* Actions — top right of profile card */}
                 <div className="flex items-center gap-2 shrink-0">
@@ -781,6 +784,15 @@ export default function ProfilePage({ params }: Props) {
           </div>
         )}
 
+        {/* ── News / announcements ────────────────────────────────────── */}
+        {login && (
+          <section className="mb-2">
+            <NewsTimeline login={login} maxItems={3} />
+          </section>
+        )}
+
+        <hr className="border-border-subtle my-8" />
+
         {/* ── Owned repos ─────────────────────────────────────────────── */}
         {profile && profile.ownedRepos.length > 0 && (
           <section className="mb-2" aria-labelledby="owned-heading">
@@ -808,6 +820,8 @@ export default function ProfilePage({ params }: Props) {
           </section>
         )}
 
+        <hr className="border-border-subtle my-8" />
+
         {/* ── Starred repos ────────────────────────────────────────────── */}
         {profile && (
           <section className="mb-2" aria-labelledby="starred-heading">
@@ -815,6 +829,7 @@ export default function ProfilePage({ params }: Props) {
               title="Starred repos on StarMapper"
               count={profile.starredCount}
               id="starred-heading"
+              noBorder
             />
             {profile.starredRepos.length === 0 ? (
               <p className="text-muted text-sm">
