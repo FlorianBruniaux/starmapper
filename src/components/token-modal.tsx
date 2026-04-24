@@ -22,15 +22,36 @@ type Props = {
 export const TokenModal = ({ onClose }: Props) => {
   const [value, setValue] = useState(() => getStoredToken());
   const [saved, setSaved] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
 
-  const handleSave = () => {
-    setStoredToken(value.trim());
+  const handleSave = async () => {
+    const token = value.trim();
+    setStoredToken(token);
+
+    if (token) {
+      setIsVerifying(true);
+      try {
+        const res = await fetch("https://api.github.com/user", {
+          headers: { Authorization: `token ${token}`, "User-Agent": "starmapper/1.0" },
+          signal: AbortSignal.timeout(4000),
+        });
+        if (res.ok) {
+          const data = await res.json() as { login?: string };
+          if (typeof data.login === "string") setStoredUsername(data.login.toLowerCase());
+        }
+      } catch { /* non-fatal — token still saved */ }
+      setIsVerifying(false);
+    } else {
+      setStoredUsername("");
+    }
+
     setSaved(true);
     setTimeout(onClose, 600);
   };
 
   const handleRemove = () => {
     setStoredToken("");
+    setStoredUsername("");
     setValue("");
     setSaved(false);
   };
@@ -90,8 +111,9 @@ export const TokenModal = ({ onClose }: Props) => {
           onClick={handleSave}
           className="px-5 py-2 rounded-lg text-sm font-medium bg-accent-green-emphasis hover:opacity-90 text-white transition-opacity"
           aria-live="polite"
+          disabled={isVerifying}
         >
-          {saved ? <>Saved <span aria-hidden="true">✓</span></> : "Save"}
+          {isVerifying ? "Verifying…" : saved ? <>Saved <span aria-hidden="true">✓</span></> : "Save"}
         </button>
       </div>
     </Modal>
