@@ -1,7 +1,7 @@
 ---
 name: architect-review
 description: Use this agent when architectural decisions are being made, system designs are being created or modified, code changes impact system architecture, or when evaluating scalability, maintainability, and architectural integrity. This agent should be used PROACTIVELY during architectural reviews.
-model: sonnet
+model: opus
 color: red
 tools: Read, Grep, Glob
 ---

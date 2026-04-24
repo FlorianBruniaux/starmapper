@@ -1,7 +1,7 @@
 ---
 name: system-architect
 description: Use this agent when making system-level architectural decisions, evaluating technology choices, planning migrations, or assessing the impact of changes on StarMapper's overall architecture. Examples: evaluating a new caching strategy, deciding whether to switch from Neon to another DB, planning a major refactor.
-model: sonnet
+model: opus
 tools: Read, Grep, Glob, Write, Bash
 ---
 
