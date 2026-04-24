@@ -96,7 +96,7 @@ Vercel Hobby default function duration = 10s, configurable up to 60s (or 300s wi
 
 **Purpose**: Track daily page views per repo and profile for internal analytics. Private — not exposed in UI, queryable via `pnpm stats:views`.
 
-**Schema**: `page_view` — composite PK `(type, slug, date)` → `count Int`. `type` = `"repo"` or `"profile"`. `slug` = `"owner/repo"` or `"login"`. `date` = UTC day (Date only, no time).
+**Schema**: `page_view` — composite PK `(type, slug, date)` → `count Int`. `type` = `"repo"` | `"profile"` | `"feed_rss"`. `slug` = `"owner/repo"` or `"login"`. `date` = UTC day (Date only, no time).
 
 **Write path**: `POST /api/track` — atomic upsert (`INSERT ... ON CONFLICT DO UPDATE SET count = count + 1`). Called fire-and-forget from both `/[owner]/[repo]/page.tsx` and `/profile/[login]/page.tsx` on mount.
 
@@ -170,6 +170,33 @@ POST /api/track
   Returns: { ok: true }
   Note: atomic daily upsert on page_view table (count += 1). Fire-and-forget from client.
         Never returns errors — silently succeeds even if DB write fails.
+
+POST /api/news
+  Header: x-gh-token (required — GitHub PAT)
+  Body: { body: string (max 280), url?: string }
+  Returns: { ok: true, news: NewsItem } | { error: string, retryAfterSec?: number }
+  Note: publishes an announcement for the authenticated GitHub user. Sliding 24h cooldown
+        (includes soft-deleted posts). PAT verified via GitHub REST API, cached 5min in Upstash.
+
+GET /api/news/[login]
+  Returns: { items: NewsItem[], hasMore: boolean }
+  Cache: public, 5min CDN
+  Note: returns up to 20 live posts (deletedAt = null), ordered desc.
+
+DELETE /api/news/item/[id]
+  Header: x-gh-token (required)
+  Returns: { ok: true }
+  Note: soft-delete (sets deletedAt). Only the post's author can delete.
+
+GET /api/feed/[login]/rss
+  Returns: RSS 2.0 XML (Content-Type: application/rss+xml)
+  Cache: public, 1h CDN — supports If-Modified-Since / 304
+  Note: tracks subscriber hits in page_view (type: "feed_rss"). Falls back to 404 if user unknown.
+
+GET /api/feed/[login]/json
+  Returns: JSON Feed 1.1 object (Content-Type: application/feed+json)
+  Cache: public, 1h CDN
+  Note: same data as RSS feed, JSON Feed 1.1 format.
 ```
 
 ---
@@ -190,6 +217,10 @@ POST /api/track
 │   │   │   ├── page.tsx                       # Dev Maps landing — language selector
 │   │   │   ├── [language]/page.tsx            # Dev map filtered by language
 │   │   │   └── atlas/page.tsx                 # Language Atlas — choropleth map by country
+│   │   ├── feed/
+│   │   │   └── [login]/
+│   │   │       ├── page.tsx                   # Subscription page — identity hero + subscribe card + news list
+│   │   │       └── page.client.tsx            # Subscribe card (copy RSS/JSON URLs)
 │   │   └── api/
 │   │       ├── chunk/route.ts                 # POST — fetch + geocode 100 users
 │   │       ├── repo-info/route.ts             # GET  — repo metadata (GitHub REST)
@@ -201,6 +232,14 @@ POST /api/track
 │   │       ├── stargazer-cache/
 │   │       │   ├── route.ts                   # POST — write full scan cache (gzip+base64)
 │   │       │   └── [owner]/[repo]/route.ts    # GET  — read full scan cache
+│   │       ├── news/
+│   │       │   ├── route.ts                   # POST — publish announcement (PAT auth, 24h cooldown)
+│   │       │   ├── [login]/route.ts           # GET  — list news for a developer (public, 5min cache)
+│   │       │   └── item/[id]/route.ts         # DELETE — soft-delete a news post (author only)
+│   │       ├── feed/
+│   │       │   └── [login]/
+│   │       │       ├── rss/route.ts           # GET  — RSS 2.0 feed (1h cache, If-Modified-Since)
+│   │       │       └── json/route.ts          # GET  — JSON Feed 1.1 (1h cache)
 │   │       ├── user-details/route.ts          # POST — stargazer details (bio, followers)
 │   │       ├── badge-update/route.ts          # POST — upsert BadgeCache
 │   │       ├── badge/[owner]/[repo]/route.ts  # GET  — SVG shield badge
@@ -215,6 +254,8 @@ POST /api/track
 │   │   ├── filter-combobox.tsx                # Reusable combobox for country/city filters
 │   │   ├── repo-table.tsx                     # Community maps table (sortable, paginated)
 │   │   ├── footer.tsx                         # Landing page footer with ecosystem links
+│   │   ├── news-timeline.tsx                  # NewsTimeline — news section on profile pages (owner publish + public view)
+│   │   ├── news-publish-modal.tsx             # NewsPublishModal — publish/delete flow + feed URLs display
 │   │   └── map/
 │   │       ├── stargazer-map.tsx              # MapLibre GL map (client component)
 │   │       ├── stargazer-map-dynamic.tsx      # Dynamic import wrapper (ssr: false)
@@ -225,6 +266,8 @@ POST /api/track
 │       ├── db-health.ts                       # DB storage usage check (Neon 512MB limit)
 │       ├── geocoder.ts                        # geocode() + geocodeBatch() — 3-tier cascade
 │       ├── github.ts                          # fetchStargazersPage() — GitHub GraphQL
+│       ├── github-auth.ts                     # verifyPat() — GitHub PAT verification + Upstash cache; isValidLogin() / normalizeLogin()
+│       ├── feed-builders.ts                   # buildRss20() + buildJsonFeed() — RSS 2.0 and JSON Feed 1.1 builders
 │       ├── map-style.ts                       # fetchAndPatchStyle() — single source for Jawg tile style patching
 │       ├── bookmarks.ts                       # Client-side repo bookmarks (localStorage)
 │       ├── user-cache.ts                      # bulkUpsertUsers() + bulkUpsertStarEvents()
@@ -571,5 +614,5 @@ vercel --prod
 
 ---
 
-*Last updated: 2026-04-17*
-*Version: 0.3.5*
+*Last updated: 2026-04-24*
+*Version: 0.4.0*

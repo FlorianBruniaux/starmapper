@@ -5,6 +5,32 @@ Versioning : Semantic Versioning (MAJOR.MINOR.PATCH)
 
 ---
 
+## [0.4.0] — 2026-04-24
+
+### Nouvelles fonctionnalités
+
+- **News & Annonces sur les profils** — Les développeurs peuvent publier de courtes annonces (280 chars max, lien optionnel) directement sur leur profil StarMapper. Authentification via GitHub PAT — le même token que celui utilisé pour scanner des repos. Cooldown de 24h glissantes par auteur (soft-delete inclus dans le cooldown, anti-contournement). Composant `NewsTimeline` intégré sur `/profile/[login]` avec skeleton loader, bouton "Publish" conditionnel (visible uniquement si le token stocké correspond au login de la page).
+- **RSS 2.0 + JSON Feed 1.1 par développeur** — Chaque profil expose deux feeds abonnables : `GET /api/feed/[login]/rss` (RSS 2.0 avec `<atom:link>`, `If-Modified-Since`, réponse 304) et `GET /api/feed/[login]/json` (JSON Feed 1.1). Cachés 1h CDN. Subscribe link (icône RSS + "Subscribe") affiché en tête de la section News sur le profil.
+- **Page `/feed/[login]`** — Page dédiée aux abonnements : hero avec avatar + identité, subscribe card avec URLs RSS/JSON copiables, liste complète des annonces, lien de retour vers le profil carte. Accessible via le lien "Subscribe" sur le profil ou "View all" sur la timeline.
+- **`NewsPublishModal`** — Modal de publication avec compteur de chars (280), champ URL optionnel, affichage des URLs de feed copiables post-publication. Gestion des erreurs : cooldown restant affiché en h/min, token invalide signalé clairement.
+- **`verifyPat()` + cache Upstash** — `src/lib/github-auth.ts` : vérification d'un GitHub PAT via l'API REST (`/user`), résultat mis en cache dans Upstash Redis 5 min. Clé de cache = préfixe SHA-256 du PAT (jamais le token brut). Fallback gracieux si Redis indisponible.
+- **Tracking abonnés RSS** — Chaque hit sur `/api/feed/[login]/rss` est comptabilisé dans `page_view` (type `"feed_rss"`, slug = login). Consultable via `pnpm stats:views`.
+
+### Corrections
+
+- **TokenModal — username non résolu** — Le modal ne stockait que le token, jamais le username. Sur les pages autres que la carte (ex. `/profile/[login]`), `getStoredUsername()` retournait `""`, ce qui faisait passer `isOwner` à `false` et masquait le bouton "Publish" même pour le propriétaire du profil. `handleSave` résout désormais le login via `GET /api.github.com/user` et le stocke. "Verifying…" pendant la vérification, `handleRemove` efface également le username.
+- **Middleware** — `POST_LIMITERS` utilisait une comparaison exacte sur les routes POST, manquant les routes avec segments dynamiques (ex. `/api/news/item/123`). Remplacé par des regex.
+- **Cooldown news** — Les posts soft-deleted n'étaient pas comptés dans la fenêtre de 24h, ce qui permettait publish → delete → re-publish immédiat. Le cooldown inclut désormais les entrées supprimées.
+- **Organic score** — L'endpoint `/api/organic-score/refresh` n'avait pas de guard server-side sur le feature flag. Guard ajouté : retourne 404 si `NEXT_PUBLIC_ORGANIC_SCORE_ENABLED !== "true"`.
+- **Web Vitals** — Whitelist des noms de métriques valides (`CLS`, `FID`, `FCP`, `LCP`, `TTFB`, `INP`) + validation que les champs numériques sont bien des nombres. Évite les injections de données arbitraires dans la table `web_vitals`.
+
+### Technique
+
+- **`feed-builders.ts`** — Deux fonctions pures : `buildRss20()` (XML RSS 2.0, CDATA correct, `]]>` splitté en deux sections CDATA) et `buildJsonFeed()` (objet JSON Feed 1.1). Logique de construction découplée des routes pour testabilité.
+- **`isValidLogin()` / `normalizeLogin()`** — Helpers centralisés dans `github-auth.ts`, réutilisés par toutes les routes news et feed.
+
+---
+
 ## [0.3.5] — 2026-04-24
 
 ### Nouvelles fonctionnalités
