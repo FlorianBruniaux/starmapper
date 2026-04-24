@@ -67,7 +67,7 @@ const ColHeader = ({
       {label}
       <SortIcon active={active} dir={dir} />
       {tooltip && (
-        <span className="pointer-events-none absolute bottom-full right-0 mb-2 w-56 rounded-lg bg-surface border border-border px-3 py-2 text-xs text-foreground leading-relaxed shadow-xl opacity-0 group-hover/tip:opacity-100 transition-opacity duration-150 z-50 whitespace-normal font-normal normal-case tracking-normal">
+        <span className="pointer-events-none absolute top-full right-0 mt-2 w-56 rounded-lg bg-surface border border-border px-3 py-2 text-xs text-foreground leading-relaxed shadow-xl opacity-0 group-hover/tip:opacity-100 transition-opacity duration-150 z-50 whitespace-normal font-normal normal-case tracking-normal">
           {tooltip}
         </span>
       )}
