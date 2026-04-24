@@ -72,7 +72,7 @@ const buildSignals = (organic: RepoOrganic): SignalRow[] => {
     rows.push({
       label: "Fork / star ratio",
       tooltip: FORK_TOOLTIP,
-      rawValue: `${fmtPct(ratio)} — ${forksCount.toLocaleString()} forks / ${totalCount.toLocaleString()} ★`,
+      rawValue: `${fmtPct(ratio)} · ${forksCount.toLocaleString()} forks / ${totalCount.toLocaleString()} ★`,
       weight: "40%",
       signalScore: score,
       status: totalCount < 5000 ? "na" : ratio >= 0.07 ? "ok" : "warn",
@@ -93,7 +93,7 @@ const buildSignals = (organic: RepoOrganic): SignalRow[] => {
     rows.push({
       label: "Watcher / star ratio",
       tooltip: WATCHER_TOOLTIP,
-      rawValue: `${fmtPct(ratio)} — ${watchersCount.toLocaleString()} watchers`,
+      rawValue: `${fmtPct(ratio)} · ${watchersCount.toLocaleString()} watchers`,
       weight: "5%",
       signalScore: normWatcher(ratio),
       status: ratio >= 0.005 ? "ok" : "warn",
@@ -237,43 +237,101 @@ export const OrganicScoreModal = ({ open, onClose, organic, owner, repo, onRecal
           ))}
         </div>
 
-        {/* Activity row */}
-        {(organic.openIssuesCount !== null || organic.latestReleaseTag) && (
-          <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted border-t border-border-subtle pt-3">
-            {organic.openIssuesCount !== null && (
-              <span className="flex items-center gap-1.5">
-                <svg className="size-3 text-muted/60" fill="none" viewBox="0 0 16 16" stroke="currentColor" strokeWidth="1.5">
-                  <circle cx="8" cy="8" r="6.25"/>
-                  <path d="M8 5v3.5M8 11v.5" strokeLinecap="round"/>
-                </svg>
-                {`${organic.openIssuesCount.toLocaleString()} issues & PRs`}
-              </span>
-            )}
-            {organic.latestReleaseTag && organic.latestReleaseUrl && (
-              <a
-                href={organic.latestReleaseUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1 hover:text-foreground transition-colors"
-              >
-                <svg className="size-3 text-muted/60" fill="none" viewBox="0 0 16 16" stroke="currentColor" strokeWidth="1.5">
-                  <path d="M8 2l1.5 3 3.5.5-2.5 2.5.5 3.5L8 10l-3 1.5.5-3.5L3 5.5 6.5 5z" strokeLinejoin="round"/>
-                </svg>
-                {organic.latestReleaseTag}
-                {organic.latestReleaseAt && (
-                  <span className="text-muted/70">({new Date(organic.latestReleaseAt).toLocaleDateString()})</span>
-                )}
-                <svg className="size-2.5 text-muted/60" fill="none" viewBox="0 0 10 10" stroke="currentColor" strokeWidth="1.5">
-                  <path d="M2 8L8 2M5 2h3v3" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </a>
-            )}
-          </div>
-        )}
+        {/* Activity + Release row */}
+        {(organic.openIssuesCount !== null || organic.latestReleaseTag) && (() => {
+          const issuesOnlyCount =
+            organic.openIssuesCount !== null && organic.openPRsCount !== null
+              ? organic.openIssuesCount - organic.openPRsCount
+              : organic.openIssuesCount;
+          return (
+            <div className="flex flex-wrap gap-2 border-t border-border-subtle pt-3">
+              {/* Issues counter — split view */}
+              {issuesOnlyCount !== null && organic.openPRsCount !== null && (
+                <a
+                  href={`https://github.com/${owner}/${repo}/issues`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 bg-surface-alt rounded-md px-2.5 py-1.5 border border-border-subtle hover:border-accent-blue/40 transition-colors"
+                >
+                  <svg className="size-3.5 text-muted flex-shrink-0" fill="none" viewBox="0 0 16 16"
+                    stroke="currentColor" strokeWidth="1.5">
+                    <circle cx="8" cy="8" r="6.25"/>
+                    <path d="M8 5v3.5M8 11v.5" strokeLinecap="round"/>
+                  </svg>
+                  <span className="text-sm font-semibold text-foreground tabular-nums">
+                    {issuesOnlyCount.toLocaleString()}
+                  </span>
+                  <span className="text-xs text-muted">issues</span>
+                </a>
+              )}
+              {/* PRs counter */}
+              {organic.openPRsCount !== null && (
+                <a
+                  href={`https://github.com/${owner}/${repo}/pulls`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 bg-surface-alt rounded-md px-2.5 py-1.5 border border-border-subtle hover:border-accent-blue/40 transition-colors"
+                >
+                  <svg className="size-3.5 text-muted flex-shrink-0" fill="none" viewBox="0 0 16 16"
+                    stroke="currentColor" strokeWidth="1.5">
+                    <circle cx="4" cy="4" r="1.75"/>
+                    <circle cx="12" cy="12" r="1.75"/>
+                    <circle cx="12" cy="4" r="1.75"/>
+                    <path d="M4 5.75v4.5M12 5.75v2.5a2 2 0 01-2 2H7" strokeLinecap="round"/>
+                  </svg>
+                  <span className="text-sm font-semibold text-foreground tabular-nums">
+                    {organic.openPRsCount.toLocaleString()}
+                  </span>
+                  <span className="text-xs text-muted">open PRs</span>
+                </a>
+              )}
+              {/* Fallback combiné si pas de split */}
+              {organic.openIssuesCount !== null && organic.openPRsCount === null && (
+                <a
+                  href={`https://github.com/${owner}/${repo}/issues`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 bg-surface-alt rounded-md px-2.5 py-1.5 border border-border-subtle hover:border-accent-blue/40 transition-colors"
+                >
+                  <svg className="size-3.5 text-muted flex-shrink-0" fill="none" viewBox="0 0 16 16"
+                    stroke="currentColor" strokeWidth="1.5">
+                    <circle cx="8" cy="8" r="6.25"/>
+                    <path d="M8 5v3.5M8 11v.5" strokeLinecap="round"/>
+                  </svg>
+                  <span className="text-sm font-semibold text-foreground tabular-nums">
+                    {organic.openIssuesCount.toLocaleString()}
+                  </span>
+                  <span className="text-xs text-muted">issues & PRs</span>
+                </a>
+              )}
+              {/* Version + date */}
+              {organic.latestReleaseTag && organic.latestReleaseUrl && (
+                <a
+                  href={organic.latestReleaseUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 bg-surface-alt rounded-md px-2.5 py-1.5 border border-border-subtle hover:border-accent-blue/40 transition-colors"
+                >
+                  <svg className="size-3.5 text-muted flex-shrink-0" fill="none" viewBox="0 0 16 16"
+                    stroke="currentColor" strokeWidth="1.5">
+                    <path d="M8 2l1.5 3 3.5.5-2.5 2.5.5 3.5L8 10l-3 1.5.5-3.5L3 5.5 6.5 5z"
+                      strokeLinejoin="round"/>
+                  </svg>
+                  <span className="text-sm font-semibold text-foreground">{organic.latestReleaseTag}</span>
+                  {organic.latestReleaseAt && (
+                    <span className="text-xs text-muted">
+                      ({new Date(organic.latestReleaseAt).toLocaleDateString()})
+                    </span>
+                  )}
+                </a>
+              )}
+            </div>
+          );
+        })()}
 
         {/* Disclaimer */}
         <p className="text-xs text-muted/80 leading-relaxed border-t border-border-subtle pt-3">
-          Heuristic based on 3 public signals — not an accusation of fraud.
+          Heuristic based on 3 public signals, not an accusation of fraud.
           Repos with viral growth or niche communities may score lower despite being organic.
           {organic.computedAt && (
             <>{" "}<span className="text-muted/60">Computed {new Date(organic.computedAt).toLocaleDateString()}.</span></>
