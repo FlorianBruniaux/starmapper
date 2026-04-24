@@ -14,13 +14,36 @@ type Tier = "strict-get" | "stargazer-cache-get" | "moderate-get" | "admin" | "p
 
 const redis = Redis.fromEnv();
 
-// POST route limiters — one instance per route, prefix avoids key collisions
-const POST_LIMITERS: Record<string, Ratelimit> = {
-  "/api/chunk":           new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(100, "60 s"), prefix: "rl:chunk" }),
-  "/api/badge-update":    new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(20,  "60 s"), prefix: "rl:badge-update" }),
-  "/api/stargazer-cache": new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(10,  "60 s"), prefix: "rl:stargazer-cache" }),
-  "/api/user-details":    new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(30,  "60 s"), prefix: "rl:user-details" }),
-};
+// POST/DELETE route limiters — array supports dynamic path matching (regex)
+// This replaces the old Record<string, Ratelimit> which only handled exact-match paths.
+// Dynamic routes like /api/news/item/[id] or /api/organic-score/[o]/[r]/refresh
+// could never match an exact-match record and were silently classified "exempt".
+type PostRoute = { match: (p: string) => boolean; limiter: Ratelimit };
+
+const POST_ROUTES: PostRoute[] = [
+  // Existing write endpoints (exact match)
+  { match: (p) => p === "/api/chunk",           limiter: new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(100, "60 s"),  prefix: "rl:chunk" }) },
+  { match: (p) => p === "/api/badge-update",    limiter: new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(20,  "60 s"),  prefix: "rl:badge-update" }) },
+  { match: (p) => p === "/api/stargazer-cache", limiter: new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(10,  "60 s"),  prefix: "rl:stargazer-cache" }) },
+  { match: (p) => p === "/api/user-details",    limiter: new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(30,  "60 s"),  prefix: "rl:user-details" }) },
+
+  // News endpoints (PAT-protected, but still rate-limited as defence-in-depth)
+  { match: (p) => p === "/api/news",                         limiter: new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(10,  "60 m"), prefix: "rl:news-publish" }) },
+  { match: (p) => /^\/api\/news\/item\/\d+$/.test(p),        limiter: new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(20,  "60 m"), prefix: "rl:news-delete" }) },
+
+  // Analytics fire-and-forget — generous limits, just preventing raw DoS
+  { match: (p) => p === "/api/track",   limiter: new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(120, "60 s"), prefix: "rl:track" }) },
+  { match: (p) => p === "/api/vitals",  limiter: new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(60,  "60 s"), prefix: "rl:vitals" }) },
+
+  // Nominatim DoS vector — strict limit (each call triggers a geocoder re-request)
+  { match: (p) => p === "/api/recalculate-location", limiter: new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(10, "60 s"), prefix: "rl:recalc-loc" }) },
+
+  // User profile refresh — route has its own 1h internal cooldown, rate limit adds defence-in-depth
+  { match: (p) => /^\/api\/profile\/[^/]+\/refresh$/.test(p), limiter: new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(10, "60 m"), prefix: "rl:profile-refresh" }) },
+
+  // Organic score refresh — 3 GitHub API calls per invocation, route has 1h internal cooldown
+  { match: (p) => /^\/api\/organic-score\/[^/]+\/[^/]+\/refresh$/.test(p), limiter: new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(10, "60 m"), prefix: "rl:organic-refresh" }) },
+];
 
 // Tier limiters for GET routes
 const TIER_LIMITERS: Record<"strict-get" | "stargazer-cache-get" | "moderate-get" | "admin", Ratelimit> = {
@@ -79,7 +102,7 @@ const classifyRoute = (method: string, pathname: string): Tier => {
 
   // POST/mutating methods
   if (method !== "GET" && method !== "HEAD") {
-    if (POST_LIMITERS[pathname]) return "post";
+    if (POST_ROUTES.some((r) => r.match(pathname))) return "post";
     return "exempt";
   }
 
@@ -230,9 +253,9 @@ export const middleware = async (req: NextRequest): Promise<NextResponse> => {
         return NextResponse.json({ error: "forbidden" }, { status: 403 });
       }
     }
-    const limiter = POST_LIMITERS[pathname];
-    if (limiter) {
-      const blocked = await rateLimit(limiter, ip);
+    const route = POST_ROUTES.find((r) => r.match(pathname));
+    if (route) {
+      const blocked = await rateLimit(route.limiter, ip);
       if (blocked) return blocked;
     }
     return withCors(NextResponse.next(), false);
