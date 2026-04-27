@@ -53,9 +53,26 @@ const TIER_LIMITERS: Record<"strict-get" | "stargazer-cache-get" | "moderate-get
   "admin":               new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(10, "60 s"), prefix: "rl:admin" }),
 };
 
-// SM_TOKEN_SECRET: when set, enables HMAC token validation on strict-get endpoints.
+// SM_TOKEN_SECRET: when set, enables HMAC token validation on strict-get and POST endpoints.
 // When unset (local dev without env), falls back to Referer check + rate limit only.
 const SM_SECRET = process.env.SM_TOKEN_SECRET ?? "";
+
+const isDev = process.env.NODE_ENV === "development";
+
+// Build a per-request CSP with a unique nonce — eliminates 'unsafe-inline' for scripts.
+const buildCsp = (nonce: string): string =>
+  [
+    "default-src 'self'",
+    `script-src 'self' 'nonce-${nonce}'${isDev ? " 'unsafe-eval'" : ""}`,
+    "worker-src blob:",
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' https://avatars.githubusercontent.com https://github.com data: blob:",
+    "connect-src 'self' https://api.jawg.io https://tile.jawg.io https://*.tile.jawg.io https://api.geoapify.com https://nominatim.openstreetmap.org https://api.github.com https://*.tiles.jawg.io wss:",
+    "font-src 'self' data:",
+    "frame-ancestors 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+  ].join("; ");
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -131,11 +148,13 @@ const classifyRoute = (method: string, pathname: string): Tier => {
 
 /**
  * Distributed sliding-window rate limiter via Upstash Redis.
- * Fails open on Redis errors — never blocks legitimate traffic due to infra issues.
+ * failClosed=true (POST routes): Redis down → 503, never silently open.
+ * failClosed=false (GET routes): Redis down → pass through, preserve availability.
  */
 const rateLimit = async (
   limiter: Ratelimit,
   ip: string,
+  failClosed = false,
 ): Promise<NextResponse | null> => {
   try {
     const { success, limit, remaining, reset } = await limiter.limit(ip);
@@ -154,7 +173,9 @@ const rateLimit = async (
       );
     }
   } catch {
-    // Redis unavailable — fail open, never block legitimate traffic
+    if (failClosed) {
+      return NextResponse.json({ error: "service_unavailable" }, { status: 503 });
+    }
   }
   return null;
 };
@@ -213,15 +234,21 @@ export const middleware = async (req: NextRequest): Promise<NextResponse> => {
     return withCors(new NextResponse(null, { status: 204 }), isPublic);
   }
 
-  // ── Non-API page requests: issue / refresh HMAC session cookie ────────────
-  // The cookie is HttpOnly + SameSite=Strict — auto-sent with all same-origin
-  // fetch() calls from the browser. Enables token validation on strict-get routes.
+  // ── Non-API page requests: nonce + CSP + HMAC session cookie ────────────
+  // Per-request nonce replaces 'unsafe-inline' in script-src (CSP hardening).
+  // The HMAC cookie is HttpOnly + SameSite=Strict — auto-sent with same-origin
+  // fetch() calls, enabling token validation on strict-get and POST routes.
   if (!pathname.startsWith("/api/")) {
+    const nonce = btoa(crypto.randomUUID());
+    const reqHeaders = new Headers(req.headers);
+    reqHeaders.set("x-nonce", nonce);
+    const res = NextResponse.next({ request: { headers: reqHeaders } });
+    res.headers.set("Content-Security-Policy", buildCsp(nonce));
+
     if (SM_SECRET) {
       const existing = req.cookies.get(COOKIE_NAME)?.value;
       const valid = existing ? await verifyToken(existing, SM_SECRET) : false;
       if (!valid) {
-        const res = NextResponse.next();
         res.cookies.set(COOKIE_NAME, await generateToken(SM_SECRET), {
           httpOnly: true,
           sameSite: "strict",
@@ -229,10 +256,9 @@ export const middleware = async (req: NextRequest): Promise<NextResponse> => {
           maxAge: TOKEN_TTL_MS / 1000,
           path: "/",
         });
-        return res;
       }
     }
-    return NextResponse.next();
+    return res;
   }
 
   const tier = classifyRoute(method, pathname);
@@ -242,7 +268,7 @@ export const middleware = async (req: NextRequest): Promise<NextResponse> => {
 
   const ip = getIP(req);
 
-  // ── POST routes: origin check + per-route rate limit ─────────────────────
+  // ── POST routes: origin check + HMAC cookie + fail-closed rate limit ────
   if (tier === "post") {
     const origin = req.headers.get("origin");
     if (origin) {
@@ -253,9 +279,17 @@ export const middleware = async (req: NextRequest): Promise<NextResponse> => {
         return NextResponse.json({ error: "forbidden" }, { status: 403 });
       }
     }
+    // HMAC session cookie — blocks server-side/curl calls when SM_TOKEN_SECRET is set.
+    // Browser fetch() automatically sends the HttpOnly cookie issued on page load.
+    if (SM_SECRET) {
+      const token = req.cookies.get(COOKIE_NAME)?.value;
+      if (!await verifyToken(token, SM_SECRET)) {
+        return NextResponse.json({ error: "forbidden" }, { status: 403 });
+      }
+    }
     const route = POST_ROUTES.find((r) => r.match(pathname));
     if (route) {
-      const blocked = await rateLimit(route.limiter, ip);
+      const blocked = await rateLimit(route.limiter, ip, true);
       if (blocked) return blocked;
     }
     return withCors(NextResponse.next(), false);
