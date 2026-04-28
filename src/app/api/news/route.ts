@@ -3,7 +3,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { verifyPat, normalizeLogin } from "@/lib/github-auth";
+import { verifyPat, normalizeLogin, getRedis } from "@/lib/github-auth";
 import { getOrCreateGitHubUserMinimal } from "@/lib/user-cache";
 import { jsonError, logError } from "@/lib/api-helpers";
 
@@ -44,6 +44,19 @@ export const POST = async (req: NextRequest) => {
     if (typeof url !== "string" || !URL_RE.test(url)) {
       return jsonError("url_invalid", 400);
     }
+  }
+
+  // Redis lock — prevents TOCTOU: two concurrent requests with the same PAT passing
+  // the cooldown check before either create completes.
+  const redis = getRedis();
+  const lockKey = `lock:news:${authorLogin}`;
+  let lockAcquired = false;
+  if (redis) {
+    try {
+      const acquired = await redis.set(lockKey, "1", { nx: true, ex: 5 });
+      lockAcquired = acquired !== null;
+    } catch { /* Redis unavailable — proceed without lock (TOCTOU risk accepted) */ }
+    if (!lockAcquired) return NextResponse.json({ error: "cooldown_active", retryAfterSec: 5 }, { status: 429 });
   }
 
   try {
@@ -89,5 +102,7 @@ export const POST = async (req: NextRequest) => {
   } catch (err) {
     logError("api/news POST", err);
     return jsonError("internal", 500);
+  } finally {
+    if (lockAcquired && redis) redis.del(lockKey).catch(() => {});
   }
 };

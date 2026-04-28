@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 
-import { createHash } from "crypto";
+import { createHash, createHmac, timingSafeEqual } from "crypto";
 import { Redis } from "@upstash/redis";
 
 let _redis: Redis | null = null;
-const getRedis = (): Redis | null => {
+export const getRedis = (): Redis | null => {
   if (_redis) return _redis;
   try {
     _redis = Redis.fromEnv();
@@ -13,6 +13,34 @@ const getRedis = (): Redis | null => {
   } catch {
     return null;
   }
+};
+
+// CACHE_SIGN_SECRET: when set, signs cached PAT→login entries with HMAC-SHA256.
+// Prevents an attacker with Redis access from forging entries.
+// When unset, cached values are stored and read as plain strings (backward compat).
+const CACHE_SIGN_SECRET = process.env.CACHE_SIGN_SECRET ?? "";
+
+const signCacheValue = (login: string): string => {
+  if (!CACHE_SIGN_SECRET) return login;
+  const hmac = createHmac("sha256", CACHE_SIGN_SECRET).update(login).digest("base64url");
+  return `${login}.${hmac}`;
+};
+
+const verifyCacheValue = (stored: string): string | null => {
+  if (!CACHE_SIGN_SECRET) return stored;
+  const dot = stored.lastIndexOf(".");
+  if (dot === -1) return null; // unsigned value while secret is set — reject
+  const login = stored.slice(0, dot);
+  const storedHmac = stored.slice(dot + 1);
+  try {
+    const expected = createHmac("sha256", CACHE_SIGN_SECRET).update(login).digest("base64url");
+    const a = Buffer.from(storedHmac, "base64url");
+    const b = Buffer.from(expected, "base64url");
+    if (a.length !== b.length || !timingSafeEqual(a, b)) return null;
+  } catch {
+    return null;
+  }
+  return login || null;
 };
 
 export const normalizeLogin = (s: string) => s.trim().toLowerCase();
@@ -33,7 +61,7 @@ export const verifyPat = async (pat: string): Promise<string | null> => {
 
   try {
     const cached = await getRedis()?.get<string>(cacheKey);
-    if (cached) return cached;
+    if (cached) return verifyCacheValue(cached);
   } catch {
     // Upstash unavailable — fall through to live check
   }
@@ -56,7 +84,7 @@ export const verifyPat = async (pat: string): Promise<string | null> => {
     const login = normalizeLogin(data.login);
 
     try {
-      await getRedis()?.set(cacheKey, login, { ex: 300 });
+      await getRedis()?.set(cacheKey, signCacheValue(login), { ex: 60 });
     } catch {
       // non-fatal
     }
