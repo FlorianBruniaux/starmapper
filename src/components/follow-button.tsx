@@ -114,7 +114,7 @@ export const FollowButton = ({ login, minimal = false }: Props) => {
       {open && (
         <div
           role="menu"
-          className="absolute left-0 top-full mt-1.5 z-50 w-72 rounded-xl border border-border bg-surface shadow-xl overflow-hidden"
+          className="absolute left-0 top-full mt-1.5 z-50 w-96 rounded-xl border border-border bg-surface shadow-xl overflow-hidden"
         >
           {/* Follow toggle */}
           <button
@@ -139,8 +139,8 @@ export const FollowButton = ({ login, minimal = false }: Props) => {
           <div className="border-t border-border-subtle mx-4" />
 
           {/* RSS URLs */}
-          <div className="px-4 py-2.5 space-y-2">
-            <p className="text-xs text-muted mb-1.5">Subscribe via RSS reader:</p>
+          <div className="px-4 py-3 space-y-2.5">
+            <p className="text-xs text-muted mb-2">Subscribe via RSS reader:</p>
             {(["rss", "json"] as const).map((kind) => (
               <div key={kind} className="flex items-center gap-2">
                 <span className="text-xs text-muted w-10 shrink-0">{kind === "rss" ? "RSS" : "JSON"}</span>
@@ -148,7 +148,7 @@ export const FollowButton = ({ login, minimal = false }: Props) => {
                   readOnly
                   value={kind === "rss" ? rssUrl : jsonUrl}
                   aria-label={`${kind.toUpperCase()} feed URL`}
-                  className="flex-1 min-w-0 bg-background border border-border rounded px-2 py-1 text-xs font-mono text-muted focus:outline-none focus:ring-1 focus:ring-accent-blue/40"
+                  className="flex-1 min-w-0 bg-background border border-border rounded px-2.5 py-1.5 text-xs font-mono text-muted focus:outline-none focus:ring-1 focus:ring-accent-blue/40"
                   onFocus={(e) => e.target.select()}
                 />
                 <button
@@ -167,7 +167,7 @@ export const FollowButton = ({ login, minimal = false }: Props) => {
             ))}
           </div>
 
-          <div className="px-4 pb-3">
+          <div className="px-4 pb-4">
             <a href={`/feed/${login}`} className="text-xs text-accent-blue hover:underline">
               Open subscribe page →
             </a>
