@@ -9,6 +9,8 @@ import { Header } from "@/components/header";
 import { StargazerMapDynamic } from "@/components/map/stargazer-map-dynamic";
 import { TokenModal, getStoredToken } from "@/components/token-modal";
 import { LANGUAGE_COLORS } from "@/lib/language-colors";
+import { MAP_STYLE_DARK, MAP_STYLE_LIGHT } from "@/lib/theme";
+import { useTheme } from "@/hooks/useTheme";
 import type { ProfileResponse, ProfileRepo } from "@/app/api/profile/[login]/route";
 import type { NearbyResponse } from "@/app/api/explore/nearby/route";
 import type { StargazerPoint } from "@/app/api/chunk/route";
@@ -145,6 +147,10 @@ export default function ProfilePage({ params }: Props) {
   const [contactDetails, setContactDetails] = useState<{ email: string | null; twitter: string | null; blog: string | null } | null>(null);
   const [contactLoading, setContactLoading] = useState(false);
   const [emailCopied, setEmailCopied] = useState(false);
+
+  const { theme } = useTheme();
+  const JAWG_TOKEN = process.env.NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN ?? "";
+  const mapStyleUrl = theme === "light" ? MAP_STYLE_LIGHT(JAWG_TOKEN) : MAP_STYLE_DARK(JAWG_TOKEN);
 
   const handleTokenClose = useCallback(() => {
     setTokenOpen(false);
@@ -460,6 +466,7 @@ export default function ProfilePage({ params }: Props) {
               flyTarget={mapFlyTarget}
               onFlyDone={() => setMapFlyTarget(null)}
               showProjectionToggle
+              styleUrl={mapStyleUrl}
             />
           ) : (
             <div className="w-full h-full bg-surface-alt animate-pulse motion-reduce:animate-none" />
