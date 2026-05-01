@@ -4,8 +4,9 @@
 "use client";
 
 import { useState } from "react";
+import { FollowButton } from "@/components/follow-button";
 
-type Props = { rssUrl: string; jsonUrl: string };
+type Props = { login: string; rssUrl: string; jsonUrl: string };
 
 const RssIcon = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -43,7 +44,7 @@ const feeds = [
   },
 ];
 
-export const FeedPageClient = ({ rssUrl, jsonUrl }: Props) => {
+export const FeedPageClient = ({ login, rssUrl, jsonUrl }: Props) => {
   const [copied, setCopied] = useState<"rss" | "json" | null>(null);
 
   const copy = async (which: "rss" | "json") => {
@@ -74,9 +75,12 @@ export const FeedPageClient = ({ rssUrl, jsonUrl }: Props) => {
             </a>
           </p>
         </div>
-        <div className="flex items-center gap-1.5 text-xs text-muted bg-surface-alt border border-border rounded-full px-2.5 py-1">
-          <RssIcon />
-          <span>Feed</span>
+        <div className="flex items-center gap-2">
+          <FollowButton login={login} />
+          <div className="flex items-center gap-1.5 text-xs text-muted bg-surface-alt border border-border rounded-full px-2.5 py-1">
+            <RssIcon />
+            <span>Feed</span>
+          </div>
         </div>
       </div>
 

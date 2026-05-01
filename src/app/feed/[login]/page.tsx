@@ -87,7 +87,7 @@ const FeedPage = async ({ params }: Props) => {
         </div>
 
         {/* Subscribe card */}
-        <FeedPageClient rssUrl={rssUrl} jsonUrl={jsonUrl} />
+        <FeedPageClient login={login} rssUrl={rssUrl} jsonUrl={jsonUrl} />
 
         {/* News list */}
         <section className="space-y-4">

@@ -6,6 +6,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { NewsItem } from "@/app/api/news/route";
 import { NewsPublishModal } from "@/components/news-publish-modal";
+import { FollowButton } from "@/components/follow-button";
 import { getStoredToken, getStoredUsername } from "@/lib/token";
 
 type Props = {
@@ -29,11 +30,6 @@ const isStale = (items: NewsItem[]): boolean => {
   return Date.now() - new Date(items[0].publishedAt).getTime() > 90 * 86_400_000;
 };
 
-const RssIcon = () => (
-  <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-    <path d="M6.18 15.64a2.18 2.18 0 0 1 2.18 2.18C8.36 19.01 7.38 20 6.18 20C4.98 20 4 19.01 4 17.82a2.18 2.18 0 0 1 2.18-2.18M4 4.44A15.56 15.56 0 0 1 19.56 20h-2.83A12.73 12.73 0 0 0 4 7.27V4.44m0 5.66a9.9 9.9 0 0 1 9.9 9.9h-2.83A7.07 7.07 0 0 0 4 12.93V10.1z"/>
-  </svg>
-);
 
 export const NewsTimeline = ({ login, maxItems }: Props) => {
   const appUrl = typeof window !== "undefined" ? window.location.origin : "";
@@ -90,14 +86,7 @@ export const NewsTimeline = ({ login, maxItems }: Props) => {
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <h3 className="text-sm font-semibold text-foreground">News</h3>
-          <a
-            href={`/feed/${login}`}
-            className="inline-flex items-center gap-1 text-xs text-accent-orange hover:text-accent-orange/80 transition-colors"
-            aria-label="Subscribe to RSS or JSON Feed"
-          >
-            <RssIcon />
-            Subscribe
-          </a>
+          <FollowButton login={login} />
           {stale && (
             <span className="text-xs text-muted bg-surface-alt px-2 py-0.5 rounded-full">
               Last post {formatRelativeDate(items![0].publishedAt)}
