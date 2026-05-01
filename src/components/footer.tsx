@@ -80,6 +80,7 @@ export const Footer = () => (
 
       {/* Legal links */}
       <div className="border-t border-border-subtle pt-5 pb-4 flex flex-wrap gap-4">
+        <a href="/changelog" className="text-2xs text-muted-subtle hover:text-muted transition-colors">Changelog</a>
         <a href="/privacy" className="text-2xs text-muted-subtle hover:text-muted transition-colors">Privacy Policy</a>
         <a href="/terms" className="text-2xs text-muted-subtle hover:text-muted transition-colors">Terms of Service</a>
         <a href="/legal" className="text-2xs text-muted-subtle hover:text-muted transition-colors">Legal</a>
