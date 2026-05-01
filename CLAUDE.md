@@ -517,6 +517,7 @@ import type { StargazerPoint } from "@/app/api/chunk/route";
 | `SM_TOKEN_SECRET` | Recommended | HMAC secret for session token anti-scraping (min 32 chars). Generate: `openssl rand -hex 32`. When unset, falls back to Referer check only. |
 | `UPSTASH_REDIS_REST_URL` | Recommended | Upstash Redis URL for distributed rate limiting |
 | `UPSTASH_REDIS_REST_TOKEN` | Recommended | Upstash Redis token |
+| `CACHE_SIGN_SECRET` | Recommended | HMAC-SHA256 key used to sign PAT→login cache entries in Upstash (prevents forgery if Redis is compromised). Generate: `openssl rand -hex 32`. When unset, entries are stored unsigned. |
 
 Without `JAWG_TOKEN_HEADER` and `GEOAPIFY_APIKEY`, all stargazer geocoding falls through to Nominatim — strictly sequential at 1100ms per call, noticeably slower for large repos.
 

@@ -16,6 +16,15 @@ Versioning : Semantic Versioning (MAJOR.MINOR.PATCH)
 - **`verifyPat()` + cache Upstash** — `src/lib/github-auth.ts` : vérification d'un GitHub PAT via l'API REST (`/user`), résultat mis en cache dans Upstash Redis 5 min. Clé de cache = préfixe SHA-256 du PAT (jamais le token brut). Fallback gracieux si Redis indisponible.
 - **Tracking abonnés RSS** — Chaque hit sur `/api/feed/[login]/rss` est comptabilisé dans `page_view` (type `"feed_rss"`, slug = login). Consultable via `pnpm stats:views`.
 
+### Sécurité
+
+- **CSP nonces dynamiques** — Le middleware génère un nonce par requête (`crypto.randomUUID()`), le passe via le header `x-nonce`, et construit un `Content-Security-Policy` avec `'nonce-{n}'` — supprime `unsafe-inline`. `layout.tsx` lit le nonce et l'applique aux deux scripts inline. La directive CSP statique dans `next.config.ts` est supprimée (gérée dynamiquement).
+- **HMAC cookie sur les routes POST** — Quand `SM_TOKEN_SECRET` est défini, le middleware vérifie un cookie de session HMAC sur toutes les routes POST. Les appels curl/server-side sans cookie sont bloqués ; les navigateurs envoient automatiquement le cookie HttpOnly.
+- **Rate limit fail-closed** — `rateLimit()` en mode `failClosed=true` sur toutes les routes POST : si Redis est indisponible, retourne 503 au lieu de laisser passer silencieusement.
+- **Cache PAT signé HMAC** — Les entrées `pat:*` dans Upstash sont signées via HMAC-SHA256 (`CACHE_SIGN_SECRET`). Un attaquant avec accès Redis ne peut pas forger de valeur sans la clé de signature. Fallback en plain string si `CACHE_SIGN_SECRET` absent.
+- **TTL cache PAT réduit** — 300s → 60s : fenêtre de révocation d'un token réduite de 5 min à 1 min.
+- **Redis nx-lock sur publish news** — Lock `SET NX` avant le check cooldown + création pour prévenir le TOCTOU (deux requêtes concurrentes passant le cooldown simultanément → doublon).
+
 ### Corrections
 
 - **TokenModal — username non résolu** — Le modal ne stockait que le token, jamais le username. Sur les pages autres que la carte (ex. `/profile/[login]`), `getStoredUsername()` retournait `""`, ce qui faisait passer `isOwner` à `false` et masquait le bouton "Publish" même pour le propriétaire du profil. `handleSave` résout désormais le login via `GET /api.github.com/user` et le stocke. "Verifying…" pendant la vérification, `handleRemove` efface également le username.
