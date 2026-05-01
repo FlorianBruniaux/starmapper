@@ -6,7 +6,7 @@
 import { useEffect, useRef, useState } from "react";
 import { addSubscription, hasSubscription, removeSubscription } from "@/lib/subscriptions";
 
-type Props = { login: string };
+type Props = { login: string; minimal?: boolean };
 
 const RssIcon = () => (
   <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -20,7 +20,7 @@ const CheckIcon = () => (
   </svg>
 );
 
-export const FollowButton = ({ login }: Props) => {
+export const FollowButton = ({ login, minimal = false }: Props) => {
   const [following, setFollowing] = useState<boolean | null>(null);
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState<"rss" | "json" | null>(null);
@@ -70,6 +70,25 @@ export const FollowButton = ({ login }: Props) => {
       >
         <RssIcon />
         Follow
+      </button>
+    );
+  }
+
+  if (minimal) {
+    return (
+      <button
+        type="button"
+        onClick={toggleFollow}
+        aria-pressed={following}
+        aria-label={following ? `Unfollow ${login}` : `Follow ${login} on StarMapper`}
+        className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-md border transition-colors ${
+          following
+            ? "border-accent-green-emphasis text-accent-green hover:bg-accent-green-emphasis/10"
+            : "border-border text-muted hover:text-foreground hover:border-accent-blue/50"
+        }`}
+      >
+        <RssIcon />
+        {following ? "Following" : "Follow"}
       </button>
     );
   }

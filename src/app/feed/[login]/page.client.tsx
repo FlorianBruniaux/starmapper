@@ -76,7 +76,7 @@ export const FeedPageClient = ({ login, rssUrl, jsonUrl }: Props) => {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <FollowButton login={login} />
+          <FollowButton login={login} minimal />
           <div className="flex items-center gap-1.5 text-xs text-muted bg-surface-alt border border-border rounded-full px-2.5 py-1">
             <RssIcon />
             <span>Feed</span>
