@@ -67,9 +67,14 @@ export const GET = async (req: NextRequest) => {
   if (skip >= MAX_RESULTS) return jsonError("invalid_params", 400);
 
   try {
-    // Main query: bounding box + Haversine + tracked repo count.
-    // user_repo_count_mv replaces the expensive LEFT JOIN star_event + COUNT(DISTINCT) (11.9M rows).
-    // Falls back to 0 for users not in the MV (not yet refreshed or no star events).
+    // Main query — three-stage CTE to avoid O(N) JOIN on dense bounding boxes.
+    //
+    // Problem: dense areas like Singapore have 12k+ users in the bounding box.
+    // Joining user_repo_count_mv on 12k rows via Neon storage = ~12k index lookups
+    // over the network → exceeds the 10s statement timeout.
+    //
+    // Fix: compute Haversine once (MATERIALIZED), cap at MAX_RESULTS, then JOIN only
+    // on the final PAGE_SIZE rows. Reduces MV lookups from 12k → 30.
     const rows = await prisma.$queryRaw<{
       login: string;
       name: string | null;
@@ -84,7 +89,7 @@ export const GET = async (req: NextRequest) => {
       ulng: number;
       distance_km: number;
     }[]>`
-      WITH nearby AS (
+      WITH bbox AS MATERIALIZED (
         SELECT
           u.login,
           u.name,
@@ -100,27 +105,27 @@ export const GET = async (req: NextRequest) => {
               * cos(radians(u.lng) - radians(${lng}))
               + sin(radians(${lat})) * sin(radians(u.lat)))
             ))::numeric, 1
-          )::float                                    AS distance_km,
-          COALESCE(rc.repo_count, 0)                  AS tracked_repos
+          )::float                                    AS distance_km
         FROM github_user u
-        LEFT JOIN user_repo_count_mv rc ON rc.login = u.login
         WHERE
           u.lat BETWEEN ${minLat} AND ${maxLat}
           AND u.lng BETWEEN ${minLng} AND ${maxLng}
           AND u.lat IS NOT NULL
           AND u.lng IS NOT NULL
-          AND (
-            6371 * acos(
-              LEAST(1.0, cos(radians(${lat})) * cos(radians(u.lat))
-              * cos(radians(u.lng) - radians(${lng}))
-              + sin(radians(${lat})) * sin(radians(u.lat)))
-            )
-          ) <= ${radius}
-      )
-      SELECT *, COUNT(*) OVER() AS total_count
-      FROM nearby
-      ORDER BY followers DESC
-      LIMIT ${PAGE_SIZE} OFFSET ${skip}
+      ),
+      nearby AS MATERIALIZED (
+        SELECT * FROM bbox
+        WHERE distance_km <= ${radius}
+        ORDER BY followers DESC
+        LIMIT ${MAX_RESULTS}
+      ),
+      page_rows AS (
+        SELECT n.*, COALESCE(rc.repo_count, 0) AS tracked_repos
+        FROM (SELECT * FROM nearby LIMIT ${PAGE_SIZE} OFFSET ${skip}) n
+        LEFT JOIN user_repo_count_mv rc ON rc.login = n.login
+      ),
+      total AS (SELECT COUNT(*)::bigint AS total_count FROM nearby)
+      SELECT p.*, t.total_count FROM page_rows p CROSS JOIN total t
     `;
 
     const total = rows.length > 0 ? Math.min(Number(rows[0].total_count), MAX_RESULTS) : 0;

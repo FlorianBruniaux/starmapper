@@ -10,7 +10,7 @@ This file provides guidance to Claude Code when working with code in this reposi
 
 **Tagline**: "See who stars your repo, on a map."
 
-**Tech Stack**: Next.js 16.2.0 (App Router, Turbopack), TypeScript 5, MapLibre GL 5.x, Prisma 7.5 + @prisma/adapter-neon + Neon Postgres, GitHub GraphQL API + REST, Jawg Places API + Geoapify + Nominatim (geocoding), Tailwind CSS v4 (@theme inline), Vercel (deployment).
+**Tech Stack**: Next.js 16.2.3 (App Router, Turbopack), TypeScript 5, MapLibre GL 5.x, Prisma 7.7.0 + @prisma/adapter-neon + Neon Postgres, GitHub GraphQL API + REST, Jawg Places API + Geoapify + Nominatim (geocoding), Tailwind CSS v4 (@theme inline), Vercel (deployment).
 
 ---
 
