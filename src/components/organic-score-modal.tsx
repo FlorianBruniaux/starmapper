@@ -46,8 +46,16 @@ const normWatcher = (v: number) => {
   return clamp(lerp(v, 0.0001, 0.001, 0, 50));
 };
 
+const normReleasesCount = (v: number): number => {
+  if (v >= 100) return 100;
+  if (v <= 0)   return 0;
+  if (v >= 20)  return clamp(lerp(v, 20, 100, 60, 100));
+  if (v >= 5)   return clamp(lerp(v, 5,  20,  30, 60));
+  return clamp(lerp(v, 0, 5, 0, 30));
+};
+
 const buildSignals = (organic: RepoOrganic): SignalRow[] => {
-  const { totalCount, forksCount, watchersCount } = organic;
+  const { totalCount, forksCount, watchersCount, releasesCount } = organic;
 
   const FORK_TOOLTIP =
     "Repos with organic traction accumulate forks as developers build on them. " +
@@ -64,6 +72,11 @@ const buildSignals = (organic: RepoOrganic): SignalRow[] => {
     "A healthy repo has < 10% zero-follower stargazers. " +
     "Computed from users StarMapper has enriched — requires sufficient sample size (≥ 30 users).";
 
+  const RELEASES_TOOLTIP =
+    "Repositories that ship regularly attract genuine users who follow development. " +
+    "High release cadence (100+) → 100/100. Active projects (20–100) → 60–100. " +
+    "Low cadence or no releases → penalised. Corrects bias against CLI/dev tools with low fork ratios.";
+
   const rows: SignalRow[] = [];
 
   if (forksCount !== null && totalCount > 0) {
@@ -73,7 +86,7 @@ const buildSignals = (organic: RepoOrganic): SignalRow[] => {
       label: "Fork / star ratio",
       tooltip: FORK_TOOLTIP,
       rawValue: `${fmtPct(ratio)} · ${forksCount.toLocaleString()} forks / ${totalCount.toLocaleString()} ★`,
-      weight: "40%",
+      weight: "30%",
       signalScore: score,
       status: totalCount < 5000 ? "na" : ratio >= 0.07 ? "ok" : "warn",
     });
@@ -82,7 +95,7 @@ const buildSignals = (organic: RepoOrganic): SignalRow[] => {
       label: "Fork / star ratio",
       tooltip: FORK_TOOLTIP,
       rawValue: totalCount < 5000 ? "Gated — repo has < 5 000 stars" : "No data",
-      weight: "70%",
+      weight: "30%",
       signalScore: null,
       status: "na",
     });
@@ -113,10 +126,31 @@ const buildSignals = (organic: RepoOrganic): SignalRow[] => {
     label: "Zero-follower stargazers",
     tooltip: ZF_TOOLTIP,
     rawValue: "Computed from enriched users in our DB",
-    weight: "55%",
+    weight: "45%",
     signalScore: null,
     status: "ok",
   });
+
+  if (releasesCount !== null) {
+    const score = normReleasesCount(releasesCount);
+    rows.push({
+      label: "Releases cadence",
+      tooltip: RELEASES_TOOLTIP,
+      rawValue: `${releasesCount.toLocaleString()} total releases`,
+      weight: "20%",
+      signalScore: score,
+      status: score >= 60 ? "ok" : score >= 30 ? "warn" : "warn",
+    });
+  } else {
+    rows.push({
+      label: "Releases cadence",
+      tooltip: RELEASES_TOOLTIP,
+      rawValue: "No data — click Recompute to fetch",
+      weight: "20%",
+      signalScore: null,
+      status: "na",
+    });
+  }
 
   return rows;
 };
@@ -331,7 +365,7 @@ export const OrganicScoreModal = ({ open, onClose, organic, owner, repo, onRecal
 
         {/* Disclaimer */}
         <p className="text-xs text-muted/80 leading-relaxed border-t border-border-subtle pt-3">
-          Heuristic based on 3 public signals, not an accusation of fraud.
+          Heuristic based on 4 public signals, not an accusation of fraud.
           Repos with viral growth or niche communities may score lower despite being organic.
           {organic.computedAt && (
             <>{" "}<span className="text-muted/60">Computed {new Date(organic.computedAt).toLocaleDateString()}.</span></>

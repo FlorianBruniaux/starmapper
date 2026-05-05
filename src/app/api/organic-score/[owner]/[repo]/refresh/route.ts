@@ -140,6 +140,7 @@ export const POST = async (
       latestReleaseTag: release?.tag_name ?? null,
       latestReleaseUrl: release?.html_url ?? null,
       latestReleaseAt:  latestReleaseAt?.toISOString() ?? null,
+      releasesCount,
     };
 
     return NextResponse.json({ organic });

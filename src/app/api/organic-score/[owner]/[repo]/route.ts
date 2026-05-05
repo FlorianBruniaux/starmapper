@@ -39,6 +39,7 @@ export const GET = async (
         latestReleaseTag:  true,
         latestReleaseUrl:  true,
         latestReleaseAt:   true,
+        releasesCount:     true,
       },
     });
 
@@ -79,6 +80,7 @@ export const GET = async (
       latestReleaseTag: row.latestReleaseTag ?? null,
       latestReleaseUrl: row.latestReleaseUrl ?? null,
       latestReleaseAt:  row.latestReleaseAt?.toISOString() ?? null,
+      releasesCount:    row.releasesCount ?? null,
     };
 
     return NextResponse.json({ organic }, {

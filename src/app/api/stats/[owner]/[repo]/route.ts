@@ -20,6 +20,7 @@ export type RepoOrganic = {
   latestReleaseTag: string | null;
   latestReleaseUrl: string | null;
   latestReleaseAt: string | null;
+  releasesCount: number | null;
 };
 
 export type RepoStats = {
@@ -69,6 +70,7 @@ export const GET = async (
         openIssuesCount: true,
         openPRsCount: true,
         latestReleaseTag: true, latestReleaseUrl: true, latestReleaseAt: true,
+        releasesCount: true,
       },
     });
 
@@ -217,6 +219,7 @@ export const GET = async (
           latestReleaseTag: badgeRow.latestReleaseTag ?? null,
           latestReleaseUrl: badgeRow.latestReleaseUrl ?? null,
           latestReleaseAt:  badgeRow.latestReleaseAt?.toISOString() ?? null,
+          releasesCount:    badgeRow.releasesCount ?? null,
         }
       : null;
 
