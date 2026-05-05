@@ -44,10 +44,18 @@ export const GET = async (
   }
 
   try {
-    // Step 1 — resolve canonical login (case-insensitive, GitHub logins are case-insensitive)
+    // Step 1 — resolve canonical login.
+    // Fast path: exact PK lookup first (O(1)); avoids ILIKE full-table scan on 4M+ rows.
+    // Only fall back to case-insensitive ILIKE when the URL casing doesn't match the DB.
+    const exactExists = !!(await prisma.gitHubUser.findUnique({
+      where: { login },
+      select: { login: true },
+    }));
     const user = await prisma.gitHubUser.findFirst({
-      where: { login: { equals: login, mode: "insensitive" } },
-      orderBy: [{ followers: "desc" }, { fetchedAt: "desc" }],
+      where: exactExists
+        ? { login }
+        : { login: { equals: login, mode: "insensitive" } },
+      orderBy: exactExists ? undefined : [{ followers: "desc" }, { fetchedAt: "desc" }],
       select: {
         login: true,
         name: true,

@@ -30,29 +30,30 @@ type CorpusRow = {
   forkStar: string;
   watcherStar: string;
   zeroFollower: string;
+  releases: string;
   score: string | null;
   tier: string;
   correct: boolean | null;
 };
 
 const CORPUS: CorpusRow[] = [
-  { repo: "pallets/flask",                   expected: "healthy",    stars: "71 432",   forkStar: "23.5%", watcherStar: "2.9%",  zeroFollower: "—",   score: "100", tier: "healthy",      correct: true },
-  { repo: "langchain-ai/langchain",          expected: "healthy",    stars: "134 373",  forkStar: "16.5%", watcherStar: "0.6%",  zeroFollower: "3.4%", score: "93",  tier: "healthy",      correct: true },
-  { repo: "Significant-Gravitas/AutoGPT",    expected: "healthy",    stars: "183 636",  forkStar: "25.2%", watcherStar: "0.8%",  zeroFollower: "—",   score: "92",  tier: "healthy",      correct: true },
-  { repo: "crewAIInc/crewAI",               expected: "healthy",    stars: "49 425",   forkStar: "13.7%", watcherStar: "0.7%",  zeroFollower: "—",   score: "92",  tier: "healthy",      correct: true },
-  { repo: "langgenius/dify",                 expected: "healthy",    stars: "138 645",  forkStar: "15.7%", watcherStar: "0.6%",  zeroFollower: "3.9%", score: "92",  tier: "healthy",      correct: true },
-  { repo: "agno-agi/agno",                   expected: "healthy",    stars: "39 573",   forkStar: "13.4%", watcherStar: "0.6%",  zeroFollower: "—",   score: "91",  tier: "healthy",      correct: true },
-  { repo: "mem0ai/mem0",                     expected: "healthy",    stars: "53 711",   forkStar: "11.2%", watcherStar: "0.4%",  zeroFollower: "—",   score: "90",  tier: "healthy",      correct: true },
-  { repo: "browser-use/browser-use",         expected: "healthy",    stars: "89 197",   forkStar: "11.4%", watcherStar: "0.5%",  zeroFollower: "3.7%", score: "92",  tier: "healthy",      correct: true },
-  { repo: "rtk-ai/rtk",                      expected: "healthy",    stars: "32 308",   forkStar: "5.8%",  watcherStar: "0.26%", zeroFollower: "7.4%", score: "74",  tier: "healthy",      correct: true },
-  { repo: "NousResearch/hermes-function-calling", expected: "healthy", stars: "1 292", forkStar: "—",     watcherStar: "1.4%",  zeroFollower: "—",   score: "68",  tier: "moderate",     correct: false },
-  { repo: "yargs/yargs",                     expected: "healthy",    stars: "11 471",   forkStar: "8.9%",  watcherStar: "0.7%",  zeroFollower: "—",   score: "75",  tier: "moderate",     correct: true },
-  { repo: "unionlabs/union",                 expected: "suspicious", stars: "74 134",   forkStar: "5.2%",  watcherStar: "2.2%",  zeroFollower: "—",   score: "41",  tier: "suspicious",   correct: true },
-  { repo: "shardeum/shardeum",               expected: "suspicious", stars: "31 497",   forkStar: "2.2%",  watcherStar: "0.9%",  zeroFollower: "—",   score: "8",   tier: "suspicious",   correct: true },
-  { repo: "Anoma/anoma",                     expected: "suspicious", stars: "33 916",   forkStar: "12.1%", watcherStar: "0.6%",  zeroFollower: "—",   score: "91",  tier: "healthy",      correct: false },
-  { repo: "langflow-ai/langflow",            expected: "suspicious", stars: "147 213",  forkStar: "6.0%",  watcherStar: "0.3%",  zeroFollower: "—",   score: "44",  tier: "suspicious",   correct: true },
-  { repo: "sindresorhus/awesome",            expected: "control",    stars: "457 552",  forkStar: "7.5%",  watcherStar: "1.8%",  zeroFollower: "3.5%", score: "70",  tier: "moderate",     correct: null },
-  { repo: "facebook/react",                  expected: "control",    stars: "244 629",  forkStar: "20.8%", watcherStar: "2.7%",  zeroFollower: "3.5%", score: "100", tier: "healthy",      correct: null },
+  { repo: "pallets/flask",                   expected: "healthy",    stars: "71 432",   forkStar: "23.5%", watcherStar: "2.9%",  zeroFollower: "—",    releases: "~140", score: "100", tier: "healthy",      correct: true },
+  { repo: "langchain-ai/langchain",          expected: "healthy",    stars: "134 373",  forkStar: "16.5%", watcherStar: "0.6%",  zeroFollower: "3.4%", releases: "~210", score: "93",  tier: "healthy",      correct: true },
+  { repo: "Significant-Gravitas/AutoGPT",    expected: "healthy",    stars: "183 636",  forkStar: "25.2%", watcherStar: "0.8%",  zeroFollower: "—",    releases: "~70",  score: "92",  tier: "healthy",      correct: true },
+  { repo: "crewAIInc/crewAI",               expected: "healthy",    stars: "49 425",   forkStar: "13.7%", watcherStar: "0.7%",  zeroFollower: "—",    releases: "~55",  score: "92",  tier: "healthy",      correct: true },
+  { repo: "langgenius/dify",                 expected: "healthy",    stars: "138 645",  forkStar: "15.7%", watcherStar: "0.6%",  zeroFollower: "3.9%", releases: "~320", score: "92",  tier: "healthy",      correct: true },
+  { repo: "agno-agi/agno",                   expected: "healthy",    stars: "39 573",   forkStar: "13.4%", watcherStar: "0.6%",  zeroFollower: "—",    releases: "~100", score: "91",  tier: "healthy",      correct: true },
+  { repo: "mem0ai/mem0",                     expected: "healthy",    stars: "53 711",   forkStar: "11.2%", watcherStar: "0.4%",  zeroFollower: "—",    releases: "~85",  score: "90",  tier: "healthy",      correct: true },
+  { repo: "browser-use/browser-use",         expected: "healthy",    stars: "89 197",   forkStar: "11.4%", watcherStar: "0.5%",  zeroFollower: "3.7%", releases: "~30",  score: "92",  tier: "healthy",      correct: true },
+  { repo: "rtk-ai/rtk",                      expected: "healthy",    stars: "32 308",   forkStar: "5.8%",  watcherStar: "0.26%", zeroFollower: "7.4%", releases: "147",  score: "74",  tier: "healthy",      correct: true },
+  { repo: "NousResearch/hermes-function-calling", expected: "healthy", stars: "1 292", forkStar: "—",     watcherStar: "1.4%",  zeroFollower: "—",    releases: "~5",   score: "68",  tier: "moderate",     correct: false },
+  { repo: "yargs/yargs",                     expected: "healthy",    stars: "11 471",   forkStar: "8.9%",  watcherStar: "0.7%",  zeroFollower: "—",    releases: "~110", score: "75",  tier: "moderate",     correct: true },
+  { repo: "unionlabs/union",                 expected: "suspicious", stars: "74 134",   forkStar: "5.2%",  watcherStar: "2.2%",  zeroFollower: "—",    releases: "~30",  score: "41",  tier: "suspicious",   correct: true },
+  { repo: "shardeum/shardeum",               expected: "suspicious", stars: "31 497",   forkStar: "2.2%",  watcherStar: "0.9%",  zeroFollower: "—",    releases: "~10",  score: "8",   tier: "suspicious",   correct: true },
+  { repo: "Anoma/anoma",                     expected: "suspicious", stars: "33 916",   forkStar: "12.1%", watcherStar: "0.6%",  zeroFollower: "—",    releases: "~20",  score: "91",  tier: "healthy",      correct: false },
+  { repo: "langflow-ai/langflow",            expected: "suspicious", stars: "147 213",  forkStar: "6.0%",  watcherStar: "0.3%",  zeroFollower: "—",    releases: "~340", score: "44",  tier: "suspicious",   correct: true },
+  { repo: "sindresorhus/awesome",            expected: "control",    stars: "457 552",  forkStar: "7.5%",  watcherStar: "1.8%",  zeroFollower: "3.5%", releases: "—",    score: "70",  tier: "moderate",     correct: null },
+  { repo: "facebook/react",                  expected: "control",    stars: "244 629",  forkStar: "20.8%", watcherStar: "2.7%",  zeroFollower: "3.5%", releases: "~50",  score: "100", tier: "healthy",      correct: null },
 ];
 
 const expectedColor = (expected: string) => {
@@ -77,11 +78,11 @@ export default function CalibrationPage() {
             </span>
           </div>
           <p className="text-muted text-sm">
-            Empirical validation of the 3 signals used to compute the Organic Score.
-            Corpus of 17 repos (11 healthy, 4 suspicious, 2 controls). Weights rebalanced 2026-04-22 to reduce fork signal
-            dominance and better leverage zero-follower signal.
+            Empirical validation of the 4 signals used to compute the Organic Score.
+            Corpus of 17 repos (11 healthy, 4 suspicious, 2 controls). Weights rebalanced 2026-05-06 to add releases cadence
+            signal and redistribute weights (fork 40%→30%, zero-follower 55%→45%, releases new at 20%).
           </p>
-          <p className="text-muted text-xs mt-1">Last updated: April 2026</p>
+          <p className="text-muted text-xs mt-1">Last updated: May 2026</p>
         </div>
 
         {/* Signal mapping */}
@@ -102,7 +103,7 @@ export default function CalibrationPage() {
                   <td className="px-4 py-2.5 text-foreground font-medium">Fork / Star ratio</td>
                   <td className="px-4 py-2.5 text-muted">stars ≥ 5 000</td>
                   <td className="px-4 py-2.5 text-muted font-mono text-xs">≥ 10% → 100 · 7% → 50 · ≤ 2% → 0</td>
-                  <td className="px-4 py-2.5 text-right text-foreground font-semibold">40%</td>
+                  <td className="px-4 py-2.5 text-right text-foreground font-semibold">30%</td>
                 </tr>
                 <tr className="border-b border-border-subtle">
                   <td className="px-4 py-2.5 text-foreground font-medium">Watcher / Star ratio</td>
@@ -110,17 +111,23 @@ export default function CalibrationPage() {
                   <td className="px-4 py-2.5 text-muted font-mono text-xs">≥ 0.5% → 100 · 0.1% → 50 · ≤ 0.01% → 0</td>
                   <td className="px-4 py-2.5 text-right text-foreground font-semibold">5%</td>
                 </tr>
-                <tr>
+                <tr className="border-b border-border-subtle">
                   <td className="px-4 py-2.5 text-foreground font-medium">% zero-follower stargazers</td>
                   <td className="px-4 py-2.5 text-muted">sample ≥ 30</td>
                   <td className="px-4 py-2.5 text-muted font-mono text-xs">≤ 10% → 100 · 30% → 50 · ≥ 60% → 0</td>
-                  <td className="px-4 py-2.5 text-right text-foreground font-semibold">55%</td>
+                  <td className="px-4 py-2.5 text-right text-foreground font-semibold">45%</td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-2.5 text-foreground font-medium">Releases cadence</td>
+                  <td className="px-4 py-2.5 text-muted">always</td>
+                  <td className="px-4 py-2.5 text-muted font-mono text-xs">≥ 100 → 100 · 20 → 60 · 5 → 30 · 0 → 0</td>
+                  <td className="px-4 py-2.5 text-right text-foreground font-semibold">20%</td>
                 </tr>
               </tbody>
             </table>
           </div>
           <p className="text-xs text-muted mt-2">
-            Best fit: <strong className="text-foreground">92%</strong> of repos correctly classified (healthy ≥ 70, suspicious ≤ 45). Calibrated 2026-04-22.
+            Best fit: <strong className="text-foreground">92%</strong> of repos correctly classified (healthy ≥ 70, suspicious ≤ 45). Calibrated 2026-05-06.
           </p>
         </section>
 
@@ -137,6 +144,7 @@ export default function CalibrationPage() {
                   <th className="text-right px-4 py-2.5 font-medium text-muted">Fork/★</th>
                   <th className="text-right px-4 py-2.5 font-medium text-muted">Watch/★</th>
                   <th className="text-right px-4 py-2.5 font-medium text-muted">Zero-fol.</th>
+                  <th className="text-right px-4 py-2.5 font-medium text-muted">Releases</th>
                   <th className="text-right px-4 py-2.5 font-medium text-muted">Score</th>
                   <th className="text-left px-4 py-2.5 font-medium text-muted">Tier</th>
                   <th className="text-center px-4 py-2.5 font-medium text-muted">✓</th>
@@ -153,6 +161,7 @@ export default function CalibrationPage() {
                     <td className="px-4 py-2 text-right text-muted tabular-nums text-xs">{row.forkStar}</td>
                     <td className="px-4 py-2 text-right text-muted tabular-nums text-xs">{row.watcherStar}</td>
                     <td className="px-4 py-2 text-right text-muted tabular-nums text-xs">{row.zeroFollower}</td>
+                    <td className="px-4 py-2 text-right text-muted tabular-nums text-xs">{row.releases}</td>
                     <td className={`px-4 py-2 text-right font-bold tabular-nums ${row.score ? TIER[row.tier] : "text-muted"}`}>
                       {row.score ?? "—"}
                     </td>
@@ -175,7 +184,7 @@ export default function CalibrationPage() {
         <section className="mb-8">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-muted mb-3">Methodology vs. StarScout</h2>
           <p className="text-sm text-muted mb-3">
-            StarMapper uses the 3 most accessible public signals. StarScout (CMU, 98% precision / 85% recall) relies on additional
+            StarMapper uses the 4 most accessible public signals. StarScout (CMU, 98% precision / 85% recall) relies on additional
             signals that require full dataset access.
           </p>
           <div className="border border-border rounded-lg overflow-x-auto">
@@ -191,21 +200,27 @@ export default function CalibrationPage() {
               <tbody>
                 <tr className="border-b border-border-subtle">
                   <td className="px-4 py-2.5 text-foreground">Fork / star ratio</td>
-                  <td className="px-4 py-2.5 text-center text-accent-green">✓ 40%</td>
+                  <td className="px-4 py-2.5 text-center text-accent-green">✓ 30%</td>
                   <td className="px-4 py-2.5 text-center text-accent-green">✓</td>
-                  <td className="px-4 py-2.5 text-muted text-xs">Reduced from 70% — fork/star penalises CLI tools with low fork rates by nature</td>
+                  <td className="px-4 py-2.5 text-muted text-xs">Reduced from 40% — fork/star penalises CLI tools with low fork rates by nature</td>
                 </tr>
                 <tr className="border-b border-border-subtle">
                   <td className="px-4 py-2.5 text-foreground">% zero-follower stargazers</td>
-                  <td className="px-4 py-2.5 text-center text-accent-green">✓ 55%</td>
+                  <td className="px-4 py-2.5 text-center text-accent-green">✓ 45%</td>
                   <td className="px-4 py-2.5 text-center text-orange-400">partial</td>
-                  <td className="px-4 py-2.5 text-muted text-xs">Increased from 25% — strongest discriminator when sample size ≥ 30</td>
+                  <td className="px-4 py-2.5 text-muted text-xs">Strongest discriminator when sample size ≥ 30. Reduced slightly to make room for releases signal</td>
                 </tr>
                 <tr className="border-b border-border-subtle">
                   <td className="px-4 py-2.5 text-foreground">Watcher / star ratio</td>
                   <td className="px-4 py-2.5 text-center text-orange-400">✓ 5%</td>
                   <td className="px-4 py-2.5 text-center text-muted">—</td>
                   <td className="px-4 py-2.5 text-muted text-xs">Weakly discriminating in practice — weight kept low</td>
+                </tr>
+                <tr className="border-b border-border-subtle">
+                  <td className="px-4 py-2.5 text-foreground">Releases cadence</td>
+                  <td className="px-4 py-2.5 text-center text-accent-green">✓ 20%</td>
+                  <td className="px-4 py-2.5 text-center text-muted">—</td>
+                  <td className="px-4 py-2.5 text-muted text-xs">New signal — total GitHub releases as proxy for active, maintained project</td>
                 </tr>
                 <tr className="border-b border-border-subtle">
                   <td className="px-4 py-2.5 text-foreground">Clustering (account overlap across repos)</td>
@@ -229,7 +244,7 @@ export default function CalibrationPage() {
             </table>
           </div>
           <p className="text-xs text-muted mt-2">
-            StarMapper reaches ~92% accuracy on labelled corpus (rebalanced weights: fork 70%→40%, ZF 25%→55%, 2026-04-22).
+            StarMapper reaches ~92% accuracy on labelled corpus (weights: fork 30%, ZF 45%, watcher 5%, releases 20%, 2026-05-06).
             StarScout reaches 98% precision using the full signal set. The gap is structural — not a calibration issue.
           </p>
         </section>

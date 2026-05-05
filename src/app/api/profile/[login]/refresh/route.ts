@@ -74,9 +74,16 @@ export const POST = async (
   if (!LOGIN_RE.test(login)) return jsonError("invalid_params", 400);
 
   try {
+    // Fast path: exact PK match avoids ILIKE scan on 4M+ rows
+    const exactExists = !!(await prisma.gitHubUser.findUnique({
+      where: { login },
+      select: { login: true },
+    }));
     const user = await prisma.gitHubUser.findFirst({
-      where: { login: { equals: login, mode: "insensitive" } },
-      orderBy: [{ followers: "desc" }, { fetchedAt: "desc" }],
+      where: exactExists
+        ? { login }
+        : { login: { equals: login, mode: "insensitive" } },
+      orderBy: exactExists ? undefined : [{ followers: "desc" }, { fetchedAt: "desc" }],
       select: { login: true, location: true, fetchedAt: true, lat: true, lng: true },
     });
 
