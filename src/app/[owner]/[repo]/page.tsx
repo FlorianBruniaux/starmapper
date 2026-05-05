@@ -329,20 +329,32 @@ export default function MapPage({
       .catch(() => {});
   }, [owner, repo]);
 
-  // Check DB cache on mount — falls back to badge_cache metadata (last scan date)
+  // Check DB cache on mount — falls back to badge_cache metadata (last scan date).
+  // localStorage is shown immediately for instant UX, but we always revalidate against
+  // the DB so that a server-side rescan (full rescan button) is reflected on next load.
   useEffect(() => {
-    if (loadCache(owner, repo)) { setCacheCheckDone(true); return; } // localStorage takes priority
+    const local = loadCache(owner, repo);
+    if (local) {
+      dispatch({ type: "set", points: local.points, unmapped: local.unmapped });
+      setTotal(local.totalCount);
+      setCachedAt(local.scannedAt);
+      setLatestStarredAt(local.latestStarredAt ?? null);
+      setStatus("cached");
+      saveBookmark(owner, repo, local.totalCount);
+      setCacheCheckDone(true);
+    }
     fetch(`/api/stargazer-cache/${owner}/${repo}`)
       .then(async (r) => {
         if (r.status === 206) {
           const d = await r.json();
-          setLastDbScan(d.lastScan);
+          if (!local) setLastDbScan(d.lastScan);
           return;
         }
         if (!r.ok) return;
         const data = await r.json();
         if (!data.points) return;
         const scannedMs = new Date(data.scannedAt).getTime();
+        if (local && scannedMs <= local.scannedAt) return;
         dispatch({ type: "set", points: data.points, unmapped: data.unmapped });
         setTotal(data.totalCount);
         setCachedAt(scannedMs);
