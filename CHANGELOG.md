@@ -5,6 +5,23 @@ Versioning : Semantic Versioning (MAJOR.MINOR.PATCH)
 
 ---
 
+## [0.4.1] — 2026-05-05
+
+### Nouvelles fonctionnalités
+
+- **Page `/changelog`** — Timeline versionnée servie depuis `CHANGELOG.md` au build. Server Component avec rendu inline bold+code sans dépendance markdown externe. Lien ajouté dans le footer et dans la bannière d'annonce.
+
+### Performances
+
+- **Explore — timeout O(N) sur les bounding boxes denses** — Les zones à haute densité (Singapore, etc.) pouvaient renvoyer 12k+ utilisateurs dans la bounding box. Le JOIN sur `user_repo_count_mv` sur 12k lignes via Neon dépassait le statement timeout de 10s. Résolu en remontant le filtre `lat IS NOT NULL` avant le JOIN et en limitant les candidats à 500 avant enrichissement.
+
+### Corrections
+
+- **FollowButton — dropdown plus large** — Largeur passée à `w-96` avec padding augmenté pour éviter le wrapping des URLs RSS/JSON.
+- **FollowButton — mode minimal sur la page subscribe** — Sur `/feed/[login]`, le dropdown était redondant (URLs déjà affichées). Prop `minimal` ajoutée : toggle direct sans dropdown.
+
+---
+
 ## [0.4.0] — 2026-04-24
 
 ### Nouvelles fonctionnalités
