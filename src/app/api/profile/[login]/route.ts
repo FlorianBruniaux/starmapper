@@ -47,6 +47,7 @@ export const GET = async (
     // Step 1 — resolve canonical login (case-insensitive, GitHub logins are case-insensitive)
     const user = await prisma.gitHubUser.findFirst({
       where: { login: { equals: login, mode: "insensitive" } },
+      orderBy: [{ followers: "desc" }, { fetchedAt: "desc" }],
       select: {
         login: true,
         name: true,

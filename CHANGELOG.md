@@ -7,15 +7,15 @@ Versioning : Semantic Versioning (MAJOR.MINOR.PATCH)
 
 ## [0.4.1] — 2026-05-05
 
-### Nouvelles fonctionnalités
+### Features
 
 - **Page `/changelog`** — Timeline versionnée servie depuis `CHANGELOG.md` au build. Server Component avec rendu inline bold+code sans dépendance markdown externe. Lien ajouté dans le footer et dans la bannière d'annonce.
 
-### Performances
+### Performance
 
 - **Explore — timeout O(N) sur les bounding boxes denses** — Les zones à haute densité (Singapore, etc.) pouvaient renvoyer 12k+ utilisateurs dans la bounding box. Le JOIN sur `user_repo_count_mv` sur 12k lignes via Neon dépassait le statement timeout de 10s. Résolu en remontant le filtre `lat IS NOT NULL` avant le JOIN et en limitant les candidats à 500 avant enrichissement.
 
-### Corrections
+### Bug Fixes
 
 - **FollowButton — dropdown plus large** — Largeur passée à `w-96` avec padding augmenté pour éviter le wrapping des URLs RSS/JSON.
 - **FollowButton — mode minimal sur la page subscribe** — Sur `/feed/[login]`, le dropdown était redondant (URLs déjà affichées). Prop `minimal` ajoutée : toggle direct sans dropdown.
@@ -24,7 +24,7 @@ Versioning : Semantic Versioning (MAJOR.MINOR.PATCH)
 
 ## [0.4.0] — 2026-04-24
 
-### Nouvelles fonctionnalités
+### Features
 
 - **News & Annonces sur les profils** — Les développeurs peuvent publier de courtes annonces (280 chars max, lien optionnel) directement sur leur profil StarMapper. Authentification via GitHub PAT — le même token que celui utilisé pour scanner des repos. Cooldown de 24h glissantes par auteur (soft-delete inclus dans le cooldown, anti-contournement). Composant `NewsTimeline` intégré sur `/profile/[login]` avec skeleton loader, bouton "Publish" conditionnel (visible uniquement si le token stocké correspond au login de la page).
 - **RSS 2.0 + JSON Feed 1.1 par développeur** — Chaque profil expose deux feeds abonnables : `GET /api/feed/[login]/rss` (RSS 2.0 avec `<atom:link>`, `If-Modified-Since`, réponse 304) et `GET /api/feed/[login]/json` (JSON Feed 1.1). Cachés 1h CDN. Subscribe link (icône RSS + "Subscribe") affiché en tête de la section News sur le profil.
@@ -33,7 +33,7 @@ Versioning : Semantic Versioning (MAJOR.MINOR.PATCH)
 - **`verifyPat()` + cache Upstash** — `src/lib/github-auth.ts` : vérification d'un GitHub PAT via l'API REST (`/user`), résultat mis en cache dans Upstash Redis 5 min. Clé de cache = préfixe SHA-256 du PAT (jamais le token brut). Fallback gracieux si Redis indisponible.
 - **Tracking abonnés RSS** — Chaque hit sur `/api/feed/[login]/rss` est comptabilisé dans `page_view` (type `"feed_rss"`, slug = login). Consultable via `pnpm stats:views`.
 
-### Sécurité
+### Security
 
 - **CSP nonces dynamiques** — Le middleware génère un nonce par requête (`crypto.randomUUID()`), le passe via le header `x-nonce`, et construit un `Content-Security-Policy` avec `'nonce-{n}'` — supprime `unsafe-inline`. `layout.tsx` lit le nonce et l'applique aux deux scripts inline. La directive CSP statique dans `next.config.ts` est supprimée (gérée dynamiquement).
 - **HMAC cookie sur les routes POST** — Quand `SM_TOKEN_SECRET` est défini, le middleware vérifie un cookie de session HMAC sur toutes les routes POST. Les appels curl/server-side sans cookie sont bloqués ; les navigateurs envoient automatiquement le cookie HttpOnly.
@@ -42,7 +42,7 @@ Versioning : Semantic Versioning (MAJOR.MINOR.PATCH)
 - **TTL cache PAT réduit** — 300s → 60s : fenêtre de révocation d'un token réduite de 5 min à 1 min.
 - **Redis nx-lock sur publish news** — Lock `SET NX` avant le check cooldown + création pour prévenir le TOCTOU (deux requêtes concurrentes passant le cooldown simultanément → doublon).
 
-### Corrections
+### Bug Fixes
 
 - **TokenModal — username non résolu** — Le modal ne stockait que le token, jamais le username. Sur les pages autres que la carte (ex. `/profile/[login]`), `getStoredUsername()` retournait `""`, ce qui faisait passer `isOwner` à `false` et masquait le bouton "Publish" même pour le propriétaire du profil. `handleSave` résout désormais le login via `GET /api.github.com/user` et le stocke. "Verifying…" pendant la vérification, `handleRemove` efface également le username.
 - **Middleware** — `POST_LIMITERS` utilisait une comparaison exacte sur les routes POST, manquant les routes avec segments dynamiques (ex. `/api/news/item/123`). Remplacé par des regex.
@@ -50,7 +50,7 @@ Versioning : Semantic Versioning (MAJOR.MINOR.PATCH)
 - **Organic score** — L'endpoint `/api/organic-score/refresh` n'avait pas de guard server-side sur le feature flag. Guard ajouté : retourne 404 si `NEXT_PUBLIC_ORGANIC_SCORE_ENABLED !== "true"`.
 - **Web Vitals** — Whitelist des noms de métriques valides (`CLS`, `FID`, `FCP`, `LCP`, `TTFB`, `INP`) + validation que les champs numériques sont bien des nombres. Évite les injections de données arbitraires dans la table `web_vitals`.
 
-### Technique
+### Internal
 
 - **`feed-builders.ts`** — Deux fonctions pures : `buildRss20()` (XML RSS 2.0, CDATA correct, `]]>` splitté en deux sections CDATA) et `buildJsonFeed()` (objet JSON Feed 1.1). Logique de construction découplée des routes pour testabilité.
 - **`isValidLogin()` / `normalizeLogin()`** — Helpers centralisés dans `github-auth.ts`, réutilisés par toutes les routes news et feed.
@@ -59,18 +59,18 @@ Versioning : Semantic Versioning (MAJOR.MINOR.PATCH)
 
 ## [0.3.5] — 2026-04-24
 
-### Nouvelles fonctionnalités
+### Features
 
 - **Announcement banner** — Bandeau dismissible en haut de la home pour annoncer les nouveautés. Dismissal stocké en localStorage par `BANNER_ID` ; bumper l'ID pour le faire réapparaître sur la prochaine annonce. Header home passé en `sticky` pour s'empiler naturellement sous le bandeau.
 - **Hook banner-reminder** — `PostToolUse` hook qui détecte la création d'une nouvelle `page.tsx` ou `route.ts` et rappelle de mettre à jour `AnnouncementBanner`.
 
-### Corrections
+### Bug Fixes
 
 - **Bouton Map explore** — Le bouton "Map" était caché (`opacity-0`) pour les users *avec* coordonnées, et visible (gris) pour ceux *sans*. Inversé : bouton toujours visible et cliquable pour les users géolocalisés, `invisible` (espace préservé) pour les autres.
 - **Compteur Countries = 0** — `country_stats_mv` créée à vide (aucun `countryNormalized` au moment de la création), puis jamais rafraîchie après le backfill. Ajout des commandes `create:country-stats-mv` / `create:country-stats-mv:prod` pour créer et rafraîchir la MV.
 - **Tooltips colonnes repos** — Les tooltips des headers de colonnes sortables étaient cachés derrière la barre de recherche. Positionnement corrigé.
 
-### Technique
+### Internal
 
 - **Script `starmapper-update.sh`** — Meta-script qui chaîne tous les backfills en séquence (`repo-metrics` + `repo-languages`). Commandes `update:prod`, `update:local`, `update:local:force`.
 - **Scripts `backfill:repo-metrics:local` / `:local:force`** — Variantes locales (Docker) du backfill repo-metrics avec `DATABASE_DRIVER=standard`.
@@ -79,19 +79,19 @@ Versioning : Semantic Versioning (MAJOR.MINOR.PATCH)
 
 ## [0.3.4] — 2026-04-22
 
-### Nouvelles fonctionnalités
+### Features
 
 - **Organic Score** — Score de popularité "organique" par repo (0–100), calculé à partir de signaux d'activité indépendants des stars : forks, zero-dependency forks, watchers, issues ouvertes, PRs ouvertes. Pondération : ZF 55% / forks 40% / watchers 5%. Score affiché via `OrganicScorePill` récupéré indépendamment du reste de la page.
 - **Colonne organic score dans repos list** — Colonne sortable sur la landing, colorée par tier (🟢 great / 🟡 good / 🟠 moderate / ⚫ low), avec modal de détail au clic (breakdown des signaux + comparaison StarScout).
 - **`openPRsCount` dans `BadgeCache`** — Séparation issues / PRs dans le modèle (avant : champ `openIssuesCount` mixte). Modal organic score affiche les deux badges séparément et cliquables (liens vers GitHub).
 - **Page calibration organic score** — `/api/admin/calibrate-organic-score` — page de debug pour comparer les scores sur un échantillon réel, accessible localement.
 
-### Corrections
+### Bug Fixes
 
 - **Timeout Neon** — `stats/[owner]/[repo]` levait une timeout Neon sur les grosses tables. Fallback gracieux : retourne les données partielles disponibles sans planter.
 - **Backfill prod** — `backfill-repo-metrics.ts` utilisait `DATABASE_URL_LOCAL` au lieu de `DATABASE_URL` sur les commandes `:prod`. Corrigé + `NEXT_PUBLIC_ORGANIC_SCORE_ENABLED=true` forcé.
 
-### Technique
+### Internal
 
 - **Rééquilibrages poids** — Deux passes de calibration : watcher 10%→5%, fork 70%→40%, zero-fork 25%→55%. Résultats plus discriminants sur les repos réels.
 - **Docs méthodologie** — `docs/organic-score.md` : comparaison StarScout vs StarMapper, formule de normalisation, limites connues.
@@ -100,7 +100,7 @@ Versioning : Semantic Versioning (MAJOR.MINOR.PATCH)
 
 ## [0.3.3] — 2026-04-16
 
-### Nouvelles fonctionnalités
+### Features
 
 - **Page profil développeur** — `/profile/[login]` : layout deux colonnes (panneau scrollable 2/3 + carte sticky 1/3). Données : bio, followers, repos, langages, star events trackés, contribution par pays. Profil partiel si user absent de la DB (refresh déclenché automatiquement).
 - **Entrées profil** — Clic sur avatar/login dans les popups carte, dans `explore/top`, `explore/power`, `explore/nearby`. Bouton "View StarMapper profile →" dans le popup stargazer.
@@ -110,13 +110,13 @@ Versioning : Semantic Versioning (MAJOR.MINOR.PATCH)
 - **GeoJSON API gated** — `GET /api/geo/[owner]/[repo]` : endpoint agrégé retournant les points GeoJSON d'un scan, protégé par API key HMAC. Utilisable par des outils tiers.
 - **Timelapse** — Rejouer l'historique d'acquisition d'étoiles par mois/semaine avec sélecteur de vitesse. Basé sur `star_event.starredAt`.
 
-### Performances
+### Performance
 
 - **Core Web Vitals audit** — Multiple passes : `startTransition` autour des dispatches chunk loop, `useDeferredValue` sur le filtre stargazers, `useCallback` sur les handlers carte, gating des memos coûteux, lazy-load `TokenModal` + `SponsorsBlock`, `width/height` sur les avatars (CLS).
 - **ETag + CDN** — Two-step ETag sur `stargazer-cache`, TTL CDN optimisé, index login superflu supprimé.
 - **GeoJSON in throttled window** — Calcul du GeoJSON dans la fenêtre `setData` throttlée pour éviter les frames bloquées.
 
-### Technique
+### Internal
 
 - **`CircuitBreaker` class** — Extraction depuis `geocoder.ts` vers une classe réutilisable. Tests unitaires ajoutés.
 - **Refactor cache** — `compressToGzBase64` centralisé dans `compression.ts`. `buildUserWritePayload` extrait dans le chunk route.
@@ -126,12 +126,12 @@ Versioning : Semantic Versioning (MAJOR.MINOR.PATCH)
 
 ## [0.3.2] — 2026-04-14
 
-### Performances
+### Performance
 
 - **DB optimisations Neon** — `db:sync:from-neon` : variantes `--repo`, `--limit`, `--tables` pour sync partiel. `SET statement_timeout=0` ajouté en tête de tous les scripts DDL (index + MV). Slow query logger Prisma activé.
 - **MVs additionnelles** — `user_repo_count_mv` (per-user repo count, nearby query 6s→200ms). Index GIN trigram sur `login` + `name` (ILIKE search 6s→50ms).
 
-### Technique
+### Internal
 
 - **Tests** — Suite CircuitBreaker (pré-extraction). Corrections des stubs `chunk route` + `github` qui échouaient silencieusement.
 - **SEO / a11y / perf audit** — Robots, sitemap, structured data, focus management, aria labels manquants, bundle size.
@@ -141,14 +141,14 @@ Versioning : Semantic Versioning (MAJOR.MINOR.PATCH)
 
 ## [0.3.1] — 2026-04-13
 
-### Corrections
+### Bug Fixes
 
 - **Fix auth Jawg** — `callJawg()` dans `geocoder.ts` envoyait le token uniquement via header `x-api-key`. Ajout du query param `access-token` requis par l'endpoint dédié `starmapper.jawg.io`. Sans ce param, les requêtes Jawg retournaient 401 silencieusement.
 - **Fix label geocode explore** — `/api/explore/geocode` reconstruisait le label manuellement avec `p.city` (champ inexistant dans le modèle Jawg Places). Remplacé par `feature.properties.label` que Jawg fournit nativement.
 - **Fix tests geocoder** — `geocoder.test.ts` stubbait `JAWGMAP_ACCESS_TOKEN` alors que le code lit `JAWG_TOKEN_HEADER`. 7 tests pré-existants échouaient silencieusement. Corrigé.
 - **Docs** — Remplacement de toutes les occurrences de "Pelias" par "Jawg Places" dans `README.md` et `docs/ARCHITECTURE.md`. Jawg Places est basé sur Pelias mais la marque correcte est Jawg Places.
 
-### Technique
+### Internal
 
 - **Consolidation `fetchAndPatchStyle`** — La fonction existait en double : une version inline dans `stargazer-map.tsx` (30 lignes, sans cache) et une version dans `lib/map-style.ts` (avec cache). `lib/map-style.ts` est désormais la source unique. La fonction accepte un paramètre `projection` (`"mercator"` | `"globe"`, défaut `"mercator"`) avec clé de cache composite `${url}#${projection}` pour éviter les collisions globe/mercator.
 - **Suppression patches style obsolètes** — `lang=en` retiré des URLs de style dans `theme.ts` et `stargazer-map.tsx` (Jawg gère la langue nativement). Patch glyphs URL retiré (`lib/map-style.ts`, `stargazer-map.tsx`). Remplacement `name:fr → name:en` retiré (`map-style.ts`, `stargazer-map.tsx`).
@@ -159,23 +159,23 @@ Versioning : Semantic Versioning (MAJOR.MINOR.PATCH)
 
 ## [0.3.0] — 2026-04-10
 
-### Nouvelles fonctionnalités
+### Features
 
 - **Language Atlas** — Page `/devs/atlas` : carte choroplèthe mondiale affichant le langage le plus populaire par pays, calculé sur les repos étoilés et contribués. Détail par pays au clic (langage dominant, %, nombre de devs). Bandeau "Early preview" le temps du backfill.
 - **Dev Maps par langage** — Pages `/devs` et `/devs/[language]` : carte des développeurs filtrée par langage, avec combobox de sélection.
 - **Backfill langages** — Script `backfill-languages.ts` pour alimenter le champ `languages[]` sur `github_user`. Mode `--from-cache` : dérive les langages depuis `star_event + badge_cache` sans appel GitHub (1,23M users en quelques secondes). Mode API : parallélisable via `--token-index`.
 - **Materialized view `country_language_stats_mv`** — Agrégation (pays × langage) pour l'Atlas. Créée/rafraîchie automatiquement par `pnpm db:sync` et le cron admin quotidien.
 
-### Performances
+### Performance
 
 - **Backfill 3× plus rapide** — `maxRepositories: 30 → 10` (moins de points GraphQL consommés), batch par défaut `10 → 50`, bulk UPDATE via `unnest()` (1 requête SQL au lieu de N individuelles).
 
-### Corrections
+### Bug Fixes
 
 - **db:sync** — `github_user` passait de `DO NOTHING` à `DO UPDATE` : les colonnes `languages` et `languagesFetchedAt` n'étaient jamais poussées vers Neon. Corrigé.
 - **db:sync** — Création automatique de `country_language_stats_mv` sur Neon lors du sync si elle n'existe pas encore.
 
-### Technique
+### Internal
 
 - **`LANGUAGE_COLORS`** — Map de 24 langages vers des couleurs distinctives dans `src/lib/language-colors.ts`.
 - **`LanguageChoropleth`** — Composant MapLibre choroplèthe (dynamic import `ssr: false`).
@@ -185,7 +185,7 @@ Versioning : Semantic Versioning (MAJOR.MINOR.PATCH)
 
 ## [0.2.0] — 2026-03-31
 
-### Sécurité
+### Security
 
 - **Token HMAC session** — Cookie `sm-token` (HttpOnly + SameSite=Strict), signé HMAC-SHA256 via Web Crypto API (Edge-compatible). Émis à chaque page load, vérifié sur tous les endpoints strict-get. Nécessite `SM_TOKEN_SECRET`. Bloque le scraping par Referer forgé même avec un cookie valide.
 - **Rate limiting distribué** — Remplacement des compteurs en mémoire (par-instance Vercel) par Upstash Redis sliding windows. Les limites survivent au scaling serverless. Tiers : chunk 100/min, strict-get 30/min, moderate-get 60/min, admin 10/min, stargazer-cache-get 3/min (dédié).
@@ -204,7 +204,7 @@ Versioning : Semantic Versioning (MAJOR.MINOR.PATCH)
 - **Réduction précision lat/lng** — Les réponses API arrondissent les coordonnées à 2 décimales (~1.1km). Précision complète conservée en DB.
 - **Semgrep SAST CI** — Workflow sur push/PR vers main et hebdomadaire (dimanche 02:00 UTC). Couvre typescript, owasp-top-ten, secrets, nodejs.
 
-### Nouvelles fonctionnalités
+### Features
 
 - **Find me** — Username GitHub sauvegardé en localStorage. Premier usage : prompt inline. Visites suivantes : un clic pour voler vers son propre pin sur la carte.
 - **Badge button sidebar** — Bouton "Badge" dans la sidebar (entre History et Share) → mini-modal avec preview live, code Markdown sélectionnable, bouton "Copy" avec feedback.
@@ -216,7 +216,7 @@ Versioning : Semantic Versioning (MAJOR.MINOR.PATCH)
 - **Footer landing** — Boutons pill "by Florian Bruniaux" et "Follow" avec liens portfolio/GitHub.
 - **Pagination community maps** — Tableau paginé (20 lignes/page) avec boutons Prev/Next. Limite API portée de 50 à 200 repos.
 
-### Performances
+### Performance
 
 - **Compression gzip client-side** — Données de scan compressées côté client (Web CompressionStream, gzip+base64) avant `POST /api/stargazer-cache`. Résout la perte silencieuse du cache sur les repos >~15k étoiles (payload brut ~15MB > limite Vercel 4.5MB). Payload réduit à ~800KB.
 - **Geocache GeoNames** — Pre-seeding de ~51k entrées (villes pop >15k + pays + codes ISO2/ISO3). Hit rate >99% sur les scans réels.
@@ -224,7 +224,7 @@ Versioning : Semantic Versioning (MAJOR.MINOR.PATCH)
 - **DB portabilité** — Adaptateur conditionnel dans `db.ts` : `DATABASE_DRIVER=standard` → `@prisma/adapter-pg` (Docker, Railway, Supabase) ; défaut → `@prisma/adapter-neon`. L'auto-hébergement sans Neon fonctionne.
 - **DB optimisations** — Index ajoutés sur les chemins de requête chauds, caps de résultats (`take: 10_000`), health guard TTL-aware.
 
-### Corrections
+### Bug Fixes
 
 - **Bug antimeridian** — La Russie et autres pays croisant le 180° causaient un triangle artifact sur la carte choroplèthe. Fix : normalisation des rings polygone pour qu'aucun sommet adjacent ne diffère de plus de 180° en longitude.
 - **MapLibre Web Worker CSP** — Ajout de `worker-src blob:` (bloquait le web worker MapLibre → carte blanche sur certaines configs).
@@ -232,7 +232,7 @@ Versioning : Semantic Versioning (MAJOR.MINOR.PATCH)
 - **Race condition pre-scan modal** — La modale de pré-scan apparaissait brièvement sur les repos déjà indexés. Fix : état `cacheCheckDone`.
 - **Geocoder** — Filtre `isGeocodeableLocation` étendu aux préfixes `#$<>[{"!`.
 
-### Technique
+### Internal
 
 - **Licence AGPL-3.0-only** — Headers SPDX sur les 50 fichiers source, fichier NOTICE.
 - **Refactoring API** — Libs partagées : `api-validation.ts`, `api-helpers.ts`, `compression.ts`, `compress-client.ts`. Remplacement de 10 patterns dupliqués sur 15 route handlers.
@@ -247,7 +247,7 @@ Versioning : Semantic Versioning (MAJOR.MINOR.PATCH)
 
 Version initiale publique.
 
-### Nouvelles fonctionnalités
+### Features
 
 - **Dark / light mode** : Toggle dans le header avec migration complète des tokens CSS.
 - **Sidebar mobile repliable** : La sidebar gauche sur la page map est collapsible sur mobile, avec bouton de fermeture visible.
@@ -261,7 +261,7 @@ Version initiale publique.
 - **SEO / GEO** : `robots.txt`, `sitemap.xml`, FAQ structurée, Open Graph metadata.
 - **Explore page** : `/explore` listant les repos mappés avec stats.
 
-### Performances
+### Performance
 
 - **Stargazer cache** : Cache partagé des scans complets (`stargazer_cache` table) — rechargement instantané pour les visiteurs suivants sur un même repo. Limite : 100k stars.
 - **Compression gzip** : Les données du cache stargazer sont compressées (gzip+base64), réduisant la taille des payloads de ~70%.

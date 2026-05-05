@@ -76,6 +76,7 @@ export const POST = async (
   try {
     const user = await prisma.gitHubUser.findFirst({
       where: { login: { equals: login, mode: "insensitive" } },
+      orderBy: [{ followers: "desc" }, { fetchedAt: "desc" }],
       select: { login: true, location: true, fetchedAt: true, lat: true, lng: true },
     });
 

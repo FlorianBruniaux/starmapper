@@ -83,23 +83,23 @@ const renderInline = (text: string): React.ReactNode[] => {
 // ─── Section badge config ─────────────────────────────────────────────────────
 
 const SECTION_STYLES: Record<string, { dot: string; badge: string }> = {
-  "Nouvelles fonctionnalités": {
+  "Features": {
     dot: "bg-accent-green",
     badge: "bg-accent-green/10 text-accent-green border border-accent-green/20",
   },
-  "Sécurité": {
+  "Security": {
     dot: "bg-accent-orange",
     badge: "bg-accent-orange/10 text-accent-orange border border-accent-orange/20",
   },
-  "Corrections": {
+  "Bug Fixes": {
     dot: "bg-accent-red",
     badge: "bg-accent-red/10 text-accent-red border border-accent-red/20",
   },
-  "Performances": {
+  "Performance": {
     dot: "bg-accent-blue",
     badge: "bg-accent-blue/10 text-accent-blue border border-accent-blue/20",
   },
-  "Technique": {
+  "Internal": {
     dot: "bg-accent-purple",
     badge: "bg-accent-purple/10 text-accent-purple border border-accent-purple/20",
   },
