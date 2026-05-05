@@ -316,7 +316,7 @@ const makeGridCellPopup = (bio: string, login: string): HTMLElement => {
   topRow.style.cssText = "margin-top:8px;font-size:12px;color:var(--color-muted)";
   const topLabel = document.createTextNode("Top: ");
   const topLink = document.createElement("a");
-  topLink.href = `https://github.com/${encodeURIComponent(topLogin)}`;
+  topLink.href = `/profile/${encodeURIComponent(topLogin)}`;
   topLink.target = "_blank";
   topLink.rel = "noopener noreferrer";
   topLink.style.cssText = "color:var(--color-accent-blue);text-decoration:none";
