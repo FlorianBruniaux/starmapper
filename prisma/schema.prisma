@@ -31,6 +31,7 @@ model BadgeCache {
   latestReleaseTag   String?
   latestReleaseUrl   String?
   latestReleaseAt    DateTime?
+  releasesCount      Int?
   updatedAt          DateTime @updatedAt @default(now())
 
   @@id([owner, repo])

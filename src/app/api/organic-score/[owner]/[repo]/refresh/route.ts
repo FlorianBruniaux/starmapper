@@ -49,11 +49,15 @@ export const POST = async (
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     };
 
-    const [ghRes, releaseRes, prSearchRes] = await Promise.all([
+    const [ghRes, releaseRes, prSearchRes, releasesCountRes] = await Promise.all([
       fetch(`https://api.github.com/repos/${key.owner}/${key.repo}`, { headers: ghHeaders }),
       fetch(`https://api.github.com/repos/${key.owner}/${key.repo}/releases/latest`, { headers: ghHeaders }),
       fetch(
         `https://api.github.com/search/issues?q=repo:${key.owner}/${key.repo}+type:pr+state:open&per_page=1`,
+        { headers: ghHeaders },
+      ),
+      fetch(
+        `https://api.github.com/repos/${key.owner}/${key.repo}/releases?per_page=1`,
         { headers: ghHeaders },
       ),
     ]);
@@ -63,6 +67,19 @@ export const POST = async (
     const prData: { total_count: number } | null =
       prSearchRes.ok ? await prSearchRes.json() as { total_count: number } : null;
     const openPRsCount = prData?.total_count ?? null;
+
+    // Parse total releases count from Link header pagination
+    let releasesCount: number | null = null;
+    if (releasesCountRes.ok) {
+      const link = releasesCountRes.headers.get("link");
+      if (link) {
+        const match = link.match(/[?&]page=(\d+)>;\s*rel="last"/);
+        releasesCount = match ? parseInt(match[1], 10) : 1;
+      } else {
+        const items = await releasesCountRes.json() as unknown[];
+        releasesCount = items.length;
+      }
+    }
 
     let zfRow: { zero_count: bigint; sample_size: bigint } | null = null;
     try {
@@ -87,6 +104,7 @@ export const POST = async (
       watchersCount:     meta.subscribers_count,
       zeroFollowerCount: sampleSize && sampleSize > 0 ? zeroFollowerCount : null,
       sampleSize:        sampleSize ?? null,
+      releasesCount,
     });
 
     const now = new Date();
@@ -106,6 +124,7 @@ export const POST = async (
         latestReleaseTag:  release?.tag_name ?? null,
         latestReleaseUrl:  release?.html_url ?? null,
         latestReleaseAt,
+        releasesCount,
       },
     });
 

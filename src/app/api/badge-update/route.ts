@@ -71,6 +71,7 @@ export const POST = async (req: NextRequest) => {
         watchersCount:     watchers,
         zeroFollowerCount: sample ? Number(sample.zero_count) : null,
         sampleSize:        sample ? Number(sample.sample_size) : null,
+        releasesCount:     null, // badge-update path — releases count not available here
       });
       organicScore       = result.score;
       organicTier        = result.tier;

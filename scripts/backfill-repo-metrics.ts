@@ -117,6 +117,7 @@ const processOne = async (item: WorkItem): Promise<"updated" | "skipped" | "no-d
       watchersCount:     meta.subscribers_count,
       zeroFollowerCount: zf?.zeroCount ?? null,
       sampleSize:        zf?.sampleSize ?? null,
+      releasesCount:     null, // backfill script — releases count not fetched here
     });
     organicScore      = result.score;
     organicTier       = result.tier;
