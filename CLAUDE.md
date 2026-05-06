@@ -87,7 +87,7 @@ Vercel Hobby default function duration = 10s, configurable up to 60s (or 300s wi
 **Purpose**: Normalized per-user data and star event tracking, used by `/api/stats/[owner]/[repo]` to compute aggregated stats without re-parsing the full scan.
 
 **Schema**:
-- `github_user` — `login` (PK), `name?`, `company?`, `location?`, `followers`, `lat?`, `lng?`, `fetchedAt`
+- `github_user` — `login` (PK), `name?`, `company?`, `location?`, `followers`, `lat?`, `lng?`, `languages String[]`, `languagesFetchedAt?`, `topRepos Json?` (UserRepo[], max 8), `topReposFetchedAt?`, `fetchedAt`
 - `star_event` — `id` (autoincrement), `login` → `github_user`, `owner`, `repo`, `starredAt`. Unique on `(login, owner, repo)`.
 
 **Write path**: `src/lib/user-cache.ts` exports `bulkUpsertUsers()` and `bulkUpsertStarEvents()`. Both check `db-health.ts` before writing — if DB usage exceeds 95%, writes are skipped to prevent storage overflow.

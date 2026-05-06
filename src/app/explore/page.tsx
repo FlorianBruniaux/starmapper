@@ -4,6 +4,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Header } from "@/components/header";
 import { TokenModal, getStoredToken } from "@/components/token-modal";
 import { CommandSearch } from "@/components/command-search";
@@ -91,12 +92,14 @@ const Pagination = ({
 const ReposBadge = ({ login, count }: { login: string; count: number }) => {
   const [open, setOpen] = useState(false);
   const [resolvedCount, setResolvedCount] = useState(count);
-  const ref = useRef<HTMLDivElement>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const popoverRef = useRef<HTMLDivElement>(null);
+  const [popoverPos, setPopoverPos] = useState<{ top: number; right: number }>({ top: 0, right: 0 });
   const url = open ? `/api/explore/user-repos?login=${encodeURIComponent(login)}` : null;
   const { data, loading } = useFetch<UserReposResponse>(url);
 
   useEffect(() => {
-    if (data?.totalRepos && data.totalRepos > resolvedCount) {
+    if (data != null && data.totalRepos > resolvedCount) {
       setResolvedCount(data.totalRepos);
     }
   }, [data, resolvedCount]);
@@ -104,16 +107,27 @@ const ReposBadge = ({ login, count }: { login: string; count: number }) => {
   useEffect(() => {
     if (!open) return;
     const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      const clickedBtn = btnRef.current?.contains(e.target as Node);
+      const clickedPopover = popoverRef.current?.contains(e.target as Node);
+      if (!clickedBtn && !clickedPopover) setOpen(false);
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, [open]);
 
+  const handleToggle = () => {
+    if (!open && btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect();
+      setPopoverPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right });
+    }
+    setOpen((v) => !v);
+  };
+
   return (
-    <div ref={ref} className="relative flex-shrink-0">
+    <div className="flex-shrink-0">
       <button
-        onClick={() => setOpen((v) => !v)}
+        ref={btnRef}
+        onClick={handleToggle}
         className={`text-xs px-1.5 py-0.5 rounded border transition-colors tabular-nums ${
           open
             ? "border-accent-blue text-accent-blue bg-accent-blue/10"
@@ -124,8 +138,12 @@ const ReposBadge = ({ login, count }: { login: string; count: number }) => {
         {resolvedCount} repos
       </button>
 
-      {open && (
-        <div className="absolute right-0 top-full mt-1 w-72 bg-surface border border-border rounded-xl shadow-lg z-50 overflow-hidden">
+      {open && createPortal(
+        <div
+          ref={popoverRef}
+          style={{ top: popoverPos.top, right: popoverPos.right }}
+          className="fixed w-72 bg-surface border border-border rounded-xl shadow-lg z-[9999] overflow-hidden"
+        >
           <div className="px-3 py-2 border-b border-border-subtle flex items-center justify-between">
             <span className="text-xs font-medium text-foreground">Top GitHub repos</span>
             <a
@@ -174,7 +192,8 @@ const ReposBadge = ({ login, count }: { login: string; count: number }) => {
               ))}
             </ul>
           )}
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

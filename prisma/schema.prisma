@@ -72,6 +72,8 @@ model GitHubUser {
   cityNormalized       String?
   languages            String[]    @default([])
   languagesFetchedAt   DateTime?
+  topRepos             Json?
+  topReposFetchedAt    DateTime?
   fetchedAt            DateTime    @default(now())
   stars                StarEvent[]
   news                 News[]
