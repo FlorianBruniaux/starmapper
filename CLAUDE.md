@@ -545,12 +545,17 @@ npx prisma db push        # Sync schema to Neon (no migration files)
 npx prisma studio         # GUI to inspect tables
 npx prisma generate       # Regenerate Prisma client after schema change
 
-# DB Sync
-pnpm db:sync                                      # local Docker → Neon prod (upsert, never overwrites)
-pnpm db:sync:from-neon                            # Neon prod → local Docker (all tables)
-pnpm db:sync:from-neon -- --repo facebook/react   # Neon prod → local, one repo only (~30s)
-pnpm db:sync:from-neon -- --limit 100000          # Neon prod → local, top 100k users by followers
-pnpm db:sync:from-neon -- --tables badge_cache,stargazer_cache  # metadata only
+# DB Sync (additive upsert, table-by-table)
+pnpm db:sync:to-prod                                      # local Docker → Neon prod  ⚠️ WRITES TO PROD
+pnpm db:sync:from-prod                                    # Neon prod → local Docker (all tables)
+pnpm db:sync:from-prod -- --repo facebook/react           # Neon prod → local, one repo only (~30s)
+pnpm db:sync:from-prod -- --limit 100000                  # Neon prod → local, top 100k users by followers
+pnpm db:sync:from-prod -- --tables badge_cache,stargazer_cache  # metadata only
+
+# DB Dump/Restore (full dump — replaces local entirely)
+pnpm db:dump                                              # dump Neon prod → /tmp/neon-prod.dump
+pnpm db:restore                                           # restore /tmp/neon-prod.dump → local Docker
+pnpm db:pull                                              # dump + restore in one step (prod → local)
 
 # One-time DB setup (run once per DB instance — local + Neon prod)
 pnpm create:trgm-indexes:prod       # GIN trigram indexes on login+name (ILIKE search, 6s→50ms)
