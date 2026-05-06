@@ -82,6 +82,8 @@
     "create:language-grid-mv:prod": "sh -c 'set -a && . .env.local && set +a && psql \"$DATABASE_URL\" -f scripts/create-language-grid-mv.sql'",
     "create:login-index": "sh -c 'set -a && . .env.local && set +a && psql \"$DATABASE_URL_LOCAL\" -f scripts/create-login-index.sql'",
     "create:login-index:prod": "sh -c 'set -a && . .env.local && set +a && psql \"$DATABASE_URL\" -f scripts/create-login-index.sql'",
+    "create:languages-gin-idx": "sh -c 'set -a && . .env.local && set +a && psql \"$DATABASE_URL_LOCAL\" -f scripts/create-languages-gin-idx.sql'",
+    "create:languages-gin-idx:prod": "sh -c 'set -a && . .env.local && set +a && psql \"$DATABASE_URL\" -f scripts/create-languages-gin-idx.sql'",
     "refresh:language-grid-mv": "sh -c 'set -a && . .env.local && set +a && psql \"$DATABASE_URL_LOCAL\" -c \"SET statement_timeout = 0; REFRESH MATERIALIZED VIEW CONCURRENTLY language_grid_mv;\"'",
     "refresh:language-grid-mv:prod": "sh -c 'set -a && . .env.local && set +a && psql \"$DATABASE_URL\" -c \"SET statement_timeout = 0; REFRESH MATERIALIZED VIEW CONCURRENTLY language_grid_mv;\"'",
     "probe:star-burst": "sh -c 'set -a && . .env.local && set +a && tsx scripts/probe-star-burst.ts'",
