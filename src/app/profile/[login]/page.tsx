@@ -14,6 +14,9 @@ import { useTheme } from "@/hooks/useTheme";
 import type { ProfileResponse, ProfileRepo } from "@/app/api/profile/[login]/route";
 import type { NearbyResponse } from "@/app/api/explore/nearby/route";
 import type { StargazerPoint } from "@/app/api/chunk/route";
+import type { UserRepo, UserReposResponse } from "@/app/api/explore/user-repos/route";
+import type { UserRepo as GhRepo } from "@/app/api/user-repos/route";
+import { Modal } from "@/components/modal";
 import { NewsTimeline } from "@/components/news-timeline";
 
 // ---------------------------------------------------------------------------
@@ -137,6 +140,12 @@ export default function ProfilePage({ params }: Props) {
   const [refreshCooldownMin, setRefreshCooldownMin] = useState(0);
   const [pinnedLogins, setPinnedLogins] = useState<Set<string>>(new Set());
   const [mapFlyTarget, setMapFlyTarget] = useState<{ lat: number; lng: number; login: string; zoom?: number } | null>(null);
+  const [githubRepos, setGithubRepos] = useState<UserRepo[] | null>(null);
+  const [scanModalOpen, setScanModalOpen] = useState(false);
+  const [scanRepos, setScanRepos] = useState<GhRepo[] | null>(null);
+  const [scanLoading, setScanLoading] = useState(false);
+  const [scanSearch, setScanSearch] = useState("");
+  const [scanSort, setScanSort] = useState<"stars" | "name">("stars");
 
   // Token modal
   const [tokenOpen, setTokenOpen] = useState(false);
@@ -156,6 +165,28 @@ export default function ProfilePage({ params }: Props) {
     setTokenOpen(false);
     setHasToken(!!getStoredToken());
   }, []);
+
+  const handleScanOpen = useCallback(async () => {
+    setScanModalOpen(true);
+    if (scanRepos !== null) return;
+    setScanLoading(true);
+    try {
+      const token = getStoredToken();
+      const headers: Record<string, string> = {};
+      if (token) headers["x-gh-token"] = token;
+      const res = await fetch(`/api/user-repos?username=${encodeURIComponent(login)}`, { headers });
+      if (res.ok) {
+        const data = await res.json() as { repos: GhRepo[] };
+        setScanRepos(data.repos);
+      } else {
+        setScanRepos([]);
+      }
+    } catch {
+      setScanRepos([]);
+    } finally {
+      setScanLoading(false);
+    }
+  }, [login, scanRepos]);
 
   const handleRefresh = useCallback(async () => {
     if (refreshState === "loading" || refreshState === "cooldown") return;
@@ -308,6 +339,20 @@ export default function ProfilePage({ params }: Props) {
     return () => ctrl.abort();
   }, [profile, login]);
 
+  // Fetch GitHub repos — non-blocking
+  useEffect(() => {
+    if (!login) return;
+    const ctrl = new AbortController();
+    fetch(`/api/explore/user-repos?login=${encodeURIComponent(login)}`, { signal: ctrl.signal })
+      .then(async (res) => {
+        if (!res.ok) return;
+        const data = await res.json() as UserReposResponse;
+        if (data.repos.length > 0) setGithubRepos(data.repos);
+      })
+      .catch(() => {});
+    return () => ctrl.abort();
+  }, [login]);
+
   // Build a single synthetic StargazerPoint for the profile user
   const miniMapPoints: StargazerPoint[] =
     profile?.lat && profile?.lng
@@ -435,6 +480,19 @@ export default function ProfilePage({ params }: Props) {
   const ownedVisible = showAllOwned ? profile?.ownedRepos : profile?.ownedRepos.slice(0, 12);
   const starredVisible = showAllStarred ? starredFiltered : starredFiltered.slice(0, 12);
   const hasMap = !!(profile?.lat && profile?.lng);
+
+  const scanFiltered = useMemo(() => {
+    if (!scanRepos) return [];
+    const q = scanSearch.toLowerCase().trim();
+    const filtered = q
+      ? scanRepos.filter(
+          (r) => r.name.toLowerCase().includes(q) || (r.description ?? "").toLowerCase().includes(q),
+        )
+      : [...scanRepos];
+    if (scanSort === "name") filtered.sort((a, b) => a.name.localeCompare(b.name));
+    else filtered.sort((a, b) => b.stars - a.stars);
+    return filtered;
+  }, [scanRepos, scanSearch, scanSort]);
 
   // ── Main render ───────────────────────────────────────────────────────────
   return (
@@ -800,6 +858,85 @@ export default function ProfilePage({ params }: Props) {
 
         <hr className="border-border-subtle my-8" />
 
+        {/* ── GitHub repos (scannable) ─────────────────────────────────── */}
+        {githubRepos && githubRepos.length > 0 && (
+          <section className="mb-2" aria-labelledby="gh-repos-heading">
+            <div className="flex items-center gap-2 mb-3">
+              <h2 id="gh-repos-heading" className="text-foreground text-sm font-semibold">GitHub Repos</h2>
+              <span className="text-muted-subtle text-xs bg-surface border border-border px-1.5 py-0.5 rounded-full tabular-nums">
+                {profile?.publicRepos ?? githubRepos.length}
+              </span>
+              <button
+                onClick={handleScanOpen}
+                title="Select a repo to map"
+                aria-label="Select a repo to map"
+                className="inline-flex items-center gap-1 text-2xs font-medium px-2 py-1 rounded-full border
+                           border-accent-green/60 text-accent-green hover:bg-accent-green/10 transition-colors"
+              >
+                <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                  <path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.751.751 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25z"/>
+                </svg>
+                Map a repo
+              </button>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {githubRepos.map((r) => (
+                <Link
+                  key={r.fullName}
+                  href={`/${r.fullName}`}
+                  className="flex flex-col gap-1.5 p-3 rounded-lg border border-border bg-surface
+                             hover:border-accent-blue/50 hover:bg-surface-alt transition-colors group"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="text-foreground text-sm font-medium group-hover:text-accent-blue
+                                     transition-colors truncate leading-snug">
+                      {r.name}
+                    </span>
+                    {r.language && (
+                      <span
+                        className="shrink-0 text-2xs font-medium px-1.5 py-0.5 rounded-full border"
+                        style={{
+                          color: LANGUAGE_COLORS[r.language] ?? "#8b949e",
+                          borderColor: `${LANGUAGE_COLORS[r.language] ?? "#8b949e"}40`,
+                          backgroundColor: `${LANGUAGE_COLORS[r.language] ?? "#8b949e"}14`,
+                        }}
+                      >
+                        {r.language}
+                      </span>
+                    )}
+                  </div>
+                  {r.description && (
+                    <p className="text-xs text-muted line-clamp-1">{r.description}</p>
+                  )}
+                  <div className="flex items-center gap-3 text-xs text-muted">
+                    <span className="flex items-center gap-1">
+                      <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                        <path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.751.751 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25z"/>
+                      </svg>
+                      {formatCount(r.stars)}
+                    </span>
+                    <span className="ml-auto text-accent-blue text-xs opacity-0 group-hover:opacity-100 transition-opacity">
+                      Map stargazers →
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+            {profile && profile.publicRepos > githubRepos.length && (
+              <a
+                href={`https://github.com/${login}?tab=repositories&type=source`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-3 inline-block text-sm text-accent-blue hover:underline"
+              >
+                See all {profile.publicRepos} repos on GitHub →
+              </a>
+            )}
+          </section>
+        )}
+
+        <hr className="border-border-subtle my-8" />
+
         {/* ── Owned repos ─────────────────────────────────────────────── */}
         {profile && profile.ownedRepos.length > 0 && (
           <section className="mb-2" aria-labelledby="owned-heading">
@@ -1003,6 +1140,116 @@ export default function ProfilePage({ params }: Props) {
       </div>{/* end two-column flex container */}
 
       {tokenOpen && <TokenModal onClose={handleTokenClose} />}
+
+      <Modal
+        open={scanModalOpen}
+        onClose={() => setScanModalOpen(false)}
+        title={`Map a repo from ${login}`}
+        maxWidth="max-w-xl"
+      >
+        <div className="flex flex-col">
+          {/* Search + sort */}
+          <div className="px-5 py-3 border-b border-border-subtle flex items-center gap-2">
+            <input
+              type="text"
+              value={scanSearch}
+              onChange={(e) => setScanSearch(e.target.value)}
+              placeholder="Search repos…"
+              autoFocus
+              className="flex-1 bg-surface-alt border border-border rounded-md px-3 py-2 text-sm
+                         text-foreground placeholder:text-muted focus:outline-none
+                         focus:ring-2 focus:ring-accent-blue/40 focus:border-accent-blue"
+            />
+            <div className="flex items-center gap-0.5 shrink-0">
+              {(["stars", "name"] as const).map((opt) => (
+                <button
+                  key={opt}
+                  onClick={() => setScanSort(opt)}
+                  className={`text-2xs px-2.5 py-1.5 rounded-md transition-colors
+                    ${scanSort === opt
+                      ? "bg-surface-alt text-foreground border border-border"
+                      : "text-muted hover:text-foreground"}`}
+                >
+                  {opt === "stars" ? "★ Stars" : "A–Z"}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Repo list */}
+          <div className="overflow-y-auto max-h-96 divide-y divide-border-subtle">
+            {scanLoading && (
+              <div className="flex items-center justify-center py-10 gap-2 text-muted text-sm">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" className="animate-spin" aria-hidden="true">
+                  <path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+                  <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+                </svg>
+                Loading repos…
+              </div>
+            )}
+            {!scanLoading && scanFiltered.length === 0 && (
+              <p className="py-10 text-center text-muted text-sm">
+                {scanSearch ? "No repos match." : "No public repos found."}
+              </p>
+            )}
+            {!scanLoading && scanFiltered.map((r) => (
+              <Link
+                key={r.name}
+                href={`/${login}/${r.name}`}
+                onClick={() => setScanModalOpen(false)}
+                className="flex items-start gap-3 px-5 py-3.5 hover:bg-surface-alt transition-colors group"
+              >
+                <div className="flex flex-col gap-0.5 flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-foreground group-hover:text-accent-blue
+                                     transition-colors truncate">
+                      {r.name}
+                    </span>
+                    {r.fork && (
+                      <span className="shrink-0 text-2xs px-1.5 py-0.5 rounded-full border border-border text-muted-subtle">
+                        fork
+                      </span>
+                    )}
+                    {r.language && (
+                      <span
+                        className="shrink-0 text-2xs font-medium px-1.5 py-0.5 rounded-full border"
+                        style={{
+                          color: LANGUAGE_COLORS[r.language] ?? "#8b949e",
+                          borderColor: `${LANGUAGE_COLORS[r.language] ?? "#8b949e"}40`,
+                          backgroundColor: `${LANGUAGE_COLORS[r.language] ?? "#8b949e"}14`,
+                        }}
+                      >
+                        {r.language}
+                      </span>
+                    )}
+                  </div>
+                  {r.description && (
+                    <p className="text-xs text-muted line-clamp-1">{r.description}</p>
+                  )}
+                </div>
+                <div className="shrink-0 flex items-center gap-1 text-xs text-muted tabular-nums pt-0.5">
+                  <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                    <path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.751.751 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25z"/>
+                  </svg>
+                  {formatCount(r.stars)}
+                </div>
+              </Link>
+            ))}
+          </div>
+
+          <div className="px-5 py-3 border-t border-border-subtle flex items-center justify-between">
+            <span className="text-xs text-muted-subtle">
+              {scanRepos ? `${scanFiltered.length} / ${scanRepos.length} repos` : ""}
+            </span>
+            <button
+              onClick={() => setScanModalOpen(false)}
+              className="text-xs text-muted hover:text-foreground transition-colors"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
