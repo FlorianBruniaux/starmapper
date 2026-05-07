@@ -167,6 +167,8 @@ export const POST = async (
         lat,
         lng,
         fetchedAt: now,
+        // Reset topRepos cache so the next profile load re-fetches from GitHub
+        topReposFetchedAt: null,
         ...(languages.length > 0 ? { languages, languagesFetchedAt: now } : {}),
       },
     });
