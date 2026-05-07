@@ -482,7 +482,7 @@ export default function ExplorePage() {
 
   // Debounce search input → search
   useEffect(() => {
-    const t = setTimeout(() => setSearch(searchInput), 300);
+    const t = setTimeout(() => setSearch(searchInput.replace(/^@/, "")), 300);
     return () => clearTimeout(t);
   }, [searchInput]);
 
