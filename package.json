@@ -3,6 +3,10 @@
   "version": "0.4.1",
   "private": true,
   "license": "AGPL-3.0-only",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9"
+  },
   "scripts": {
     "prepare": "git config core.hooksPath .githooks",
     "dev": "next dev",
@@ -10,6 +14,7 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
+    "db:setup": "sh -c 'set -a && . .env.local && set +a && bash scripts/db-setup.sh'",
     "db:push": "sh -c 'set -a && . .env.local && set +a && prisma db push'",
     "db:push:local": "sh -c 'set -a && . .env.local && set +a && DATABASE_URL=$DATABASE_URL_LOCAL prisma db push'",
     "db:generate": "prisma generate",

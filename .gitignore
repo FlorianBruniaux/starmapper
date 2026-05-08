@@ -74,9 +74,14 @@ research-*.md
 # Serena — tout ignoré
 .serena/
 
+# Claude Code local settings (machine-specific paths + hook logic)
+.claude/settings.local.json
+.claude/scripts/
+
 # Cyber-defense pipeline output (analysis artifacts)
 cyber-defense-*.json
 cyber-defense-report.md
+cyber-defense-*.md
 
 # Analysis/audit artifacts
 dep-scope-report.md

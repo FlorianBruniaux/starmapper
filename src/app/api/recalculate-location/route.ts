@@ -4,12 +4,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { geocode } from "@/lib/geocoder";
+import { verifyToken, COOKIE_NAME } from "@/lib/api-token";
 
 export type RecalculateLocationResult =
   | { lat: number; lng: number }
   | { unmapped: true };
 
 export const POST = async (req: NextRequest) => {
+  const SM_SECRET = process.env.SM_TOKEN_SECRET ?? "";
+  if (SM_SECRET) {
+    const smToken = req.cookies.get(COOKIE_NAME)?.value;
+    if (!await verifyToken(smToken, SM_SECRET)) {
+      return NextResponse.json({ error: "forbidden" }, { status: 403 });
+    }
+  }
+
   let login: string;
   try {
     const body = await req.json();

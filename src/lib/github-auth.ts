@@ -84,7 +84,7 @@ export const verifyPat = async (pat: string): Promise<string | null> => {
     const login = normalizeLogin(data.login);
 
     try {
-      await getRedis()?.set(cacheKey, signCacheValue(login), { ex: 60 });
+      await getRedis()?.set(cacheKey, signCacheValue(login), { ex: 300 });
     } catch {
       // non-fatal
     }

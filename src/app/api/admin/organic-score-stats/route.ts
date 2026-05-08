@@ -3,17 +3,14 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { jsonError } from "@/lib/api-helpers";
+import { jsonError, requireAdminAuth } from "@/lib/api-helpers";
 
 const BUCKET_SIZE = 10;
 const BUCKETS = 10; // 0-9, 10-19, ..., 90-99, 100
 
 export const GET = async (req: NextRequest) => {
-  const secret = process.env.ADMIN_SECRET;
-  if (secret) {
-    const auth = req.headers.get("x-admin-secret");
-    if (auth !== secret) return jsonError("forbidden", 403);
-  }
+  const authErr = requireAdminAuth(req);
+  if (authErr) return authErr;
 
   try {
     const rows = await prisma.badgeCache.findMany({

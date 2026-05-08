@@ -2,6 +2,8 @@
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 
 import { NextRequest, NextResponse, after } from "next/server";
+import { Ratelimit } from "@upstash/ratelimit";
+import { Redis } from "@upstash/redis";
 import { fetchStargazersPage, GitHubRateLimitError } from "@/lib/github";
 import { geocodeBatch } from "@/lib/geocoder";
 import { checkDbHealth, DB_WARN_PCT } from "@/lib/db-health";
@@ -54,6 +56,29 @@ const buildUserWritePayload = (
   };
 };
 
+// Distributed rate limiter — 10 req/min per IP via Upstash. Fail-open if Redis unavailable.
+let _chunkLimiter: Ratelimit | null = null;
+let _chunkLimiterReady = false;
+const getChunkLimiter = (): Ratelimit | null => {
+  if (_chunkLimiterReady) return _chunkLimiter;
+  _chunkLimiterReady = true;
+  try {
+    _chunkLimiter = new Ratelimit({
+      redis: Redis.fromEnv(),
+      limiter: Ratelimit.slidingWindow(10, "60 s"),
+      prefix: "rl:chunk",
+    });
+  } catch {
+    _chunkLimiter = null;
+  }
+  return _chunkLimiter;
+};
+
+const getClientIP = (req: NextRequest): string =>
+  req.headers.get("cf-connecting-ip") ??
+  req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+  "unknown";
+
 // In-memory rate limiter — max 3 concurrent geocoding sessions across all users.
 // Vercel serverless: each instance has its own counter, so this is a per-instance
 // limit. Good enough to prevent a single deploy from hammering Jawg on spikes.
@@ -61,6 +86,12 @@ let activeSessions = 0;
 const MAX_CONCURRENT = 3;
 
 export const POST = async (req: NextRequest) => {
+  const limiter = getChunkLimiter();
+  if (limiter) {
+    const { success } = await limiter.limit(getClientIP(req));
+    if (!success) return jsonError("Rate limit exceeded. Retry in a few seconds.", 429);
+  }
+
   if (activeSessions >= MAX_CONCURRENT) {
     return jsonError("Server busy — too many concurrent scans. Retry in a few seconds.", 429);
   }
