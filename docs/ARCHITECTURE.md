@@ -183,6 +183,21 @@ The geocache was pre-seeded with ~51,000 entries from GeoNames data (cities with
 
 **Jawg sponsorship**: The Jawg geocoding endpoint (`starmapper.jawg.io`) is a dedicated Jawg Places instance provided by JawgMaps (Jawg Places is based on Pelias). Batch geocoding is not permitted on the public Jawg API; this dedicated server exists specifically for StarMapper. The geocoding token (`JAWG_TOKEN_HEADER`) is scoped to geocoding only and cannot access tile rendering. The explore page uses a separate token (`JAWGMAP_ACCESS_TOKEN`) against the public `api.jawg.io` endpoint.
 
+### Self-hosting without a Jawg sponsor token
+
+If you are running StarMapper yourself, you will not have access to `starmapper.jawg.io`. The geocoder degrades gracefully:
+
+| Available env vars | Geocoding path | Speed estimate (1000-star repo) |
+|---|---|---|
+| `JAWG_TOKEN_HEADER` + `GEOAPIFY_APIKEY` | Jawg (parallel) → Geoapify (parallel) → Nominatim | ~2–5 min |
+| `GEOAPIFY_APIKEY` only | Geoapify (up to 5 parallel) → Nominatim | ~5–10 min |
+| Neither (Nominatim only) | Sequential 1.1 s/user, ~30% hit rate via geocache | ~18 min |
+
+**Practical advice for self-hosters:**
+- Set `GEOAPIFY_APIKEY` (free plan: 3000 req/day). This covers most scans.
+- Run `pnpm seed:geonames` once after DB setup. Pre-seeding ~51k common city/country names gives >99% geocache hit rate on real repos — most scans never touch the external APIs at all.
+- Without `JAWGMAP_ACCESS_TOKEN`, map tiles will not render (`NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN` is required for the browser). You can replace the tile source in `src/lib/map-style.ts` with any MapLibre-compatible tile provider (MapTiler, OpenMapTiles, etc.).
+
 ---
 
 ## 5. Database Schema
