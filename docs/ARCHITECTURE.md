@@ -1,7 +1,7 @@
 # StarMapper Architecture
 
-**Version**: 0.3.0
-**Last updated**: 2026-04-10
+**Version**: 0.4.2
+**Last updated**: 2026-05-08
 
 ---
 
@@ -438,6 +438,40 @@ Returns geocoded developer points filtered by programming language.
 **Query params**: `?language=typescript` (slug format, e.g. `typescript`, `python`, `c-cpp`)
 
 **Response**: `{ points: GeoPoint[], total: number }`, geocoded users only (`lat IS NOT NULL`), filtered by `languages[]` array.
+
+---
+
+### `GET /api/user-repos`
+
+Fetches all public repos for a GitHub user via GitHub REST API (up to 500, sorted by stars). Used by the "Map a repo" modal on profile pages.
+
+**Query params**: `?username=<login>`
+
+**Request headers**: `x-gh-token` (optional)
+
+**Response**: `{ repos: UserRepo[] }` — name, fullName, description, stars, language, fork.
+
+---
+
+### `GET /api/explore/user-repos`
+
+Returns cached top repos for a user from the DB (`topRepos` field, 7-day TTL). Falls back to GitHub API on cache miss.
+
+**Query params**: `?login=<login>`
+
+**Response**: `{ repos: UserRepo[], fromCache: boolean }`
+
+---
+
+### `POST /api/profile/[login]/refresh`
+
+Re-fetches a developer's GitHub data (name, location, followers, languages) and updates the DB. Also resets `topReposFetchedAt` so the next profile load re-fetches top repos from GitHub.
+
+**Request headers**: `x-gh-token` (optional)
+
+**Response**: `{ ok: true, updatedAt: string }` or `{ error: "cooldown", retryAfterSec: number }` (429 — 1h cooldown per user).
+
+If the user is not in the DB, creates them on the fly (used by the profile page auto-fetch flow).
 
 ---
 

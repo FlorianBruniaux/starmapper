@@ -5,6 +5,20 @@ Versioning : Semantic Versioning (MAJOR.MINOR.PATCH)
 
 ---
 
+## [0.4.2] — 2026-05-08
+
+### Features
+
+- **GitHub Repos section on profile pages** — `/profile/[login]` now shows the cached top repos grid (up to 8, from `topRepos` in DB). Count badge reflects the real `publicRepos` value from GitHub, not the cached repo list length.
+- **Map a repo modal** — "Map a repo" button next to the repos count badge opens a full-repo picker: fetches all public repos from GitHub (up to 500), searchable by name/description, sortable by Stars or A–Z. Clicking any repo navigates directly to its StarMapper map.
+
+### Bug Fixes
+
+- **Explore — `@username` search** — Searching with a leading `@` (e.g. `@ruvnet`) now works the same as without. The prefix is stripped before debouncing to the search state.
+- **Profile — stale `topRepos` after Refresh** — After a manual Refresh, `topReposFetchedAt` is reset so the next profile load re-fetches top repos from GitHub instead of serving the outdated cache.
+
+---
+
 ## [0.4.1] — 2026-05-05
 
 ### Features

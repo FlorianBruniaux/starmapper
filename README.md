@@ -60,11 +60,19 @@ Enter any GitHub repository URL and StarMapper fetches all stargazers, geocodes 
 - **Language Atlas** (`/devs/atlas`), a choropleth map showing the dominant language per country
 - **Dev Maps by language** (`/devs/[language]`), filtered by programming language
 
+### Developer Profiles
+
+- Profile page (`/profile/[login]`) with mini-map, language badges, follower stats, and top repos grid
+- **Map a repo** button opens a full repo picker: all public repos (up to 500), searchable by name/description, sortable by Stars or A–Z
+- One-click Refresh updates the profile from GitHub (location, follower count, repos)
+- Devs can publish short announcements on their profile (280 chars, GitHub PAT auth), with RSS 2.0 and JSON Feed 1.1 feeds
+
 ### UX
 
 - Community maps table on the landing page (sortable, paginated)
 - Optional GitHub token input to raise rate limits from 60 to 5000 req/hour
 - Collapsible sidebar on mobile
+- Explore page (`/explore`) to discover developers by username, with leaderboard and language filter
 
 ---
 
