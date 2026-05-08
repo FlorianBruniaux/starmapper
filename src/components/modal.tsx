@@ -3,7 +3,7 @@
 
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useId, useRef } from "react";
 
 type Props = {
   open: boolean;
@@ -16,6 +16,7 @@ type Props = {
 
 export const Modal = ({ open, onClose, title, maxWidth = "max-w-md", innerClassName = "", children }: Props) => {
   const dialogRef = useRef<HTMLDivElement>(null);
+  const titleId = useId();
 
   // ESC to close
   useEffect(() => {
@@ -69,7 +70,7 @@ export const Modal = ({ open, onClose, title, maxWidth = "max-w-md", innerClassN
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
       role="dialog"
       aria-modal="true"
-      aria-labelledby={title ? "modal-title" : undefined}
+      aria-labelledby={title ? titleId : undefined}
     >
       <div
         ref={dialogRef}
@@ -77,7 +78,7 @@ export const Modal = ({ open, onClose, title, maxWidth = "max-w-md", innerClassN
       >
         {title && (
           <div className="flex items-center justify-between px-6 py-4 border-b border-border-subtle">
-            <h2 id="modal-title" className="text-foreground font-semibold text-base">{title}</h2>
+            <h2 id={titleId} className="text-foreground font-semibold text-base">{title}</h2>
             <button
               onClick={onClose}
               className="text-muted hover:text-foreground transition-colors text-xl leading-none"

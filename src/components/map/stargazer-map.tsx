@@ -5,7 +5,6 @@
 
 import { useCallback, useEffect, useRef, useState, useMemo, memo } from "react";
 import maplibregl from "maplibre-gl";
-import "maplibre-gl/dist/maplibre-gl.css";
 import type { StargazerPoint } from "@/app/api/chunk/route";
 import { getStoredProjection, setStoredProjection } from "@/lib/theme";
 import type { MapProjection } from "@/lib/theme";
@@ -747,6 +746,7 @@ const StargazerMapInner = ({ points, comparePoints, flyTarget, onFlyDone, onRead
     // F11: compute GeoJSON inside the throttle window, not on every points change.
     // buildGeoJSON only runs on leading edge + trailing edge (every 2s), not per-chunk.
     const applyFromRefs = () => {
+      if (!map.isStyleLoaded()) return;
       const src = map.getSource("stargazers") as maplibregl.GeoJSONSource | undefined;
       if (src) src.setData(buildGeoJSON(pointsRef.current));
       const hSrc = map.getSource("stargazers-heat") as maplibregl.GeoJSONSource | undefined;
