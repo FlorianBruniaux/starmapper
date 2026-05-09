@@ -4,7 +4,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { validateOwnerRepo } from "@/lib/api-validation";
-import { jsonError } from "@/lib/api-helpers";
+import { jsonError, logError } from "@/lib/api-helpers";
 import { decompressGzBase64 } from "@/lib/compression";
 
 export const GET = async (
@@ -67,7 +67,8 @@ export const GET = async (
       },
       { headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300", ETag: etag } },
     );
-  } catch {
+  } catch (err) {
+    logError("stargazer-cache GET", err);
     return jsonError("internal", 500);
   }
 };
