@@ -15,7 +15,7 @@ export default defineConfig({
     exclude: ["**/.worktrees/**", "**/node_modules/**"],
     coverage: {
       provider: "v8",
-      reporter: ["text", "html"],
+      reporter: ["text", "html", "json-summary"],
       include: ["src/lib/**/*.ts", "src/app/api/**/*.ts"],
       exclude: [
         "src/lib/db.ts",        // Prisma singleton — tested via mocks
@@ -23,6 +23,11 @@ export default defineConfig({
         "src/lib/bookmarks.ts", // Browser-only (localStorage)
         "**/__tests__/**",
       ],
+      thresholds: {
+        lines: 80,
+        functions: 70,
+        branches: 70,
+      },
     },
   },
   resolve: {

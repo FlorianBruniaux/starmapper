@@ -1,0 +1,26 @@
+name: Dependency Audit
+
+on:
+  schedule:
+    - cron: "0 8 * * 1"  # every Monday 08:00 UTC
+  pull_request:
+    paths:
+      - package.json
+      - pnpm-lock.yaml
+
+jobs:
+  audit:
+    name: pnpm audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # HIGH and CRITICAL advisories fail the job; MODERATE is reported only
+      - run: pnpm audit --prod --audit-level=high
