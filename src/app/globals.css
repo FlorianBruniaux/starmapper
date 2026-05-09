@@ -99,6 +99,8 @@ html.dark {
   --color-accent-green: var(--color-accent-green);
   --color-accent-green-emphasis: var(--color-accent-green-emphasis);
   --color-accent-orange: var(--color-accent-orange);
+  --color-accent-orange-bg: color-mix(in srgb, var(--color-accent-orange) 15%, transparent);
+  --color-accent-orange-border: color-mix(in srgb, var(--color-accent-orange) 30%, transparent);
   --color-accent-red: var(--color-accent-red);
   --color-accent-purple: var(--color-accent-purple);
   --color-warning-subtle: var(--color-warning-subtle);

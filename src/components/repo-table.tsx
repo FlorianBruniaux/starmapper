@@ -27,7 +27,7 @@ const timeAgo = (iso: string): string => {
 
 const TIER_TEXT: Record<string, string> = {
   healthy:      "text-accent-green",
-  moderate:     "text-orange-400",
+  moderate:     "text-accent-orange",
   suspicious:   "text-accent-red",
   insufficient: "text-muted",
 };
