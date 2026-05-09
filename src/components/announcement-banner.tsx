@@ -48,7 +48,7 @@ export const AnnouncementBanner = () => {
     >
       <span className="flex items-center gap-3 flex-wrap justify-center">
         <span className="inline-flex items-center px-1.5 py-0.5 rounded text-2xs font-bold
-                         bg-accent-orange text-white tracking-wide uppercase">
+                         bg-accent-orange text-[#24292f] tracking-wide uppercase">
           New
         </span>
         {LINKS.map((link, i) => (
