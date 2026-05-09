@@ -1,5 +1,7 @@
 # Design System StarMapper
 
+> **Last verified:** 2026-05-09 — cross-checked with `src/app/globals.css`.
+
 > Guide de référence visuel et technique. Dark theme inspiré GitHub.
 
 ---
@@ -19,43 +21,62 @@
 
 ### 2.1 Backgrounds & Surfaces
 
-| Token CSS | Hex | Usage |
-|-----------|-----|-------|
+| Token CSS | Hex (dark) | Usage |
+|-----------|------------|-------|
 | `--color-background` | `#0d1117` | App background (dark navy) |
 | `--color-surface` | `#161b22` | Cards, popups, panels |
-| `--color-surface-alt` | `#21262d` | Hover states, inputs |
+| `--color-surface-alt` | `#1c2128` | Hover states, inputs |
 | `--color-border` | `#30363d` | Bordures |
 | `--color-border-subtle` | `#21262d` | Séparateurs légers |
 
 ### 2.2 Textes
 
-| Token CSS | Hex | Usage |
-|-----------|-----|-------|
+| Token CSS | Hex (dark) | Usage |
+|-----------|------------|-------|
 | `--color-foreground` | `#f0f6fc` | Texte principal |
 | `--color-muted` | `#8b949e` | Texte secondaire |
-| `--color-muted-subtle` | `#484f58` | Texte très discret |
+| `--color-muted-subtle` | `#848d97` | Texte très discret |
 
 ### 2.3 Accents Fonctionnels
 
-| Token CSS | Hex | Classe Tailwind | Usage |
-|-----------|-----|-----------------|-------|
+| Token CSS | Hex (dark) | Classe Tailwind | Usage |
+|-----------|------------|-----------------|-------|
 | `--color-accent-blue` | `#58a6ff` | `text-accent-blue` | Links, info, primary repo |
-| `--color-accent-green` | `#238636` | `bg-accent-green` | CTA principal, succès |
+| `--color-accent-green` | `#3fb950` | `bg-accent-green` | CTA principal, succès |
+| `--color-accent-green-emphasis` | `#238636` | `bg-accent-green-emphasis` | Bouton CTA rempli |
 | `--color-accent-red` | `#f85149` | `text-accent-red` | Erreurs |
-| `--color-accent-orange` | `#ffa657` | `text-accent-orange` | Map: followers moyen, bandeaux warning |
-| `--color-accent-purple` | `#a371f7` | (none) | Map: repo compare |
+| `--color-accent-orange` | `#f0883e` | `text-accent-orange` | Tier "moderate", bandeaux warning |
+| `--color-accent-orange-bg` | `color-mix(orange 15%)` | `bg-accent-orange-bg` | Fond pill/badge orange |
+| `--color-accent-orange-border` | `color-mix(orange 30%)` | `border-accent-orange-border` | Bordure pill/badge orange |
+| `--color-accent-purple` | `#a371f7` | `text-accent-purple` | Map: repo compare |
+| `--color-warning-subtle` | `#271d0e` | `bg-warning-subtle` | Fond avertissement discret |
 
-### 2.4 Map Layers (non-Tailwind, MapLibre uniquement)
+### 2.4 Light mode overrides (valeurs clés)
 
-Gradient couleur des points par followers :
+| Token CSS | Hex (light) |
+|-----------|-------------|
+| `--color-background` | `#ffffff` |
+| `--color-surface` | `#f0f3f6` |
+| `--color-surface-alt` | `#e4e8ec` |
+| `--color-foreground` | `#24292f` |
+| `--color-accent-orange` | `#bc4c00` |
+| `--color-accent-blue` | `#0969da` |
+| `--color-accent-green` | `#1a7f37` |
+| `--color-muted-subtle` | `#6e7681` |
+
+### 2.5 Map Layers (non-Tailwind, MapLibre uniquement)
+
+Gradient couleur des points par followers (valeurs JS hardcodées dans `stargazer-map.tsx`) :
 
 ```
 0–10 followers    → #58a6ff (bleu)
-11–100 followers  → #ffa657 (orange)
+11–100 followers  → #ffa657 (orange MapLibre — distinct du token DS)
 100+ followers    → #f85149 (rouge/corail)
 ```
 
 Repo compare : `#a371f7` (violet) pour distinguer du repo principal.
+
+> Note: `#ffa657` est la couleur orange utilisée dans les layers MapLibre JS. Le token DS `--color-accent-orange` vaut `#f0883e` (dark) / `#bc4c00` (light). Ces valeurs sont intentionnellement différentes.
 
 ---
 
@@ -68,8 +89,9 @@ Repo compare : `#a371f7` (violet) pour distinguer du repo principal.
 | Corps | `text-sm text-foreground` |
 | Secondaire | `text-sm text-muted` |
 | Caption | `text-xs text-muted` |
+| Compact label | `text-2xs text-muted` (custom, défini dans `@theme`) |
 
-**Police** : System stack (Tailwind default), pas de Google Fonts.
+**Police** : Geist Sans / Geist Mono (via `--font-geist-sans` / `--font-geist-mono`).
 
 ---
 
@@ -117,16 +139,26 @@ Repo compare : `#a371f7` (violet) pour distinguer du repo principal.
 </span>
 ```
 
-### 4.5 MapLibre Popup
+### 4.5 Badge "Experimental" / orange pill
+
+```tsx
+<span className="inline-flex items-center px-2 py-0.5 rounded-full
+                 bg-accent-orange-bg text-accent-orange border border-accent-orange-border
+                 text-2xs font-semibold uppercase tracking-wide">
+  Experimental
+</span>
+```
+
+### 4.6 MapLibre Popup
 
 Style CSS dans `globals.css` (classe `.starmapper-popup`), hors Tailwind.
 
 ```css
-.starmapper-popup {
-  background: #161b22;
-  color: #e6edf3;
-  border: 1px solid #30363d;
-  border-radius: 6px;
+.starmapper-popup .maplibregl-popup-content {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  color: var(--color-foreground);
 }
 ```
 
@@ -206,8 +238,9 @@ Base unit : 4px (Tailwind default).
 
 ## 8. Accessibilité
 
-- Focus ring : `focus:ring-2 focus:ring-accent-blue/40` sur tous les éléments interactifs
-- Contraste : Texte `#f0f6fc` sur `#0d1117` ≥ 4.5:1 ✅
+- Focus ring : `*:focus-visible` → `outline: 2px solid var(--color-accent-blue)` (global dans `globals.css`)
+- Contraste texte principal : `#f0f6fc` sur `#0d1117` ≥ 4.5:1 ✅
+- Badge "New" : `#24292f` sur `#f0883e` = ~5.4:1 ✅ WCAG AA
 - Touch targets : min 44×44px sur mobile
 - Map clusters : `aria-label` sur les boutons de fermeture popup
 
@@ -225,7 +258,6 @@ Trois couches collaborent :
 - `getStoredTheme()` / `setStoredTheme()` : lit/écrit `starmapper:theme` dans `localStorage` (`"light" | "dark" | null`)
 - `getSystemTheme()` : lit `prefers-color-scheme`
 - `applyTheme(theme)` : applique la classe `"dark"` ou `"light"` sur `<html>` et retourne le thème résolu
-- `MAP_STYLE_DARK(token)` / `MAP_STYLE_LIGHT(token)` : retourne l'URL Jawg correspondante (jawg-dark vs jawg-sunny)
 
 **2. `src/app/layout.tsx`** : prévention du FOUC (Flash Of Unstyled Content).
 Un inline script synchrone s'exécute avant le premier paint pour lire `localStorage` et appliquer la classe correcte sur `<html>` immédiatement.
@@ -269,7 +301,7 @@ localStorage override ("light" | "dark")
 ### Règles d'implémentation
 
 - **Toujours utiliser les tokens CSS** (`bg-background`, `text-foreground`...), jamais de valeurs hex directes. Les tokens s'adaptent automatiquement au mode actif.
-- **Les tuiles MapLibre** sont swappées via `MAP_STYLE_DARK`/`MAP_STYLE_LIGHT` dans `theme.ts`; le map écoute le changement de thème et recharge son style.
+- **Les tuiles MapLibre** sont swappées via style URL dans `map-style.ts`; le map écoute le changement de thème et recharge son style.
 - **`"use client"` obligatoire** sur tout composant qui importe de `theme.ts` (accès localStorage).
 
 ---
@@ -282,8 +314,11 @@ localStorage override ("light" | "dark")
 | `text-[#8b949e]` | `text-muted` |
 | `border-[#30363d]` | `border-border` |
 | `bg-white` | `bg-surface` |
+| `bg-orange-500/15` | `bg-accent-orange-bg` |
+| `text-orange-400` | `text-accent-orange` |
+| `border-orange-500/30` | `border-accent-orange-border` |
 | Popup styles en inline JSX | Popup styles dans `.starmapper-popup` CSS |
 
 ---
 
-*Dernière mise à jour : 2026-04-10 (v0.3.0)*
+*Dernière mise à jour : 2026-05-09 (v0.4.2)*
