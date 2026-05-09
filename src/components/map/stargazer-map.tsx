@@ -5,6 +5,7 @@
 
 import { useCallback, useEffect, useRef, useState, useMemo, memo } from "react";
 import maplibregl from "maplibre-gl";
+import "maplibre-gl/dist/maplibre-gl.css";
 import type { StargazerPoint } from "@/app/api/chunk/route";
 import { getStoredProjection, setStoredProjection } from "@/lib/theme";
 import type { MapProjection } from "@/lib/theme";

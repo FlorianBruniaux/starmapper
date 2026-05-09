@@ -4,7 +4,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { feature } from "topojson-client";
-import { normalizeOwnerRepo } from "@/lib/api-validation";
+import { validateOwnerRepo } from "@/lib/api-validation";
 import { decompressGzBase64 } from "@/lib/compression";
 import { fmt } from "@/lib/format";
 import type { Topology, GeometryCollection } from "topojson-specification";
@@ -66,6 +66,9 @@ const project = (lat: number, lng: number, w: number, h: number) => ({
 const truncate = (s: string, max: number) =>
   s.length > max ? s.slice(0, max - 1) + "…" : s;
 
+const xmlEscape = (s: string): string =>
+  s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
 const makeSvg = (
   owner: string,
   repo: string,
@@ -102,11 +105,12 @@ const makeSvg = (
     })
     .join("");
 
-  const repoLabel = truncate(`${owner}/${repo}`, 48);
-  const statsText =
+  const repoLabel = xmlEscape(truncate(`${owner}/${repo}`, 48));
+  const statsText = xmlEscape(
     countryCount > 0
       ? `${fmt(mappedCount)} mapped  ·  ${countryCount} countries  ·  ${fmt(totalCount)} total`
-      : "Scan this repo on starmapper.bruniaux.com";
+      : "Scan this repo on starmapper.bruniaux.com",
+  );
 
   const hasData = points.length > 0;
 
@@ -145,9 +149,12 @@ export const GET = async (
   req: NextRequest,
   { params }: { params: Promise<{ owner: string; repo: string }> },
 ) => {
-  const { owner, repo } = await params;
+  const raw = await params;
+  const validated = validateOwnerRepo(raw.owner, raw.repo);
+  if (!validated) return new NextResponse("Invalid repository", { status: 400 });
+  const { owner, repo } = validated;
   const theme = req.nextUrl.searchParams.get("theme") === "light" ? "light" : "dark";
-  const key = normalizeOwnerRepo(owner, repo);
+  const key = { owner, repo };
 
   let points: Point[] = [];
   let mappedCount = 0;

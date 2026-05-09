@@ -5,6 +5,7 @@
 
 import { useEffect, useRef, memo } from "react";
 import maplibregl from "maplibre-gl";
+import "maplibre-gl/dist/maplibre-gl.css";
 import { MAP_STYLE_DARK, MAP_STYLE_LIGHT } from "@/lib/theme";
 import { fetchAndPatchStyle } from "@/lib/map-style";
 import { JawgBadge } from "@/components/map/jawg-badge";
