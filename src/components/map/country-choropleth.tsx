@@ -3,7 +3,7 @@
 
 "use client";
 
-import { useEffect, useRef, memo } from "react";
+import { useEffect, useRef, useState, useMemo, memo } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { MAP_STYLE_DARK, MAP_STYLE_LIGHT } from "@/lib/theme";
@@ -13,9 +13,6 @@ import { useTheme } from "@/hooks/useTheme";
 import { feature } from "topojson-client";
 import type { Topology, GeometryCollection } from "topojson-specification";
 import { toGeoName } from "@/lib/country-geo-names";
-
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const topoData = require("world-atlas/countries-110m.json") as Topology;
 
 type Props = {
   countryData: [string, number][];
@@ -51,39 +48,6 @@ const normalizeGeometry = (geom: GeoJSON.Geometry): GeoJSON.Geometry => {
   return geom;
 };
 
-/**
- * Pre-compute TopoJSON → GeoJSON + antimeridian normalization once at module level.
- * The topology never changes — only the per-country intensities vary.
- */
-const BASE_FEATURES = feature(
-  topoData,
-  topoData.objects.countries as GeometryCollection,
-).features.map((f) => ({
-  ...f,
-  geometry: normalizeGeometry(f.geometry),
-}));
-
-/** Build a GeoJSON FeatureCollection annotated with dev counts. Geometry is pre-computed. */
-const buildChoroplethGeoJSON = (countryData: [string, number][]) => {
-  const countMap = new Map(countryData.map(([name, n]) => [toGeoName(name), n]));
-  const maxCount = Math.max(...countryData.map(([, n]) => n), 1);
-
-  return {
-    type: "FeatureCollection" as const,
-    features: BASE_FEATURES.map((f) => {
-      const count = countMap.get((f.properties as { name: string } | null)?.name ?? "") ?? 0;
-      return {
-        ...f,
-        properties: {
-          ...f.properties,
-          count,
-          intensity: count / maxCount,
-        },
-      };
-    }),
-  };
-};
-
 export const CountryChoropleth = memo(({ countryData, onCountryClick }: Props) => {
   const { theme } = useTheme();
   const styleUrl = theme === "light" ? MAP_STYLE_LIGHT(JAWG_TOKEN) : MAP_STYLE_DARK(JAWG_TOKEN);
@@ -91,6 +55,50 @@ export const CountryChoropleth = memo(({ countryData, onCountryClick }: Props) =
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const tooltipRef = useRef<maplibregl.Popup | null>(null);
+
+  const [topoData, setTopoData] = useState<Topology | null>(null);
+
+  useEffect(() => {
+    fetch("/world-110m.json")
+      .then((r) => r.json())
+      .then((data) => setTopoData(data as Topology))
+      .catch(() => {});
+  }, []);
+
+  const baseFeatures = useMemo(() => {
+    if (!topoData) return null;
+    return feature(
+      topoData,
+      topoData.objects.countries as GeometryCollection,
+    ).features.map((f) => ({
+      ...f,
+      geometry: normalizeGeometry(f.geometry),
+    }));
+  }, [topoData]);
+
+  const geoJson = useMemo(() => {
+    if (!baseFeatures) return null;
+    const countMap = new Map(countryData.map(([name, n]) => [toGeoName(name), n]));
+    const maxCount = Math.max(...countryData.map(([, n]) => n), 1);
+    return {
+      type: "FeatureCollection" as const,
+      features: baseFeatures.map((f) => {
+        const count = countMap.get((f.properties as { name: string } | null)?.name ?? "") ?? 0;
+        return {
+          ...f,
+          properties: {
+            ...f.properties,
+            count,
+            intensity: count / maxCount,
+          },
+        };
+      }),
+    };
+  }, [baseFeatures, countryData]);
+
+  // Keep a ref so the map-init closure can read the latest geoJson without being in its deps
+  const geoJsonRef = useRef(geoJson);
+  useEffect(() => { geoJsonRef.current = geoJson; }, [geoJson]);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -117,11 +125,11 @@ export const CountryChoropleth = memo(({ countryData, onCountryClick }: Props) =
         className: "choropleth-tooltip",
       });
 
-      const geoJson = buildChoroplethGeoJSON(countryData);
-
       map.on("load", () => {
         if (cancelled) return;
-        map.addSource("countries", { type: "geojson", data: geoJson });
+        const data = geoJsonRef.current;
+        if (!data) return;
+        map.addSource("countries", { type: "geojson", data });
 
         // Fill layer — color driven by intensity
         map.addLayer({
@@ -232,10 +240,16 @@ export const CountryChoropleth = memo(({ countryData, onCountryClick }: Props) =
   // Update source data when countryData changes (without rebuilding the map)
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !map.isStyleLoaded()) return;
+    if (!map || !map.isStyleLoaded() || !geoJson) return;
     const src = map.getSource("countries") as maplibregl.GeoJSONSource | undefined;
-    src?.setData(buildChoroplethGeoJSON(countryData));
-  }, [countryData]);
+    src?.setData(geoJson);
+  }, [geoJson]);
+
+  // Don't render the map container until topo data is ready — avoids initializing MapLibre
+  // against an empty source and then having to re-add it
+  if (!geoJson) {
+    return <div className="relative w-full h-full bg-background" />;
+  }
 
   return (
     <div className="relative w-full h-full">
