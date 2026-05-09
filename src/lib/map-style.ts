@@ -10,6 +10,38 @@ import type { MapProjection } from "@/lib/theme";
  */
 const styleCache = new Map<string, string | StyleSpecification>();
 
+// ─── sessionStorage layer ─────────────────────────────────────────────────────
+// Persists patched styles across hard refreshes. Falls back silently when
+// sessionStorage is unavailable (SSR, private browsing, quota exceeded).
+
+const SESSION_PREFIX = "sm-style:";
+const SESSION_TTL_MS = 24 * 60 * 60 * 1000; // 24h
+
+type StoredStyle = { value: StyleSpecification | string; storedAt: number };
+
+const readFromSession = (key: string): StyleSpecification | string | undefined => {
+  if (typeof window === "undefined") return undefined;
+  try {
+    const raw = sessionStorage.getItem(SESSION_PREFIX + key);
+    if (!raw) return undefined;
+    const { value, storedAt } = JSON.parse(raw) as StoredStyle;
+    if (Date.now() - storedAt > SESSION_TTL_MS) {
+      sessionStorage.removeItem(SESSION_PREFIX + key);
+      return undefined;
+    }
+    return value;
+  } catch { return undefined; }
+};
+
+const writeToSession = (key: string, value: StyleSpecification | string): void => {
+  if (typeof window === "undefined") return;
+  try {
+    sessionStorage.setItem(SESSION_PREFIX + key, JSON.stringify({ value, storedAt: Date.now() }));
+  } catch { /* QuotaExceededError — silently skip */ }
+};
+
+// ─── fetchAndPatchStyle ───────────────────────────────────────────────────────
+
 /**
  * Fetch a Jawg style URL and apply StarMapper-specific patches:
  * - Sets `projection` to the requested value (defaults to "mercator" if missing from style)
@@ -17,13 +49,12 @@ const styleCache = new Map<string, string | StyleSpecification>();
  * - Removes water_name / marine layers (noisy on the stargazer map)
  * - Patches attribution links to include utm_source=starmapper
  *
+ * Cache strategy: in-memory (module lifetime) → sessionStorage (tab lifetime, 24h TTL)
+ * → Jawg network fetch. The patched StyleSpecification is stored at both layers so
+ * hard refreshes skip the network round-trip and re-patching.
+ *
  * Language localisation is handled automatically by Jawg based on Accept-Language header —
  * no lang= param is needed. The map will render in the visitor's browser language.
- *
- * Note on font and label patches: these are applied in code for fork-friendliness so any
- * self-hosted instance works without a Jawg account style. Jawg's Back Office can configure
- * both (Open Sans font + label density) directly in the style, which avoids patching at
- * runtime — but that style is then tied to a specific Jawg account and not forkable.
  *
  * Falls back to the raw URL string if the fetch fails or returns invalid JSON,
  * so MapLibre can still attempt to load the style on its own.
@@ -36,9 +67,19 @@ export const fetchAndPatchStyle = async (
   projection: MapProjection = "mercator",
 ): Promise<string | StyleSpecification> => {
   const cacheKey = `${url}#${projection}`;
-  const cached = styleCache.get(cacheKey);
-  if (cached !== undefined) return cached;
 
+  // 1. In-memory hit — cheapest possible path
+  const inMemory = styleCache.get(cacheKey);
+  if (inMemory !== undefined) return inMemory;
+
+  // 2. sessionStorage hit — avoids network on hard refresh
+  const inSession = readFromSession(cacheKey);
+  if (inSession !== undefined) {
+    styleCache.set(cacheKey, inSession);
+    return inSession;
+  }
+
+  // 3. Network fetch + patch
   try {
     const res = await fetch(url);
     if (!res.ok) return url;
@@ -71,6 +112,7 @@ export const fetchAndPatchStyle = async (
       }
     }
     styleCache.set(cacheKey, json);
+    writeToSession(cacheKey, json);
     return json;
   } catch {
     styleCache.set(cacheKey, url);
