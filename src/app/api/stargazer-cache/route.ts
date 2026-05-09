@@ -6,7 +6,7 @@ import { prisma } from "@/lib/db";
 import { compressToGzBase64 } from "@/lib/compression";
 import { checkDbHealth, DB_CRITICAL_PCT } from "@/lib/db-health";
 import { validateOwnerRepo } from "@/lib/api-validation";
-import { jsonError } from "@/lib/api-helpers";
+import { jsonError, logError } from "@/lib/api-helpers";
 import { verifyToken, COOKIE_NAME } from "@/lib/api-token";
 
 const MAX_CACHEABLE_STARS = 500_000;
@@ -90,7 +90,8 @@ export const POST = async (req: NextRequest) => {
     });
 
     return NextResponse.json({ ok: true });
-  } catch {
+  } catch (err) {
+    logError("stargazer-cache POST", err);
     return jsonError("internal", 500);
   }
 };
