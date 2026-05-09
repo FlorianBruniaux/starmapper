@@ -1,0 +1,67 @@
+# StarMapper — LLM Navigation Index
+# https://starmapper.bruniaux.com
+# Format: plain list, one entry per line. Full index: PROJECT_INDEX.md
+
+## Project identity
+- StarMapper maps GitHub stargazers on an interactive world map
+- Stack: Next.js 16, TypeScript 5, MapLibre GL 5, Prisma 7 + Neon Postgres, Tailwind v4
+- Deployment: Vercel Hobby (10s function limit → client-side chunk loop architecture)
+
+## Authoritative spec
+- CLAUDE.md — full project spec, architecture, file map, conventions, gotchas
+- PROJECT_INDEX.md — this index, human-readable
+- docs/ARCHITECTURE.md — deep architecture doc
+
+## Entry points by task
+- Add API route → src/app/api/chunk/route.ts (example) + .claude/rules/architecture.md
+- Modify geocoding → src/lib/geocoder.ts
+- Change map rendering → src/components/map/stargazer-map.tsx
+- Update DB schema → prisma/schema.prisma + npx prisma db push
+- Add component → src/components/ + .claude/rules/design-system.md
+- Write tests → .claude/rules/tdd-mandatory.md + src/lib/*.test.ts
+
+## Key source files
+- src/app/api/chunk/route.ts — hot path: GitHub fetch + geocode + return points
+- src/app/[owner]/[repo]/page.tsx — client chunk loop orchestration + map page
+- src/lib/geocoder.ts — 3-tier cascade: Jawg → Geoapify → Nominatim + geocache
+- src/lib/github.ts — GitHub GraphQL paginator (100 users/call)
+- src/lib/db.ts — Prisma singleton with Neon adapter
+- src/lib/organic-score.ts — organic score model
+- src/lib/user-cache.ts — bulk upsert with DB health guard
+- prisma/schema.prisma — all DB models
+- src/app/globals.css — CSS tokens (@theme inline)
+
+## Exported types
+- StargazerPoint → src/app/api/chunk/route.ts
+- UnmappedUser → src/app/api/chunk/route.ts
+- UserDetail → src/app/api/user-details/route.ts
+
+## Key conventions
+- Arrow functions only (no function keyword)
+- type over interface
+- No arbitrary Tailwind values (bg-background not bg-[#0d1117])
+- Nominatim: 1100ms between calls, always check geocache first
+- GitHub cursor: never pass null as GraphQL variable
+- All Prisma calls in try/catch (graceful degradation if DB down)
+
+## Test infrastructure
+- Framework: Vitest
+- Run: pnpm test | pnpm test:coverage
+- Coverage thresholds: 60% global, 70% src/lib/
+
+## CI workflows
+- .github/workflows/ci.yml — typecheck + lint + test + Semgrep SAST
+- .github/workflows/audit.yml — pnpm audit (weekly + PR gate on package.json changes)
+
+## Architecture decisions (out of scope = will not build)
+- No auth / user accounts
+- No star history over time
+- No real-time webhooks
+- No server-side rate limit queuing
+
+## Docs
+- docs/ARCHITECTURE.md — architecture deep-dive
+- docs/ROADMAP.md — feature backlog
+- docs/design-system.md — design system reference
+- docs/organic-score.md — organic score model + signals
+- docs/test-strategy.md — test strategy
