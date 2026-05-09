@@ -5,6 +5,7 @@
 // power_users_mv, company_stats_mv, trending_repos_mv.
 // Runs 1x/day via Vercel Cron (see vercel.json). Also callable manually via admin auth.
 // CONCURRENTLY = does not block reads during refresh.
+// Sequential loop — parallel refresh exhausts Neon's connection pool and causes cascading failures.
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
@@ -35,21 +36,30 @@ export const GET = async (req: NextRequest) => {
   return runRefresh();
 };
 
+const MV_NAMES = [
+  "github_user_grid_mv",
+  "country_stats_mv",
+  "power_users_mv",
+  "company_stats_mv",
+  "country_language_stats_mv",
+  "user_repo_count_mv",
+  "trending_repos_mv",
+] as const;
+
 const runRefresh = async () => {
   const start = Date.now();
-  try {
-    await Promise.all([
-      prisma.$executeRaw`REFRESH MATERIALIZED VIEW CONCURRENTLY github_user_grid_mv`,
-      prisma.$executeRaw`REFRESH MATERIALIZED VIEW CONCURRENTLY country_stats_mv`,
-      prisma.$executeRaw`REFRESH MATERIALIZED VIEW CONCURRENTLY power_users_mv`,
-      prisma.$executeRaw`REFRESH MATERIALIZED VIEW CONCURRENTLY company_stats_mv`,
-      prisma.$executeRaw`REFRESH MATERIALIZED VIEW CONCURRENTLY country_language_stats_mv`,
-      prisma.$executeRaw`REFRESH MATERIALIZED VIEW CONCURRENTLY user_repo_count_mv`,
-      prisma.$executeRaw`REFRESH MATERIALIZED VIEW CONCURRENTLY trending_repos_mv`,
-    ]);
-    return NextResponse.json({ ok: true, durationMs: Date.now() - start });
-  } catch (err) {
-    logError("admin/refresh-grid-mv", err);
-    return jsonError("internal", 500);
+  const results: { mv: string; durationMs: number; error?: string }[] = [];
+
+  for (const mv of MV_NAMES) {
+    const t = Date.now();
+    try {
+      await prisma.$executeRawUnsafe(`REFRESH MATERIALIZED VIEW CONCURRENTLY ${mv}`);
+      results.push({ mv, durationMs: Date.now() - t });
+    } catch (err) {
+      logError(`admin/refresh-grid-mv [${mv}]`, err);
+      results.push({ mv, durationMs: Date.now() - t, error: String(err) });
+    }
   }
+
+  return NextResponse.json({ ok: true, durationMs: Date.now() - start, results });
 };
