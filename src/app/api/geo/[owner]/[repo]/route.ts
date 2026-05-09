@@ -6,6 +6,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 import { prisma } from "@/lib/db";
+import { hashApiKey } from "@/lib/api-key";
 import { validateOwnerRepo } from "@/lib/api-validation";
 import { jsonError, logError } from "@/lib/api-helpers";
 import { parseLocation } from "@/lib/location-parser";
@@ -65,13 +66,21 @@ export const GET = async (
   const apiKey = authHeader.slice(7).trim();
   if (!apiKey) return jsonError("unauthorized", 401);
 
-  // 3. Verify key exists and is not revoked
+  // 3. Verify key exists and is not revoked.
+  // Look up by keyHash (SHA-256 of the raw key). Fall back to plaintext key
+  // lookup for rows that haven't been migrated yet (run backfill-api-key-hash.ts).
+  const incomingHash = hashApiKey(apiKey);
   let keyRecord: { key: string; revokedAt: Date | null } | null;
   try {
-    keyRecord = await prisma.apiKey.findUnique({
-      where: { key: apiKey },
-      select: { key: true, revokedAt: true },
-    });
+    keyRecord =
+      (await prisma.apiKey.findUnique({
+        where: { keyHash: incomingHash },
+        select: { key: true, revokedAt: true },
+      })) ??
+      (await prisma.apiKey.findUnique({
+        where: { key: apiKey },
+        select: { key: true, revokedAt: true },
+      }));
   } catch (err) {
     logError("geo/api-key-lookup", err);
     return jsonError("internal_error", 500);
@@ -105,7 +114,7 @@ export const GET = async (
 
   // 5. Update lastUsedAt (fire-and-forget — non-critical, must not delay response)
   prisma.apiKey
-    .update({ where: { key: apiKey }, data: { lastUsedAt: new Date() } })
+    .update({ where: { key: keyRecord.key }, data: { lastUsedAt: new Date() } })
     .catch(() => {});
 
   // 6. Read scan cache + badge metadata in parallel

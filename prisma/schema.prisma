@@ -143,6 +143,7 @@ model PageView {
 
 model ApiKey {
   key        String    @id @default(uuid())
+  keyHash    String?   @unique  // SHA-256(key) hex — run scripts/backfill-api-key-hash.ts to populate
   email      String
   name       String
   note       String?

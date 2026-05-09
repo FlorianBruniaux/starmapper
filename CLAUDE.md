@@ -197,6 +197,15 @@ GET /api/feed/[login]/json
   Returns: JSON Feed 1.1 object (Content-Type: application/feed+json)
   Cache: public, 1h CDN
   Note: same data as RSS feed, JSON Feed 1.1 format.
+
+GET /api/geo/[owner]/[repo]
+  Header: Authorization: Bearer <api-key>
+  Returns: { metadata: { owner, repo, totalCount, geocodedCount, scannedAt, apiVersion }, countries: [{name, count}][], cities: [{name, count}][] }
+  Cache: private, no-store
+  Note: API key authenticated (ApiKey model). Looks up by keyHash (SHA-256) first, falls back
+        to plaintext key during migration. Decompresses stargazer_cache gzip+base64 in Node,
+        aggregates country/city top-50 in-memory. Rate-limited 60 req/min per IP (Upstash).
+        Returns 404 if repo not yet scanned. See scripts/backfill-api-key-hash.ts.
 ```
 
 ---
@@ -296,6 +305,18 @@ GET /api/feed/[login]/json
 ---
 
 ## IV. Known Gotchas (PRIORITY #3 — read before touching anything)
+
+### ApiKey — SHA-256 hashing migration
+
+The `ApiKey` model stores keys as UUIDs. The `keyHash` field (SHA-256 hex of `key`) was added as an optional unique column. The geo route (`/api/geo/[owner]/[repo]/route.ts`) looks up by `keyHash` first, falls back to plaintext `key` during transition.
+
+**After any `prisma db push`**, run the backfill to populate `keyHash` for existing rows:
+```bash
+pnpm backfill:api-key-hash        # local Docker
+pnpm backfill:api-key-hash:prod   # Neon prod (requires DATABASE_URL in env)
+```
+
+When **creating new API keys**, always store `keyHash = hashApiKey(key)` (`src/lib/api-key.ts`) — never store the raw key in a way that's returned to a client.
 
 ### AnnouncementBanner — BANNER_ID lifecycle
 
