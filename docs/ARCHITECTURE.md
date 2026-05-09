@@ -398,7 +398,7 @@ Writes the full scan result to `StargazerCache`.
 { owner, repo, points: StargazerPoint[], unmapped: UnmappedUser[], totalCount: number }
 ```
 
-Validates `totalCount ≤ 100,000`. Performs an upsert on `StargazerCache`.
+Validates `totalCount ≤ 500,000`. Performs an upsert on `StargazerCache`.
 
 ---
 
