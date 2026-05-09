@@ -29,7 +29,7 @@ export default function DevsHubPage() {
         setData(json);
       })
       .catch((e) => {
-        if (e.name !== "AbortError") console.error("[devs/hub] fetch error:", e);
+        if (e.name !== "AbortError") {}
       })
       .finally(() => setLoading(false));
     return () => ctrl.abort();

@@ -107,7 +107,7 @@ export default function DevsLanguagePage({ params }: Props) {
         setLangOptions(json.languages);
       })
       .catch((e) => {
-        if (e.name !== "AbortError") console.error("[devs] options fetch error:", e);
+        if (e.name !== "AbortError") {}
       })
       .finally(() => setOptionsLoading(false));
     return () => ctrl.abort();
@@ -130,7 +130,7 @@ export default function DevsLanguagePage({ params }: Props) {
         setData(json);
       })
       .catch((e) => {
-        if (e.name !== "AbortError") console.error("[devs] fetch error:", e);
+        if (e.name !== "AbortError") {}
       })
       .finally(() => setLoading(false));
 

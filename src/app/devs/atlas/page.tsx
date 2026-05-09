@@ -176,7 +176,7 @@ export default function LanguageAtlasPage() {
         setData(json);
       })
       .catch((e) => {
-        if (e.name !== "AbortError") console.error("[devs/atlas] fetch error:", e);
+        if (e.name !== "AbortError") {}
       })
       .finally(() => setLoading(false));
     return () => ctrl.abort();
