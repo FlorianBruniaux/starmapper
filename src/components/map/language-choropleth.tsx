@@ -3,7 +3,7 @@
 
 "use client";
 
-import { useEffect, useRef, useMemo, memo } from "react";
+import { useEffect, useRef, useState, useMemo, memo } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { MAP_STYLE_DARK, MAP_STYLE_LIGHT } from "@/lib/theme";
@@ -15,9 +15,6 @@ import type { Topology, GeometryCollection } from "topojson-specification";
 import { toGeoName } from "@/lib/country-geo-names";
 import { LANGUAGE_COLORS, NO_DATA_COLOR } from "@/lib/language-colors";
 import type { AtlasCountry } from "@/app/api/devs/atlas/route";
-
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const topoData = require("world-atlas/countries-110m.json") as Topology;
 
 export type SelectedCountry = {
   country: string;   // StarMapper normalized name (smCountry)
@@ -61,18 +58,6 @@ const normalizeGeometry = (geom: GeoJSON.Geometry): GeoJSON.Geometry => {
   return geom;
 };
 
-/**
- * Pre-compute TopoJSON → GeoJSON + antimeridian normalization once at module level.
- * Geometry never changes — only per-country data varies.
- */
-const BASE_FEATURES = feature(
-  topoData,
-  topoData.objects.countries as GeometryCollection,
-).features.map((f) => ({
-  ...f,
-  geometry: normalizeGeometry(f.geometry),
-}));
-
 /** Build MapLibre match expression: ["match", ["get", "topLang"], "Python", "#3572A5", ..., fallback] */
 const buildMatchExpression = (): unknown[] => {
   const expr: unknown[] = ["match", ["get", "topLang"]];
@@ -86,15 +71,20 @@ const buildMatchExpression = (): unknown[] => {
 // Stable expression — computed once, shared across re-renders
 const FILL_COLOR_EXPRESSION = buildMatchExpression();
 
+type BaseFeature = GeoJSON.Feature & { geometry: GeoJSON.Geometry };
+
 /** Annotate each world feature with atlas country data. */
-const buildAtlasGeoJSON = (countries: AtlasCountry[]) => {
+const buildAtlasGeoJSON = (
+  baseFeatures: BaseFeature[],
+  countries: AtlasCountry[],
+) => {
   const dataMap = new Map(
     countries.map((c) => [toGeoName(c.country), c]),
   );
 
   return {
     type: "FeatureCollection" as const,
-    features: BASE_FEATURES.map((f) => {
+    features: baseFeatures.map((f) => {
       const geoName = (f.properties as { name: string } | null)?.name ?? "";
       const data = dataMap.get(geoName);
       return {
@@ -119,7 +109,34 @@ export const LanguageChoropleth = memo(({ countries, onCountryClick }: Props) =>
   const mapRef = useRef<maplibregl.Map | null>(null);
   const tooltipRef = useRef<maplibregl.Popup | null>(null);
 
-  const geoJson = useMemo(() => buildAtlasGeoJSON(countries), [countries]);
+  const [topoData, setTopoData] = useState<Topology | null>(null);
+
+  useEffect(() => {
+    fetch("/world-110m.json")
+      .then((r) => r.json())
+      .then((data) => setTopoData(data as Topology))
+      .catch(() => {});
+  }, []);
+
+  const baseFeatures = useMemo(() => {
+    if (!topoData) return null;
+    return feature(
+      topoData,
+      topoData.objects.countries as GeometryCollection,
+    ).features.map((f) => ({
+      ...f,
+      geometry: normalizeGeometry(f.geometry),
+    })) as BaseFeature[];
+  }, [topoData]);
+
+  const geoJson = useMemo(
+    () => (baseFeatures ? buildAtlasGeoJSON(baseFeatures, countries) : null),
+    [baseFeatures, countries],
+  );
+
+  // Keep a ref so the map-init closure can read the latest geoJson without being in its deps
+  const geoJsonRef = useRef(geoJson);
+  useEffect(() => { geoJsonRef.current = geoJson; }, [geoJson]);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -147,7 +164,9 @@ export const LanguageChoropleth = memo(({ countries, onCountryClick }: Props) =>
 
       map.on("load", () => {
         if (cancelled) return;
-        map.addSource("lang-countries", { type: "geojson", data: geoJson });
+        const data = geoJsonRef.current;
+        if (!data) return;
+        map.addSource("lang-countries", { type: "geojson", data });
 
         // Categorical fill driven by topLang → linguist color
         map.addLayer({
@@ -290,10 +309,15 @@ export const LanguageChoropleth = memo(({ countries, onCountryClick }: Props) =>
   // Update source data when countries prop changes (no full map rebuild)
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !map.isStyleLoaded()) return;
+    if (!map || !map.isStyleLoaded() || !geoJson) return;
     const src = map.getSource("lang-countries") as maplibregl.GeoJSONSource | undefined;
     src?.setData(geoJson);
   }, [geoJson]);
+
+  // Don't render the map container until topo data is ready
+  if (!geoJson) {
+    return <div className="relative w-full h-full bg-background" />;
+  }
 
   return (
     <div role="region" aria-label={`Language atlas map — ${countries.length} countries mapped`} className="relative w-full h-full">
