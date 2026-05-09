@@ -677,8 +677,7 @@ export default function MapPage({
         if (!chunk.nextCursor) break;
         cursor = chunk.nextCursor;
       }
-    } catch (e) {
-      console.error("[compare] scan failed:", e);
+    } catch {
       setCompareStatus("done");
       compareRunningRef.current = false;
       return;

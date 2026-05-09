@@ -137,6 +137,8 @@ const classifyRoute = (method: string, pathname: string): Tier => {
     pathname === "/api/explore/power" ||
     pathname === "/api/explore/user-repos" ||
     pathname === "/api/explore/global-map" ||
+    pathname === "/api/explore/autocomplete" ||
+    pathname === "/api/explore/geocode" ||
     pathname.startsWith("/api/profile/")
   ) {
     return "strict-get";

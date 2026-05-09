@@ -6,6 +6,17 @@ import { NextRequest } from "next/server";
 
 // ─── Mocks (must come before importing the route) ─────────────────────────────
 
+// Upstash rate limiter — stub so getChunkLimiter() returns null (fail-open) in tests.
+vi.mock("@upstash/ratelimit", () => ({
+  Ratelimit: class {
+    static slidingWindow() { return {}; }
+    async limit() { return { success: true }; }
+  },
+}));
+vi.mock("@upstash/redis", () => ({
+  Redis: { fromEnv: () => ({}) },
+}));
+
 // after() throws outside Next.js request scope — replace with synchronous no-op.
 vi.mock("next/server", async (importOriginal) => {
   const original = await importOriginal<typeof import("next/server")>();

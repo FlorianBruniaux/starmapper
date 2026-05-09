@@ -8,7 +8,20 @@ import { getOrCreateGitHubUserMinimal } from "@/lib/user-cache";
 import { jsonError, logError } from "@/lib/api-helpers";
 
 const BODY_MAX = 280;
-const URL_RE = /^https?:\/\/.+/;
+const URL_RE = /^https:\/\/.+/;
+
+// Block private/loopback/link-local hostnames to prevent SSRF via stored URLs.
+const PRIVATE_HOST_RE =
+  /^(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|169\.254\.|::1|fc00:|fd|0\.0\.0\.0)/i;
+
+const isPrivateUrl = (raw: string): boolean => {
+  try {
+    const { hostname } = new URL(raw);
+    return PRIVATE_HOST_RE.test(hostname);
+  } catch {
+    return true;
+  }
+};
 
 export type NewsItem = {
   id: number;
@@ -41,7 +54,7 @@ export const POST = async (req: NextRequest) => {
     return jsonError("body_too_long", 400);
   }
   if (url !== undefined && url !== null) {
-    if (typeof url !== "string" || !URL_RE.test(url)) {
+    if (typeof url !== "string" || !URL_RE.test(url) || isPrivateUrl(url)) {
       return jsonError("url_invalid", 400);
     }
   }

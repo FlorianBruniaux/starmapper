@@ -4,6 +4,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { jsonError, logError } from "@/lib/api-helpers";
 import { prisma } from "@/lib/db";
+import { LOGIN_RE } from "@/lib/api-validation";
 
 export type UserRepo = {
   name: string;
@@ -47,7 +48,7 @@ const mapRawRepos = (rawRepos: {
 
 export const GET = async (req: NextRequest) => {
   const login = new URL(req.url).searchParams.get("login") ?? "";
-  if (!login) return jsonError("missing login", 400);
+  if (!login || !LOGIN_RE.test(login)) return jsonError("invalid_login", 400);
 
   // 1. DB read — graceful fallback if DB is down
   const dbUser = await prisma.gitHubUser.findUnique({

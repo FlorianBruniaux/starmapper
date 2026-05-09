@@ -39,7 +39,7 @@ export const POST = async (req: NextRequest): Promise<NextResponse> => {
         rating: body.rating,
         delta: body.delta,
         navigationType: typeof body.navigationType === "string" ? body.navigationType : "navigate",
-        path: typeof body.path === "string" ? body.path.slice(0, 200) : "",
+        path: typeof body.path === "string" ? body.path.replace(/[\r\n\t]/g, " ").slice(0, 200) : "",
         ts: new Date().toISOString(),
       }),
     );
