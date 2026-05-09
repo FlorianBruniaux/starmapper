@@ -9,7 +9,7 @@ type Props =
 
 const TIER_STYLES: Record<OrganicTier, string> = {
   healthy:      "bg-accent-green/15 text-accent-green border-accent-green/30",
-  moderate:     "bg-orange-500/15 text-orange-400 border-orange-500/30",
+  moderate:     "bg-accent-orange-bg text-accent-orange border border-accent-orange-border",
   suspicious:   "bg-accent-red/15 text-accent-red border-accent-red/30",
   insufficient: "bg-surface-alt text-muted border-border",
 };

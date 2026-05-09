@@ -157,20 +157,20 @@ const buildSignals = (organic: RepoOrganic): SignalRow[] => {
 
 const TIER_CONFIG: Record<string, { color: string; bg: string; bar: string; label: string }> = {
   healthy:      { color: "text-accent-green",  bg: "bg-accent-green/10",  bar: "bg-accent-green",  label: "Healthy" },
-  moderate:     { color: "text-orange-400",    bg: "bg-orange-400/10",    bar: "bg-orange-400",    label: "Moderate" },
+  moderate:     { color: "text-accent-orange",  bg: "bg-accent-orange-bg", bar: "bg-accent-orange", label: "Moderate" },
   suspicious:   { color: "text-accent-red",    bg: "bg-accent-red/10",    bar: "bg-accent-red",    label: "Suspicious" },
   insufficient: { color: "text-muted",         bg: "bg-surface-alt",      bar: "bg-muted",         label: "Insufficient data" },
 };
 
 const STATUS_COLOR: Record<string, string> = {
   ok:   "bg-accent-green",
-  warn: "bg-orange-400",
+  warn: "bg-accent-orange",
   na:   "bg-muted/40",
 };
 
 const SIGNAL_BAR_COLOR: Record<string, string> = {
   ok:   "bg-accent-green",
-  warn: "bg-orange-400",
+  warn: "bg-accent-orange",
   na:   "bg-muted/30",
 };
 
@@ -219,7 +219,7 @@ export const OrganicScoreModal = ({ open, onClose, organic, owner, repo, onRecal
                 <div className="text-xs text-muted">out of 100</div>
               </div>
             </div>
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-orange-500/15 text-orange-400 border border-orange-500/25 text-2xs font-semibold uppercase tracking-wide">
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-accent-orange-bg text-accent-orange border border-accent-orange-border text-2xs font-semibold uppercase tracking-wide">
               Experimental
             </span>
           </div>
@@ -250,7 +250,7 @@ export const OrganicScoreModal = ({ open, onClose, organic, owner, repo, onRecal
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
                   {s.signalScore !== null && (
-                    <span className={`text-xs font-semibold tabular-nums ${s.status === "ok" ? "text-accent-green" : s.status === "warn" ? "text-orange-400" : "text-muted"}`}>
+                    <span className={`text-xs font-semibold tabular-nums ${s.status === "ok" ? "text-accent-green" : s.status === "warn" ? "text-accent-orange" : "text-muted"}`}>
                       {Math.round(s.signalScore)}/100
                     </span>
                   )}

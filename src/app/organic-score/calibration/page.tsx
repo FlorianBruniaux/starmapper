@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 const TIER: Record<string, string> = {
   healthy: "text-accent-green",
-  moderate: "text-orange-400",
+  moderate: "text-accent-orange",
   suspicious: "text-accent-red",
   insufficient: "text-muted",
 };
@@ -59,7 +59,7 @@ const CORPUS: CorpusRow[] = [
 const expectedColor = (expected: string) => {
   if (expected === "healthy") return "text-accent-green";
   if (expected === "suspicious") return "text-accent-red";
-  return "text-orange-400";
+  return "text-accent-orange";
 };
 
 export default function CalibrationPage() {
@@ -73,7 +73,7 @@ export default function CalibrationPage() {
           </Link>
           <div className="flex items-center gap-3 mb-2">
             <h1 className="text-2xl font-bold">Organic Score — Calibration Data</h1>
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-orange-500/15 text-orange-400 border border-orange-500/30 text-xs font-medium uppercase tracking-wide">
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-accent-orange-bg text-accent-orange border border-accent-orange-border text-xs font-medium uppercase tracking-wide">
               Experimental
             </span>
           </div>
@@ -207,12 +207,12 @@ export default function CalibrationPage() {
                 <tr className="border-b border-border-subtle">
                   <td className="px-4 py-2.5 text-foreground">% zero-follower stargazers</td>
                   <td className="px-4 py-2.5 text-center text-accent-green">✓ 45%</td>
-                  <td className="px-4 py-2.5 text-center text-orange-400">partial</td>
+                  <td className="px-4 py-2.5 text-center text-accent-orange">partial</td>
                   <td className="px-4 py-2.5 text-muted text-xs">Strongest discriminator when sample size ≥ 30. Reduced slightly to make room for releases signal</td>
                 </tr>
                 <tr className="border-b border-border-subtle">
                   <td className="px-4 py-2.5 text-foreground">Watcher / star ratio</td>
-                  <td className="px-4 py-2.5 text-center text-orange-400">✓ 5%</td>
+                  <td className="px-4 py-2.5 text-center text-accent-orange">✓ 5%</td>
                   <td className="px-4 py-2.5 text-center text-muted">—</td>
                   <td className="px-4 py-2.5 text-muted text-xs">Weakly discriminating in practice — weight kept low</td>
                 </tr>
