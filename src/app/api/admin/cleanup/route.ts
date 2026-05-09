@@ -23,8 +23,14 @@ export const POST = async (req: NextRequest) => {
 // We validate it to prevent unauthenticated cron execution.
 export const GET = async (req: NextRequest) => {
   const cronSecret = process.env.CRON_SECRET;
+  if (!cronSecret) {
+    if (process.env.NODE_ENV === "production") {
+      console.warn("[cron/cleanup] CRON_SECRET not set — cron auth will always fail (data retention policy broken)");
+    }
+    return jsonError("Unauthorized", 401);
+  }
   const authHeader = req.headers.get("authorization");
-  if (!cronSecret || !safeEqual(authHeader ?? "", `Bearer ${cronSecret}`)) {
+  if (!safeEqual(authHeader ?? "", `Bearer ${cronSecret}`)) {
     return jsonError("Unauthorized", 401);
   }
 

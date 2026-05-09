@@ -908,6 +908,8 @@ export default function ExplorePage() {
                           <img
                             src={u.avatarUrl}
                             alt={`Avatar of ${u.login}`}
+                            width={32}
+                            height={32}
                             className="w-8 h-8 rounded-full flex-shrink-0 ring-1 ring-border"
                           />
                           <div className="flex-1 min-w-0">
@@ -1021,6 +1023,8 @@ export default function ExplorePage() {
                               <img
                                 src={u.avatarUrl}
                                 alt={`Avatar of ${u.login}`}
+                                width={32}
+                                height={32}
                                 className="w-8 h-8 rounded-full flex-shrink-0 ring-1 ring-border"
                               />
                               <div className="flex-1 min-w-0">
@@ -1238,6 +1242,8 @@ export default function ExplorePage() {
                                 <img
                                   src={`https://github.com/${u.login}.png`}
                                   alt={`Avatar of ${u.login}`}
+                                  width={32}
+                                  height={32}
                                   className="w-8 h-8 rounded-full flex-shrink-0 ring-1 ring-border"
                                 />
                                 <div className="flex-1 min-w-0">
