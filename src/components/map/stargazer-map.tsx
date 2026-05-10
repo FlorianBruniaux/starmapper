@@ -190,6 +190,10 @@ const buildGeoJSON = (pts: StargazerPoint[]) => {
   };
 }
 
+const prefersReducedMotion = () =>
+  typeof window !== "undefined" &&
+  window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
 // Spider layout: circle for ≤ 8 points, spiral for more
 const spiderPositions = (count: number, cx: number, cy: number) => {
   const pts: { x: number; y: number }[] = [];
@@ -447,7 +451,10 @@ const makePopupElement = (props: Record<string, unknown>): HTMLElement => {
   el.appendChild(reposSection);
 
   if (!profileFetchCache.has(login)) {
-    if (profileFetchCache.size >= PROFILE_CACHE_MAX) profileFetchCache.clear();
+    if (profileFetchCache.size >= PROFILE_CACHE_MAX) {
+    const oldest = profileFetchCache.keys().next().value;
+    if (oldest !== undefined) profileFetchCache.delete(oldest);
+  }
     profileFetchCache.set(login, fetch(`/api/profile/${encodeURIComponent(login)}`)
       .then((r) => r.ok ? r.json() : null)
       .catch(() => null));
@@ -673,7 +680,7 @@ const StargazerMapInner = ({ points, comparePoints, flyTarget, onFlyDone, onRead
                 showSpider(map, spiderActiveRef, clusterId, coords).catch(() => {});
               } else {
                 clearSpider(map, spiderActiveRef);
-                map.easeTo({ center: coords, zoom });
+                map.easeTo({ center: coords, zoom, ...(prefersReducedMotion() && { duration: 0 }) });
               }
             })
             .catch(() => {});
@@ -779,7 +786,7 @@ const StargazerMapInner = ({ points, comparePoints, flyTarget, onFlyDone, onRead
 
   useEffect(() => {
     if (!flyTarget || !mapRef.current || !mapReady) return;
-    mapRef.current.flyTo({ center: [flyTarget.lng, flyTarget.lat], zoom: flyTarget.zoom ?? 12, duration: 1200 });
+    mapRef.current.flyTo({ center: [flyTarget.lng, flyTarget.lat], zoom: flyTarget.zoom ?? 12, duration: prefersReducedMotion() ? 0 : 1200 });
     onFlyDone?.();
   }, [flyTarget, onFlyDone, mapReady]);
 

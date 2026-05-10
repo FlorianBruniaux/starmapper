@@ -27,7 +27,11 @@
     "seed:geonames:dry": "tsx scripts/seed-geocache-geonames.ts --dry-run",
     "stats:views": "tsx scripts/view-stats.ts",
     "backfill:api-key-hash": "DATABASE_DRIVER=standard tsx scripts/backfill-api-key-hash.ts",
-    "backfill:api-key-hash:prod": "DATABASE_DRIVER=standard DATABASE_URL=$DATABASE_URL tsx scripts/backfill-api-key-hash.ts"
+    "backfill:api-key-hash:prod": "DATABASE_DRIVER=standard DATABASE_URL=$DATABASE_URL tsx scripts/backfill-api-key-hash.ts",
+    "backfill:organic-score": "sh -c 'set -a && . .env.local && set +a && DATABASE_DRIVER=standard DATABASE_URL=$DATABASE_URL_LOCAL tsx scripts/backfill-organic-score.ts \"$@\"' _",
+    "backfill:organic-score:prod": "sh -c 'set -a && . .env.local && set +a && DATABASE_DRIVER=standard DATABASE_URL=$DATABASE_URL tsx scripts/backfill-organic-score.ts \"$@\"' _",
+    "setup:mvs": "sh -c 'set -a && . .env.local && set +a && DATABASE_URL=$DATABASE_URL_LOCAL tsx scripts/setup-mvs.ts'",
+    "setup:mvs:prod": "tsx scripts/setup-mvs.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.2",

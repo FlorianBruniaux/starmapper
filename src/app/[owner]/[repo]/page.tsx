@@ -343,14 +343,46 @@ export default function MapPage({
       saveBookmark(owner, repo, local.totalCount);
       setCacheCheckDone(true);
     }
+    // Upload localStorage data to DB so other users can load the map without rescanning.
+    // Called when the DB has no scan data (206 = badge only, 404 = nothing) but we have a local cache.
+    const donateLocalCacheToDb = (cache: LocalCache) => {
+      (async () => {
+        try {
+          type SlimPoint = Omit<StargazerPoint, "bio" | "avatarUrl">;
+          const slim: SlimPoint[] = cache.points.map(({ bio: _b, avatarUrl: _av, ...rest }) => rest);
+          const [pointsGz, unmappedGz] = await Promise.all([
+            compressToBase64(slim),
+            compressToBase64(cache.unmapped),
+          ]);
+          await fetch("/api/stargazer-cache", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              owner, repo, pointsGz, unmappedGz,
+              totalCount: cache.totalCount,
+              latestStarredAt: cache.latestStarredAt,
+              ts: Date.now(),
+            }),
+          });
+        } catch { /* fire-and-forget */ }
+      })();
+    };
+
     fetch(`/api/stargazer-cache/${owner}/${repo}`)
       .then(async (r) => {
         if (r.status === 206) {
           const d = await r.json();
-          if (!local) setLastDbScan(d.lastScan);
+          if (!local) {
+            setLastDbScan(d.lastScan);
+          } else {
+            donateLocalCacheToDb(local);
+          }
           return;
         }
-        if (!r.ok) return;
+        if (!r.ok) {
+          if (local) donateLocalCacheToDb(local);
+          return;
+        }
         const data = await r.json();
         if (!data.points) return;
         const scannedMs = new Date(data.scannedAt).getTime();
@@ -1159,7 +1191,7 @@ export default function MapPage({
           >
             <div className="flex items-center gap-3 mb-6">
               {repoInfo.avatar && (
-                <NextImage src={repoInfo.avatar} alt="" width={40} height={40} className="w-10 h-10 rounded-full" />
+                <NextImage src={repoInfo.avatar} alt="" width={40} height={40} sizes="40px" className="w-10 h-10 rounded-full" />
               )}
               <div>
                 <h2 id="prescan-title" className="text-foreground font-semibold">{repoInfo.name}</h2>
@@ -1339,7 +1371,7 @@ export default function MapPage({
       {drawerOpen && (
         <div className="absolute bottom-0 left-0 right-0 z-20
           bg-background/95 border-t border-border backdrop-blur-md
-          flex flex-col max-h-[45vh]">
+          flex flex-col max-h-[45dvh]">
           <div className="flex items-center justify-between px-5 py-3 border-b border-border-subtle flex-shrink-0">
             <div>
               <span className="text-sm text-muted">
@@ -1675,7 +1707,7 @@ export default function MapPage({
                       <td className="px-3 py-2">
                         <div className="flex items-center gap-2">
                           {u.avatarUrl
-                            ? <NextImage src={u.avatarUrl} alt="" width={24} height={24} className="w-6 h-6 rounded-full flex-shrink-0" />
+                            ? <NextImage src={u.avatarUrl} alt="" width={24} height={24} sizes="24px" className="w-6 h-6 rounded-full flex-shrink-0" />
                             : <div className="w-6 h-6 rounded-full bg-surface-alt flex-shrink-0" />
                           }
                           <div className="min-w-0">
@@ -1812,7 +1844,7 @@ export default function MapPage({
             {/* Preview card */}
             <div id="share-card" className="mx-5 my-4 bg-background rounded-xl p-6 border border-border">
               <div className="flex items-center gap-3 mb-4">
-                {repoInfo.avatar && <NextImage src={repoInfo.avatar} alt="" width={40} height={40} className="w-10 h-10 rounded-full border border-border flex-shrink-0" />}
+                {repoInfo.avatar && <NextImage src={repoInfo.avatar} alt="" width={40} height={40} sizes="40px" className="w-10 h-10 rounded-full border border-border flex-shrink-0" />}
                 <div className="min-w-0">
                   <div className="text-muted text-xs leading-tight">{owner}</div>
                   <div className="text-foreground font-bold text-base leading-tight truncate">{repo}</div>
@@ -2354,7 +2386,7 @@ export default function MapPage({
                       <div key={u.login} className="flex items-center gap-3 py-0.5">
                         <span className="text-muted-subtle text-xs w-5 text-right flex-shrink-0">{i + 1}</span>
                         {u.avatarUrl
-                          ? <NextImage src={u.avatarUrl} alt="" width={32} height={32} className="w-8 h-8 rounded-full flex-shrink-0 ring-1 ring-border" />
+                          ? <NextImage src={u.avatarUrl} alt="" width={32} height={32} sizes="32px" className="w-8 h-8 rounded-full flex-shrink-0 ring-1 ring-border" />
                           : <div className="w-8 h-8 rounded-full bg-surface-alt flex-shrink-0 ring-1 ring-border" />
                         }
                         <div className="flex-1 min-w-0">
@@ -2447,7 +2479,7 @@ export default function MapPage({
                   {displayStats.powerStargazers.map((u, i) => (
                     <div key={u.login} className="flex items-center gap-3 py-0.5">
                       <span className="text-muted-subtle text-xs w-5 text-right flex-shrink-0">{i + 1}</span>
-                      <NextImage src={u.avatarUrl} alt="" width={32} height={32} className="w-8 h-8 rounded-full flex-shrink-0 ring-1 ring-border" />
+                      <NextImage src={u.avatarUrl} alt="" width={32} height={32} sizes="32px" className="w-8 h-8 rounded-full flex-shrink-0 ring-1 ring-border" />
                       <div className="flex-1 min-w-0">
                         <a
                           href={`/profile/${u.login}`}
