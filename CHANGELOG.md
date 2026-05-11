@@ -5,6 +5,14 @@ Versioning : Semantic Versioning (MAJOR.MINOR.PATCH)
 
 ---
 
+## [0.4.5] — 2026-05-11
+
+### Features
+
+- **Watch mode** — Bouton "Watch" dans le Dock (visible pour les repos scannés avec timestamps). Active un polling GitHub toutes les 60s : compare les stargazers récents au timestamp de démarrage, détecte les nouvelles étoiles sans rescanner. Affichage : point vert pulsant + `+N ★ · India, Germany` en temps réel. S'arrête automatiquement après 10 min sans nouvelle étoile. Endpoint `GET /api/watch/[owner]/[repo]?since=<ISO>` : GitHub REST + lookup `countryNormalized` depuis `github_user` (aucun appel Nominatim). Aucune écriture DB, `Cache-Control: no-store`.
+
+---
+
 ## [0.4.4] — 2026-05-11
 
 ### Features
