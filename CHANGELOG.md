@@ -5,6 +5,15 @@ Versioning : Semantic Versioning (MAJOR.MINOR.PATCH)
 
 ---
 
+## [0.4.4] — 2026-05-11
+
+### Features
+
+- **Notable stargazers row** — Le modal Stats affiche maintenant les 5 meilleurs stargazers par followers sous forme de chips d'avatars, visibles dès l'ouverture sans changer d'onglet. Chaque chip montre l'avatar, le login et le nombre de followers. Un lien "Top N →" bascule vers l'onglet Top Stars complet. Données disponibles immédiatement depuis les points scannés en mémoire (aucun appel API supplémentaire).
+- **Geographic velocity ("📈 Rising")** — Nouvel onglet dans le modal Stats qui révèle quels pays découvrent le repo en ce moment. Compare le rythme quotidien des 30 derniers jours au rythme historique des jours 31–90. Quatre statuts : `rising` (×1.5+), `new` (aucun historique), `stable`, `declining` (≤0.5). Chargement paresseux : la requête ne part que lorsque l'onglet est ouvert, une seule fois par session. Endpoint `GET /api/stats/[owner]/[repo]/geo-velocity`, requête SQL avec `COUNT(*) FILTER`, cache CDN 5 min.
+
+---
+
 ## [0.4.3] — 2026-05-11
 
 ### Features
