@@ -22,8 +22,7 @@ export const defineRoute =
     }
     const result = schema.safeParse(raw);
     if (!result.success) {
-      const firstMessage = result.error.issues[0]?.message;
-      const code = firstMessage && firstMessage.length > 0 ? firstMessage : "invalid_params";
+      const code = result.error.issues[0]?.message ?? "invalid_params";
       return jsonError(code, 400);
     }
     return handler(req, result.data);

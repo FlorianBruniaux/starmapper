@@ -21,7 +21,7 @@ describe("defineRoute", () => {
 
   it("dispatches to handler with parsed body on success", async () => {
     const handler = defineRoute(schema, async (_req, body) =>
-      Response.json({ ok: true, body }) as never,
+      Response.json({ ok: true, body }),
     );
     const res = await handler(makeReq({ name: "x", count: 1 }));
     expect(res.status).toBe(200);
@@ -29,7 +29,7 @@ describe("defineRoute", () => {
   });
 
   it("returns 400 invalid_json when body is not parseable JSON", async () => {
-    const handler = defineRoute(schema, async () => Response.json({}) as never);
+    const handler = defineRoute(schema, async () => Response.json({}));
     const res = await handler(makeReq(null, { rawBody: "{not json" }));
     expect(res.status).toBe(400);
     expect(await res.json()).toEqual({ error: "invalid_json" });
@@ -38,7 +38,7 @@ describe("defineRoute", () => {
   it("honours jsonErrorCode option for the JSON parse branch", async () => {
     const handler = defineRoute(
       schema,
-      async () => Response.json({}) as never,
+      async () => Response.json({}),
       { jsonErrorCode: "invalid_body" },
     );
     const res = await handler(makeReq(null, { rawBody: "{not json" }));
@@ -47,7 +47,7 @@ describe("defineRoute", () => {
   });
 
   it("returns 400 with first issue message as code on schema failure", async () => {
-    const handler = defineRoute(schema, async () => Response.json({}) as never);
+    const handler = defineRoute(schema, async () => Response.json({}));
     const res = await handler(makeReq({ count: -1 }));
     expect(res.status).toBe(400);
     const body = await res.json();
@@ -56,7 +56,7 @@ describe("defineRoute", () => {
 
   it("falls back to invalid_params when no issue message is set", async () => {
     const bareSchema = z.object({ a: z.string() });
-    const handler = defineRoute(bareSchema, async () => Response.json({}) as never);
+    const handler = defineRoute(bareSchema, async () => Response.json({}));
     const res = await handler(makeReq({}));
     expect(res.status).toBe(400);
     const body = await res.json();
