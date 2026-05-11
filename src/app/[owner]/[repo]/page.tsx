@@ -183,6 +183,8 @@ export default function MapPage({
   const [liDraft, setLiDraft] = useState("");
   const [liCopied, setLiCopied] = useState(false);
   const [badgeCopied, setBadgeCopied] = useState(false);
+  const [filterLinkCopied, setFilterLinkCopied] = useState(false);
+  const [sharedView, setSharedView] = useState(false);
   const [allOpen, setAllOpen] = useState(false);
   const [allSearch, setAllSearch] = useState("");
   const deferredSearch = useDeferredValue(allSearch);
@@ -243,16 +245,33 @@ export default function MapPage({
     return () => clearTimeout(t);
   }, [clusterRadius]);
 
-  // Read compare param from URL on mount
+  // Read compare + filter params from URL on mount
   useEffect(() => {
-    const p = new URLSearchParams(window.location.search).get("compare");
-    if (p && p.includes("/") && p.split("/").length === 2) {
-      const [o, r] = p.split("/");
-      if (o && r) {
-        setCompareOwner(o);
-        setCompareRepo(r);
-      }
+    const p = new URLSearchParams(window.location.search);
+    const compare = p.get("compare");
+    if (compare && compare.includes("/") && compare.split("/").length === 2) {
+      const [o, r] = compare.split("/");
+      if (o && r) { setCompareOwner(o); setCompareRepo(r); }
     }
+    // Deep-link filter restore
+    let hasSharedState = false;
+    const country = p.get("country");
+    const city = p.get("city");
+    const company = p.get("company");
+    const followers = p.get("followers");
+    const date = p.get("date");
+    const tier = p.get("tier");
+    const mode = p.get("mode");
+    const proj = p.get("proj");
+    if (country) { setFilterCountry(country); hasSharedState = true; }
+    if (city) { setFilterCity(city); hasSharedState = true; }
+    if (company) { setFilterCompany(company); hasSharedState = true; }
+    if (followers) { const n = parseInt(followers, 10); if (n > 0) { setFilterFollowers(n); hasSharedState = true; } }
+    if (date && (["30d", "90d", "1y"] as string[]).includes(date)) { setFilterDate(date as "30d" | "90d" | "1y"); hasSharedState = true; }
+    if (tier && (["high", "mid", "low"] as string[]).includes(tier)) { setFollowerMapFilter(tier as "high" | "mid" | "low"); hasSharedState = true; }
+    if (mode === "heatmap") { setViewMode("heatmap"); hasSharedState = true; }
+    if (proj === "mercator") { setMapProjection("mercator"); hasSharedState = true; }
+    if (hasSharedState) setSharedView(true);
   }, []);
 
   const ghHeaders = useCallback((): Record<string, string> => {
@@ -1038,6 +1057,30 @@ export default function MapPage({
   // Client-side stats take priority; fall back to server stats when no points loaded yet
   const displayStats = stats ?? serverStats;
 
+  // Stars gained in the last 30 days (based on starredAt already in memory)
+  const starsThisMonth = useMemo(() => {
+    const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    return points.filter((p) => p.starredAt && new Date(p.starredAt).getTime() >= cutoff).length;
+  }, [points]);
+
+  // Build a filtered-view URL encoding current filter state
+  const buildFilteredUrl = useCallback((): string => {
+    const params = new URLSearchParams();
+    if (filterCountry) params.set("country", filterCountry);
+    if (filterCity) params.set("city", filterCity);
+    if (filterCompany) params.set("company", filterCompany);
+    if (filterFollowers > 0) params.set("followers", String(filterFollowers));
+    if (filterDate !== "all") params.set("date", filterDate);
+    if (followerMapFilter !== "all") params.set("tier", followerMapFilter);
+    if (viewMode !== "clusters") params.set("mode", viewMode);
+    if (mapProjection !== "globe") params.set("proj", String(mapProjection));
+    const base = `${window.location.origin}${window.location.pathname}`;
+    const qs = params.toString();
+    return qs ? `${base}?${qs}` : base;
+  }, [filterCountry, filterCity, filterCompany, filterFollowers, filterDate, followerMapFilter, viewMode, mapProjection]);
+
+  const hasActiveFilters = !!(filterCountry || filterCity || filterCompany || filterFollowers > 0 || filterDate !== "all" || followerMapFilter !== "all" || viewMode !== "clusters");
+
   // Stable callbacks for StargazerMap — prevents re-mount on every render (memo + shallow compare)
   const handleFlyDone = useCallback(() => setFlyTarget(null), []);
   const handleMapReady = useCallback(
@@ -1356,6 +1399,28 @@ export default function MapPage({
         findStatus={findStatus}
         organic={organicData ?? serverStats?.organic}
       />
+
+      {/* Shared-view banner — shown when URL encoded filters were detected on load */}
+      {sharedView && (
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20
+          bg-accent-blue/10 border border-accent-blue/30 rounded-lg px-4 py-2
+          text-xs backdrop-blur-md flex items-center gap-3 max-w-sm shadow-md">
+          <span className="text-accent-blue font-medium">Shared view</span>
+          {filterCountry && <span className="text-muted-subtle">{filterCountry}</span>}
+          {filterCity && <span className="text-muted-subtle">{filterCity}</span>}
+          {filterCompany && <span className="text-muted-subtle">{filterCompany}</span>}
+          {filterFollowers > 0 && <span className="text-muted-subtle">{filterFollowers}+ flw</span>}
+          {filterDate !== "all" && <span className="text-muted-subtle">{filterDate}</span>}
+          {followerMapFilter !== "all" && <span className="text-muted-subtle">{followerMapFilter}</span>}
+          <button
+            onClick={() => setSharedView(false)}
+            aria-label="Dismiss"
+            className="ml-auto text-muted hover:text-foreground leading-none"
+          >
+            <span aria-hidden="true">✕</span>
+          </button>
+        </div>
+      )}
 
       {/* Legend — compare mode indicator only */}
       {compareOwner && compareRepo && (
@@ -2113,6 +2178,38 @@ export default function MapPage({
                   </button>
                 </div>
               </div>
+              {/* Current view deep link — only shown when filters are active */}
+              {hasActiveFilters && (
+                <div className="border border-border rounded-lg overflow-hidden">
+                  <div className="px-3 py-2 border-b border-border-subtle flex items-center justify-between">
+                    <span className="text-foreground text-xs font-medium">Current view</span>
+                    <div className="flex flex-wrap gap-1">
+                      {filterCountry && <span className="text-2xs bg-surface border border-border-subtle rounded px-1.5 py-0.5 text-muted">{filterCountry}</span>}
+                      {filterCity && <span className="text-2xs bg-surface border border-border-subtle rounded px-1.5 py-0.5 text-muted">{filterCity}</span>}
+                      {filterCompany && <span className="text-2xs bg-surface border border-border-subtle rounded px-1.5 py-0.5 text-muted">{filterCompany}</span>}
+                      {filterFollowers > 0 && <span className="text-2xs bg-surface border border-border-subtle rounded px-1.5 py-0.5 text-muted">{filterFollowers}+ flw</span>}
+                      {filterDate !== "all" && <span className="text-2xs bg-surface border border-border-subtle rounded px-1.5 py-0.5 text-muted">{filterDate}</span>}
+                      {followerMapFilter !== "all" && <span className="text-2xs bg-surface border border-border-subtle rounded px-1.5 py-0.5 text-muted">{followerMapFilter}</span>}
+                      {viewMode !== "clusters" && <span className="text-2xs bg-surface border border-border-subtle rounded px-1.5 py-0.5 text-muted">{viewMode}</span>}
+                    </div>
+                  </div>
+                  <div className="px-3 py-2 flex items-center gap-2">
+                    <code className="flex-1 text-xs text-muted truncate">
+                      {typeof window !== "undefined" ? buildFilteredUrl().replace(/^https?:\/\//, "") : ""}
+                    </code>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(buildFilteredUrl()).catch(() => {});
+                        setFilterLinkCopied(true);
+                        setTimeout(() => setFilterLinkCopied(false), 2000);
+                      }}
+                      className="flex-shrink-0 bg-surface-alt hover:bg-border border border-border text-muted hover:text-foreground text-xs px-3 py-1.5 rounded-md transition-colors"
+                    >
+                      {filterLinkCopied ? "✓ Copied" : "Copy"}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
       </Modal>
       )}
@@ -2275,6 +2372,9 @@ export default function MapPage({
                   {displayStats.totalStars >= 1000 ? `${(displayStats.totalStars / 1000).toFixed(1)}k` : displayStats.totalStars}
                 </div>
                 <div className="text-2xs text-muted uppercase tracking-wide mt-0.5">stars</div>
+                {starsThisMonth > 0 && (
+                  <div className="text-2xs text-accent-green mt-0.5">+{starsThisMonth >= 1000 ? `${(starsThisMonth / 1000).toFixed(1)}k` : starsThisMonth}/mo</div>
+                )}
               </div>
               <div className="bg-background rounded-lg px-2 py-2 text-center">
                 <div className="text-xl font-bold text-accent-green">{displayStats.mappingRate}%</div>
