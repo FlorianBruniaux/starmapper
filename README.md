@@ -44,35 +44,59 @@ Enter any GitHub repository URL and StarMapper fetches all stargazers, geocodes 
 ### Map & Visualization
 
 - Interactive world map with native GeoJSON clustering (MapLibre GL 5.x)
-- Progressive loading, with points appearing on the map as chunks arrive
+- Progressive loading — points appear on the map as chunks arrive
+- **Heatmap mode** — toggle between dot clusters and density heatmap from the Dock
+- **Animated timelapse** — replay weekly star accumulation with speed control (0.5×–4×)
+- **Multi-repo compare** — overlay two repos on the same map to visualize audience overlap
 - Stargazer detail cards on click (bio, followers, company)
 - Dark / light mode toggle
-- Embeddable SVG badge with mapped count and country stats
+
+### Stats & Analytics
+
+- **Stats panel** — 6 summary cards (mapped, countries, cities, top company, followers, scan date), all computed client-side after a scan
+- **Notable stargazers** — top-5 by followers shown as avatar chips above the tabs, visible immediately on stats modal open
+- **Geographic velocity** ("📈 Rising" tab) — shows which countries are accelerating: compares 30-day rate vs 31–90-day historical rate, with `rising / new / stable / declining` labels
+- **Star growth timeline** — weekly bar chart with hover tooltips, best week / avg / total summary
+- **Watch mode** — polls GitHub every 60s during a launch; pulsing badge shows `+N ★ · India, Germany` in real time; auto-stops after 10 min idle
+- **Power users** tab — cross-repo stargazers ranked by number of repos they've starred on StarMapper
+
+### Sharing & Embeds
+
+- **Deep link sharing** — Share modal encodes all active filters (country, city, company, followers, date, tier, view mode) into the URL; recipients see the exact same filtered view
+- **README badge** — SVG shield (`/api/badge/[owner]/[repo]`) cached 6h at CDN, one-click Markdown copy
+- **README map image** — full scatter map as SVG (`/api/map-image/[owner]/[repo]?theme=dark|light`), embeddable via `<picture>` for dark/light auto-switching
+- **PNG share card** — export the map + stats as a PNG for LinkedIn or social media
 
 ### Data & Geocoding
 
 - 3-tier geocoding cascade: Jawg (primary) → Geoapify (fallback) → Nominatim (ultimate fallback)
-- Shared geocache pre-seeded with ~51k GeoNames entries. Over 99% of real locations resolve without any external API call
+- Shared geocache pre-seeded with ~51k GeoNames entries — over 99% of real locations resolve without any external API call
 - Full scan results cached per repo; subsequent visitors get an instant map with no re-scan
 
-### Developer Maps (bonus features)
+### Explore & Discovery
 
-- **Language Atlas** (`/devs/atlas`), a choropleth map showing the dominant language per country
-- **Dev Maps by language** (`/devs/[language]`), filtered by programming language
+- **Explore page** (`/explore`) — leaderboard of top stargazers by followers and public repos, top companies, top locations, filterable by country and company with deep-linkable URL state
+- **Trending map** (`/trending`) — aggregate map of trending GitHub repos × stargazer geography, refreshed daily
+- **Public GeoJSON API** (`/api/geo/[owner]/[repo]`) — API-key authenticated, returns country + city aggregates (GDPR-safe, no individual coordinates)
 
 ### Developer Profiles
 
-- Profile page (`/profile/[login]`) with mini-map, language badges, follower stats, and top repos grid
+- Profile page (`/profile/[login]`) with mini-map, language badges, follower stats, nearby developers, and top repos grid
 - **Map a repo** button opens a full repo picker: all public repos (up to 500), searchable by name/description, sortable by Stars or A–Z
 - One-click Refresh updates the profile from GitHub (location, follower count, repos)
-- Devs can publish short announcements on their profile (280 chars, GitHub PAT auth), with RSS 2.0 and JSON Feed 1.1 feeds
+- Devs can publish short announcements on their profile (280 chars, GitHub PAT auth), with RSS 2.0 and JSON Feed 1.1 feeds (`/api/feed/[login]/rss`, `/api/feed/[login]/json`)
+
+### Developer Maps
+
+- **Language Atlas** (`/devs/atlas`) — choropleth map showing the dominant programming language per country, powered by a materialized view
+- **Dev Maps by language** (`/devs/[language]`) — developer map filtered by programming language (24 languages supported)
 
 ### UX
 
-- Community maps table on the landing page (sortable, paginated)
+- Community maps table on the landing page (sortable, paginated, with Organic Score badges)
 - Optional GitHub token input to raise rate limits from 60 to 5000 req/hour
 - Collapsible sidebar on mobile
-- Explore page (`/explore`) to discover developers by username, with leaderboard and language filter
+- Versioned changelog at `/changelog`
 
 ---
 
@@ -205,6 +229,8 @@ Open [http://localhost:3000](http://localhost:3000), enter any public GitHub rep
 
 ## Development Commands
 
+> **pnpm vs Make** — Two toolchains coexist intentionally. `pnpm` handles all scripts that need argument passthrough (`--force`, `--dry-run`, `--prod`, etc.) because Make cannot forward arbitrary arguments to sub-commands natively. `make` is kept for multi-step workflows with target dependencies (`db-pull: db-dump db-restore`) and shell-heavy operations (DB dump/restore, sync to Neon) where chaining and variable interpolation are more natural. Rule of thumb: if a command takes flags → `pnpm`. If it orchestrates multiple steps → `make`.
+
 ```bash
 pnpm dev                  # Dev server with Turbopack
 pnpm build                # Production build
@@ -222,12 +248,26 @@ npx prisma generate       # Regenerate Prisma client after schema edits
 pnpm seed:geonames:dry    # Preview, no insert
 pnpm seed:geonames        # Insert ~51k GeoNames entries (idempotent)
 
-# Language Atlas backfill
-pnpm backfill:languages --from-cache     # Fill from existing cache (no API)
-pnpm backfill:languages --token-index 0  # Fill remaining via GitHub API
+# Backfill — repo metadata (badge_cache)
+pnpm backfill:repo-metrics -- --force    # Update stars, forks, watchers, release info (all repos)
+pnpm backfill:repo-languages             # Update primary language per repo
+pnpm backfill:organic-score -- --force   # Recompute organic scores (repos ≥ 5000 stars)
 
-# DB sync (local Docker → Neon prod)
-pnpm db:sync              # Push github_user, star_event, badge_cache, stargazer_cache + refresh MVs
+# Backfill — developer data (github_user)
+pnpm backfill:languages -- --from-cache  # Fill languages[] from existing cache (no API calls)
+pnpm backfill:languages -- --force       # Refetch languages via GitHub GraphQL API
+pnpm backfill:user-top-repos -- --force  # Fetch top repos for devs (followers ≥ 100)
+pnpm backfill:linkedin                   # Fetch LinkedIn URLs via GitHub social accounts
+pnpm backfill:locations                  # Derive countryNormalized + cityNormalized
+
+# Batch scan (delta by default — only new stars since last scan)
+pnpm batch:scan -- --input /tmp/repos.json          # Delta scan from a repo list
+pnpm batch:scan -- --input /tmp/repos.json --force  # Full rescan
+
+# Maintenance pipeline (backfills → sync to Neon prod → refresh materialized views)
+make maintenance          # Full pipeline
+make maintenance-dry      # Dry-run preview, no writes
+make maintenance-sync-only  # Sync + MV refresh only (skip backfills)
 ```
 
 ---

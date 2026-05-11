@@ -206,6 +206,25 @@ GET /api/geo/[owner]/[repo]
         to plaintext key during migration. Decompresses stargazer_cache gzip+base64 in Node,
         aggregates country/city top-50 in-memory. Rate-limited 60 req/min per IP (Upstash).
         Returns 404 if repo not yet scanned. See scripts/backfill-api-key-hash.ts.
+
+GET /api/stats/[owner]/[repo]/geo-velocity
+  Returns: { items: GeoVelocityItem[] }
+  Cache: public, 5min CDN
+  Note: raw SQL on star_event × github_user. Computes 30d vs 31–90d daily rate ratio.
+        Trend: rising (≥1.5×), new (no history), stable, declining (≤0.5×). Top 20 countries.
+
+GET /api/watch/[owner]/[repo]?since=<ISO>
+  Returns: WatchResult { newCount: number, countries: string[], logins: string[] }
+  Cache: no-store
+  Note: GitHub REST GET /repos/.../stargazers with Accept: vnd.github.v3.star+json.
+        Filters to starred_at > since. Looks up countryNormalized from github_user (no Nominatim).
+        Uses server GITHUB_TOKEN (no client token forwarding).
+
+GET /api/map-image/[owner]/[repo]?theme=dark|light
+  Returns: SVG image (800×400, equirectangular projection)
+  Cache: public, 6h CDN (revalidate: 21600)
+  Note: pure SVG, no external font deps. Land path pre-computed at module load from world-atlas.
+        Points sampled to ≤2500 for SVG size. Embeddable via <picture> for dark/light themes.
 ```
 
 ---
@@ -235,6 +254,10 @@ GET /api/geo/[owner]/[repo]
 │   │       ├── repo-info/route.ts             # GET  — repo metadata (GitHub REST)
 │   │       ├── repos/route.ts                 # GET  — community maps list (BadgeCache)
 │   │       ├── stats/[owner]/[repo]/route.ts  # GET  — aggregated repo stats (GitHubUser+StarEvent)
+│   │       │   ├── geo-velocity/route.ts      # GET  — country velocity (30d vs 31-90d rate ratio)
+│   │       │   └── top-users/route.ts         # GET  — top 60 users by followers
+│   │       ├── watch/[owner]/[repo]/route.ts  # GET  — live star polling (GitHub REST, no-store)
+│   │       ├── map-image/[owner]/[repo]/route.ts # GET — SVG scatter map for README embeds
 │   │       ├── devs/
 │   │       │   ├── route.ts                   # GET  — dev map points filtered by language
 │   │       │   └── atlas/route.ts             # GET  — country × language aggregation (MV)
@@ -268,6 +291,8 @@ GET /api/geo/[owner]/[repo]
 │   │   └── map/
 │   │       ├── stargazer-map.tsx              # MapLibre GL map (client component)
 │   │       ├── stargazer-map-dynamic.tsx      # Dynamic import wrapper (ssr: false)
+│   │       ├── dock.tsx                       # Vertical Dock — view controls, stats/growth/watch/share buttons
+│   │       ├── country-choropleth.tsx         # Choropleth map — stargazer density by country
 │   │       ├── language-choropleth.tsx        # Choropleth map — language by country
 │   │       └── language-choropleth-dynamic.tsx # Dynamic import wrapper (ssr: false)
 │   ├── schemas/
@@ -564,6 +589,10 @@ npx prisma db push
 
 ## VII. Development Commands
 
+**pnpm vs Make — rationale**: Two toolchains coexist intentionally.
+- **pnpm** — all scripts that need argument passthrough (`--force`, `--dry-run`, `--prod`). pnpm forwards extra args after `--` directly to the script. Scripts using Node `parseArgs` require a `[ "$1" = "--" ] && shift` guard in the wrapper to strip the separator pnpm injects.
+- **make** — multi-step workflows with target dependencies (`db-pull: db-dump db-restore`) and shell-heavy ops (dump/restore, sync to Neon) where target chaining and shell variable interpolation are natural. Make cannot forward arbitrary args to sub-commands, so avoid it for scripts that take flags.
+
 ```bash
 # Dev
 pnpm dev                  # Start dev server (Turbopack)
@@ -596,9 +625,40 @@ pnpm create:user-repo-count-mv:prod # MV per-user repo count (nearby query, 6s�
 pnpm create:trgm-indexes            # same for local Docker
 pnpm create:user-repo-count-mv      # same for local Docker
 
-# Scripts
+# Geocache seeding
 pnpm seed:geonames        # Seed geocache from GeoNames (idempotent)
 pnpm seed:geonames:dry    # Dry-run — preview + stats, no insert
+
+# Backfill — badge_cache (repo metadata)
+pnpm backfill:repo-metrics -- --force          # stars, forks, watchers, release info (all repos)
+pnpm backfill:repo-metrics -- --dry-run        # preview only
+pnpm backfill:repo-metrics:prod -- --force     # same → Neon prod
+pnpm backfill:repo-languages                   # primary language per repo
+pnpm backfill:repo-languages:prod              # same → Neon prod
+pnpm backfill:organic-score -- --force         # organic score + tier (repos ≥ 5000 stars)
+pnpm backfill:organic-score:prod -- --force    # same → Neon prod
+
+# Backfill — github_user (developer data)
+pnpm backfill:languages -- --force             # languages[] from dev's own repos (GitHub GraphQL)
+pnpm backfill:languages -- --from-cache        # pre-fill from star_event + badge_cache (no API)
+pnpm backfill:languages:prod -- --force        # same → Neon prod
+pnpm backfill:user-top-repos -- --force        # topRepos[] for devs with ≥ 100 followers
+pnpm backfill:user-top-repos:prod -- --force   # same → Neon prod
+pnpm backfill:linkedin -- --top 5000           # LinkedIn URLs via GitHub social accounts
+pnpm backfill:linkedin:prod                    # same → Neon prod
+pnpm backfill:locations                        # countryNormalized + cityNormalized (one-shot)
+
+# Batch scan — rescan repos (delta by default, --force for full rescan)
+# Generate input JSON from DB: psql $DATABASE_URL_LOCAL -t -A -c "SELECT json_agg(owner||'/'||repo) FROM badge_cache" > /tmp/all-repos.json
+pnpm batch:scan -- --input /tmp/all-repos.json           # delta scan all repos (local)
+pnpm batch:scan -- --input /tmp/all-repos.json --force   # full rescan (local)
+pnpm batch:scan:prod -- --input /tmp/all-repos.json      # delta scan → Neon prod
+
+# Maintenance pipeline (local backfills → sync to Neon → refresh MVs)
+make maintenance          # full pipeline
+make maintenance-dry      # dry-run, no writes, no sync
+make maintenance-sync-only  # skip backfills, sync + refresh MVs only
+bash scripts/maintenance.sh --skip-sync  # backfills only
 
 # Analytics
 pnpm stats:views                   # Global overview (last 7 days, top 20)
