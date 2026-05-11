@@ -412,10 +412,21 @@ export default function ExplorePage() {
   const { theme } = useTheme();
   const mapStyleUrl = theme === "light" ? MAP_STYLE_LIGHT(JAWG_TOKEN) : MAP_STYLE_DARK(JAWG_TOKEN);
 
-  const [tab, setTab]                     = useState<Tab>("top");
-  const [selectedCountry, setCountry]     = useState("");
-  const [searchInput, setSearchInput]     = useState("");
-  const [search, setSearch]               = useState("");
+  const VALID_TABS: Tab[] = ["top", "power", "companies", "countries", "cities", "nearby"];
+  const [tab, setTab] = useState<Tab>(() => {
+    if (typeof window === "undefined") return "top";
+    const t = new URLSearchParams(window.location.search).get("tab") as Tab | null;
+    return t && VALID_TABS.includes(t) ? t : "top";
+  });
+  const [selectedCountry, setCountry] = useState(() =>
+    typeof window !== "undefined" ? (new URLSearchParams(window.location.search).get("country") ?? "") : ""
+  );
+  const [searchInput, setSearchInput] = useState(() =>
+    typeof window !== "undefined" ? (new URLSearchParams(window.location.search).get("q") ?? "") : ""
+  );
+  const [search, setSearch] = useState(() =>
+    typeof window !== "undefined" ? (new URLSearchParams(window.location.search).get("q") ?? "") : ""
+  );
   const [pages, setPages]                 = useState<Record<Tab, number>>({
     top: 1, power: 1, companies: 1, countries: 1, cities: 1, nearby: 1,
   });
@@ -425,9 +436,14 @@ export default function ExplorePage() {
   const [summaryLoading, setSummaryLoading] = useState(true);
 
   // Map panel state
-  const [mapMode, setMapMode]             = useState<"choropleth" | "heatmap">("choropleth");
+  const [mapMode, setMapMode] = useState<"choropleth" | "heatmap">(() =>
+    typeof window !== "undefined" && new URLSearchParams(window.location.search).get("map") === "heatmap"
+      ? "heatmap" : "choropleth"
+  );
   const [mapEverOpened, setMapEverOpened] = useState(false);
-  const [heatmapEverOpened, setHeatmapEverOpened] = useState(false);
+  const [heatmapEverOpened, setHeatmapEverOpened] = useState(() =>
+    typeof window !== "undefined" && new URLSearchParams(window.location.search).get("map") === "heatmap"
+  );
   const mapColumnRef = useRef<HTMLDivElement>(null);
 
   // Nearby tab state
@@ -485,6 +501,17 @@ export default function ExplorePage() {
     const t = setTimeout(() => setSearch(searchInput.replace(/^@/, "")), 300);
     return () => clearTimeout(t);
   }, [searchInput]);
+
+  // Sync active filters to URL so explore views are shareable
+  useEffect(() => {
+    const sp = new URLSearchParams();
+    if (tab !== "top") sp.set("tab", tab);
+    if (selectedCountry) sp.set("country", selectedCountry);
+    if (search) sp.set("q", search);
+    if (mapMode !== "choropleth") sp.set("map", mapMode);
+    const qs = sp.toString();
+    window.history.replaceState(null, "", qs ? `/explore?${qs}` : "/explore");
+  }, [tab, selectedCountry, search, mapMode]);
 
   // Reset pages to 1 when filters change (except nearby — it manages its own page)
   const prevFilters = useRef({ selectedCountry, search });
