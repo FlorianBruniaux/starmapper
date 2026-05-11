@@ -14,7 +14,7 @@ Versioning : Semantic Versioning (MAJOR.MINOR.PATCH)
 
 ### Internal
 
-- **Zod `defineRoute` wrapper** — POST routes progressively migrated to a typed `defineRoute()` helper that centralises Zod body validation, error serialisation, and rate-limit wiring. Reduces per-route boilerplate and standardises 400/429/500 response shapes.
+- **Zod body validation on all POST routes** — All 7 POST routes migrated to a `defineRoute(schema, handler)` wrapper. New `src/schemas/` directory holds typed Zod v4 schemas for each route (`track`, `vitals`, `recalculate-location`, `badge-update`, `chunk`, `news`, `stargazer-cache`). Per-field error codes are declared directly in schemas; `defineRoute` surfaces `issues[0].message` verbatim so every existing error contract is preserved unchanged. Manual `typeof` / regex validation chains removed from all route handlers. `getIP` exported from `api-helpers` to replace a duplicate helper in the chunk route.
 
 ---
 

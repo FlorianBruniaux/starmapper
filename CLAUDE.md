@@ -270,7 +270,19 @@ GET /api/geo/[owner]/[repo]
 │   │       ├── stargazer-map-dynamic.tsx      # Dynamic import wrapper (ssr: false)
 │   │       ├── language-choropleth.tsx        # Choropleth map — language by country
 │   │       └── language-choropleth-dynamic.tsx # Dynamic import wrapper (ssr: false)
+│   ├── schemas/
+│   │   ├── track.ts                           # Zod schema — POST /api/track
+│   │   ├── vitals.ts                          # Zod schema — POST /api/vitals
+│   │   ├── recalculate-location.ts            # Zod schema — POST /api/recalculate-location
+│   │   ├── badge-update.ts                    # Zod schema — POST /api/badge-update
+│   │   ├── chunk.ts                           # Zod schema — POST /api/chunk
+│   │   ├── news.ts                            # Zod schema — POST /api/news
+│   │   └── stargazer-cache.ts                 # Zod schema — POST /api/stargazer-cache (envelope)
 │   └── lib/
+│       ├── define-route.ts                    # defineRoute(schema, handler, opts?) — Zod JSON-parse + safeParse wrapper for POST routes
+│       ├── api-helpers.ts                     # jsonError(), logError(), getIP() — shared route utilities
+│       ├── api-validation.ts                  # validateOwnerRepo(), OWNER_REPO_RE, LOGIN_RE — path-param validation
+│       ├── api-token.ts                       # verifyToken(), COOKIE_NAME — sm-token HMAC cookie
 │       ├── db.ts                              # Prisma + Neon adapter singleton
 │       ├── db-health.ts                       # DB storage usage check (Neon 512MB limit)
 │       ├── geocoder.ts                        # geocode() + geocodeBatch() — 3-tier cascade
