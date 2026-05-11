@@ -1404,12 +1404,22 @@ export default function ExplorePage() {
                   </div>
                 )}
                 {!showNearbyMap && mapMode === "choropleth" && (
-                  <span className="hidden sm:flex items-center gap-1.5 text-xs text-muted border border-border-subtle rounded-md px-2.5 py-1">
-                    <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" className="text-accent-blue shrink-0">
-                      <path d="M1 2.75C1 1.784 1.784 1 2.75 1h10.5c.966 0 1.75.784 1.75 1.75v7.5A1.75 1.75 0 0 1 13.25 12H9.06l.47 2h1.72a.75.75 0 0 1 0 1.5H4.75a.75.75 0 0 1 0-1.5h1.72l.47-2H2.75A1.75 1.75 0 0 1 1 10.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h10.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z" />
-                    </svg>
-                    Click a country to filter
-                  </span>
+                  selectedCountry ? (
+                    <button
+                      onClick={() => { setCountry(""); setTab("top"); }}
+                      className="flex items-center gap-1.5 text-xs text-accent-blue bg-accent-blue/10 border border-accent-blue/30 rounded-md px-2.5 py-1 hover:bg-accent-blue/20 transition-colors"
+                    >
+                      {selectedCountry}
+                      <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l3.22-3.22a.749.749 0 0 1 1.275.326.749.749 0 0 1-.215.734L9.06 8l3.22 3.22a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215L8 9.06l-3.22 3.22a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042L6.94 8 3.72 4.78a.75.75 0 0 1 0-1.06Z"/></svg>
+                    </button>
+                  ) : (
+                    <span className="hidden sm:flex items-center gap-1.5 text-xs text-muted border border-border-subtle rounded-md px-2.5 py-1">
+                      <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" className="text-accent-blue shrink-0">
+                        <path d="M1 2.75C1 1.784 1.784 1 2.75 1h10.5c.966 0 1.75.784 1.75 1.75v7.5A1.75 1.75 0 0 1 13.25 12H9.06l.47 2h1.72a.75.75 0 0 1 0 1.5H4.75a.75.75 0 0 1 0-1.5h1.72l.47-2H2.75A1.75 1.75 0 0 1 1 10.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h10.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z" />
+                      </svg>
+                      Click a country to filter
+                    </span>
+                  )
                 )}
               </div>
 
@@ -1445,6 +1455,7 @@ export default function ExplorePage() {
                   mapCountriesData ? (
                     <CountryChoroplethDynamic
                       countryData={mapCountriesData.items}
+                      selectedCountry={selectedCountry}
                       onCountryClick={handleChoroplethCountryClick}
                     />
                   ) : (
@@ -1456,6 +1467,7 @@ export default function ExplorePage() {
                   mapCountriesData ? (
                     <CountryChoroplethDynamic
                       countryData={mapCountriesData.items}
+                      selectedCountry={selectedCountry}
                       onCountryClick={handleChoroplethCountryClick}
                     />
                   ) : (

@@ -16,6 +16,7 @@ import { toGeoName } from "@/lib/country-geo-names";
 
 type Props = {
   countryData: [string, number][];
+  selectedCountry?: string;
   onCountryClick?: (country: string) => void;
 };
 
@@ -48,7 +49,7 @@ const normalizeGeometry = (geom: GeoJSON.Geometry): GeoJSON.Geometry => {
   return geom;
 };
 
-export const CountryChoropleth = memo(({ countryData, onCountryClick }: Props) => {
+export const CountryChoropleth = memo(({ countryData, selectedCountry, onCountryClick }: Props) => {
   const { theme } = useTheme();
   const styleUrl = theme === "light" ? MAP_STYLE_LIGHT(JAWG_TOKEN) : MAP_STYLE_DARK(JAWG_TOKEN);
 
@@ -96,9 +97,11 @@ export const CountryChoropleth = memo(({ countryData, onCountryClick }: Props) =
     };
   }, [baseFeatures, countryData]);
 
-  // Keep a ref so the map-init closure can read the latest geoJson without being in its deps
+  // Keep refs so map-init closures can read latest values without being in their deps
   const geoJsonRef = useRef(geoJson);
   useEffect(() => { geoJsonRef.current = geoJson; }, [geoJson]);
+  const selectedCountryRef = useRef(selectedCountry);
+  useEffect(() => { selectedCountryRef.current = selectedCountry; }, [selectedCountry]);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -141,6 +144,14 @@ export const CountryChoropleth = memo(({ countryData, onCountryClick }: Props) =
         source: "countries",
         paint: { "fill-color": "rgba(255, 255, 255, 0.08)", "fill-opacity": 0 },
         filter: ["==", ["get", "name"], ""],
+      });
+      const sel = selectedCountryRef.current ? toGeoName(selectedCountryRef.current) : "";
+      map.addLayer({
+        id: "countries-selected",
+        type: "line",
+        source: "countries",
+        paint: { "line-color": "#58a6ff", "line-width": 2, "line-opacity": 1 },
+        filter: ["==", ["get", "name"], sel],
       });
     };
 
@@ -270,8 +281,23 @@ export const CountryChoropleth = memo(({ countryData, onCountryClick }: Props) =
         paint: { "fill-color": "rgba(255, 255, 255, 0.08)", "fill-opacity": 0 },
         filter: ["==", ["get", "name"], ""],
       });
+      const sel = selectedCountryRef.current ? toGeoName(selectedCountryRef.current) : "";
+      map.addLayer({
+        id: "countries-selected",
+        type: "line",
+        source: "countries",
+        paint: { "line-color": "#58a6ff", "line-width": 2, "line-opacity": 1 },
+        filter: ["==", ["get", "name"], sel],
+      });
     }
   }, [geoJson]);
+
+  // Update selected-country highlight when selection changes
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !map.isStyleLoaded() || !map.getLayer("countries-selected")) return;
+    map.setFilter("countries-selected", ["==", ["get", "name"], selectedCountry ? toGeoName(selectedCountry) : ""]);
+  }, [selectedCountry]);
 
   return (
     <div className="relative w-full h-full">
