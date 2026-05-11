@@ -7,8 +7,10 @@ import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 import { prisma } from "@/lib/db";
 import { defineRoute } from "@/lib/define-route";
+import { getIP } from "@/lib/api-helpers";
 import { trackSchema } from "@/schemas/track";
 
+// Lazy init — Redis.fromEnv() throws at module load if UPSTASH_REDIS_REST_URL is unset.
 let _trackLimiter: Ratelimit | null = null;
 
 const getTrackLimiter = (): Ratelimit | null => {
@@ -24,11 +26,6 @@ const getTrackLimiter = (): Ratelimit | null => {
     return null;
   }
 };
-
-const getIP = (req: NextRequest): string =>
-  req.headers.get("cf-connecting-ip") ??
-  req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-  "unknown";
 
 export const POST = defineRoute(trackSchema, async (req, body) => {
   const limiter = getTrackLimiter();
