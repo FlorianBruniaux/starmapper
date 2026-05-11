@@ -41,6 +41,12 @@ type Props = {
   hasTimelapse: boolean;
   timelapseActive: boolean;
   setTimelapseActive: (v: boolean) => void;
+  // Watch mode
+  watchActive: boolean;
+  watchNewCount: number;
+  watchCountries: string[];
+  onWatchStart: () => void;
+  onWatchStop: () => void;
 };
 
 export const Dock = ({
@@ -53,6 +59,7 @@ export const Dock = ({
   sidebarOpen, setSidebarOpen,
   setStatsOpen, setAllOpen, setGrowthOpen, setBadgeOpen, setShareOpen,
   hasTimelapse, timelapseActive, setTimelapseActive,
+  watchActive, watchNewCount, watchCountries, onWatchStart, onWatchStop,
 }: Props) => {
   return (
     <>
@@ -217,6 +224,39 @@ export const Dock = ({
               <path d="M1.5 12.5 5 8l3 3 3.5-5 3 3"/>
             </svg>
             <span>Growth</span>
+          </button>
+        )}
+
+        {hasGrowthData && (
+          <button
+            onClick={watchActive ? onWatchStop : onWatchStart}
+            className={`border rounded-lg px-3 py-2.5 text-xs backdrop-blur-md transition-all flex items-center gap-2 ${
+              watchActive
+                ? "bg-accent-green/10 border-accent-green/50 text-accent-green"
+                : "bg-background/90 border-border text-muted hover:text-foreground hover:border-accent-green/50"
+            }`}
+            title={watchActive ? "Stop watching" : "Watch for new stars in real time"}
+          >
+            {watchActive ? (
+              <>
+                <span className="relative flex size-2 flex-shrink-0">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-green opacity-75" />
+                  <span className="relative inline-flex rounded-full size-2 bg-accent-green" />
+                </span>
+                <span className="tabular-nums">
+                  {watchNewCount > 0
+                    ? `+${watchNewCount} ★${watchCountries.length > 0 ? ` · ${watchCountries.slice(0, 2).join(", ")}` : ""}`
+                    : "Watching…"}
+                </span>
+              </>
+            ) : (
+              <>
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" className="flex-shrink-0" aria-hidden="true">
+                  <path d="M8 2a6 6 0 1 0 0 12A6 6 0 0 0 8 2Zm0 10.5a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9Zm0-7a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5Z"/>
+                </svg>
+                <span>Watch</span>
+              </>
+            )}
           </button>
         )}
 

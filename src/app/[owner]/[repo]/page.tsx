@@ -209,6 +209,11 @@ export default function MapPage({
   const [filterCity, setFilterCity] = useState("");
   const [flyTarget, setFlyTarget] = useState<{ lat: number; lng: number; login: string } | null>(null);
   const [growthOpen, setGrowthOpen] = useState(false);
+  const [watchActive, setWatchActive] = useState(false);
+  const [watchSince, setWatchSince] = useState<string | null>(null);
+  const [watchNewCount, setWatchNewCount] = useState(0);
+  const [watchCountries, setWatchCountries] = useState<string[]>([]);
+  const watchIdleRef = useRef(0);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [tokenOpen, setTokenOpen] = useState(false);
   const [hasToken, setHasToken] = useState(false);
@@ -1079,6 +1084,45 @@ export default function MapPage({
       .finally(() => setGeoVelocityLoading(false));
   }, [statsOpen, statsTab, geoVelocity, geoVelocityLoading, owner, repo]);
 
+  // Watch mode — poll GitHub for new stars every 60s, auto-stop after 10 min idle
+  const AUTO_STOP_MS = 10 * 60_000;
+  useEffect(() => {
+    if (!watchActive || !watchSince) return;
+    watchIdleRef.current = 0;
+
+    const poll = async () => {
+      try {
+        const res = await fetch(`/api/watch/${owner}/${repo}?since=${encodeURIComponent(watchSince)}`);
+        if (!res.ok) return;
+        const data = await res.json() as { newCount: number; countries: string[] };
+        if (data.newCount > 0) {
+          setWatchNewCount((prev) => prev + data.newCount);
+          setWatchCountries(data.countries);
+          watchIdleRef.current = 0;
+        } else {
+          watchIdleRef.current += 60_000;
+          if (watchIdleRef.current >= AUTO_STOP_MS) setWatchActive(false);
+        }
+      } catch { /* network errors are silently ignored */ }
+    };
+
+    const id = setInterval(poll, 60_000);
+    return () => clearInterval(id);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [watchActive, watchSince, owner, repo]);
+
+  const handleWatchStart = useCallback(() => {
+    setWatchActive(true);
+    setWatchSince(new Date().toISOString());
+    setWatchNewCount(0);
+    setWatchCountries([]);
+  }, []);
+
+  const handleWatchStop = useCallback(() => {
+    setWatchActive(false);
+    setWatchSince(null);
+  }, []);
+
   // Build a filtered-view URL encoding current filter state
   const buildFilteredUrl = useCallback((): string => {
     const params = new URLSearchParams();
@@ -1537,6 +1581,11 @@ export default function MapPage({
           hasTimelapse={weekBuckets.length > 1}
           timelapseActive={timelapseActive}
           setTimelapseActive={setTimelapseActive}
+          watchActive={watchActive}
+          watchNewCount={watchNewCount}
+          watchCountries={watchCountries}
+          onWatchStart={handleWatchStart}
+          onWatchStop={handleWatchStop}
         />
       )}
 
