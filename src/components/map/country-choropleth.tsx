@@ -147,10 +147,17 @@ export const CountryChoropleth = memo(({ countryData, selectedCountry, onCountry
       });
       const sel = selectedCountryRef.current ? toGeoName(selectedCountryRef.current) : "";
       map.addLayer({
+        id: "countries-selected-fill",
+        type: "fill",
+        source: "countries",
+        paint: { "fill-color": "rgba(88, 166, 255, 0.35)" },
+        filter: ["==", ["get", "name"], sel],
+      });
+      map.addLayer({
         id: "countries-selected",
         type: "line",
         source: "countries",
-        paint: { "line-color": "#58a6ff", "line-width": 2, "line-opacity": 1 },
+        paint: { "line-color": "rgba(255, 255, 255, 0.9)", "line-width": 2.5 },
         filter: ["==", ["get", "name"], sel],
       });
     };
@@ -283,10 +290,17 @@ export const CountryChoropleth = memo(({ countryData, selectedCountry, onCountry
       });
       const sel = selectedCountryRef.current ? toGeoName(selectedCountryRef.current) : "";
       map.addLayer({
+        id: "countries-selected-fill",
+        type: "fill",
+        source: "countries",
+        paint: { "fill-color": "rgba(88, 166, 255, 0.35)" },
+        filter: ["==", ["get", "name"], sel],
+      });
+      map.addLayer({
         id: "countries-selected",
         type: "line",
         source: "countries",
-        paint: { "line-color": "#58a6ff", "line-width": 2, "line-opacity": 1 },
+        paint: { "line-color": "rgba(255, 255, 255, 0.9)", "line-width": 2.5 },
         filter: ["==", ["get", "name"], sel],
       });
     }
@@ -295,8 +309,10 @@ export const CountryChoropleth = memo(({ countryData, selectedCountry, onCountry
   // Update selected-country highlight when selection changes
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !map.isStyleLoaded() || !map.getLayer("countries-selected")) return;
-    map.setFilter("countries-selected", ["==", ["get", "name"], selectedCountry ? toGeoName(selectedCountry) : ""]);
+    if (!map || !map.isStyleLoaded()) return;
+    const geoName = selectedCountry ? toGeoName(selectedCountry) : "";
+    if (map.getLayer("countries-selected-fill")) map.setFilter("countries-selected-fill", ["==", ["get", "name"], geoName]);
+    if (map.getLayer("countries-selected")) map.setFilter("countries-selected", ["==", ["get", "name"], geoName]);
   }, [selectedCountry]);
 
   return (
