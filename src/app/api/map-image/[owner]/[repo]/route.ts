@@ -69,6 +69,11 @@ const truncate = (s: string, max: number) =>
 const xmlEscape = (s: string): string =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
+const fmtDate = (d: Date): string => {
+  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  return `${months[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+};
+
 const makeSvg = (
   owner: string,
   repo: string,
@@ -77,6 +82,7 @@ const makeSvg = (
   countryCount: number,
   totalCount: number,
   theme: "dark" | "light",
+  scannedAt: Date | null,
 ): string => {
   const isDark = theme === "dark";
   const bg = isDark ? "#0d1117" : "#ffffff";
@@ -106,9 +112,10 @@ const makeSvg = (
     .join("");
 
   const repoLabel = xmlEscape(truncate(`${owner}/${repo}`, 48));
+  const dateLabel = scannedAt ? `  ·  ${fmtDate(scannedAt)}` : "";
   const statsText = xmlEscape(
     countryCount > 0
-      ? `${fmt(mappedCount)} mapped  ·  ${countryCount} countries  ·  ${fmt(totalCount)} total`
+      ? `${fmt(mappedCount)} mapped  ·  ${countryCount} countries  ·  ${fmt(totalCount)} total${dateLabel}`
       : "Scan this repo on starmapper.bruniaux.com",
   );
 
@@ -160,6 +167,7 @@ export const GET = async (
   let mappedCount = 0;
   let countryCount = 0;
   let totalCount = 0;
+  let scannedAt: Date | null = null;
 
   try {
     const [cached, badge] = await Promise.all([
@@ -170,17 +178,19 @@ export const GET = async (
     if (cached) {
       points = decompressGzBase64<Point>(cached.points);
       totalCount = cached.totalCount;
+      scannedAt = cached.scannedAt;
     }
     if (badge) {
       mappedCount = badge.mappedCount;
       countryCount = badge.countryCount;
       if (!totalCount) totalCount = badge.totalCount;
+      if (!scannedAt) scannedAt = badge.updatedAt;
     }
   } catch {
     // DB down — return empty map
   }
 
-  const svg = makeSvg(owner, repo, points, mappedCount, countryCount, totalCount, theme);
+  const svg = makeSvg(owner, repo, points, mappedCount, countryCount, totalCount, theme, scannedAt);
 
   return new NextResponse(svg, {
     headers: {
