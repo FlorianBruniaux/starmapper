@@ -11,6 +11,7 @@ import { CLUSTER_RADIUS } from "@/components/map/constants";
 import type { StargazerPoint, ChunkResponse } from "@/app/api/chunk/route";
 import type { MapProjection } from "@/lib/theme";
 import type { RepoStats, RepoOrganic } from "@/app/api/stats/[owner]/[repo]/route";
+import type { GeoVelocityItem } from "@/app/api/stats/[owner]/[repo]/geo-velocity/route";
 import { TokenModal, getStoredToken, getStoredUsername, setStoredUsername } from "@/components/token-modal";
 import { Modal } from "@/components/modal";
 import { saveBookmark } from "@/lib/bookmarks";
@@ -173,7 +174,9 @@ export default function MapPage({
   const [serverStats, setServerStats] = useState<RepoStats | null>(null);
   const [organicData, setOrganicData] = useState<RepoOrganic | null>(null);
   const [statsOpen, setStatsOpen] = useState(false);
-  const [statsTab, setStatsTab] = useState<"countries" | "cities" | "top" | "companies" | "power">("top");
+  const [statsTab, setStatsTab] = useState<"countries" | "cities" | "top" | "companies" | "power" | "rising">("top");
+  const [geoVelocity, setGeoVelocity] = useState<GeoVelocityItem[] | null>(null);
+  const [geoVelocityLoading, setGeoVelocityLoading] = useState(false);
   const [statsFilter, setStatsFilter] = useState("");
   const [statsTopSort, setStatsTopSort] = useState<"followers" | "repos">("followers");
   const [shareOpen, setShareOpen] = useState(false);
@@ -1062,6 +1065,19 @@ export default function MapPage({
     const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
     return points.filter((p) => p.starredAt && new Date(p.starredAt).getTime() >= cutoff).length;
   }, [points]);
+
+  // Lazy-fetch geo velocity when user opens the Rising tab
+  useEffect(() => {
+    if (!statsOpen || statsTab !== "rising" || geoVelocity !== null || geoVelocityLoading) return;
+    setGeoVelocityLoading(true);
+    fetch(`/api/stats/${owner}/${repo}/geo-velocity`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((data: { items: GeoVelocityItem[] } | null) => {
+        if (data) setGeoVelocity(data.items);
+      })
+      .catch(() => {})
+      .finally(() => setGeoVelocityLoading(false));
+  }, [statsOpen, statsTab, geoVelocity, geoVelocityLoading, owner, repo]);
 
   // Build a filtered-view URL encoding current filter state
   const buildFilteredUrl = useCallback((): string => {
@@ -2410,9 +2426,40 @@ export default function MapPage({
               </div>
             </div>
 
+            {/* Notable stargazers — top 5 by followers, visible without clicking Top Stars tab */}
+            {displayStats.topUsers.length > 0 && (
+              <div className="flex items-center gap-2.5 px-5 py-2.5 border-b border-border-subtle flex-shrink-0">
+                <span className="text-2xs text-muted uppercase tracking-wide flex-shrink-0">Notables</span>
+                <div className="flex items-center gap-2 flex-1 overflow-hidden">
+                  {displayStats.topUsers.slice(0, 5).map((u) => (
+                    <a
+                      key={u.login}
+                      href={`/profile/${u.login}`}
+                      title={`@${u.login} — ${u.followers.toLocaleString()} followers`}
+                      className="flex items-center gap-1 hover:opacity-75 transition-opacity flex-shrink-0"
+                    >
+                      {u.avatarUrl
+                        ? <NextImage src={u.avatarUrl} alt="" width={20} height={20} sizes="20px" className="w-5 h-5 rounded-full ring-1 ring-border" />
+                        : <div className="w-5 h-5 rounded-full bg-surface-alt ring-1 ring-border flex-shrink-0" />
+                      }
+                      <span className="text-2xs text-muted-subtle tabular-nums">
+                        {u.followers >= 1000 ? `${(u.followers / 1000).toFixed(1)}k` : u.followers}
+                      </span>
+                    </a>
+                  ))}
+                </div>
+                <button
+                  onClick={() => { setStatsTab("top"); setStatsFilter(""); }}
+                  className="text-2xs text-accent-blue hover:underline flex-shrink-0"
+                >
+                  Top {displayStats.topUsers.length} →
+                </button>
+              </div>
+            )}
+
             {/* Tabs */}
             <div role="tablist" aria-label="Stats view" className="flex border-b border-border-subtle flex-shrink-0">
-              {(["top", "countries", "cities", "companies", "power"] as const).map((tab, idx, arr) => (
+              {(["top", "countries", "cities", "companies", "power", "rising"] as const).map((tab, idx, arr) => (
                 <button
                   key={tab}
                   role="tab"
@@ -2431,7 +2478,7 @@ export default function MapPage({
                       : "text-muted hover:text-foreground"
                   }`}
                 >
-                  {tab === "top" ? "Top Stars" : tab === "countries" ? "Countries" : tab === "cities" ? "Cities" : tab === "companies" ? "Companies" : <><span aria-hidden="true">⚡</span> Power</>}
+                  {tab === "top" ? "Top Stars" : tab === "countries" ? "Countries" : tab === "cities" ? "Cities" : tab === "companies" ? "Companies" : tab === "power" ? <><span aria-hidden="true">⚡</span> Power</> : <><span aria-hidden="true">📈</span> Rising</>}
                 </button>
               ))}
             </div>
@@ -2564,6 +2611,52 @@ export default function MapPage({
                   ))}
                   {displayStats.topCompanies.length === 0 && (
                     <div className="text-center text-muted-subtle text-xs py-8">No company data available</div>
+                  )}
+                </div>
+              )}
+              {statsTab === "rising" && (
+                <div>
+                  {geoVelocityLoading && (
+                    <div className="text-center text-muted-subtle text-xs py-8">Loading…</div>
+                  )}
+                  {!geoVelocityLoading && geoVelocity !== null && geoVelocity.length === 0 && (
+                    <div className="text-center text-muted-subtle text-xs py-8">
+                      <div className="text-2xl mb-2" aria-hidden="true">📈</div>
+                      <div>Not enough timestamp data yet.</div>
+                      <div className="mt-1 text-2xs">Needs repos with starredAt data from the last 90 days.</div>
+                    </div>
+                  )}
+                  {!geoVelocityLoading && geoVelocity !== null && geoVelocity.length > 0 && (
+                    <div className="space-y-2.5">
+                      <p className="text-2xs text-muted-subtle mb-3">
+                        New stars in the last 30 days vs. the prior 60-day rate — which countries are discovering this repo.
+                      </p>
+                      {geoVelocity.map((item) => {
+                        const trendColor =
+                          item.trend === "rising" ? "text-accent-green" :
+                          item.trend === "new"     ? "text-accent-blue" :
+                          item.trend === "declining" ? "text-accent-red" : "text-muted";
+                        const trendLabel =
+                          item.trend === "rising"   ? `↑ ${item.ratio}×` :
+                          item.trend === "new"      ? "✦ new" :
+                          item.trend === "declining" ? "↓ slowing" : "→ stable";
+                        return (
+                          <div key={item.country} className="flex items-center gap-3">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-1.5 mb-0.5">
+                                <span className="text-xs text-foreground font-medium truncate">{item.country}</span>
+                                <span className={`text-2xs font-semibold flex-shrink-0 ${trendColor}`}>{trendLabel}</span>
+                              </div>
+                              <div className="flex items-center gap-1 text-2xs text-muted-subtle">
+                                <span>{item.stars30d} this month</span>
+                                <span>·</span>
+                                <span>{item.total.toLocaleString()} total</span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   )}
                 </div>
               )}
