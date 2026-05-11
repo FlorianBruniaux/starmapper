@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <!-- Background -->
+  <rect width="128" height="128" rx="20" fill="#0d1117"/>
+  <!-- Globe outline -->
+  <circle cx="64" cy="64" r="44" fill="none" stroke="#21262d" stroke-width="3"/>
+  <!-- Latitude lines -->
+  <ellipse cx="64" cy="64" rx="44" ry="18" fill="none" stroke="#21262d" stroke-width="1.5"/>
+  <line x1="20" y1="64" x2="108" y2="64" stroke="#21262d" stroke-width="1.5"/>
+  <!-- Dots (stargazers) -->
+  <circle cx="38" cy="52" r="4" fill="#58a6ff" opacity="0.9"/>
+  <circle cx="55" cy="44" r="3" fill="#58a6ff" opacity="0.8"/>
+  <circle cx="72" cy="56" r="5" fill="#f85149" opacity="0.95"/>
+  <circle cx="88" cy="50" r="3.5" fill="#58a6ff" opacity="0.85"/>
+  <circle cx="46" cy="72" r="3" fill="#58a6ff" opacity="0.7"/>
+  <circle cx="64" cy="78" r="4" fill="#ffa657" opacity="0.9"/>
+  <circle cx="82" cy="70" r="3" fill="#58a6ff" opacity="0.75"/>
+  <circle cx="96" cy="62" r="2.5" fill="#58a6ff" opacity="0.7"/>
+  <circle cx="30" cy="68" r="2.5" fill="#58a6ff" opacity="0.65"/>
+  <!-- Star icon (small, top-right) -->
+  <path d="M100 24l2.2 4.4 4.9.7-3.6 3.5.85 4.9L100 35.3l-4.35 2.2.85-4.9-3.6-3.5 4.9-.7z" fill="#58a6ff"/>
+</svg>
