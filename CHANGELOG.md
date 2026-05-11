@@ -5,6 +5,19 @@ Versioning : Semantic Versioning (MAJOR.MINOR.PATCH)
 
 ---
 
+## [0.4.3] — 2026-05-11
+
+### Features
+
+- **Deep link sharing** — The Share modal now shows a "Current view" section when filters are active (country, city, company, followers, date, tier, view mode). The filtered URL is copy-able in one click and encodes all active filters as query params. Loading a shared URL restores the filter state and shows a dismissible "Shared view" overlay listing the active filters.
+- **Velocity indicator** — The Stats modal summary row shows `+N/mo` in green under the star count, computed from `starredAt` already in memory after a scan. Only appears when the data is present (recent scans with timestamps); silently absent for old caches.
+
+### Internal
+
+- **Zod `defineRoute` wrapper** — POST routes progressively migrated to a typed `defineRoute()` helper that centralises Zod body validation, error serialisation, and rate-limit wiring. Reduces per-route boilerplate and standardises 400/429/500 response shapes.
+
+---
+
 ## [0.4.2] — 2026-05-08
 
 ### Features
