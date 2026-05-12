@@ -71,6 +71,33 @@ const buildMatchExpression = (): unknown[] => {
 // Stable expression — computed once, shared across re-renders
 const FILL_COLOR_EXPRESSION = buildMatchExpression();
 
+const addChoroplethLayers = (map: maplibregl.Map, data: GeoJSON.FeatureCollection) => {
+  if (map.getSource("lang-countries")) return;
+  map.addSource("lang-countries", { type: "geojson", data });
+  map.addLayer({
+    id: "lang-countries-fill",
+    type: "fill",
+    source: "lang-countries",
+    paint: {
+      "fill-color": FILL_COLOR_EXPRESSION as maplibregl.ExpressionSpecification,
+      "fill-opacity": ["case", [">", ["get", "total"], 0], 0.85, 0.15],
+    },
+  });
+  map.addLayer({
+    id: "lang-countries-border",
+    type: "line",
+    source: "lang-countries",
+    paint: { "line-color": "rgba(255, 255, 255, 0.12)", "line-width": 0.5 },
+  });
+  map.addLayer({
+    id: "lang-countries-hover",
+    type: "fill",
+    source: "lang-countries",
+    paint: { "fill-color": "rgba(255, 255, 255, 0.10)", "fill-opacity": 0 },
+    filter: ["==", ["get", "name"], ""],
+  });
+};
+
 type BaseFeature = GeoJSON.Feature & { geometry: GeoJSON.Geometry };
 
 /** Annotate each world feature with atlas country data. */
@@ -165,45 +192,7 @@ export const LanguageChoropleth = memo(({ countries, onCountryClick }: Props) =>
       map.on("load", () => {
         if (cancelled) return;
         const data = geoJsonRef.current;
-        if (!data) return;
-        map.addSource("lang-countries", { type: "geojson", data });
-
-        // Categorical fill driven by topLang → linguist color
-        map.addLayer({
-          id: "lang-countries-fill",
-          type: "fill",
-          source: "lang-countries",
-          paint: {
-            "fill-color": FILL_COLOR_EXPRESSION as maplibregl.ExpressionSpecification,
-            "fill-opacity": [
-              "case",
-              [">", ["get", "total"], 0], 0.85,
-              0.15,
-            ],
-          },
-        });
-
-        map.addLayer({
-          id: "lang-countries-border",
-          type: "line",
-          source: "lang-countries",
-          paint: {
-            "line-color": "rgba(255, 255, 255, 0.12)",
-            "line-width": 0.5,
-          },
-        });
-
-        // Hover highlight — initially nothing
-        map.addLayer({
-          id: "lang-countries-hover",
-          type: "fill",
-          source: "lang-countries",
-          paint: {
-            "fill-color": "rgba(255, 255, 255, 0.10)",
-            "fill-opacity": 0,
-          },
-          filter: ["==", ["get", "name"], ""],
-        });
+        if (data) addChoroplethLayers(map, data);
       });
 
       // Hover: tooltip + highlight
@@ -306,18 +295,18 @@ export const LanguageChoropleth = memo(({ countries, onCountryClick }: Props) =>
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [styleUrl]);
 
-  // Update source data when countries prop changes (no full map rebuild)
+  // Update source data when countries prop changes (no full map rebuild).
+  // Also handles the case where geoJson arrived after map.on("load") fired.
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !map.isStyleLoaded() || !geoJson) return;
     const src = map.getSource("lang-countries") as maplibregl.GeoJSONSource | undefined;
-    src?.setData(geoJson);
+    if (src) {
+      src.setData(geoJson);
+    } else {
+      addChoroplethLayers(map, geoJson);
+    }
   }, [geoJson]);
-
-  // Don't render the map container until topo data is ready
-  if (!geoJson) {
-    return <div className="relative w-full h-full bg-background" />;
-  }
 
   return (
     <div role="region" aria-label={`Language atlas map — ${countries.length} countries mapped`} className="relative w-full h-full">

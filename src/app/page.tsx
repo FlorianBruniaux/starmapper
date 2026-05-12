@@ -13,6 +13,7 @@ import { AnnouncementBanner } from "@/components/announcement-banner";
 import { Footer } from "@/components/footer";
 import Link from "next/link";
 import { CommandSearch } from "@/components/command-search";
+import { HeroGlobeDynamic } from "@/components/hero-globe-dynamic";
 import type { Bookmark } from "@/lib/bookmarks";
 import type { MappedRepo } from "@/app/api/repos/route";
 
@@ -273,75 +274,10 @@ export default function HomePage() {
                 )}
               </div>
 
-              {/* Right: stargazer map preview */}
-              <div className="hidden lg:block" aria-hidden="true">
-                <div className="relative rounded-2xl overflow-hidden border border-border bg-surface aspect-[4/3]">
-                  <svg
-                    viewBox="0 0 800 480"
-                    className="w-full h-full text-accent-blue opacity-50"
-                    preserveAspectRatio="xMidYMid slice"
-                  >
-                    {/* North America */}
-                    <circle cx="128" cy="140" r="5" fill="currentColor" opacity="0.9" />
-                    <circle cx="128" cy="112" r="3.5" fill="currentColor" opacity="0.7" />
-                    <circle cx="138" cy="149" r="3.5" fill="currentColor" opacity="0.7" />
-                    <circle cx="236" cy="131" r="5" fill="currentColor" opacity="0.9" />
-                    <circle cx="206" cy="129" r="3.5" fill="currentColor" opacity="0.7" />
-                    <circle cx="224" cy="123" r="3" fill="currentColor" opacity="0.6" />
-                    <circle cx="182" cy="158" r="2.5" fill="currentColor" opacity="0.5" />
-                    {/* South America */}
-                    <circle cx="296" cy="302" r="4.5" fill="currentColor" opacity="0.8" />
-                    <circle cx="271" cy="331" r="3" fill="currentColor" opacity="0.6" />
-                    {/* Europe */}
-                    <circle cx="400" cy="103" r="5" fill="currentColor" opacity="0.9" />
-                    <circle cx="405" cy="109" r="4" fill="currentColor" opacity="0.8" />
-                    <circle cx="430" cy="100" r="4" fill="currentColor" opacity="0.8" />
-                    <circle cx="411" cy="100" r="3" fill="currentColor" opacity="0.7" />
-                    <circle cx="440" cy="82" r="2.5" fill="currentColor" opacity="0.5" />
-                    <circle cx="419" cy="113" r="3" fill="currentColor" opacity="0.6" />
-                    <circle cx="392" cy="132" r="3" fill="currentColor" opacity="0.6" />
-                    <circle cx="428" cy="128" r="3" fill="currentColor" opacity="0.6" />
-                    <circle cx="464" cy="131" r="3" fill="currentColor" opacity="0.6" />
-                    <circle cx="484" cy="91" r="3" fill="currentColor" opacity="0.6" />
-                    {/* Asia */}
-                    <circle cx="572" cy="165" r="4" fill="currentColor" opacity="0.8" />
-                    <circle cx="562" cy="188" r="5" fill="currentColor" opacity="0.9" />
-                    <circle cx="631" cy="236" r="3" fill="currentColor" opacity="0.6" />
-                    <circle cx="678" cy="133" r="4" fill="currentColor" opacity="0.8" />
-                    <circle cx="691" cy="157" r="5" fill="currentColor" opacity="0.9" />
-                    <circle cx="710" cy="145" r="4" fill="currentColor" opacity="0.8" />
-                    {/* Australia */}
-                    <circle cx="736" cy="330" r="3" fill="currentColor" opacity="0.6" />
-                    {/* Connection lines */}
-                    <line x1="128" y1="140" x2="236" y2="131" stroke="currentColor" strokeWidth="0.8" opacity="0.2" />
-                    <line x1="400" y1="103" x2="430" y2="100" stroke="currentColor" strokeWidth="0.8" opacity="0.2" />
-                    <line x1="562" y1="188" x2="572" y2="165" stroke="currentColor" strokeWidth="0.8" opacity="0.2" />
-                    <line x1="678" y1="133" x2="710" y2="145" stroke="currentColor" strokeWidth="0.8" opacity="0.2" />
-                    <line x1="236" y1="131" x2="400" y2="103" stroke="currentColor" strokeWidth="0.8" opacity="0.1" />
-                  </svg>
-                  {/* Stats overlay */}
-                  <div className="absolute bottom-0 left-0 right-0 p-5 bg-gradient-to-t from-surface via-surface/80 to-transparent">
-                    <div className="flex items-end justify-between">
-                      <div className="flex gap-6">
-                        <div>
-                          <p className="text-xl font-bold text-foreground tabular-nums">{reposTotal > 0 ? reposTotal.toLocaleString() : "1,839"}</p>
-                          <p className="text-xs text-muted mt-0.5">repos mapped</p>
-                        </div>
-                        <div>
-                          <p className="text-xl font-bold text-foreground">127</p>
-                          <p className="text-xs text-muted mt-0.5">countries</p>
-                        </div>
-                        <div>
-                          <p className="text-xl font-bold text-accent-green">Free</p>
-                          <p className="text-xs text-muted mt-0.5">forever</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-1.5 text-xs text-muted-subtle">
-                        <span className="inline-block size-1.5 rounded-full bg-accent-green animate-pulse" />
-                        Live
-                      </div>
-                    </div>
-                  </div>
+              {/* Right: rotating globe */}
+              <div className="hidden lg:flex lg:items-center lg:justify-center" aria-hidden="true">
+                <div className="relative w-full aspect-square max-w-[480px]">
+                  <HeroGlobeDynamic />
                 </div>
               </div>
 
@@ -349,42 +285,9 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* ── Social proof strip ── */}
-        {reposLoading ? (
-          <div className="border-y border-border-subtle" aria-hidden="true">
-            <div className="max-w-7xl mx-auto px-4 lg:px-6 py-6 flex items-center justify-center gap-8 sm:gap-16 flex-wrap">
-              <div className="h-10 w-20 rounded bg-surface-alt animate-pulse" />
-              <div className="hidden sm:block h-8 w-px bg-border-subtle" />
-              <div className="h-10 w-16 rounded bg-surface-alt animate-pulse" />
-              <div className="hidden sm:block h-8 w-px bg-border-subtle" />
-              <div className="h-10 w-12 rounded bg-surface-alt animate-pulse" />
-            </div>
-          </div>
-        ) : repos.length > 0 ? (
-          <div className="border-y border-border-subtle">
-            <div className="max-w-7xl mx-auto px-4 lg:px-6 py-6 flex items-center justify-center gap-8 sm:gap-16 flex-wrap">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-foreground tabular-nums">
-                  {(reposTotal || repos.length).toLocaleString()}
-                </div>
-                <div className="text-xs text-muted mt-0.5">repos mapped</div>
-              </div>
-              <div className="hidden sm:block h-8 w-px bg-border-subtle" />
-              <div className="text-center">
-                <div className="text-2xl font-bold text-accent-green">Free</div>
-                <div className="text-xs text-muted mt-0.5">forever, no account</div>
-              </div>
-              <div className="hidden sm:block h-8 w-px bg-border-subtle" />
-              <div className="text-center">
-                <div className="text-2xl font-bold text-foreground">30s</div>
-                <div className="text-xs text-muted mt-0.5">to first map</div>
-              </div>
-            </div>
-          </div>
-        ) : null}
-
-        {/* ── Features ── */}
-        <section className="w-full max-w-7xl mx-auto px-4 lg:px-6 py-16">
+        {/* ── Features — framed between borders ── */}
+        <div className="border-y border-border-subtle">
+        <section className="w-full max-w-7xl mx-auto px-4 lg:px-6 py-10">
           <h2 className="text-muted-subtle text-2xs uppercase tracking-widest mb-6 text-center">
             More to explore
           </h2>
@@ -441,6 +344,7 @@ export default function HomePage() {
             ))}
           </div>
         </section>
+        </div>{/* end border-y wrapper */}
 
         {/* ── FAQ link ── */}
         <div className="w-full max-w-7xl mx-auto px-4 lg:px-6 pb-8 text-right">
