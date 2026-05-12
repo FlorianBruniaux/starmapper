@@ -497,6 +497,33 @@ export default function HomePage() {
           </div>
         </section>
 
+        {/* ── FAQ teaser ── */}
+        <section className="w-full max-w-7xl mx-auto px-4 lg:px-6 pb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-surface border border-border-subtle rounded-xl px-5 py-4">
+            <div>
+              <p className="text-sm font-medium text-foreground mb-1.5">Common questions</p>
+              <div className="flex flex-wrap gap-x-1 gap-y-1 text-xs text-muted">
+                <span>Free to use?</span>
+                <span className="text-border mx-0.5">·</span>
+                <span>How long does a scan take?</span>
+                <span className="text-border mx-0.5">·</span>
+                <span>Is my GitHub token stored?</span>
+                <span className="text-border mx-0.5">·</span>
+                <span>Private repos?</span>
+              </div>
+            </div>
+            <Link
+              href="/faq"
+              className="flex items-center gap-1.5 text-xs text-accent-blue hover:underline shrink-0 font-medium"
+            >
+              See all answers
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                <path d="M6.22 3.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042L9.94 8 6.22 4.28a.75.75 0 0 1 0-1.06Z" />
+              </svg>
+            </Link>
+          </div>
+        </section>
+
         {/* ── Community Maps (featured) ── */}
         {reposLoading ? (
           <section className="w-full max-w-7xl mx-auto px-4 lg:px-6 pb-12" aria-hidden="true">
@@ -562,32 +589,6 @@ export default function HomePage() {
         {/* ── Sponsors ── */}
         <SponsorsBlock />
 
-        {/* ── FAQ teaser ── */}
-        <section className="w-full max-w-7xl mx-auto px-4 lg:px-6 pb-16">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-surface border border-border-subtle rounded-xl px-5 py-4">
-            <div>
-              <p className="text-sm font-medium text-foreground mb-1.5">Common questions</p>
-              <div className="flex flex-wrap gap-x-1 gap-y-1 text-xs text-muted">
-                <span>Free to use?</span>
-                <span className="text-border mx-0.5">·</span>
-                <span>How long does a scan take?</span>
-                <span className="text-border mx-0.5">·</span>
-                <span>Is my GitHub token stored?</span>
-                <span className="text-border mx-0.5">·</span>
-                <span>Private repos?</span>
-              </div>
-            </div>
-            <Link
-              href="/faq"
-              className="flex items-center gap-1.5 text-xs text-accent-blue hover:underline shrink-0 font-medium"
-            >
-              See all answers
-              <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-                <path d="M6.22 3.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042L9.94 8 6.22 4.28a.75.75 0 0 1 0-1.06Z" />
-              </svg>
-            </Link>
-          </div>
-        </section>
 
       </main>
 
