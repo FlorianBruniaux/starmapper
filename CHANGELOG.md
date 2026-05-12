@@ -5,6 +5,21 @@ Versioning: Semantic Versioning (MAJOR.MINOR.PATCH)
 
 ---
 
+## [0.4.8] — 2026-05-12
+
+### Features
+
+- **Star growth timeline** — "Growth" button in the Dock opens a weekly bar chart of star accumulation over time. Data comes from `star_event.starredAt` via `GET /api/stats/[owner]/[repo]/growth` (SQL `DATE_TRUNC('week')`, 5-min CDN cache). Falls back to in-memory `starredAt` timestamps for repos scanned in the current session. Button is now visible for any repo with scan data, not just scans that captured timestamps in memory.
+- **Landing page — community maps diversity** — `/api/repos?diverse=true` mode: fetches a 500-row pool and filters to max 3 repos per owner + min 100 stars before returning results. Prevents a single active user from filling the entire grid.
+- **Landing page — "More to explore" section** — 4-card grid below "How it works" linking to Explore, Developer profiles, Dev Maps, and Language Atlas. The surfaces were previously invisible to new visitors.
+- **Landing page — copy + FAQ improvements** — "Shared cache" card renamed "Instant for everyone" with clearer copy. FAQ expanded from 7 to 10 questions (scan duration, token storage, open source). CTA label corrected from "Map It" to "Map Stargazers". Badge and data removal answers improved.
+
+### Docs
+
+- **PITCH.md rewrite** — Full structural rewrite from "what changed recently" (ordered by version) to "what it is" (organized by product surface: Repo Map, Stats panel, Developer profiles, Explore, Dev Maps + Atlas, Chrome Extension, Integrations & embeds). All 7 surfaces documented. Previously undocumented: heatmap, timelapse, compare, SVG map image embed, GeoJSON API, Trending page.
+
+---
+
 ## [0.4.7] — 2026-05-12
 
 ### Features
