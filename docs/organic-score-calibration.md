@@ -89,7 +89,9 @@
 
 ## Final Decision
 
-**Chosen weights**: fork=70%, watcher=10%, zero-followers=20%
+**Chosen weights**: fork=40%, watcher=5%, zero-followers=55%
+
+> **Note**: These are the deployed production weights as of v0.3.4. The grid-search above explored fork=70% as a top candidate, but post-calibration analysis showed zero-follower signal is the strongest discriminator (Anoma anomaly, langflow improvement). Deployed weights prioritise that signal. The "Top Weight Combinations" table above documents the grid-search candidates — the final choice is not the 85.7% row.
 
 **Rationale**: *(fill in manually after reviewing the table above)*
 

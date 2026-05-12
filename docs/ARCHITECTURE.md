@@ -1,7 +1,7 @@
 # StarMapper Architecture
 
-**Version**: 0.4.2
-**Last updated**: 2026-05-08
+**Version**: 0.4.6
+**Last updated**: 2026-05-12
 
 ---
 
@@ -513,6 +513,100 @@ Refreshes all materialized views (cron endpoint, runs daily at 03:00 UTC):
 
 ---
 
+### `GET /api/stats/[owner]/[repo]/geo-velocity`
+
+Returns country-level velocity data: 30-day rate vs 31–90-day historical rate, with `rising / new / stable / declining` labels. Top 20 countries.
+
+**Cache**: `public, s-maxage=300` (5 min CDN).
+
+---
+
+### `GET /api/watch/[owner]/[repo]`
+
+Live star polling endpoint. Returns new stars since a given timestamp.
+
+**Query params**: `?since=<ISO date>`
+
+**Response**: `{ newCount: number, countries: string[], logins: string[] }`
+
+**Cache**: `no-store`. Uses server `GITHUB_TOKEN`, no client token forwarding.
+
+---
+
+### `GET /api/map-image/[owner]/[repo]`
+
+Returns a pure SVG scatter map (800×400, equirectangular projection) for README embeds.
+
+**Query params**: `?theme=dark|light`
+
+**Cache**: `public, s-maxage=21600` (6h CDN).
+
+---
+
+### `GET /api/trending`
+
+Returns trending GitHub repos and their aggregate stargazer geography.
+
+**Response**: `{ repos: TrendingRepo[], mapPoints: StargazerPoint[], meta: { total } }`
+
+**Cache**: `public, s-maxage=3600` (1h CDN). Reads `trending_repos_mv`. Returns 503 with `error:"trending_mv_empty"` if MV is missing.
+
+---
+
+### `POST /api/news`
+
+Publishes a short announcement (≤280 chars) for the authenticated GitHub user.
+
+**Request headers**: `x-gh-token` (required — GitHub PAT, verified via Upstash cache)
+
+**Response**: `{ ok: true, news: NewsItem }` or `{ error, retryAfterSec }` (24h sliding cooldown)
+
+---
+
+### `GET /api/news/[login]`
+
+Returns up to 20 live news posts for a developer (soft-deleted posts excluded).
+
+**Cache**: `public, s-maxage=300` (5 min CDN).
+
+---
+
+### `DELETE /api/news/item/[id]`
+
+Soft-deletes a news post. Only the post's author can delete.
+
+**Request headers**: `x-gh-token` (required)
+
+---
+
+### `GET /api/feed/[login]/rss` and `/api/feed/[login]/json`
+
+Serve the developer's announcement feed in RSS 2.0 and JSON Feed 1.1 formats respectively.
+
+**Cache**: `public, s-maxage=3600` (1h CDN). Supports `If-Modified-Since` / 304.
+
+---
+
+### `GET /api/geo/[owner]/[repo]`
+
+API-key authenticated endpoint returning country + city aggregates for a repo.
+
+**Request headers**: `Authorization: Bearer <api-key>`
+
+**Response**: `{ metadata, countries: [{name, count}][], cities: [{name, count}][] }`
+
+Rate-limited 60 req/min per IP (Upstash). Returns 404 if repo not yet scanned.
+
+---
+
+### `POST /api/track`
+
+Atomic daily page view upsert (`page_view` table, `count += 1`). Fire-and-forget from client. Never returns errors.
+
+**Request body**: `{ type: "repo" | "profile", slug: string }`
+
+---
+
 ## 7. File Structure
 
 ```
@@ -529,48 +623,92 @@ Refreshes all materialized views (cron endpoint, runs daily at 03:00 UTC):
 │   │   │   ├── page.tsx                       # Dev Maps: language selector + map
 │   │   │   ├── [language]/page.tsx            # Dev map filtered by language
 │   │   │   └── atlas/page.tsx                 # Language Atlas: choropleth map by country
+│   │   ├── feed/[login]/
+│   │   │   ├── page.tsx                       # RSS subscription page (identity hero + subscribe card + news)
+│   │   │   └── page.client.tsx                # Subscribe card (copy RSS/JSON URLs)
 │   │   └── api/
 │   │       ├── chunk/route.ts                 # POST: fetch + geocode 100 stargazers
 │   │       ├── repo-info/route.ts             # GET:  repo metadata (GitHub REST)
 │   │       ├── repos/route.ts                 # GET:  community maps list (BadgeCache)
-│   │       ├── stats/[owner]/[repo]/route.ts  # GET:  aggregated repo stats (GitHubUser + StarEvent)
+│   │       ├── stats/[owner]/[repo]/
+│   │       │   ├── route.ts                   # GET:  aggregated repo stats (GitHubUser + StarEvent)
+│   │       │   └── geo-velocity/route.ts      # GET:  country velocity 30d vs 31–90d
+│   │       ├── watch/[owner]/[repo]/route.ts  # GET:  live star polling (no-store, GitHub REST)
+│   │       ├── map-image/[owner]/[repo]/route.ts # GET: SVG scatter map for README embeds
+│   │       ├── trending/route.ts              # GET:  trending repos + aggregate stargazer map
+│   │       ├── geo/[owner]/[repo]/route.ts    # GET:  API-key auth, country+city aggregates
 │   │       ├── devs/
 │   │       │   ├── route.ts                   # GET:  developer map points by language
 │   │       │   └── atlas/route.ts             # GET:  country × language dominance (MV)
 │   │       ├── stargazer-cache/
 │   │       │   ├── route.ts                   # POST: write full scan (gzip+base64)
 │   │       │   └── [owner]/[repo]/route.ts    # GET:  read full scan (200/206/404)
+│   │       ├── news/
+│   │       │   ├── route.ts                   # POST: publish announcement (PAT auth, 24h cooldown)
+│   │       │   ├── [login]/route.ts           # GET:  list news for a developer
+│   │       │   └── item/[id]/route.ts         # DELETE: soft-delete a news post
+│   │       ├── feed/[login]/
+│   │       │   ├── rss/route.ts               # GET:  RSS 2.0 feed (1h cache)
+│   │       │   └── json/route.ts              # GET:  JSON Feed 1.1 (1h cache)
 │   │       ├── user-details/route.ts          # POST: stargazer details (bio, followers)
 │   │       ├── badge-update/route.ts          # POST: upsert BadgeCache
 │   │       ├── badge/[owner]/[repo]/route.ts  # GET:  SVG shield badge
+│   │       ├── track/route.ts                 # POST: fire-and-forget daily page view upsert
 │   │       └── admin/
 │   │           ├── clear-geocache/route.ts    # GET:  truncate geocache (admin)
 │   │           ├── import-geocache/route.ts   # POST: bulk import geocache (admin)
 │   │           └── refresh-grid-mv/route.ts   # GET:  refresh all MVs (Vercel Cron 03:00 UTC)
 │   ├── components/
+│   │   ├── announcement-banner.tsx            # Dismissible top banner (localStorage keyed by BANNER_ID)
 │   │   ├── token-modal.tsx                    # GitHub token input modal (PAT override)
 │   │   ├── theme-toggle.tsx                   # Dark/light mode toggle button
-│   │   ├── filter-combobox.tsx                # Reusable combobox (country/city filters in stargazer table)
-│   │   ├── repo-table.tsx                     # Community maps table (sortable columns, paginated 20/page)
-│   │   ├── footer.tsx                         # Landing page footer with ecosystem links + author credit
+│   │   ├── filter-combobox.tsx                # Reusable combobox (country/city filters)
+│   │   ├── repo-table.tsx                     # Community maps table (sortable, paginated)
+│   │   ├── footer.tsx                         # Landing page footer with ecosystem links
+│   │   ├── news-timeline.tsx                  # News section on profile pages
+│   │   ├── news-publish-modal.tsx             # Publish/delete flow + feed URLs display
 │   │   └── map/
 │   │       ├── stargazer-map.tsx              # MapLibre GL map (client component, React.memo)
 │   │       ├── stargazer-map-dynamic.tsx      # Dynamic import wrapper, ssr: false
-│   │       ├── language-choropleth.tsx        # Choropleth map: language dominance by country
+│   │       ├── dock.tsx                       # Vertical Dock — view controls, stats/watch/share buttons
+│   │       ├── country-choropleth.tsx         # Choropleth map — stargazer density by country
+│   │       ├── language-choropleth.tsx        # Choropleth map — language dominance by country
 │   │       └── language-choropleth-dynamic.tsx # Dynamic import wrapper, ssr: false
+│   ├── schemas/
+│   │   ├── chunk.ts                           # Zod: POST /api/chunk
+│   │   ├── badge-update.ts                    # Zod: POST /api/badge-update
+│   │   ├── stargazer-cache.ts                 # Zod: POST /api/stargazer-cache
+│   │   ├── news.ts                            # Zod: POST /api/news
+│   │   ├── track.ts                           # Zod: POST /api/track
+│   │   └── recalculate-location.ts            # Zod: POST /api/recalculate-location
 │   └── lib/
+│       ├── define-route.ts                    # defineRoute(schema, handler) — Zod parse wrapper for POST routes
+│       ├── api-helpers.ts                     # jsonError(), logError(), getIP()
+│       ├── api-validation.ts                  # validateOwnerRepo(), OWNER_REPO_RE, LOGIN_RE
+│       ├── api-token.ts                       # verifyToken(), sm-token HMAC cookie
 │       ├── db.ts                              # Prisma + Neon adapter singleton
 │       ├── db-health.ts                       # DB storage check: checkDbHealth(), warns at 80%, skips at 95%
 │       ├── geocoder.ts                        # geocode() + geocodeBatch(): 3-level cascade
 │       ├── github.ts                          # fetchStargazersPage(): GitHub GraphQL
-│       ├── map-style.ts                       # fetchAndPatchStyle(): fetch + patch Jawg tile style (projection, attribution)
+│       ├── github-auth.ts                     # verifyPat(), isValidLogin(), normalizeLogin()
+│       ├── feed-builders.ts                   # buildRss20() + buildJsonFeed() — RSS 2.0 + JSON Feed 1.1
+│       ├── map-style.ts                       # fetchAndPatchStyle(): Jawg tile style
 │       ├── bookmarks.ts                       # Client-side repo bookmarks (localStorage)
 │       ├── user-cache.ts                      # bulkUpsertUsers() + bulkUpsertStarEvents()
-│       ├── countries.ts                       # ISO 3166 country set + isCountry() + normalizeCountry()
+│       ├── countries.ts                       # ISO 3166 country set + normalizeCountry()
 │       ├── language-colors.ts                 # LANGUAGE_COLORS map (24 languages → hex)
 │       └── theme.ts                           # getStoredTheme() / applyTheme() / MAP_STYLE_DARK/_LIGHT
+├── extension/                                 # Chrome Extension (Manifest V3, WXT framework)
+│   ├── wxt.config.ts                          # WXT manifest + permissions
+│   ├── entrypoints/
+│   │   ├── background.ts                      # Service worker: context menu on right-click
+│   │   ├── content.ts                         # Injected on github.com: ★ Map button + bfcache
+│   │   └── popup/
+│   │       ├── index.html                     # Popup UI (current repo + recent history + search)
+│   │       └── main.ts                        # Popup logic (chrome.storage for recent repos)
+│   └── public/icons/                          # Pre-generated PNGs (16, 48, 128px)
 ├── prisma/
-│   └── schema.prisma                          # GeoCache + BadgeCache + StargazerCache + GitHubUser + StarEvent + DeletionLog
+│   └── schema.prisma                          # GeoCache + BadgeCache + StargazerCache + GitHubUser + StarEvent + PageView
 ├── scripts/
 │   ├── batch-scan.ts                          # Batch-scan repos from a JSON list → writes to badge_cache
 │   ├── backfill-languages.ts                  # Backfill languages[] on github_user (--from-cache or GitHub API)
@@ -638,9 +776,9 @@ Each `/api/chunk` call processes exactly 100 users. At that batch size, GitHub G
 
 `POST /api/stargazer-cache` receives the full scan data. Raw JSON for large repos (50k+ stars) exceeds 4.5MB. Solution: the browser compresses data client-side with `CompressionStream("gzip")` + base64 encoding before sending. This reduces ~15MB to ~800KB.
 
-### Neon Postgres free tier
+### Neon Postgres (sponsored plan)
 
-512MB storage limit. `db-health.ts` monitors usage in real-time. When usage exceeds 80%, a warning is logged; at 95%, user cache writes (`GitHubUser`/`StarEvent`) are skipped to avoid overflow. The `geocache` and `stargazer_cache` tables are the primary consumers.
+Neon sponsors StarMapper with a 100GB plan. `db-health.ts` still monitors usage in real-time and exposes configurable thresholds via `DB_STORAGE_LIMIT_MB` (default: 512 for self-hosters). When usage exceeds 80%, a warning is logged; at 95%, user cache writes (`GitHubUser`/`StarEvent`) are skipped. The `geocache` and `stargazer_cache` tables are the primary consumers.
 
 ### No background jobs
 

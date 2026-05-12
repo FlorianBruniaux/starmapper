@@ -59,6 +59,13 @@
 - No real-time webhooks
 - No server-side rate limit queuing
 
+## Chrome Extension
+- extension/README.md — dev setup, build, zip
+- extension/wxt.config.ts — WXT manifest + permissions
+- extension/entrypoints/content.ts — button injection on GitHub pages
+- extension/entrypoints/background.ts — context menu service worker
+- extension/entrypoints/popup/ — toolbar popup (vanilla TS + HTML)
+
 ## Docs
 - docs/ARCHITECTURE.md — architecture deep-dive
 - docs/ROADMAP.md — feature backlog

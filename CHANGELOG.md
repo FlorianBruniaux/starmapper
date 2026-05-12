@@ -5,11 +5,19 @@ Versioning : Semantic Versioning (MAJOR.MINOR.PATCH)
 
 ---
 
-## [0.4.6] — 2026-05-11
+## [0.4.6] — 2026-05-12
 
 ### Features
 
-- **Chrome Extension (Manifest V3)** — Bouton "★ Map" injecté sur chaque page GitHub `/owner/repo` qui ouvre la carte StarMapper directement. Content script (`src/content.ts`) : détecte le pattern d'URL, injecte un bouton stylé avec les CSS variables GitHub (fonctionne en dark + light sans injection CSS custom), trois cibles de fallback (`pagehead-actions` → repo heading → bouton flottant fixe). Gère la navigation SPA de GitHub via Turbo (`turbo:render`, `turbo:load`, `popstate`) + `MutationObserver` sur le titre. Background service worker : menu contextuel "Open on StarMapper" au clic droit sur tout lien GitHub. Popup : affiche le slug du repo courant si on est sur GitHub, recherche par slug ou URL complète. Build : Vite + `@crxjs/vite-plugin` v2, cible Chrome 107+. Installation : `cd extension && npm install && npm run build` → charger `dist/` dans `chrome://extensions`.
+- **Chrome Extension (Manifest V3)** — Bouton "★ Map" injecté sur chaque page GitHub `/owner/repo` qui ouvre la carte StarMapper directement. Popup toolbar avec repo courant + 5 derniers repos visités + recherche par slug ou URL. Menu contextuel au clic droit sur les liens GitHub. Gère la navigation SPA de GitHub (Turbo + bfcache) via `MutationObserver`. Dark/light compatible via CSS variables GitHub.
+
+### Internal
+
+- **Refactor extension : migration WXT** — Remplacement de Vite + `@crxjs/vite-plugin` v2 (beta stagnante) par WXT v0.20. Structure `entrypoints/` (background.ts, content.ts, popup/), build → `.output/chrome-mv3/`, `wxt zip` pour le Chrome Web Store. `tsconfig.json` autonome (sans `extends: .wxt/tsconfig.json`) pour éviter le bug de référence circulaire Vite.
+- **5 fixes extension** — MutationObserver remplace `setTimeout(120ms)` pour l'injection du bouton ; handler `pageshow` + `e.persisted` pour le bfcache ; recent repos sauvegardés dans `chrome.storage.local` au clic ; blocklist `SYSTEM_OWNERS` dans le context menu (filtre `/settings`, `/explore`, etc.) ; icônes dans `public/icons/` pour le serving WXT.
+- **Docs audit complet** — Mise à jour de `README.md` (Chrome Extension), `PITCH.md` + `PITCH-en.md` (Organic Score : 4 signaux → 3, poids corrects fork=40%/watcher=5%/zero-followers=55% ; Watch mode, Geo velocity, Notable stargazers, Chrome Extension ajoutés), `docs/ARCHITECTURE.md` (version 0.4.6, Neon 100GB sponsored, +15 routes API manquantes, file structure complète avec schemas/ et extension/), `PROJECT_INDEX.md` + `llms.txt` (section extension/), `docs/organic-score-calibration.md` (Final Decision corrigé : fork=40%, non fork=70%).
+- **`docs/extension-publishing.md`** — Guide Chrome Web Store : compte développeur, build/zip, procédure upload, mises à jour, convention semver, roadmap bouton profil avec sélecteurs DOM préparés.
+- **`tsconfig.json`** — `extension/` exclu de la compilation racine (la config WXT est autonome dans `extension/tsconfig.json`).
 
 ---
 

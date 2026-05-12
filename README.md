@@ -97,6 +97,7 @@ Enter any GitHub repository URL and StarMapper fetches all stargazers, geocodes 
 - Optional GitHub token input to raise rate limits from 60 to 5000 req/hour
 - Collapsible sidebar on mobile
 - Versioned changelog at `/changelog`
+- **Chrome Extension** (Manifest V3) — injects a ★ Map button on any GitHub repo page, toolbar popup with current repo + recent history + search, and right-click context menu on repo links
 
 ---
 

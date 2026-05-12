@@ -55,14 +55,26 @@ https://starmapper.bruniaux.com/explore : leaderboard followers (top, power user
 
 ### Organic Score (0.3.4)
 
-Score 0–100 par repo estimant si les étoiles sont organiques ou "farmées", basé sur 4 signaux publics :
+Score 0–100 par repo estimant si les étoiles sont organiques ou "farmées", basé sur 3 signaux publics :
 
-- Ratio forks/stars (30%)
+- Ratio forks/stars (40%)
 - Ratio watchers/stars (5%)
-- % de stargazers à zéro followers (45%)
-- Cadence des releases (20%)
+- % de stargazers à zéro followers (55%)
 
 Affiché dans la liste repos avec un modal de détail au clic. 92% de classification correcte sur le corpus de calibration.
+
+### Notable stargazers + Geographic velocity (0.4.4)
+
+- **Notable stargazers** : top-5 par followers affichés comme chips d'avatars dans la stats modal, visibles immédiatement à l'ouverture
+- **Geographic velocity** (onglet "📈 Rising") : identifie les pays en accélération en comparant le taux 30j vs 31–90j avec labels `rising / new / stable / declining`
+
+### Watch mode (0.4.5)
+
+Polling GitHub toutes les 60s pendant un lancement. Badge pulsant affiché en temps réel (`+N ★ · India, Germany`). Arrêt automatique après 10 min d'inactivité.
+
+### Chrome Extension (0.4.6)
+
+Extension Manifest V3 installable depuis le Chrome Web Store. Injecte un bouton ★ Map sur chaque page de repo GitHub, popup toolbar avec le repo courant + historique des 5 derniers + champ de recherche, menu contextuel au clic droit sur les liens de repos.
 
 ### Language Atlas (0.3.0)
 
