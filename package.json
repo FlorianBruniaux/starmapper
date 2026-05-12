@@ -62,7 +62,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@next/eslint-plugin-next": "^16.2.3",
+    "@next/eslint-plugin-next": "^16.2.6",
     "@prisma/adapter-pg": "^7.6.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^25",
