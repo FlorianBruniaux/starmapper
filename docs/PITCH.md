@@ -68,13 +68,22 @@ Displayed in the repo list with a detail modal on click. 92% correct classificat
 - **Notable stargazers**: top-5 by followers shown as avatar chips in the stats modal, visible immediately on open
 - **Geographic velocity** ("📈 Rising" tab): identifies accelerating countries by comparing 30-day vs 31–90-day rate, with `rising / new / stable / declining` labels
 
+### Deep link sharing (0.4.3)
+
+The Share modal encodes all active filters (country, city, company, followers, date range, tier, view mode) into a URL. Opening a shared link restores the exact filter state and shows a dismissible "Shared view" pill. Useful for sending a specific audience slice to a co-founder or investor.
+
 ### Watch mode (0.4.5)
 
 Polls GitHub every 60s during a launch. Pulsing badge shows `+N ★ · India, Germany` in real time. Auto-stops after 10 min of inactivity.
 
-### Chrome Extension (0.4.6)
+### Chrome Extension (v1.1.0)
 
-Manifest V3 extension installable from the Chrome Web Store. Injects a ★ Map button on every GitHub repo page, toolbar popup with the current repo + last 5 recently viewed + search field, right-click context menu on repo links.
+Manifest V3 extension. Two injection points:
+
+- **On repo pages** (`github.com/owner/repo`): injects a "★ Map" button in the repo action bar, opening the StarMapper map directly. Toolbar popup with the current repo + last 5 recently visited + search field. Right-click context menu on repo links.
+- **On profile pages** (`github.com/login`): injects a "★ StarMapper" button in the user sidebar, opening `starmapper.bruniaux.com/profile/[login]`.
+
+Handles GitHub SPA navigation (Turbo + bfcache), dark/light theme via GitHub CSS variables.
 
 ---
 

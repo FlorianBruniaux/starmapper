@@ -5,6 +5,14 @@ Versioning: Semantic Versioning (MAJOR.MINOR.PATCH)
 
 ---
 
+## [0.4.7] — 2026-05-12
+
+### Features
+
+- **Chrome Extension v1.1.0 — profile button** — On GitHub profile pages (`github.com/[login]`), a "★ StarMapper" button is injected in the user sidebar that opens `starmapper.bruniaux.com/profile/[login]`. Content script `matches` extended to `["https://github.com/*", "https://github.com/*/*"]` to cover single-segment paths. `getPageContext()` discriminated union (`repo | profile | other`) dispatches the correct button per page type. Profile button is full-width to match GitHub's sidebar style; injection targets `.js-profile-editable-area` then `Layout-sidebar` with a 2s floating fallback.
+
+---
+
 ## [0.4.6] — 2026-05-12
 
 ### Features
