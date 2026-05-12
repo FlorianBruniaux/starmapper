@@ -1,28 +1,19 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { compressToGzBase64 } from "@/lib/compression";
 import { checkDbHealth, DB_CRITICAL_PCT } from "@/lib/db-health";
-import { validateOwnerRepo } from "@/lib/api-validation";
 import { jsonError, logError } from "@/lib/api-helpers";
 import { verifyToken, COOKIE_NAME } from "@/lib/api-token";
+import { defineRoute } from "@/lib/define-route";
+import { stargazerCacheEnvelopeSchema, MAX_CACHEABLE_STARS } from "@/schemas/stargazer-cache";
 
-const MAX_CACHEABLE_STARS = 500_000;
-
-export const POST = async (req: NextRequest) => {
+export const POST = defineRoute(stargazerCacheEnvelopeSchema, async (req, body) => {
   try {
-    const body = await req.json();
-    const { owner, repo, points, unmapped, pointsGz, unmappedGz, totalCount, latestStarredAt, ts } = body;
-
-    const key = validateOwnerRepo(owner, repo);
-    if (!key || typeof totalCount !== "number" || totalCount < 0 || totalCount > MAX_CACHEABLE_STARS) {
-      return jsonError("invalid_params", 400);
-    }
-
-    // Freshness check — rejects requests older than 5 minutes (anti-replay)
-    if (typeof ts !== "number" || Math.abs(Date.now() - ts) > 5 * 60_000) {
+    // Freshness check — ts type is validated by schema; window check requires Date.now()
+    if (Math.abs(Date.now() - body.ts) > 5 * 60_000) {
       return jsonError("expired_request", 400);
     }
 
@@ -32,10 +23,12 @@ export const POST = async (req: NextRequest) => {
     const SM_SECRET = process.env.SM_TOKEN_SECRET ?? "";
     if (SM_SECRET) {
       const smToken = req.cookies.get(COOKIE_NAME)?.value;
-      if (!await verifyToken(smToken, SM_SECRET)) {
+      if (!(await verifyToken(smToken, SM_SECRET))) {
         return jsonError("forbidden", 403);
       }
     }
+
+    const key = { owner: body.owner, repo: body.repo };
 
     // Run plausibility check and DB health check in parallel (independent queries).
     const [existingBadge, health] = await Promise.all([
@@ -49,7 +42,7 @@ export const POST = async (req: NextRequest) => {
     // Plausibility check — if badge data exists, totalCount must be within ±20%
     // Prevents overwriting a 50k-star repo cache with fabricated data
     if (existingBadge && existingBadge.totalCount > 0) {
-      const ratio = totalCount / existingBadge.totalCount;
+      const ratio = body.totalCount / existingBadge.totalCount;
       if (ratio < 0.8 || ratio > 1.2) {
         return jsonError("totalCount_mismatch", 400);
       }
@@ -58,23 +51,23 @@ export const POST = async (req: NextRequest) => {
     let finalPointsGz: string;
     let finalUnmappedGz: string;
 
-    if (typeof pointsGz === "string" && typeof unmappedGz === "string") {
+    if (typeof body.pointsGz === "string" && typeof body.unmappedGz === "string") {
       // New format: client compressed client-side to stay under Vercel's 4.5MB body limit
       // 30 MB base64 per field — supports up to ~500k stars
-      if (pointsGz.length > 30_000_000 || unmappedGz.length > 30_000_000) {
+      if (body.pointsGz.length > 30_000_000 || body.unmappedGz.length > 30_000_000) {
         return jsonError("payload_too_large", 413);
       }
-      finalPointsGz = pointsGz;
-      finalUnmappedGz = unmappedGz;
-    } else if (Array.isArray(points) && Array.isArray(unmapped)) {
+      finalPointsGz = body.pointsGz;
+      finalUnmappedGz = body.unmappedGz;
+    } else if (Array.isArray(body.points) && Array.isArray(body.unmapped)) {
       // Legacy format: raw arrays — compress on server
-      if (points.length + unmapped.length > MAX_CACHEABLE_STARS) {
+      if (body.points.length + body.unmapped.length > MAX_CACHEABLE_STARS) {
         return jsonError("too_large", 413);
       }
       type RawPoint = { bio?: unknown; avatarUrl?: unknown; [k: string]: unknown };
-      const slim = (points as RawPoint[]).map(({ bio: _bio, avatarUrl: _av, ...rest }) => rest);
+      const slim = (body.points as RawPoint[]).map(({ bio: _bio, avatarUrl: _av, ...rest }) => rest);
       finalPointsGz = compressToGzBase64(slim);
-      finalUnmappedGz = compressToGzBase64(unmapped);
+      finalUnmappedGz = compressToGzBase64(body.unmapped);
     } else {
       return jsonError("invalid_params", 400);
     }
@@ -82,11 +75,26 @@ export const POST = async (req: NextRequest) => {
     if (health.ok && health.usagePct >= DB_CRITICAL_PCT)
       return jsonError("storage_full", 507);
 
-    const latestStarredAtDate = typeof latestStarredAt === "string" ? new Date(latestStarredAt) : null;
+    const latestStarredAtDate =
+      typeof body.latestStarredAt === "string" ? new Date(body.latestStarredAt) : null;
+
     await prisma.stargazerCache.upsert({
       where: { owner_repo: key },
-      create: { ...key, points: finalPointsGz, unmapped: finalUnmappedGz, totalCount, scannedAt: new Date(), latestStarredAt: latestStarredAtDate },
-      update: { points: finalPointsGz, unmapped: finalUnmappedGz, totalCount, scannedAt: new Date(), latestStarredAt: latestStarredAtDate },
+      create: {
+        ...key,
+        points: finalPointsGz,
+        unmapped: finalUnmappedGz,
+        totalCount: body.totalCount,
+        scannedAt: new Date(),
+        latestStarredAt: latestStarredAtDate,
+      },
+      update: {
+        points: finalPointsGz,
+        unmapped: finalUnmappedGz,
+        totalCount: body.totalCount,
+        scannedAt: new Date(),
+        latestStarredAt: latestStarredAtDate,
+      },
     });
 
     return NextResponse.json({ ok: true });
@@ -94,4 +102,4 @@ export const POST = async (req: NextRequest) => {
     logError("stargazer-cache POST", err);
     return jsonError("internal", 500);
   }
-};
+});

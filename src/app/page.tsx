@@ -74,8 +74,8 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
-    // Fetch only 12 repos for the featured section — fast, no table needed
-    fetch("/api/repos?limit=12")
+    // Fetch 12 diversified repos for the featured section (max 3 per owner, min 100 stars)
+    fetch("/api/repos?limit=12&diverse=true")
       .then((r) => r.json())
       .then((data) => {
         if (Array.isArray(data.repos)) setRepos(data.repos);
@@ -330,7 +330,7 @@ export default function HomePage() {
                 colorClass: "text-accent-green",
                 bgClass: "bg-accent-green/8",
                 label: "Stats & export",
-                desc: "Top countries, cities, companies, followers. Export image, Markdown or LinkedIn.",
+                desc: "Top countries, cities, companies. Watch live stars during a launch. Export image, badge or LinkedIn post.",
                 icon: (
                   <path d="M1.5 1.75V13.5h13.75a.75.75 0 0 1 0 1.5H.75a.75.75 0 0 1-.75-.75V1.75a.75.75 0 0 1 1.5 0Zm14.28 2.53-5.25 5.25a.75.75 0 0 1-1.06 0L7 7.06 4.28 9.78a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042l3.25-3.25a.75.75 0 0 1 1.06 0L9 7.94l4.72-4.72a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042Z" />
                 ),
@@ -338,8 +338,8 @@ export default function HomePage() {
               {
                 colorClass: "text-accent-orange",
                 bgClass: "bg-accent-orange/8",
-                label: "Shared cache",
-                desc: "First scan populates a global cache — next visitor loads instantly.",
+                label: "Instant for everyone",
+                desc: "Already scanned? Loads in under a second for anyone who visits — no waiting, no re-scan.",
                 icon: (
                   <path d="M11.93 8.5a4.002 4.002 0 0 1-7.86 0H.75a.75.75 0 0 1 0-1.5h3.32a4.002 4.002 0 0 1 7.86 0h3.32a.75.75 0 0 1 0 1.5Zm-1.43-.75a2.5 2.5 0 1 0-5 0 2.5 2.5 0 0 0 5 0Z" />
                 ),
@@ -368,6 +368,65 @@ export default function HomePage() {
                   <div className="text-muted text-sm leading-relaxed">{desc}</div>
                 </div>
               </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ── More surfaces ── */}
+        <section className="w-full max-w-7xl mx-auto px-4 lg:px-6 pb-12">
+          <h2 className="text-muted-subtle text-2xs uppercase tracking-widest mb-4 text-center">
+            More to explore
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {[
+              {
+                href: "/explore",
+                label: "Explore",
+                desc: "Top stargazers by followers, company stats, cross-repo fans.",
+                colorClass: "text-accent-blue",
+                bgClass: "bg-accent-blue/8",
+                icon: <path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z" />,
+              },
+              {
+                href: "/profile/florianbruniaux",
+                label: "Developer profiles",
+                desc: "Any GitHub username → map, nearby devs, top repos, contact.",
+                colorClass: "text-accent-purple",
+                bgClass: "bg-accent-purple/8",
+                icon: <path d="M10.25 2.0a3.25 3.25 0 1 1-6.5 0 3.25 3.25 0 0 1 6.5 0ZM1 14a6 6 0 1 1 12 0H1Z" />,
+              },
+              {
+                href: "/devs",
+                label: "Dev Maps",
+                desc: "Interactive maps of developers filtered by programming language.",
+                colorClass: "text-accent-green",
+                bgClass: "bg-accent-green/8",
+                icon: <path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0ZM1.5 8a6.5 6.5 0 0 1 .75-3.054l1.61 1.61A2.999 2.999 0 0 0 3 8c0 .126.007.251.02.374l-1.546.682A6.47 6.47 0 0 1 1.5 8Zm1.23 4.065.886-1.328A2.999 2.999 0 0 0 8 11c.63 0 1.215-.19 1.701-.516l.886 1.328A6.5 6.5 0 0 1 2.73 12.065ZM8 9.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Zm4.52 2.565.886 1.328A6.5 6.5 0 0 0 14.5 8c0-.318-.026-.63-.074-.935l-1.546.682c.013.123.02.248.02.374a3 3 0 0 1-.38 1.444Z" />,
+              },
+              {
+                href: "/devs/atlas",
+                label: "Language Atlas",
+                desc: "Which language dominates each country? A choropleth of the dev world.",
+                colorClass: "text-accent-orange",
+                bgClass: "bg-accent-orange/8",
+                icon: <path d="M0 1.75A.75.75 0 0 1 .75 1h4.253c.712 0 1.373.333 1.75.88.377-.547 1.038-.88 1.75-.88h4.747a.75.75 0 0 1 .75.75v10.5a.75.75 0 0 1-.75.75h-4.747a1 1 0 0 0-1 1v.25a.75.75 0 0 1-1.5 0v-.25a1 1 0 0 0-1-1H.75a.75.75 0 0 1-.75-.75Zm7.5 10.931V3.455c-.32-.274-.717-.455-1.247-.455H1.5v9h3.247c.91 0 1.79.285 2.503.926Zm1.5-7.476v8.476a4.488 4.488 0 0 1 2.503-.926H14.5V3h-3.997c-.53 0-.927.18-1.247.455-.32.274-.506.62-.506 1.206Z" />,
+              },
+            ].map(({ href, label, desc, colorClass, bgClass, icon }) => (
+              <Link
+                key={href}
+                href={href}
+                className="flex flex-col gap-3 bg-surface border border-border-subtle rounded-lg p-4 hover:border-accent-blue/40 transition-colors group"
+              >
+                <div className={`size-7 shrink-0 flex items-center justify-center rounded-md ${bgClass}`}>
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" className={colorClass}>
+                    {icon}
+                  </svg>
+                </div>
+                <div>
+                  <div className={`text-xs font-semibold mb-1 ${colorClass} group-hover:underline`}>{label}</div>
+                  <div className="text-muted text-xs leading-relaxed">{desc}</div>
+                </div>
+              </Link>
             ))}
           </div>
         </section>
@@ -426,7 +485,7 @@ export default function HomePage() {
                     >
                       {repo.mappedPercent}% mapped
                     </span>
-                    <span>{repo.countryCount} countries</span>
+                    <span>{repo.countryCount === 1 ? "1 country" : `${repo.countryCount} countries`}</span>
                   </div>
                 </Link>
               ))}
@@ -444,7 +503,19 @@ export default function HomePage() {
             {[
               {
                 q: "Is StarMapper free?",
-                a: "Yes — no account, no login, no credit card. Paste a repo URL and click Map It.",
+                a: "Yes — no account, no login, no credit card. Paste a repo URL and click Map Stargazers.",
+              },
+              {
+                q: "How long does a scan take?",
+                a: "Small repos (under 500 stars) scan in under 10 seconds. Large repos (50k+ stars) take a few minutes — the GitHub API processes users in batches of 100. Once a repo is scanned, the result is cached globally: any subsequent visitor loads it instantly, no re-scan needed.",
+              },
+              {
+                q: "Will my GitHub token be stored?",
+                a: "No. Your token is saved in your browser's localStorage only — it never leaves your device except to authenticate directly with the GitHub API. StarMapper does not store tokens server-side.",
+              },
+              {
+                q: "Is StarMapper open source?",
+                a: "Yes. StarMapper is open source under the AGPL-3.0 license. The full source code is available on GitHub.",
               },
               {
                 q: "How accurate is the location data?",
@@ -456,7 +527,7 @@ export default function HomePage() {
               },
               {
                 q: "Can I embed a badge in my README?",
-                a: "Yes. After scanning a repo, StarMapper generates an embeddable SVG badge with the star count and number of mapped countries. Copy the Markdown snippet directly from the map page.",
+                a: "Yes. After scanning a repo, StarMapper generates two embeddable assets: an SVG shield badge (star count + countries mapped) and a full scatter map image. Copy the Markdown or HTML snippet directly from the map page.",
               },
               {
                 q: "Where does the stargazer data come from?",
@@ -464,7 +535,7 @@ export default function HomePage() {
               },
               {
                 q: "How do I request removal of my data?",
-                a: "Send an email to florian@bruniaux.com with your GitHub username and confirmation that you own the account. We will delete your profile data and star events within 30 days. Simpler alternative: remove your location from your GitHub profile settings — the next scan will reflect the change automatically.",
+                a: "Remove your location from your GitHub profile settings — the next scan will reflect the change automatically and your coordinates will no longer be geocoded. To delete existing data, email florian@bruniaux.com with your GitHub username. We will remove your profile data and star events within 30 days.",
               },
               {
                 q: "Not on the map?",

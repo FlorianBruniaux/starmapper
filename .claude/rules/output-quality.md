@@ -2,81 +2,81 @@
 
 ## Directive
 
-Trois patterns de friction à éliminer : passes superficielles, boucles de planification sans output, confirmation de fin de tâche manquante.
+Three friction patterns to eliminate: shallow passes, planning loops without output, missing task completion confirmation.
 
 ---
 
-## 1. Exhaustivité sur la première passe
+## 1. Exhaustiveness on the First Pass
 
-Quand une analyse, audit ou review est demandé :
-- Lire **chaque** fichier pertinent — pas un échantillon
-- Rapporter exhaustivement sur la première passe
-- Si scope ambigu → demander avant de faire superficiel
-- Ne JAMAIS livrer un résumé partiel
-
----
-
-## 2. Biais vers l'action (pas les boucles de planification)
-
-**Règle : Produire des livrables tôt, itérer ensuite.**
-
-- Créer des fichiers dès que possible — ne pas planifier pendant 3+ exchanges sans output
-- Si bloqué depuis >2 tentatives → expliquer le bloqueur clairement
-
-```
-❌ Session entière d'exploration + planification sans créer un seul fichier
-✅ Créer le fichier squelette d'abord, remplir ensuite
-```
+When an analysis, audit, or review is requested:
+- Read **every** relevant file — not a sample
+- Report exhaustively on the first pass
+- If scope is ambiguous → ask before going shallow
+- NEVER deliver a partial summary
 
 ---
 
-## 3. Confirmation de fin de tâche
+## 2. Bias Toward Action (not planning loops)
 
-Après chaque implémentation, confirmer explicitement :
+**Rule: Produce deliverables early, iterate after.**
 
-```
-✅ Fichiers modifiés : [liste]
-✅ TypeScript : rtk tsc — 0 erreur
-✅ Commit : [hash] — type(scope): description  (si demandé)
-✅ Push : [oui/non — selon demande explicite]
-```
-
-Ne jamais push sans demande explicite.
-
----
-
-## 4. Instructions de test après implémentation
-
-Après chaque implémentation, donner les étapes de test sans attendre :
+- Create files as soon as possible — do not plan for 3+ exchanges without any output
+- If blocked after >2 attempts → explain the blocker clearly
 
 ```
-Comment tester :
-  1. [action concrète — URL ou commande]
-  2. [résultat attendu]
-  3. [edge case si pertinent]
+❌ Entire session of exploration + planning without creating a single file
+✅ Create the skeleton file first, fill it in after
 ```
 
 ---
 
-## 5. Proactive : "Quelle est la suite ?"
+## 3. Task Completion Confirmation
 
-Après une tâche, énoncer proactivement :
-- Ce qui est fait
-- Ce qui reste
-- La prochaine action suggérée
+After each implementation, confirm explicitly:
 
-Si terminé → le dire explicitement : "C'est terminé, rien d'autre en attente."
+```
+✅ Files modified: [list]
+✅ TypeScript: rtk tsc — 0 errors
+✅ Commit: [hash] — type(scope): description  (if requested)
+✅ Push: [yes/no — per explicit request]
+```
+
+Never push without an explicit request.
 
 ---
 
-## 6. Offrir commit en fin de tâche
+## 4. Testing Instructions After Implementation
 
-Ne pas commiter automatiquement, mais proposer :
+After each implementation, provide test steps without waiting:
 
 ```
-Veux-tu que je commite ? (rtk git status montre N fichiers modifiés)
+How to test:
+  1. [concrete action — URL or command]
+  2. [expected result]
+  3. [edge case if relevant]
 ```
 
 ---
 
-**Auto-loaded** : Ce fichier est chargé automatiquement par Claude à chaque session.
+## 5. Proactive: "What's Next?"
+
+After a task, proactively state:
+- What is done
+- What remains
+- The suggested next action
+
+If finished → say it explicitly: "Done, nothing else pending."
+
+---
+
+## 6. Offer Commit at End of Task
+
+Do not commit automatically, but propose:
+
+```
+Do you want me to commit? (rtk git status shows N modified files)
+```
+
+---
+
+**Auto-loaded**: This file is loaded automatically at every Claude session start.

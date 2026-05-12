@@ -11,6 +11,8 @@ import { CLUSTER_RADIUS } from "@/components/map/constants";
 import type { StargazerPoint, ChunkResponse } from "@/app/api/chunk/route";
 import type { MapProjection } from "@/lib/theme";
 import type { RepoStats, RepoOrganic } from "@/app/api/stats/[owner]/[repo]/route";
+import type { GeoVelocityItem } from "@/app/api/stats/[owner]/[repo]/geo-velocity/route";
+import type { GrowthResponse } from "@/app/api/stats/[owner]/[repo]/growth/route";
 import { TokenModal, getStoredToken, getStoredUsername, setStoredUsername } from "@/components/token-modal";
 import { Modal } from "@/components/modal";
 import { saveBookmark } from "@/lib/bookmarks";
@@ -173,7 +175,9 @@ export default function MapPage({
   const [serverStats, setServerStats] = useState<RepoStats | null>(null);
   const [organicData, setOrganicData] = useState<RepoOrganic | null>(null);
   const [statsOpen, setStatsOpen] = useState(false);
-  const [statsTab, setStatsTab] = useState<"countries" | "cities" | "top" | "companies" | "power">("top");
+  const [statsTab, setStatsTab] = useState<"countries" | "cities" | "top" | "companies" | "power" | "rising">("top");
+  const [geoVelocity, setGeoVelocity] = useState<GeoVelocityItem[] | null>(null);
+  const [geoVelocityLoading, setGeoVelocityLoading] = useState(false);
   const [statsFilter, setStatsFilter] = useState("");
   const [statsTopSort, setStatsTopSort] = useState<"followers" | "repos">("followers");
   const [shareOpen, setShareOpen] = useState(false);
@@ -183,6 +187,8 @@ export default function MapPage({
   const [liDraft, setLiDraft] = useState("");
   const [liCopied, setLiCopied] = useState(false);
   const [badgeCopied, setBadgeCopied] = useState(false);
+  const [filterLinkCopied, setFilterLinkCopied] = useState(false);
+  const [sharedView, setSharedView] = useState(false);
   const [allOpen, setAllOpen] = useState(false);
   const [allSearch, setAllSearch] = useState("");
   const deferredSearch = useDeferredValue(allSearch);
@@ -204,6 +210,13 @@ export default function MapPage({
   const [filterCity, setFilterCity] = useState("");
   const [flyTarget, setFlyTarget] = useState<{ lat: number; lng: number; login: string } | null>(null);
   const [growthOpen, setGrowthOpen] = useState(false);
+  const [apiGrowthData, setApiGrowthData] = useState<[string, number][] | null>(null);
+  const [growthFetching, setGrowthFetching] = useState(false);
+  const [watchActive, setWatchActive] = useState(false);
+  const [watchSince, setWatchSince] = useState<string | null>(null);
+  const [watchNewCount, setWatchNewCount] = useState(0);
+  const [watchCountries, setWatchCountries] = useState<string[]>([]);
+  const watchIdleRef = useRef(0);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [tokenOpen, setTokenOpen] = useState(false);
   const [hasToken, setHasToken] = useState(false);
@@ -243,16 +256,33 @@ export default function MapPage({
     return () => clearTimeout(t);
   }, [clusterRadius]);
 
-  // Read compare param from URL on mount
+  // Read compare + filter params from URL on mount
   useEffect(() => {
-    const p = new URLSearchParams(window.location.search).get("compare");
-    if (p && p.includes("/") && p.split("/").length === 2) {
-      const [o, r] = p.split("/");
-      if (o && r) {
-        setCompareOwner(o);
-        setCompareRepo(r);
-      }
+    const p = new URLSearchParams(window.location.search);
+    const compare = p.get("compare");
+    if (compare && compare.includes("/") && compare.split("/").length === 2) {
+      const [o, r] = compare.split("/");
+      if (o && r) { setCompareOwner(o); setCompareRepo(r); }
     }
+    // Deep-link filter restore
+    let hasSharedState = false;
+    const country = p.get("country");
+    const city = p.get("city");
+    const company = p.get("company");
+    const followers = p.get("followers");
+    const date = p.get("date");
+    const tier = p.get("tier");
+    const mode = p.get("mode");
+    const proj = p.get("proj");
+    if (country) { setFilterCountry(country); hasSharedState = true; }
+    if (city) { setFilterCity(city); hasSharedState = true; }
+    if (company) { setFilterCompany(company); hasSharedState = true; }
+    if (followers) { const n = parseInt(followers, 10); if (n > 0) { setFilterFollowers(n); hasSharedState = true; } }
+    if (date && (["30d", "90d", "1y"] as string[]).includes(date)) { setFilterDate(date as "30d" | "90d" | "1y"); hasSharedState = true; }
+    if (tier && (["high", "mid", "low"] as string[]).includes(tier)) { setFollowerMapFilter(tier as "high" | "mid" | "low"); hasSharedState = true; }
+    if (mode === "heatmap") { setViewMode("heatmap"); hasSharedState = true; }
+    if (proj === "mercator") { setMapProjection("mercator"); hasSharedState = true; }
+    if (hasSharedState) setSharedView(true);
   }, []);
 
   const ghHeaders = useCallback((): Record<string, string> => {
@@ -810,11 +840,24 @@ export default function MapPage({
     return result;
   }, [points, followerMapFilter, timelapseActive, timelapseIndex, weekBuckets]);
 
-  // Cheap boolean — used by Dock to show/hide the growth button
-  const hasGrowthData = useMemo(
-    () => [...points, ...unmapped].some((u) => !!u.starredAt),
-    [points, unmapped],
-  );
+  // Show growth button whenever the repo has any scan data (API will provide timestamps)
+  const hasGrowthData = points.length > 0 || unmapped.length > 0;
+
+  useEffect(() => {
+    if (!growthOpen || apiGrowthData !== null) return;
+    setGrowthFetching(true);
+    fetch(`/api/stats/${owner}/${repo}/growth`)
+      .then((r) => (r.ok ? (r.json() as Promise<GrowthResponse>) : null))
+      .then((data) => {
+        if (data && data.weeks.length > 0) {
+          setApiGrowthData(data.weeks.map((w) => [w.week, w.count] as [string, number]));
+        } else {
+          setApiGrowthData([]);
+        }
+      })
+      .catch(() => setApiGrowthData([]))
+      .finally(() => setGrowthFetching(false));
+  }, [growthOpen, apiGrowthData, owner, repo]);
 
   // Expensive computation — only runs when drawer is open (INP: F2)
   const growthData = useMemo(() => {
@@ -1037,6 +1080,82 @@ export default function MapPage({
   const newStarsCount = repoInfo && total > 0 ? Math.max(0, repoInfo.stars - total) : 0;
   // Client-side stats take priority; fall back to server stats when no points loaded yet
   const displayStats = stats ?? serverStats;
+
+  // Stars gained in the last 30 days (based on starredAt already in memory)
+  const starsThisMonth = useMemo(() => {
+    const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    return points.filter((p) => p.starredAt && new Date(p.starredAt).getTime() >= cutoff).length;
+  }, [points]);
+
+  // Lazy-fetch geo velocity when user opens the Rising tab
+  useEffect(() => {
+    if (!statsOpen || statsTab !== "rising" || geoVelocity !== null || geoVelocityLoading) return;
+    setGeoVelocityLoading(true);
+    fetch(`/api/stats/${owner}/${repo}/geo-velocity`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((data: { items: GeoVelocityItem[] } | null) => {
+        if (data) setGeoVelocity(data.items);
+      })
+      .catch(() => {})
+      .finally(() => setGeoVelocityLoading(false));
+  }, [statsOpen, statsTab, geoVelocity, geoVelocityLoading, owner, repo]);
+
+  // Watch mode — poll GitHub for new stars every 60s, auto-stop after 10 min idle
+  const AUTO_STOP_MS = 10 * 60_000;
+  useEffect(() => {
+    if (!watchActive || !watchSince) return;
+    watchIdleRef.current = 0;
+
+    const poll = async () => {
+      try {
+        const res = await fetch(`/api/watch/${owner}/${repo}?since=${encodeURIComponent(watchSince)}`);
+        if (!res.ok) return;
+        const data = await res.json() as { newCount: number; countries: string[] };
+        if (data.newCount > 0) {
+          setWatchNewCount((prev) => prev + data.newCount);
+          setWatchCountries(data.countries);
+          watchIdleRef.current = 0;
+        } else {
+          watchIdleRef.current += 60_000;
+          if (watchIdleRef.current >= AUTO_STOP_MS) setWatchActive(false);
+        }
+      } catch { /* network errors are silently ignored */ }
+    };
+
+    const id = setInterval(poll, 60_000);
+    return () => clearInterval(id);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [watchActive, watchSince, owner, repo]);
+
+  const handleWatchStart = useCallback(() => {
+    setWatchActive(true);
+    setWatchSince(new Date().toISOString());
+    setWatchNewCount(0);
+    setWatchCountries([]);
+  }, []);
+
+  const handleWatchStop = useCallback(() => {
+    setWatchActive(false);
+    setWatchSince(null);
+  }, []);
+
+  // Build a filtered-view URL encoding current filter state
+  const buildFilteredUrl = useCallback((): string => {
+    const params = new URLSearchParams();
+    if (filterCountry) params.set("country", filterCountry);
+    if (filterCity) params.set("city", filterCity);
+    if (filterCompany) params.set("company", filterCompany);
+    if (filterFollowers > 0) params.set("followers", String(filterFollowers));
+    if (filterDate !== "all") params.set("date", filterDate);
+    if (followerMapFilter !== "all") params.set("tier", followerMapFilter);
+    if (viewMode !== "clusters") params.set("mode", viewMode);
+    if (mapProjection !== "globe") params.set("proj", String(mapProjection));
+    const base = `${window.location.origin}${window.location.pathname}`;
+    const qs = params.toString();
+    return qs ? `${base}?${qs}` : base;
+  }, [filterCountry, filterCity, filterCompany, filterFollowers, filterDate, followerMapFilter, viewMode, mapProjection]);
+
+  const hasActiveFilters = !!(filterCountry || filterCity || filterCompany || filterFollowers > 0 || filterDate !== "all" || followerMapFilter !== "all" || viewMode !== "clusters");
 
   // Stable callbacks for StargazerMap — prevents re-mount on every render (memo + shallow compare)
   const handleFlyDone = useCallback(() => setFlyTarget(null), []);
@@ -1357,6 +1476,28 @@ export default function MapPage({
         organic={organicData ?? serverStats?.organic}
       />
 
+      {/* Shared-view banner — shown when URL encoded filters were detected on load */}
+      {sharedView && (
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20
+          bg-accent-blue/10 border border-accent-blue/30 rounded-lg px-4 py-2
+          text-xs backdrop-blur-md flex items-center gap-3 max-w-sm shadow-md">
+          <span className="text-accent-blue font-medium">Shared view</span>
+          {filterCountry && <span className="text-muted-subtle">{filterCountry}</span>}
+          {filterCity && <span className="text-muted-subtle">{filterCity}</span>}
+          {filterCompany && <span className="text-muted-subtle">{filterCompany}</span>}
+          {filterFollowers > 0 && <span className="text-muted-subtle">{filterFollowers}+ flw</span>}
+          {filterDate !== "all" && <span className="text-muted-subtle">{filterDate}</span>}
+          {followerMapFilter !== "all" && <span className="text-muted-subtle">{followerMapFilter}</span>}
+          <button
+            onClick={() => setSharedView(false)}
+            aria-label="Dismiss"
+            className="ml-auto text-muted hover:text-foreground leading-none"
+          >
+            <span aria-hidden="true">✕</span>
+          </button>
+        </div>
+      )}
+
       {/* Legend — compare mode indicator only */}
       {compareOwner && compareRepo && (
         <div className="absolute bottom-6 right-4 z-10
@@ -1456,6 +1597,11 @@ export default function MapPage({
           hasTimelapse={weekBuckets.length > 1}
           timelapseActive={timelapseActive}
           setTimelapseActive={setTimelapseActive}
+          watchActive={watchActive}
+          watchNewCount={watchNewCount}
+          watchCountries={watchCountries}
+          onWatchStart={handleWatchStart}
+          onWatchStop={handleWatchStop}
         />
       )}
 
@@ -1823,18 +1969,31 @@ export default function MapPage({
       </Modal>
 
       {/* Growth chart modal */}
-      <Modal open={growthOpen && growthData.length > 0} onClose={() => setGrowthOpen(false)} maxWidth="max-w-2xl">
+      {(() => {
+        const chartData = apiGrowthData && apiGrowthData.length > 0 ? apiGrowthData : growthData;
+        return (
+          <Modal open={growthOpen} onClose={() => setGrowthOpen(false)} maxWidth="max-w-2xl">
             <div className="flex items-center justify-between px-5 py-4 border-b border-border-subtle">
               <div>
                 <h2 className="text-foreground font-semibold text-sm">Star Growth</h2>
-                <p className="text-muted text-2xs mt-0.5">{growthData.length} weeks · {(points.length + unmapped.length).toLocaleString()} total stars</p>
+                <p className="text-muted text-2xs mt-0.5">
+                  {growthFetching ? "Loading…" : chartData.length > 0 ? `${chartData.length} weeks · ${(points.length + unmapped.length).toLocaleString()} total stars` : "No timestamp data available"}
+                </p>
               </div>
               <button onClick={() => setGrowthOpen(false)} aria-label="Close star growth" className="text-muted hover:text-foreground text-lg leading-none"><span aria-hidden="true">✕</span></button>
             </div>
             <div className="px-5 py-5">
-              <GrowthChart data={growthData} />
+              {growthFetching ? (
+                <div className="flex items-center justify-center h-40 text-muted text-sm">Loading growth data…</div>
+              ) : chartData.length > 0 ? (
+                <GrowthChart data={chartData} />
+              ) : (
+                <div className="flex items-center justify-center h-40 text-muted text-sm">No star timestamp data for this repo.</div>
+              )}
             </div>
-      </Modal>
+          </Modal>
+        );
+      })()}
 
       {/* Share modal */}
       {repoInfo && (
@@ -2113,6 +2272,38 @@ export default function MapPage({
                   </button>
                 </div>
               </div>
+              {/* Current view deep link — only shown when filters are active */}
+              {hasActiveFilters && (
+                <div className="border border-border rounded-lg overflow-hidden">
+                  <div className="px-3 py-2 border-b border-border-subtle flex items-center justify-between">
+                    <span className="text-foreground text-xs font-medium">Current view</span>
+                    <div className="flex flex-wrap gap-1">
+                      {filterCountry && <span className="text-2xs bg-surface border border-border-subtle rounded px-1.5 py-0.5 text-muted">{filterCountry}</span>}
+                      {filterCity && <span className="text-2xs bg-surface border border-border-subtle rounded px-1.5 py-0.5 text-muted">{filterCity}</span>}
+                      {filterCompany && <span className="text-2xs bg-surface border border-border-subtle rounded px-1.5 py-0.5 text-muted">{filterCompany}</span>}
+                      {filterFollowers > 0 && <span className="text-2xs bg-surface border border-border-subtle rounded px-1.5 py-0.5 text-muted">{filterFollowers}+ flw</span>}
+                      {filterDate !== "all" && <span className="text-2xs bg-surface border border-border-subtle rounded px-1.5 py-0.5 text-muted">{filterDate}</span>}
+                      {followerMapFilter !== "all" && <span className="text-2xs bg-surface border border-border-subtle rounded px-1.5 py-0.5 text-muted">{followerMapFilter}</span>}
+                      {viewMode !== "clusters" && <span className="text-2xs bg-surface border border-border-subtle rounded px-1.5 py-0.5 text-muted">{viewMode}</span>}
+                    </div>
+                  </div>
+                  <div className="px-3 py-2 flex items-center gap-2">
+                    <code className="flex-1 text-xs text-muted truncate">
+                      {typeof window !== "undefined" ? buildFilteredUrl().replace(/^https?:\/\//, "") : ""}
+                    </code>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(buildFilteredUrl()).catch(() => {});
+                        setFilterLinkCopied(true);
+                        setTimeout(() => setFilterLinkCopied(false), 2000);
+                      }}
+                      className="flex-shrink-0 bg-surface-alt hover:bg-border border border-border text-muted hover:text-foreground text-xs px-3 py-1.5 rounded-md transition-colors"
+                    >
+                      {filterLinkCopied ? "✓ Copied" : "Copy"}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
       </Modal>
       )}
@@ -2275,6 +2466,9 @@ export default function MapPage({
                   {displayStats.totalStars >= 1000 ? `${(displayStats.totalStars / 1000).toFixed(1)}k` : displayStats.totalStars}
                 </div>
                 <div className="text-2xs text-muted uppercase tracking-wide mt-0.5">stars</div>
+                {starsThisMonth > 0 && (
+                  <div className="text-2xs text-accent-green mt-0.5">+{starsThisMonth >= 1000 ? `${(starsThisMonth / 1000).toFixed(1)}k` : starsThisMonth}/mo</div>
+                )}
               </div>
               <div className="bg-background rounded-lg px-2 py-2 text-center">
                 <div className="text-xl font-bold text-accent-green">{displayStats.mappingRate}%</div>
@@ -2310,9 +2504,40 @@ export default function MapPage({
               </div>
             </div>
 
+            {/* Notable stargazers — top 5 by followers, visible without clicking Top Stars tab */}
+            {displayStats.topUsers.length > 0 && (
+              <div className="flex items-center gap-2.5 px-5 py-2.5 border-b border-border-subtle flex-shrink-0">
+                <span className="text-2xs text-muted uppercase tracking-wide flex-shrink-0">Notables</span>
+                <div className="flex items-center gap-2 flex-1 overflow-hidden">
+                  {displayStats.topUsers.slice(0, 5).map((u) => (
+                    <a
+                      key={u.login}
+                      href={`/profile/${u.login}`}
+                      title={`@${u.login} — ${u.followers.toLocaleString()} followers`}
+                      className="flex items-center gap-1 hover:opacity-75 transition-opacity flex-shrink-0"
+                    >
+                      {u.avatarUrl
+                        ? <NextImage src={u.avatarUrl} alt="" width={20} height={20} sizes="20px" className="w-5 h-5 rounded-full ring-1 ring-border" />
+                        : <div className="w-5 h-5 rounded-full bg-surface-alt ring-1 ring-border flex-shrink-0" />
+                      }
+                      <span className="text-2xs text-muted-subtle tabular-nums">
+                        {u.followers >= 1000 ? `${(u.followers / 1000).toFixed(1)}k` : u.followers}
+                      </span>
+                    </a>
+                  ))}
+                </div>
+                <button
+                  onClick={() => { setStatsTab("top"); setStatsFilter(""); }}
+                  className="text-2xs text-accent-blue hover:underline flex-shrink-0"
+                >
+                  Top {displayStats.topUsers.length} →
+                </button>
+              </div>
+            )}
+
             {/* Tabs */}
             <div role="tablist" aria-label="Stats view" className="flex border-b border-border-subtle flex-shrink-0">
-              {(["top", "countries", "cities", "companies", "power"] as const).map((tab, idx, arr) => (
+              {(["top", "countries", "cities", "companies", "power", "rising"] as const).map((tab, idx, arr) => (
                 <button
                   key={tab}
                   role="tab"
@@ -2331,7 +2556,7 @@ export default function MapPage({
                       : "text-muted hover:text-foreground"
                   }`}
                 >
-                  {tab === "top" ? "Top Stars" : tab === "countries" ? "Countries" : tab === "cities" ? "Cities" : tab === "companies" ? "Companies" : <><span aria-hidden="true">⚡</span> Power</>}
+                  {tab === "top" ? "Top Stars" : tab === "countries" ? "Countries" : tab === "cities" ? "Cities" : tab === "companies" ? "Companies" : tab === "power" ? <><span aria-hidden="true">⚡</span> Power</> : <><span aria-hidden="true">📈</span> Rising</>}
                 </button>
               ))}
             </div>
@@ -2464,6 +2689,52 @@ export default function MapPage({
                   ))}
                   {displayStats.topCompanies.length === 0 && (
                     <div className="text-center text-muted-subtle text-xs py-8">No company data available</div>
+                  )}
+                </div>
+              )}
+              {statsTab === "rising" && (
+                <div>
+                  {geoVelocityLoading && (
+                    <div className="text-center text-muted-subtle text-xs py-8">Loading…</div>
+                  )}
+                  {!geoVelocityLoading && geoVelocity !== null && geoVelocity.length === 0 && (
+                    <div className="text-center text-muted-subtle text-xs py-8">
+                      <div className="text-2xl mb-2" aria-hidden="true">📈</div>
+                      <div>Not enough timestamp data yet.</div>
+                      <div className="mt-1 text-2xs">Needs repos with starredAt data from the last 90 days.</div>
+                    </div>
+                  )}
+                  {!geoVelocityLoading && geoVelocity !== null && geoVelocity.length > 0 && (
+                    <div className="space-y-2.5">
+                      <p className="text-2xs text-muted-subtle mb-3">
+                        New stars in the last 30 days vs. the prior 60-day rate — which countries are discovering this repo.
+                      </p>
+                      {geoVelocity.map((item) => {
+                        const trendColor =
+                          item.trend === "rising" ? "text-accent-green" :
+                          item.trend === "new"     ? "text-accent-blue" :
+                          item.trend === "declining" ? "text-accent-red" : "text-muted";
+                        const trendLabel =
+                          item.trend === "rising"   ? `↑ ${item.ratio}×` :
+                          item.trend === "new"      ? "✦ new" :
+                          item.trend === "declining" ? "↓ slowing" : "→ stable";
+                        return (
+                          <div key={item.country} className="flex items-center gap-3">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-1.5 mb-0.5">
+                                <span className="text-xs text-foreground font-medium truncate">{item.country}</span>
+                                <span className={`text-2xs font-semibold flex-shrink-0 ${trendColor}`}>{trendLabel}</span>
+                              </div>
+                              <div className="flex items-center gap-1 text-2xs text-muted-subtle">
+                                <span>{item.stars30d} this month</span>
+                                <span>·</span>
+                                <span>{item.total.toLocaleString()} total</span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   )}
                 </div>
               )}

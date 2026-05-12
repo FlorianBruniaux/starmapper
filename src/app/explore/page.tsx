@@ -412,10 +412,21 @@ export default function ExplorePage() {
   const { theme } = useTheme();
   const mapStyleUrl = theme === "light" ? MAP_STYLE_LIGHT(JAWG_TOKEN) : MAP_STYLE_DARK(JAWG_TOKEN);
 
-  const [tab, setTab]                     = useState<Tab>("top");
-  const [selectedCountry, setCountry]     = useState("");
-  const [searchInput, setSearchInput]     = useState("");
-  const [search, setSearch]               = useState("");
+  const VALID_TABS: Tab[] = ["top", "power", "companies", "countries", "cities", "nearby"];
+  const [tab, setTab] = useState<Tab>(() => {
+    if (typeof window === "undefined") return "top";
+    const t = new URLSearchParams(window.location.search).get("tab") as Tab | null;
+    return t && VALID_TABS.includes(t) ? t : "top";
+  });
+  const [selectedCountry, setCountry] = useState(() =>
+    typeof window !== "undefined" ? (new URLSearchParams(window.location.search).get("country") ?? "") : ""
+  );
+  const [searchInput, setSearchInput] = useState(() =>
+    typeof window !== "undefined" ? (new URLSearchParams(window.location.search).get("q") ?? "") : ""
+  );
+  const [search, setSearch] = useState(() =>
+    typeof window !== "undefined" ? (new URLSearchParams(window.location.search).get("q") ?? "") : ""
+  );
   const [pages, setPages]                 = useState<Record<Tab, number>>({
     top: 1, power: 1, companies: 1, countries: 1, cities: 1, nearby: 1,
   });
@@ -425,9 +436,14 @@ export default function ExplorePage() {
   const [summaryLoading, setSummaryLoading] = useState(true);
 
   // Map panel state
-  const [mapMode, setMapMode]             = useState<"choropleth" | "heatmap">("choropleth");
+  const [mapMode, setMapMode] = useState<"choropleth" | "heatmap">(() =>
+    typeof window !== "undefined" && new URLSearchParams(window.location.search).get("map") === "heatmap"
+      ? "heatmap" : "choropleth"
+  );
   const [mapEverOpened, setMapEverOpened] = useState(false);
-  const [heatmapEverOpened, setHeatmapEverOpened] = useState(false);
+  const [heatmapEverOpened, setHeatmapEverOpened] = useState(() =>
+    typeof window !== "undefined" && new URLSearchParams(window.location.search).get("map") === "heatmap"
+  );
   const mapColumnRef = useRef<HTMLDivElement>(null);
 
   // Nearby tab state
@@ -485,6 +501,17 @@ export default function ExplorePage() {
     const t = setTimeout(() => setSearch(searchInput.replace(/^@/, "")), 300);
     return () => clearTimeout(t);
   }, [searchInput]);
+
+  // Sync active filters to URL so explore views are shareable
+  useEffect(() => {
+    const sp = new URLSearchParams();
+    if (tab !== "top") sp.set("tab", tab);
+    if (selectedCountry) sp.set("country", selectedCountry);
+    if (search) sp.set("q", search);
+    if (mapMode !== "choropleth") sp.set("map", mapMode);
+    const qs = sp.toString();
+    window.history.replaceState(null, "", qs ? `/explore?${qs}` : "/explore");
+  }, [tab, selectedCountry, search, mapMode]);
 
   // Reset pages to 1 when filters change (except nearby — it manages its own page)
   const prevFilters = useRef({ selectedCountry, search });
@@ -1377,12 +1404,22 @@ export default function ExplorePage() {
                   </div>
                 )}
                 {!showNearbyMap && mapMode === "choropleth" && (
-                  <span className="hidden sm:flex items-center gap-1.5 text-xs text-muted border border-border-subtle rounded-md px-2.5 py-1">
-                    <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" className="text-accent-blue shrink-0">
-                      <path d="M1 2.75C1 1.784 1.784 1 2.75 1h10.5c.966 0 1.75.784 1.75 1.75v7.5A1.75 1.75 0 0 1 13.25 12H9.06l.47 2h1.72a.75.75 0 0 1 0 1.5H4.75a.75.75 0 0 1 0-1.5h1.72l.47-2H2.75A1.75 1.75 0 0 1 1 10.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h10.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z" />
-                    </svg>
-                    Click a country to filter
-                  </span>
+                  selectedCountry ? (
+                    <button
+                      onClick={() => { setCountry(""); setTab("top"); }}
+                      className="flex items-center gap-1.5 text-xs text-accent-blue bg-accent-blue/10 border border-accent-blue/30 rounded-md px-2.5 py-1 hover:bg-accent-blue/20 transition-colors"
+                    >
+                      {selectedCountry}
+                      <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l3.22-3.22a.749.749 0 0 1 1.275.326.749.749 0 0 1-.215.734L9.06 8l3.22 3.22a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215L8 9.06l-3.22 3.22a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042L6.94 8 3.72 4.78a.75.75 0 0 1 0-1.06Z"/></svg>
+                    </button>
+                  ) : (
+                    <span className="hidden sm:flex items-center gap-1.5 text-xs text-muted border border-border-subtle rounded-md px-2.5 py-1">
+                      <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" className="text-accent-blue shrink-0">
+                        <path d="M1 2.75C1 1.784 1.784 1 2.75 1h10.5c.966 0 1.75.784 1.75 1.75v7.5A1.75 1.75 0 0 1 13.25 12H9.06l.47 2h1.72a.75.75 0 0 1 0 1.5H4.75a.75.75 0 0 1 0-1.5h1.72l.47-2H2.75A1.75 1.75 0 0 1 1 10.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h10.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z" />
+                      </svg>
+                      Click a country to filter
+                    </span>
+                  )
                 )}
               </div>
 
@@ -1418,6 +1455,7 @@ export default function ExplorePage() {
                   mapCountriesData ? (
                     <CountryChoroplethDynamic
                       countryData={mapCountriesData.items}
+                      selectedCountry={selectedCountry}
                       onCountryClick={handleChoroplethCountryClick}
                     />
                   ) : (
@@ -1429,6 +1467,7 @@ export default function ExplorePage() {
                   mapCountriesData ? (
                     <CountryChoroplethDynamic
                       countryData={mapCountriesData.items}
+                      selectedCountry={selectedCountry}
                       onCountryClick={handleChoroplethCountryClick}
                     />
                   ) : (

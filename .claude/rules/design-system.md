@@ -2,54 +2,54 @@
 
 ## Directive
 
-**Ne jamais deviner une couleur ou une valeur de spacing.**
-Toujours utiliser les tokens CSS définis dans `src/app/globals.css`.
+**Never guess a color or a spacing value.**
+Always use the CSS tokens defined in `src/app/globals.css`.
 
 ---
 
-## Hiérarchie des tokens (OBLIGATOIRE)
+## Token Hierarchy (MANDATORY)
 
 ```
-Tokens CSS @theme  >  Classes Tailwind standard  >  ❌ Valeurs arbitraires
+CSS @theme tokens  >  Standard Tailwind classes  >  ❌ Arbitrary values
 ```
 
-**Jamais** : `bg-[#0d1117]`, `text-[#8b949e]`, `border-[#30363d]`
-**Toujours** : `bg-background`, `text-muted`, `border-border`
+**Never**: `bg-[#0d1117]`, `text-[#8b949e]`, `border-[#30363d]`
+**Always**: `bg-background`, `text-muted`, `border-border`
 
 ---
 
-## Palette StarMapper → Classes Tailwind
+## StarMapper Palette → Tailwind Classes
 
 ### Backgrounds
-| Besoin | Classe |
-|--------|--------|
+| Need | Class |
+|------|-------|
 | App background | `bg-background` |
 | Card / popup | `bg-surface` |
 | Hover / input | `bg-surface-alt` |
 
-### Textes
-| Besoin | Classe |
-|--------|--------|
-| Texte principal | `text-foreground` |
-| Texte secondaire | `text-muted` |
-| Texte très discret | `text-muted-subtle` |
+### Text
+| Need | Class |
+|------|-------|
+| Primary text | `text-foreground` |
+| Secondary text | `text-muted` |
+| Subtle text | `text-muted-subtle` |
 
-### Bordures
-| Besoin | Classe |
-|--------|--------|
-| Bordure standard | `border-border` |
-| Séparateur léger | `border-border-subtle` |
+### Borders
+| Need | Class |
+|------|-------|
+| Standard border | `border-border` |
+| Light separator | `border-border-subtle` |
 
 ### Accents
-| Besoin | Classe |
-|--------|--------|
+| Need | Class |
+|------|-------|
 | Links / info | `text-accent-blue` |
-| CTA / succès | `bg-accent-green` |
-| Erreurs | `text-accent-red` |
+| CTA / success | `bg-accent-green` |
+| Errors | `text-accent-red` |
 
 ---
 
-## Patterns UI imposés
+## Enforced UI Patterns
 
 ### Input
 ```tsx
@@ -58,13 +58,13 @@ className="bg-surface border border-border rounded-md px-3 py-2 text-sm
            focus:ring-2 focus:ring-accent-blue/40 focus:border-accent-blue"
 ```
 
-### Bouton CTA
+### CTA Button
 ```tsx
 className="bg-accent-green text-white font-semibold px-4 py-2 rounded-md
            text-sm hover:opacity-90 transition-opacity"
 ```
 
-### Bouton Ghost
+### Ghost Button
 ```tsx
 className="border border-border text-muted px-3 py-1.5 rounded-md text-sm
            hover:text-foreground hover:border-accent-blue/50 transition-colors"
@@ -72,32 +72,32 @@ className="border border-border text-muted px-3 py-1.5 rounded-md text-sm
 
 ---
 
-## MapLibre : hors portée Tailwind
+## MapLibre: Outside Tailwind Scope
 
-Les styles des layers MapLibre (couleurs points, clusters) sont définis en JS dans `stargazer-map.tsx`.
-Les styles des popups sont dans `.starmapper-popup` dans `globals.css`.
-**Ne pas utiliser Tailwind pour styler les éléments MapLibre.**
-
----
-
-## Règle Layout
-
-- La carte occupe **toujours** `flex-1` ou `100vh - header`
-- Les overlays (stats, drawer) sont `position: absolute` sur la carte
-- **Jamais** `position: fixed` sur mobile (clavier virtuel)
+MapLibre layer styles (point colors, clusters) are defined in JS inside `stargazer-map.tsx`.
+Popup styles live in `.starmapper-popup` in `globals.css`.
+**Do not use Tailwind to style MapLibre elements.**
 
 ---
 
-## Checklist avant commit UI
+## Layout Rule
 
-- [ ] 0 valeur arbitraire Tailwind (`[Npx]`)
-- [ ] 0 couleur hex directe (`bg-[#xxx]`)
-- [ ] Tokens CSS utilisés pour toutes les couleurs répétées
-- [ ] Focus ring présent sur éléments interactifs
-- [ ] Touch target ≥ 44px sur mobile
+- The map always occupies `flex-1` or `100vh - header`
+- Overlays (stats, drawer) are `position: absolute` on top of the map
+- **Never** `position: fixed` on mobile (virtual keyboard)
 
 ---
 
-**Référence complète** : `docs/design-system.md`
+## Pre-commit UI Checklist
 
-**Auto-loaded** : Ce fichier est chargé automatiquement par Claude à chaque session.
+- [ ] 0 arbitrary Tailwind values (`[Npx]`)
+- [ ] 0 direct hex colors (`bg-[#xxx]`)
+- [ ] CSS tokens used for all repeated colors
+- [ ] Focus ring present on interactive elements
+- [ ] Touch target ≥ 44px on mobile
+
+---
+
+**Full reference**: `docs/design-system.md`
+
+**Auto-loaded**: This file is loaded automatically at every Claude session start.

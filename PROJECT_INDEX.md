@@ -128,6 +128,16 @@ pnpm dev                           # starts on localhost:3000 (Turbopack)
 | `docs/organic-score.md` | Organic score model + signals |
 | `docs/organic-score-calibration.md` | Calibration data |
 
+### Chrome Extension developer
+
+| Starting point | Why |
+|---|---|
+| `extension/README.md` | Dev setup, build, zip |
+| `extension/wxt.config.ts` | WXT manifest config + permissions |
+| `extension/entrypoints/content.ts` | Button injection + MutationObserver + bfcache |
+| `extension/entrypoints/background.ts` | Context menu (service worker) |
+| `extension/entrypoints/popup/` | Toolbar popup (vanilla TS + HTML) |
+
 ### Documentation / OSS
 
 | Starting point | Why |

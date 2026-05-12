@@ -16,6 +16,7 @@ import { toGeoName } from "@/lib/country-geo-names";
 
 type Props = {
   countryData: [string, number][];
+  selectedCountry?: string;
   onCountryClick?: (country: string) => void;
 };
 
@@ -48,7 +49,7 @@ const normalizeGeometry = (geom: GeoJSON.Geometry): GeoJSON.Geometry => {
   return geom;
 };
 
-export const CountryChoropleth = memo(({ countryData, onCountryClick }: Props) => {
+export const CountryChoropleth = memo(({ countryData, selectedCountry, onCountryClick }: Props) => {
   const { theme } = useTheme();
   const styleUrl = theme === "light" ? MAP_STYLE_LIGHT(JAWG_TOKEN) : MAP_STYLE_DARK(JAWG_TOKEN);
 
@@ -96,14 +97,70 @@ export const CountryChoropleth = memo(({ countryData, onCountryClick }: Props) =
     };
   }, [baseFeatures, countryData]);
 
-  // Keep a ref so the map-init closure can read the latest geoJson without being in its deps
+  // Keep refs so map-init closures can read latest values without being in their deps
   const geoJsonRef = useRef(geoJson);
   useEffect(() => { geoJsonRef.current = geoJson; }, [geoJson]);
+  const selectedCountryRef = useRef(selectedCountry);
+  useEffect(() => { selectedCountryRef.current = selectedCountry; }, [selectedCountry]);
 
   useEffect(() => {
     if (!containerRef.current) return;
 
     let cancelled = false;
+
+    const addLayers = (map: maplibregl.Map, data: NonNullable<typeof geoJson>) => {
+      map.addSource("countries", { type: "geojson", data });
+      map.addLayer({
+        id: "countries-fill",
+        type: "fill",
+        source: "countries",
+        paint: {
+          "fill-color": [
+            "interpolate",
+            ["linear"],
+            ["get", "intensity"],
+            0,    "rgba(88, 166, 255, 0.08)",
+            0.05, "rgba(88, 166, 255, 0.35)",
+            0.2,  "rgba(255, 166, 87, 0.65)",
+            0.5,  "rgba(255, 100, 50, 0.80)",
+            1.0,  "rgba(248, 81, 73, 0.95)",
+          ],
+          "fill-opacity": [
+            "case",
+            [">", ["get", "count"], 0], 1,
+            0.15,
+          ],
+        },
+      });
+      map.addLayer({
+        id: "countries-border",
+        type: "line",
+        source: "countries",
+        paint: { "line-color": "rgba(255, 255, 255, 0.12)", "line-width": 0.5 },
+      });
+      map.addLayer({
+        id: "countries-hover",
+        type: "fill",
+        source: "countries",
+        paint: { "fill-color": "rgba(255, 255, 255, 0.08)", "fill-opacity": 0 },
+        filter: ["==", ["get", "name"], ""],
+      });
+      const sel = selectedCountryRef.current ? toGeoName(selectedCountryRef.current) : "";
+      map.addLayer({
+        id: "countries-selected-fill",
+        type: "fill",
+        source: "countries",
+        paint: { "fill-color": "rgba(88, 166, 255, 0.35)" },
+        filter: ["==", ["get", "name"], sel],
+      });
+      map.addLayer({
+        id: "countries-selected",
+        type: "line",
+        source: "countries",
+        paint: { "line-color": "rgba(255, 255, 255, 0.9)", "line-width": 2.5 },
+        filter: ["==", ["get", "name"], sel],
+      });
+    };
 
     const initMap = async () => {
       if (!containerRef.current) return;
@@ -128,55 +185,9 @@ export const CountryChoropleth = memo(({ countryData, onCountryClick }: Props) =
       map.on("load", () => {
         if (cancelled) return;
         const data = geoJsonRef.current;
-        if (!data) return;
-        map.addSource("countries", { type: "geojson", data });
-
-        // Fill layer — color driven by intensity
-        map.addLayer({
-          id: "countries-fill",
-          type: "fill",
-          source: "countries",
-          paint: {
-            "fill-color": [
-              "interpolate",
-              ["linear"],
-              ["get", "intensity"],
-              0,    "rgba(88, 166, 255, 0.08)",
-              0.05, "rgba(88, 166, 255, 0.35)",
-              0.2,  "rgba(255, 166, 87, 0.65)",
-              0.5,  "rgba(255, 100, 50, 0.80)",
-              1.0,  "rgba(248, 81, 73, 0.95)",
-            ],
-            "fill-opacity": [
-              "case",
-              [">", ["get", "count"], 0], 1,
-              0.15,
-            ],
-          },
-        });
-
-        // Border layer
-        map.addLayer({
-          id: "countries-border",
-          type: "line",
-          source: "countries",
-          paint: {
-            "line-color": "rgba(255, 255, 255, 0.12)",
-            "line-width": 0.5,
-          },
-        });
-
-        // Hover highlight layer — initially shows nothing
-        map.addLayer({
-          id: "countries-hover",
-          type: "fill",
-          source: "countries",
-          paint: {
-            "fill-color": "rgba(255, 255, 255, 0.08)",
-            "fill-opacity": 0,
-          },
-          filter: ["==", ["get", "name"], ""],
-        });
+        // If topoData loaded before style, add layers now.
+        // If not, useEffect([geoJson]) will add them when data arrives.
+        if (data) addLayers(map, data);
       });
 
       // Hover
@@ -237,19 +248,72 @@ export const CountryChoropleth = memo(({ countryData, onCountryClick }: Props) =
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [styleUrl]);
 
-  // Update source data when countryData changes (without rebuilding the map)
+  // Update source data when geoJson becomes available or changes.
+  // If the map "load" event fired while topoData was still loading (geoJsonRef was null),
+  // the source was never added — add it now. Otherwise just update the existing source.
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !map.isStyleLoaded() || !geoJson) return;
+    if (!map || !geoJson) return;
+    if (!map.isStyleLoaded()) return; // load event will call addLayers via geoJsonRef
     const src = map.getSource("countries") as maplibregl.GeoJSONSource | undefined;
-    src?.setData(geoJson);
+    if (src) {
+      src.setData(geoJson);
+    } else {
+      // Source was never created — geoJson wasn't ready when "load" fired
+      map.addSource("countries", { type: "geojson", data: geoJson });
+      map.addLayer({
+        id: "countries-fill",
+        type: "fill",
+        source: "countries",
+        paint: {
+          "fill-color": [
+            "interpolate", ["linear"], ["get", "intensity"],
+            0, "rgba(88, 166, 255, 0.08)", 0.05, "rgba(88, 166, 255, 0.35)",
+            0.2, "rgba(255, 166, 87, 0.65)", 0.5, "rgba(255, 100, 50, 0.80)",
+            1.0, "rgba(248, 81, 73, 0.95)",
+          ],
+          "fill-opacity": ["case", [">", ["get", "count"], 0], 1, 0.15],
+        },
+      });
+      map.addLayer({
+        id: "countries-border",
+        type: "line",
+        source: "countries",
+        paint: { "line-color": "rgba(255, 255, 255, 0.12)", "line-width": 0.5 },
+      });
+      map.addLayer({
+        id: "countries-hover",
+        type: "fill",
+        source: "countries",
+        paint: { "fill-color": "rgba(255, 255, 255, 0.08)", "fill-opacity": 0 },
+        filter: ["==", ["get", "name"], ""],
+      });
+      const sel = selectedCountryRef.current ? toGeoName(selectedCountryRef.current) : "";
+      map.addLayer({
+        id: "countries-selected-fill",
+        type: "fill",
+        source: "countries",
+        paint: { "fill-color": "rgba(88, 166, 255, 0.35)" },
+        filter: ["==", ["get", "name"], sel],
+      });
+      map.addLayer({
+        id: "countries-selected",
+        type: "line",
+        source: "countries",
+        paint: { "line-color": "rgba(255, 255, 255, 0.9)", "line-width": 2.5 },
+        filter: ["==", ["get", "name"], sel],
+      });
+    }
   }, [geoJson]);
 
-  // Don't render the map container until topo data is ready — avoids initializing MapLibre
-  // against an empty source and then having to re-add it
-  if (!geoJson) {
-    return <div className="relative w-full h-full bg-background" />;
-  }
+  // Update selected-country highlight when selection changes
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !map.isStyleLoaded()) return;
+    const geoName = selectedCountry ? toGeoName(selectedCountry) : "";
+    if (map.getLayer("countries-selected-fill")) map.setFilter("countries-selected-fill", ["==", ["get", "name"], geoName]);
+    if (map.getLayer("countries-selected")) map.setFilter("countries-selected", ["==", ["get", "name"], geoName]);
+  }, [selectedCountry]);
 
   return (
     <div className="relative w-full h-full">

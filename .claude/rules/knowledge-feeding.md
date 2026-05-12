@@ -2,98 +2,98 @@
 
 ## Directive
 
-Quand Claude apprend quelque chose de nouveau sur le codebase StarMapper, il DOIT mettre à jour les instructions IA — sans attendre que l'utilisateur le demande.
+When Claude learns something new about the StarMapper codebase, it MUST update the AI instructions — without waiting for the user to ask.
 
-**Principe** : Chaque session doit laisser le contexte IA plus riche qu'elle ne l'a trouvé.
+**Principle**: Every session should leave the AI context richer than it found it.
 
 ---
 
-## Quand mettre à jour ?
+## When to Update?
 
-### Triggers obligatoires (faire sans demander)
+### Mandatory triggers (do without asking)
 
 | Situation | Action |
 |-----------|--------|
-| Un rate limit change (Geoapify, Jawg, Nominatim, GitHub) | Mettre à jour `CLAUDE.md` section "Rate Limits" |
-| Une convention de code est clarifiée ou une exception découverte | Mettre à jour `.claude/rules/code-conventions.md` |
-| Un pattern récurrent identifié (géocoder, chunk loop, cache) | L'ajouter dans `.claude/rules/architecture.md` ou rule appropriée |
-| Un modèle Prisma ajouté ou modifié | Mettre à jour `CLAUDE.md` section "Architecture" |
-| MapLibre GL API change (version majeure) | Mettre à jour `CLAUDE.md` "Known Gotchas" |
-| Une version de dépendance majeure change | Mettre à jour `CLAUDE.md` section "Tech Stack" |
-| Nouveau endpoint API ajouté | Mettre à jour `CLAUDE.md` section "Additional Endpoints" |
+| A rate limit changes (Geoapify, Jawg, Nominatim, GitHub) | Update `CLAUDE.md` section "Rate Limits" |
+| A code convention is clarified or an exception discovered | Update `.claude/rules/code-conventions.md` |
+| A recurring pattern identified (geocoder, chunk loop, cache) | Add it to `.claude/rules/architecture.md` or the appropriate rule |
+| A Prisma model is added or modified | Update `CLAUDE.md` section "Architecture" |
+| MapLibre GL API change (major version) | Update `CLAUDE.md` "Known Gotchas" |
+| A major dependency version changes | Update `CLAUDE.md` section "Tech Stack" |
+| New API endpoint added | Update `CLAUDE.md` section "Additional Endpoints" |
 
-### Triggers à proposer (demander à l'utilisateur)
+### Triggers to propose (ask the user)
 
-| Situation | Proposer |
+| Situation | Propose |
 |-----------|---------|
-| Architecture décision importante (ex: changer provider géocoding) | "Veux-tu que j'ajoute cette décision dans `CLAUDE.md` ?" |
-| Nouveau pattern de cache ou compression | "Je peux documenter ce pattern dans `architecture.md`" |
-| Nouvel agent ou skill ajouté | "Veux-tu que je mette à jour la liste des agents dans `CLAUDE.md` ?" |
+| Important architecture decision (e.g. changing geocoding provider) | "Do you want me to add this decision to `CLAUDE.md`?" |
+| New cache or compression pattern | "I can document this pattern in `architecture.md`" |
+| New agent or skill added | "Do you want me to update the agents list in `CLAUDE.md`?" |
 
 ---
 
-## Où mettre quoi ?
+## Where Does What Go?
 
 ```
-Connaissance acquise
-├─ Architecture / patterns StarMapper
-│  └─ .claude/rules/architecture.md (patterns techniques)
+Knowledge acquired
+├─ Architecture / StarMapper patterns
+│  └─ .claude/rules/architecture.md (technical patterns)
 │     CLAUDE.md section II (request flow, rate limits, schemas)
 │
-├─ Convention de code (TypeScript, imports, naming, Tailwind)
+├─ Code convention (TypeScript, imports, naming, Tailwind)
 │  └─ .claude/rules/code-conventions.md
 │
-├─ Design system (tokens, couleurs, composants)
+├─ Design system (tokens, colors, components)
 │  └─ .claude/rules/design-system.md
 │
-├─ Pattern React / MapLibre / frontend
+├─ React / MapLibre / frontend pattern
 │  └─ .claude/rules/react-ref-patterns.md
 │
-├─ Pattern défensif (error handling, rate limits, DB guards)
+├─ Defensive pattern (error handling, rate limits, DB guards)
 │  └─ .claude/rules/defensive-code-audit.md
 │
-├─ Gotcha identifié (comportement inattendu d'une lib)
+├─ Identified gotcha (unexpected library behavior)
 │  └─ CLAUDE.md section IV "Known Gotchas"
 │
-└─ Env var ou config deployment
+└─ Env var or deployment config
    └─ CLAUDE.md section VI "Environment Variables"
 ```
 
 ---
 
-## Règles d'écriture
+## Writing Rules
 
-1. **Compact** : 1 fait = 1 ligne ou 1 bullet point. Ne pas gonfler les fichiers.
-2. **Vérifiable** : Toute info ajoutée doit être vérifiable dans le code (schema Prisma, config, etc.).
-3. **Signal utilisateur** : Mentionner ce qui a été mis à jour à la fin de la réponse.
-4. **Pas de duplication** : Vérifier si l'info existe déjà dans le fichier cible avant d'ajouter.
-5. **Pas de spéculation** : Ne documenter que ce qui est confirmé, pas ce qui est supposé.
+1. **Compact**: 1 fact = 1 line or 1 bullet point. Do not bloat files.
+2. **Verifiable**: Every added piece of information must be verifiable in the code (Prisma schema, config, etc.).
+3. **User signal**: Mention what was updated at the end of the response.
+4. **No duplication**: Check if the info already exists in the target file before adding.
+5. **No speculation**: Only document what is confirmed, not what is assumed.
 
 ---
 
-## Format du signal utilisateur
+## User Signal Format
 
-À la fin d'une réponse où une mise à jour a été faite :
+At the end of a response where an update was made:
 
 ```
-📝 Doc mise à jour : `CLAUDE.md` section "Known Gotchas"
-   → MapLibre GL 5.x: getClusterExpansionZoom est maintenant Promise-based
+📝 Doc updated: `CLAUDE.md` section "Known Gotchas"
+   → MapLibre GL 5.x: getClusterExpansionZoom is now Promise-based
 ```
 
 ---
 
 ## Anti-patterns
 
-❌ **Ne PAS faire** :
-- Ajouter des infos non vérifiées ("je pense que c'est X")
-- Documenter des détails d'implémentation trop granulaires
-- Mélanger dans CLAUDE.md des infos qui appartiennent aux rules
-- Modifier CLAUDE.md pour des changements de session temporaires
+❌ **Do NOT**:
+- Add unverified information ("I think it's X")
+- Document overly granular implementation details
+- Mix into CLAUDE.md information that belongs in the rules
+- Modify CLAUDE.md for temporary session-level changes
 
-✅ **Faire** :
-- Distinguer "architecture stable" (→ CLAUDE.md) vs "règle de code" (→ .claude/rules/)
-- Proposer explicitement quand la mise à jour est subjective
+✅ **Do**:
+- Distinguish "stable architecture" (→ CLAUDE.md) vs "code rule" (→ .claude/rules/)
+- Propose explicitly when the update is subjective
 
 ---
 
-**Auto-loaded** : Ce fichier est chargé automatiquement par Claude à chaque session.
+**Auto-loaded**: This file is loaded automatically at every Claude session start.

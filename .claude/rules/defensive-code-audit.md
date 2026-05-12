@@ -1,20 +1,20 @@
 # Defensive Code Audit (Auto-loaded)
 
-Patterns détectés automatiquement pendant l'écriture. Stop immédiat si trouvé.
+Patterns detected automatically while writing. Stop immediately if found.
 
 ---
 
 ## 1. Silent Catches (CRITICAL)
 
 ```ts
-// ❌ JAMAIS — erreur avalée silencieusement
+// ❌ NEVER — error silently swallowed
 try {
   const data = await fetchStargazersPage(...);
 } catch (error) {
-  console.error(error);  // Avalé, caller ne sait pas
+  console.error(error);  // Swallowed, caller doesn't know
 }
 
-// ✅ TOUJOURS — propager ou retourner NextResponse d'erreur
+// ✅ ALWAYS — propagate or return a NextResponse error
 try {
   const data = await fetchStargazersPage(...);
 } catch (error) {
@@ -24,28 +24,28 @@ try {
 
 ---
 
-## 2. Hidden Fallbacks sur Prisma (HIGH)
+## 2. Hidden Fallbacks on Prisma (HIGH)
 
 ```ts
-// ❌ JAMAIS — null masqué comme objet vide
+// ❌ NEVER — null masked as empty object
 const cached = await db.geoCache.findFirst(...) || {};
 
-// ✅ TOUJOURS — guard explicite
+// ✅ ALWAYS — explicit guard
 const cached = await db.geoCache.findFirst(...);
 if (!cached) return null;
 ```
 
 ---
 
-## 3. Async dans forEach (CRITICAL)
+## 3. Async inside forEach (CRITICAL)
 
 ```ts
-// ❌ JAMAIS — les promises ne sont pas attendues
+// ❌ NEVER — promises are not awaited
 locations.forEach(async (loc) => {
   await geocode(loc);
 });
 
-// ✅ TOUJOURS
+// ✅ ALWAYS
 await Promise.all(locations.map(async (loc) => geocode(loc)));
 ```
 
@@ -54,10 +54,10 @@ await Promise.all(locations.map(async (loc) => geocode(loc)));
 ## 4. Nominatim Rate Limit (HIGH — StarMapper-specific)
 
 ```ts
-// ❌ JAMAIS — appels Nominatim en parallèle
+// ❌ NEVER — parallel Nominatim calls
 await Promise.all(locations.map(loc => callNominatim(loc)));
 
-// ✅ TOUJOURS — séquentiel avec délai 1100ms
+// ✅ ALWAYS — sequential with 1100ms delay
 for (const loc of locations) {
   await callNominatim(loc);
   await sleep(1100);
@@ -69,22 +69,22 @@ for (const loc of locations) {
 ## 5. GitHub Cursor null (MEDIUM)
 
 ```ts
-// ❌ JAMAIS — null comme variable GraphQL
+// ❌ NEVER — null as GraphQL variable
 variables: { cursor: null }
 
-// ✅ TOUJOURS — omettre la variable ou passer undefined
+// ✅ ALWAYS — omit the variable or pass undefined
 variables: cursor ? { cursor } : {}
 ```
 
 ---
 
-## 6. Géocache — clé non normalisée (HIGH)
+## 6. Geocache — unnormalized key (HIGH)
 
 ```ts
-// ❌ JAMAIS — casse inconsistante
+// ❌ NEVER — inconsistent casing
 const key = location;
 
-// ✅ TOUJOURS — lowercase + trim
+// ✅ ALWAYS — lowercase + trim
 const key = location.toLowerCase().trim();
 ```
 
@@ -92,14 +92,14 @@ const key = location.toLowerCase().trim();
 
 ## Definition of Done
 
-Avant tout commit :
+Before any commit:
 
-- [ ] 0 `console.error` sans re-throw dans les API routes
-- [ ] 0 `|| {}` ou `|| []` sur des retours Prisma
-- [ ] 0 `forEach` avec `async`
-- [ ] Nominatim : toujours 1100ms de délai entre appels
-- [ ] `rtk tsc` → 0 erreur
+- [ ] 0 `console.error` without re-throw in API routes
+- [ ] 0 `|| {}` or `|| []` on Prisma return values
+- [ ] 0 `forEach` with `async`
+- [ ] Nominatim: always 1100ms delay between calls
+- [ ] `rtk tsc` → 0 errors
 
 ---
 
-**Auto-loaded** : Ce fichier est chargé automatiquement par Claude à chaque session.
+**Auto-loaded**: This file is loaded automatically at every Claude session start.

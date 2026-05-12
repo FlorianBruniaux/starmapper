@@ -1,15 +1,15 @@
 # React Ref Patterns (Auto-loaded)
 
-## Callback Ref Pattern (Recommandé)
+## Callback Ref Pattern (Recommended)
 
-Pour notifier le parent quand un élément enfant est monté/démonté.
+To notify the parent when a child element is mounted/unmounted.
 
 ```tsx
-// ✅ Callback ref — parent reçoit la ref directement
+// ✅ Callback ref — parent receives the ref directly
 const Parent = () => {
   const handleMapRef = useCallback((node: HTMLDivElement | null) => {
     if (node) {
-      // node est disponible — initialiser MapLibre ici
+      // node is available — initialize MapLibre here
     }
   }, []);
 
@@ -34,7 +34,7 @@ useEffect(() => {
   });
 
   return () => {
-    // OBLIGATOIRE : cleanup pour éviter les leaks
+    // MANDATORY: cleanup to prevent leaks
     mapRef.current?.remove();
     mapRef.current = null;
   };
@@ -46,16 +46,16 @@ useEffect(() => {
 ## Anti-patterns
 
 ```tsx
-// ❌ MutationObserver dans un composant React
+// ❌ MutationObserver inside a React component
 useEffect(() => {
   const observer = new MutationObserver(() => { ... });
   observer.observe(document.querySelector(".map"), ...);
-  // → fragile, couplé au DOM, ignore le cycle de vie React
+  // → fragile, coupled to DOM, ignores React lifecycle
 });
 
-// ❌ document.querySelector dans un composant React
+// ❌ document.querySelector inside a React component
 const el = document.querySelector(".cluster-popup");
-// → utiliser useRef à la place
+// → use useRef instead
 ```
 
 ---
@@ -64,13 +64,13 @@ const el = document.querySelector(".cluster-popup");
 
 | Situation | Pattern |
 |-----------|---------|
-| Composant enfant expose une ref au parent | `forwardRef` |
-| Parent veut être notifié du montage | Callback prop `onMounted` |
-| Ref interne uniquement | `useRef` local |
+| Child component exposes a ref to the parent | `forwardRef` |
+| Parent wants to be notified of mounting | Callback prop `onMounted` |
+| Internal ref only | local `useRef` |
 
 ---
 
-## MapLibre : combinaison ref interne + callback
+## MapLibre: Internal Ref + Callback Combination
 
 ```tsx
 const StargazerMap = memo(({ onReady }: { onReady?: (map: Map) => void }) => {
@@ -79,7 +79,7 @@ const StargazerMap = memo(({ onReady }: { onReady?: (map: Map) => void }) => {
   useEffect(() => {
     const map = new maplibregl.Map({ ... });
     mapRef.current = map;
-    map.on("load", () => onReady?.(map));  // Notifier le parent
+    map.on("load", () => onReady?.(map));  // Notify the parent
 
     return () => { map.remove(); mapRef.current = null; };
   }, [onReady]);
@@ -88,4 +88,4 @@ const StargazerMap = memo(({ onReady }: { onReady?: (map: Map) => void }) => {
 
 ---
 
-**Auto-loaded** : Ce fichier est chargé automatiquement par Claude à chaque session.
+**Auto-loaded**: This file is loaded automatically at every Claude session start.

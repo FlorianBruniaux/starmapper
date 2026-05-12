@@ -12,7 +12,7 @@ export const jsonError = (message: string, status: number) =>
   NextResponse.json({ error: message }, { status });
 
 /** Extract the real client IP — Vercel injects cf-connecting-ip on production. */
-const getIP = (req: NextRequest): string =>
+export const getIP = (req: NextRequest): string =>
   req.headers.get("cf-connecting-ip") ??
   req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
   "unknown";

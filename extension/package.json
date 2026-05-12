@@ -1,0 +1,17 @@
+{
+  "name": "starmapper-extension",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Map the stargazers of any GitHub repo without leaving GitHub",
+  "scripts": {
+    "dev": "wxt",
+    "build": "wxt build",
+    "zip": "wxt zip",
+    "typecheck": "wxt prepare && tsc --noEmit",
+    "icons": "node scripts/generate-icons.mjs"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3",
+    "wxt": "^0.20.0"
+  }
+}

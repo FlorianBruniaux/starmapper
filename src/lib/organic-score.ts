@@ -37,7 +37,7 @@ export type OrganicResult = {
 // Fork/star (w=30%): ≥0.10 → 100, 0.07 → 50, ≤0.02 → 0
 // Watcher/star (w=5%): ≥0.005 → 100, 0.001 → 50, ≤0.0001 → 0
 // Zero-follower % (w=45%): ≤10 → 100, 30 → 50, ≥60 → 0
-// Releases count (w=20%): ≥100 → 100, 20 → 60, 5 → 30, 0 → 0
+// Releases count (w=20%): ≥100 → 100, 20 → 60, 5 → 30, 1 → ~6. 0 = N/A (excluded — courses/scripts are not libraries)
 
 const lerp = (v: number, lo: number, hi: number, outLo: number, outHi: number): number =>
   outLo + ((v - lo) / (hi - lo)) * (outHi - outLo);
@@ -78,19 +78,20 @@ const WEIGHT_WATCH    = 5;
 const WEIGHT_ZF       = 45;  // reduced from 55 — still strongest discriminator
 const WEIGHT_RELEASES = 20;  // new — active maintenance proxy, corrects CLI tool bias
 
+const GATE_MIN_STARS      = 500;   // repos below this threshold are too small for reliable signals
 const GATE_FORK_MIN_STARS = 5000;
 const GATE_ZF_MIN_SAMPLE  = 30;
 
 export const computeOrganicScore = (input: OrganicSignals): OrganicResult => {
   const { starsCount, forksCount, watchersCount, zeroFollowerCount, sampleSize, releasesCount = null } = input;
 
-  if (starsCount === 0) {
+  if (starsCount < GATE_MIN_STARS) {
     return {
       score: null,
       tier: "insufficient",
       signals: { forkRatio: null, watcherRatio: null, zeroFollowerPct: null, releasesCount: null, sampleSize: 0 },
       activeSignals: [],
-      reasons: ["Repo has 0 stars"],
+      reasons: [starsCount === 0 ? "Repo has 0 stars" : `Repo too small for reliable signals (${starsCount.toLocaleString()} stars < ${GATE_MIN_STARS.toLocaleString()})`],
     };
   }
 
@@ -104,7 +105,8 @@ export const computeOrganicScore = (input: OrganicSignals): OrganicResult => {
   const forkActive     = starsCount >= GATE_FORK_MIN_STARS;
   const watchActive    = true;
   const zfActive       = zeroFollowerPct !== null;
-  const releasesActive = releasesCount !== null;
+  // releasesCount === 0 is excluded: absence of releases is neutral (courses, scripts, one-shot tools)
+  const releasesActive = releasesCount !== null && releasesCount > 0;
 
   type WeightedPair = [number, number]; // [normalizedScore, weight]
   const active: WeightedPair[] = [];
@@ -137,6 +139,8 @@ export const computeOrganicScore = (input: OrganicSignals): OrganicResult => {
   if (releasesActive) {
     active.push([normReleasesCount(releasesCount!), WEIGHT_RELEASES]);
     activeSignals.push("releases_count");
+  } else if (releasesCount === 0) {
+    reasons.push("Releases signal excluded (0 releases — could be a course, script, or one-shot project)");
   }
 
   if (active.length === 0) {

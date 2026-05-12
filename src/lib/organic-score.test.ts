@@ -114,7 +114,20 @@ describe("computeOrganicScore", () => {
 
   // ── Edge cases ────────────────────────────────────────────────────────────
 
-  it("small repo (< 5000 stars) — fork signal gated, returns result from watcher only", () => {
+  it("small repo (< 500 stars) — returns insufficient, too small for reliable signals", () => {
+    const result = computeOrganicScore({
+      starsCount:         199,
+      forksCount:         169,
+      watchersCount:      8,
+      zeroFollowerCount:  null,
+      sampleSize:         null,
+    });
+    expect(result.score).toBeNull();
+    expect(result.tier).toBe("insufficient");
+    expect(result.reasons[0]).toMatch(/too small/);
+  });
+
+  it("repo with 500+ stars (< 5000) — fork signal gated, returns result from watcher only", () => {
     const result = computeOrganicScore({
       starsCount:         1_292,
       forksCount:         200,
@@ -136,10 +149,31 @@ describe("computeOrganicScore", () => {
       zeroFollowerCount:  null,
       sampleSize:         null,
     });
-    // fork gated (0 < 5000), watcher ratio = 0/0 handled
     expect(() => result).not.toThrow();
     expect(result.score).toBeNull();
     expect(result.tier).toBe("insufficient");
+  });
+
+  it("repo with 0 releases — releases signal excluded, not penalised", () => {
+    const withZero = computeOrganicScore({
+      starsCount:         5_000,
+      forksCount:         500,
+      watchersCount:      100,
+      zeroFollowerCount:  null,
+      sampleSize:         null,
+      releasesCount:      0,
+    });
+    const withNull = computeOrganicScore({
+      starsCount:         5_000,
+      forksCount:         500,
+      watchersCount:      100,
+      zeroFollowerCount:  null,
+      sampleSize:         null,
+      releasesCount:      null,
+    });
+    expect(withZero.activeSignals).not.toContain("releases_count");
+    expect(withZero.score).toEqual(withNull.score);
+    expect(withZero.reasons.some(r => r.includes("0 releases"))).toBe(true);
   });
 
   it("large sample with healthy zero-follower % raises score", () => {

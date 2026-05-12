@@ -116,6 +116,17 @@ calibrate-organic-score:
 probe-star-burst:
 	$(ENV) tsx scripts/probe-star-burst.ts'
 
+# ─── Maintenance (full pipeline) ──────────────────────────────────────────────
+
+maintenance:
+	bash scripts/maintenance.sh
+
+maintenance-dry:
+	bash scripts/maintenance.sh --dry-run
+
+maintenance-sync-only:
+	bash scripts/maintenance.sh --skip-backfills
+
 # ─── Deploy helpers ────────────────────────────────────────────────────────────
 
 update-prod:
@@ -134,6 +145,7 @@ update-local:
         backfill-languages backfill-languages-prod backfill-linkedin backfill-linkedin-prod \
         backfill-repo-languages backfill-repo-languages-prod backfill-repo-metrics backfill-repo-metrics-prod \
         backfill-user-top-repos backfill-user-top-repos-prod \
+        maintenance maintenance-dry maintenance-sync-only \
         collect-repos collect-trending collect-merge batch-scan batch-scan-dry \
         calibrate-organic-score probe-star-burst \
         update-prod update-prod-dry update-local

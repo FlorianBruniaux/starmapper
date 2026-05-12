@@ -2,53 +2,53 @@
 
 ## DRY Principle
 
-**Golden Rule** : Si une fonction existe à 2+ endroits avec la même logique → refactoriser immédiatement.
+**Golden Rule**: If a function exists in 2+ places with the same logic → refactor immediately.
 
 ---
 
 ## Detection Triggers
 
-### CRITICAL : Identical Function Signatures
+### CRITICAL: Identical Function Signatures
 
 ```typescript
-// 🚨 RED FLAG : même fonction dans plusieurs fichiers
+// 🚨 RED FLAG: same function in multiple files
 // src/lib/geocoder.ts
 export const normalizeLocation = (loc: string) => loc.toLowerCase().trim();
 
 // src/app/api/chunk/route.ts
-export const normalizeLocation = (loc: string) => loc.toLowerCase().trim(); // ❌ doublon
+export const normalizeLocation = (loc: string) => loc.toLowerCase().trim(); // ❌ duplicate
 ```
 
-**Action** : Centraliser dans `src/lib/` et importer partout.
+**Action**: Centralize in `src/lib/` and import everywhere.
 
 ---
 
-### HIGH : Similar Logic with Minor Variations
+### HIGH: Similar Logic with Minor Variations
 
-Même algorithme avec de petites différences → extraire avec paramètres.
-
----
-
-## Workflow de Refactoring
-
-1. **Identifier** : `git grep "export const myFunction"` avant d'écrire du code
-2. **Décider l'emplacement** :
-   - Utilité pure → `src/lib/`
-   - Logique métier → `src/lib/[domain]/`
-3. **Créer Single Source of Truth** avec JSDoc
-4. **Refactorer** : importer depuis le fichier centralisé
-5. **Vérifier** : `rtk tsc` puis tests
+Same algorithm with small differences → extract with parameters.
 
 ---
 
-## Emplacement par Type (StarMapper)
+## Refactoring Workflow
 
-| Type | Emplacement | Exemple |
-|------|-------------|---------|
-| Geocoding helpers | `src/lib/geocoder.ts` | normalisation locations |
-| GitHub API helpers | `src/lib/github.ts` | formatage réponses GraphQL |
-| Types partagés | exporter depuis `route.ts` | `StargazerPoint`, `UnmappedUser` |
-| Constantes | `src/lib/constants.ts` | limites rate limit |
+1. **Identify**: `git grep "export const myFunction"` before writing code
+2. **Decide the location**:
+   - Pure utility → `src/lib/`
+   - Business logic → `src/lib/[domain]/`
+3. **Create Single Source of Truth** with JSDoc
+4. **Refactor**: import from the centralized file
+5. **Verify**: `rtk tsc` then tests
+
+---
+
+## Location by Type (StarMapper)
+
+| Type | Location | Example |
+|------|----------|---------|
+| Geocoding helpers | `src/lib/geocoder.ts` | location normalization |
+| GitHub API helpers | `src/lib/github.ts` | GraphQL response formatting |
+| Shared types | export from `route.ts` | `StargazerPoint`, `UnmappedUser` |
+| Constants | `src/lib/constants.ts` | rate limit thresholds |
 
 ---
 
@@ -56,10 +56,10 @@ Même algorithme avec de petites différences → extraire avec paramètres.
 
 | ❌ | ✅ |
 |----|-----|
-| "Il n'y a que 2 occurrences, c'est OK" | Fixer immédiatement — 2 devient 3 |
-| Copier-coller + modifier 1 ligne | Extraire + paramétrer la différence |
-| Variations sans justification | Standardiser sur une seule variante |
+| "There are only 2 occurrences, it's fine" | Fix immediately — 2 becomes 3 |
+| Copy-paste + change 1 line | Extract + parameterize the difference |
+| Variations without justification | Standardize on a single variant |
 
 ---
 
-**Auto-loaded** : Ce fichier est chargé automatiquement par Claude à chaque session.
+**Auto-loaded**: This file is loaded automatically at every Claude session start.

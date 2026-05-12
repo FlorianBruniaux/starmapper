@@ -1,75 +1,108 @@
-# StarMapper : récap complet features + ce qui a évolué
+# StarMapper — Product Reference
 
-## C'est quoi StarMapper ?
+Free, open-source developer intelligence platform built around GitHub stargazer geography. No account required.
 
-On donne un repo GitHub, on obtient une carte interactive de tous ses stargazers géolocalisés, avec clustering natif, stats par pays/ville/entreprise. Gratuit, open-source, pas de compte requis.
 → https://starmapper.bruniaux.com
 
 ---
 
-## Pages disponibles aujourd'hui
+## What it does
 
-- https://starmapper.bruniaux.com : landing page avec champ URL + tableau des repos déjà mappés
-- https://starmapper.bruniaux.com/ruvnet/ruflo : carte des 45k stargazers de ruflo
-- https://starmapper.bruniaux.com/explore : découvrir des devs par username, leaderboard, carte sticky
+Paste a GitHub repo URL and get an interactive world map of every stargazer, geocoded in real time. Beyond the map: stats by country/city/company, velocity trends, developer profiles, language distribution across 180+ countries, a live watch mode for launch days, and a Chrome Extension that injects a Map button on every GitHub page.
 
-### /profile
-
-- https://starmapper.bruniaux.com/profile/florianbruniaux : mon profil, mini-carte, stats, repos, nearby devs
-- https://starmapper.bruniaux.com/profile/ruvnet : profil ruvnet, 174 repos, carte, langages, top repos
-
-### Autres
-
-- https://starmapper.bruniaux.com/devs : cartes de devs filtrées par langage
-- https://starmapper.bruniaux.com/devs/atlas : carte choroplèthe, quel langage domine par pays ?
-- https://starmapper.bruniaux.com/feed/florianbruniaux : ma page d'abonnement RSS
-- https://starmapper.bruniaux.com/changelog : historique des versions
+The core insight: stars are a proxy for developer community. Where those developers live tells you where your project has traction, which markets are accelerating, and who your most influential users are.
 
 ---
 
-## Ce qui a évolué ces dernières semaines
+## Live pages
 
-### Profils développeurs (0.3.3 → 0.4.2)
+| URL | What it is |
+|-----|-----------|
+| https://starmapper.bruniaux.com | Landing — repo URL input + community maps |
+| https://starmapper.bruniaux.com/torvalds/linux | Map of linux's stargazers |
+| https://starmapper.bruniaux.com/explore | Developer leaderboard + cross-repo analytics |
+| https://starmapper.bruniaux.com/profile/florianbruniaux | My developer profile |
+| https://starmapper.bruniaux.com/profile/ruvnet | ruvnet's profile (174 repos, 50k+ stars) |
+| https://starmapper.bruniaux.com/devs | Developer maps filtered by language |
+| https://starmapper.bruniaux.com/devs/atlas | Language Atlas — dominant language per country |
+| https://starmapper.bruniaux.com/trending | Trending repos × stargazer geography |
+| https://starmapper.bruniaux.com/feed/florianbruniaux | RSS subscription page |
+| https://starmapper.bruniaux.com/changelog | Version history |
 
-La page profil est passée de "bio + followers" à un hub complet. Exemple concret avec https://starmapper.bruniaux.com/profile/ruvnet :
+---
 
-- **Section GitHub Repos** : ses top repos (ruflo, RuView, RuVector…) avec langages + étoiles, lien vers les 174 repos GitHub
-- **Bouton "Map a repo"** à côté du badge "174 repos" : picker complet, searchable, triable Stars ou A–Z. Un clic et on arrive sur la carte StarMapper du repo (on a indexé ses 5 premiers ce soir : ruflo 45k, RuView 52k, RuVector 4k, agentic-flow 685, Bot-Generator-Bot 565)
-- **Refresh** : met à jour location, followers, repos depuis GitHub et invalide le cache top repos pour repartir propre
-- **Nearby developers** : les devs géolocalisés à moins de Xkm, avec pins sur la carte
-- **Contact dropdown** : LinkedIn, email, GitHub, obfusqués contre le scraping
+## Features by surface
 
-### Système d'abonnement RSS (0.4.0)
+### Repo Map
 
-Les devs publient de courtes annonces (280 chars) sur leur profil via GitHub PAT. Mon feed en exemple :
+The core. Given a GitHub repo, StarMapper fetches all stargazers via the GitHub GraphQL API, geocodes their self-declared locations through a 3-tier cascade (Jawg → Geoapify → Nominatim), and renders a MapLibre GL map with native GeoJSON clustering.
 
-- RSS 2.0 → https://starmapper.bruniaux.com/api/feed/florianbruniaux/rss
-- JSON Feed 1.1 → https://starmapper.bruniaux.com/api/feed/florianbruniaux/json
-- Page abonnement → https://starmapper.bruniaux.com/feed/florianbruniaux
+- **Progressive loading** — points appear as each batch of 100 users is geocoded. No waiting for the full scan.
+- **Heatmap mode** — toggle between scatter dots and heat density. One button in the dock.
+- **Multi-repo compare** — overlay two repos on the same map. Points from repo A are blue, repo B are purple. Shows audience overlap at a glance.
+- **Animated timelapse** — weekly buckets replay on the map at 0.5×→4× speed. Based on `starredAt` timestamps already in DB.
+- **Filters** — country, city, company, follower count, date range, tier. All combinable.
+- **Deep link sharing** — the Share modal encodes all active filters into a URL. Opening it restores the exact view with a dismissible "Shared view" pill.
+- **Watch mode** — during a product launch, polls GitHub every 60s and shows `+N ★ · India, Germany` with a pulsing badge. Auto-stops after 10 min of inactivity. No DB writes, cache-free.
+- **Shared cache** — first scan is cached globally. Any subsequent visitor loads the same repo instantly, no re-scan.
 
-Cache CDN 1h, `If-Modified-Since` / 304 supporté. Chaque hit RSS comptabilisé en analytics.
+### Stats panel
 
-### Explore (continu)
+Opened from the map page after a scan.
 
-https://starmapper.bruniaux.com/explore : leaderboard followers (top, power users, nearby), search par `@ruvnet` ou `ruvnet` (le `@` bloquait avant, fixé ce matin), carte sticky synchro avec les résultats.
+- **Summary cards** — total stargazers, geocoded %, countries, cities, companies, top followers
+- **Notable stargazers** — top-5 by followers as avatar chips, visible immediately on open without switching tabs
+- **Top Stars tab** — full leaderboard sortable by followers or public repos, with company badges
+- **Geographic velocity** ("📈 Rising") — compares the 30-day daily rate vs the 31–90-day historical rate per country. Four statuses: `rising` (×1.5+), `new`, `stable`, `declining`. Answers "which countries are discovering this repo right now?"
+- **Power tab** — cross-repo stargazers: users who starred more than one indexed repo. Identifies your most engaged community members.
 
-### Organic Score (0.3.4)
+### Developer profiles `/profile/[login]`
 
-Score 0–100 par repo estimant si les étoiles sont organiques ou "farmées", basé sur 4 signaux publics :
+Every GitHub username has a StarMapper profile. Two-column layout: scrollable panel with data on the left, sticky mini-map on the right.
 
-- Ratio forks/stars (30%)
-- Ratio watchers/stars (5%)
-- % de stargazers à zéro followers (45%)
-- Cadence des releases (20%)
+- **Profile card** — bio, followers, location, languages, top repos grid (up to 8)
+- **Map a repo** — full repo picker (up to 500 repos, searchable, sortable by stars or A–Z). One click navigates to the StarMapper map for that repo.
+- **Nearby developers** — list + pins on the map for geolocated devs within X km
+- **Contact dropdown** — GitHub, LinkedIn, email, all obfuscated against scraping. Fetched on demand.
+- **News & Announcements** — devs can publish short posts (280 chars, optional link) authenticated via GitHub PAT. Each profile gets RSS 2.0 and JSON Feed 1.1 feeds (1h CDN cache, `If-Modified-Since` supported).
+- **Refresh** — re-fetches location, followers, and repos from GitHub with a 1h cooldown.
+- **Auto-fetch on 404** — if a profile isn't in DB yet, it's fetched from GitHub on the first visit automatically.
 
-Affiché dans la liste repos avec un modal de détail au clic. 92% de classification correcte sur le corpus de calibration.
+### Explore `/explore`
 
-### Language Atlas (0.3.0)
+Four tabs, sticky map that updates in sync with results.
 
-https://starmapper.bruniaux.com/devs/atlas : quel langage prédomine par pays, calculé sur 4M+ devs en DB, mis à jour quotidiennement.
+- **Top** — leaderboard of stargazers ranked by followers. Filterable by country and company. Searchable by `@username` or `username`.
+- **Power users** — developers who've starred the most indexed repos. Cross-repo engagement signal.
+- **Nearby** — geolocated developers within a bounding box (set by clicking the map). Shows who your community is concentrated around any location.
+- **Companies** — which companies appear most in developer profiles across all indexed repos.
+
+### Dev Maps `/devs` and Language Atlas `/devs/atlas`
+
+- **Dev Maps** — interactive map of developers filtered by programming language. Combobox to switch language, map updates in place. Based on `languages[]` field populated from each dev's own public repos.
+- **Language Atlas** (`/devs/atlas`) — world choropleth showing the dominant language per country. Click a country for breakdown: dominant language, percentage, number of devs. Based on `country_language_stats_mv`, a materialized view refreshed daily.
+
+### Chrome Extension (v1.1.0, Manifest V3)
+
+Two injection points depending on the GitHub page:
+
+- **Repo pages** (`github.com/owner/repo`) — "★ Map" button in the repo action bar. Toolbar popup: current repo + last 5 visited + search field. Right-click context menu on any GitHub repo link.
+- **Profile pages** (`github.com/login`) — "★ StarMapper" button in the user sidebar, linking to `starmapper.bruniaux.com/profile/[login]`.
+
+Handles GitHub SPA navigation (Turbo + bfcache). Adapts to dark/light theme via GitHub CSS variables.
+
+### Integrations & embeds
+
+- **SVG shield badge** — `/api/badge/[owner]/[repo]`: star count + countries mapped. 6h CDN cache. Copy Markdown in one click from the map page.
+- **Map image embed** — `/api/map-image/[owner]/[repo]?theme=dark|light`: full 800×400 SVG scatter map. Use `<picture>` to serve dark/light variants. Embeddable in any README.
+- **Public GeoJSON API** — `GET /api/geo/[owner]/[repo]`: aggregate countries + cities (top 50 each), API key authenticated, rate-limited 60 req/min. GDPR-safe (no individual coordinates). For third-party tools and dashboards.
+- **RSS 2.0 + JSON Feed 1.1** — per-developer announcement feeds. Subscribable from any RSS reader.
+- **Organic Score** — `GET /api/organic-score/[owner]/[repo]`: 0–100 score estimating whether stars are organic or farmed. Three signals: fork/star ratio (40%), watcher/star ratio (5%), zero-follower stargazers (55%). 92% accuracy on calibration corpus. Displayed on the repos landing page with a detail modal.
 
 ---
 
 ## Stack
 
-Next.js 16 (App Router) + TypeScript + MapLibre GL 5 + Prisma 7 + Neon Postgres + Jawg Maps, déployé sur Vercel, sponsorisé par Neon (100GB plan)
+Next.js 16.2.3 (App Router, Turbopack) + TypeScript 5 + MapLibre GL 5 + Prisma 7 + Neon Postgres (100GB, sponsored) + Jawg Maps (geocoding + tiles), deployed on Vercel.
+
+GitHub GraphQL + REST for stargazer data. Upstash Redis for distributed rate limiting and PAT verification cache.
