@@ -12,6 +12,7 @@ import type { StargazerPoint, ChunkResponse } from "@/app/api/chunk/route";
 import type { MapProjection } from "@/lib/theme";
 import type { RepoStats, RepoOrganic } from "@/app/api/stats/[owner]/[repo]/route";
 import type { GeoVelocityItem } from "@/app/api/stats/[owner]/[repo]/geo-velocity/route";
+import type { GrowthResponse } from "@/app/api/stats/[owner]/[repo]/growth/route";
 import { TokenModal, getStoredToken, getStoredUsername, setStoredUsername } from "@/components/token-modal";
 import { Modal } from "@/components/modal";
 import { saveBookmark } from "@/lib/bookmarks";
@@ -209,6 +210,8 @@ export default function MapPage({
   const [filterCity, setFilterCity] = useState("");
   const [flyTarget, setFlyTarget] = useState<{ lat: number; lng: number; login: string } | null>(null);
   const [growthOpen, setGrowthOpen] = useState(false);
+  const [apiGrowthData, setApiGrowthData] = useState<[string, number][] | null>(null);
+  const [growthFetching, setGrowthFetching] = useState(false);
   const [watchActive, setWatchActive] = useState(false);
   const [watchSince, setWatchSince] = useState<string | null>(null);
   const [watchNewCount, setWatchNewCount] = useState(0);
@@ -837,11 +840,24 @@ export default function MapPage({
     return result;
   }, [points, followerMapFilter, timelapseActive, timelapseIndex, weekBuckets]);
 
-  // Cheap boolean — used by Dock to show/hide the growth button
-  const hasGrowthData = useMemo(
-    () => [...points, ...unmapped].some((u) => !!u.starredAt),
-    [points, unmapped],
-  );
+  // Show growth button whenever the repo has any scan data (API will provide timestamps)
+  const hasGrowthData = points.length > 0 || unmapped.length > 0;
+
+  useEffect(() => {
+    if (!growthOpen || apiGrowthData !== null) return;
+    setGrowthFetching(true);
+    fetch(`/api/stats/${owner}/${repo}/growth`)
+      .then((r) => (r.ok ? (r.json() as Promise<GrowthResponse>) : null))
+      .then((data) => {
+        if (data && data.weeks.length > 0) {
+          setApiGrowthData(data.weeks.map((w) => [w.week, w.count] as [string, number]));
+        } else {
+          setApiGrowthData([]);
+        }
+      })
+      .catch(() => setApiGrowthData([]))
+      .finally(() => setGrowthFetching(false));
+  }, [growthOpen, apiGrowthData, owner, repo]);
 
   // Expensive computation — only runs when drawer is open (INP: F2)
   const growthData = useMemo(() => {
@@ -1953,18 +1969,31 @@ export default function MapPage({
       </Modal>
 
       {/* Growth chart modal */}
-      <Modal open={growthOpen && growthData.length > 0} onClose={() => setGrowthOpen(false)} maxWidth="max-w-2xl">
+      {(() => {
+        const chartData = apiGrowthData && apiGrowthData.length > 0 ? apiGrowthData : growthData;
+        return (
+          <Modal open={growthOpen} onClose={() => setGrowthOpen(false)} maxWidth="max-w-2xl">
             <div className="flex items-center justify-between px-5 py-4 border-b border-border-subtle">
               <div>
                 <h2 className="text-foreground font-semibold text-sm">Star Growth</h2>
-                <p className="text-muted text-2xs mt-0.5">{growthData.length} weeks · {(points.length + unmapped.length).toLocaleString()} total stars</p>
+                <p className="text-muted text-2xs mt-0.5">
+                  {growthFetching ? "Loading…" : chartData.length > 0 ? `${chartData.length} weeks · ${(points.length + unmapped.length).toLocaleString()} total stars` : "No timestamp data available"}
+                </p>
               </div>
               <button onClick={() => setGrowthOpen(false)} aria-label="Close star growth" className="text-muted hover:text-foreground text-lg leading-none"><span aria-hidden="true">✕</span></button>
             </div>
             <div className="px-5 py-5">
-              <GrowthChart data={growthData} />
+              {growthFetching ? (
+                <div className="flex items-center justify-center h-40 text-muted text-sm">Loading growth data…</div>
+              ) : chartData.length > 0 ? (
+                <GrowthChart data={chartData} />
+              ) : (
+                <div className="flex items-center justify-center h-40 text-muted text-sm">No star timestamp data for this repo.</div>
+              )}
             </div>
-      </Modal>
+          </Modal>
+        );
+      })()}
 
       {/* Share modal */}
       {repoInfo && (
