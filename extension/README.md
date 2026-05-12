@@ -5,61 +5,71 @@ Adds a **★ Map** button on every GitHub repository page that opens the StarMap
 ## Features
 
 - **★ Map button** injected next to Watch / Star / Fork — navigates directly to `starmapper.bruniaux.com/owner/repo`
-- **Toolbar popup** — shows the current repo with a one-click open, plus a search field to map any repo by slug or URL
-- **Context menu** — right-click any GitHub repo link → "Open on StarMapper"
-- Handles GitHub's SPA navigation (Turbo) — button reappears after client-side route changes
+- **Toolbar popup** — shows the current repo with a one-click open, last 5 recently mapped repos, and a search field to map any repo by slug or URL
+- **Context menu** — right-click any GitHub repo link → "Open on StarMapper" (system pages like `/settings`, `/explore` are filtered out)
+- Handles GitHub's SPA navigation (Turbo + bfcache) — button reappears after client-side route changes
 - Follows GitHub's CSS variables for dark/light mode compatibility
+- Recent repos persisted in `chrome.storage.local`
 
 ## Dev setup
 
 ```bash
 cd extension
 npm install
-npm run icons   # generate PNG icons from icons/icon.svg (requires ImageMagick or sharp-cli)
-npm run dev     # Vite watch mode → writes to dist/
+npm run dev     # WXT dev mode — writes to .output/chrome-mv3-dev/ with HMR
 ```
 
 Then in Chrome:
 1. `chrome://extensions` → enable Developer mode
-2. "Load unpacked" → select the `dist/` folder
+2. "Load unpacked" → select `.output/chrome-mv3-dev/`
 3. Navigate to any `github.com/owner/repo` page
 
 ## Production build
 
 ```bash
-npm run build   # outputs to dist/
+npm run build   # outputs to .output/chrome-mv3/
+npm run zip     # packages .output/chrome-mv3/ as a .zip for the Chrome Web Store
 ```
 
-Zip `dist/` and upload to the [Chrome Web Store Developer Dashboard](https://chrome.google.com/webstore/devconsole).
+Upload the `.zip` to the [Chrome Web Store Developer Dashboard](https://chrome.google.com/webstore/devconsole).
+
+## Type checking
+
+```bash
+npm run typecheck   # runs wxt prepare + tsc --noEmit
+```
 
 ## Icon generation
 
-The manifest references `icons/icon16.png`, `icon48.png`, `icon128.png`. Generate them from `icons/icon.svg`:
+PNG icons are pre-generated in `public/icons/`. To regenerate from `icons/icon.svg`:
 
 ```bash
-# With ImageMagick (brew install imagemagick)
-convert -resize 16x16 icons/icon.svg icons/icon16.png
-convert -resize 48x48 icons/icon.svg icons/icon48.png
-convert -resize 128x128 icons/icon.svg icons/icon128.png
-
-# Or with the bundled script (auto-detects available tools)
-npm run icons
+npm run icons   # uses scripts/generate-icons.mjs (auto-detects sharp-cli or ImageMagick)
+# then copy to public/icons/
+cp icons/icon*.png public/icons/
 ```
 
 ## Tech stack
 
-- **Manifest V3** (required for Chrome Web Store)
+- **Manifest V3** (Chrome Web Store requirement)
 - **TypeScript** — strict mode, no `any`
-- **Vite + @crxjs/vite-plugin** — handles content script bundling, service worker, popup HTML
-- No React — content script is plain DOM manipulation (~2.75 kB)
+- **WXT** — modern extension framework, replaces @crxjs/vite-plugin. HMR in dev, `wxt zip` for packaging
+- No React — content script is plain DOM manipulation, popup is vanilla TS
 
 ## File map
 
 ```
-manifest.json       MV3 manifest — permissions, content_scripts, action
-src/content.ts      Injected into github.com — detects repo URL, injects button
-src/background.ts   Service worker — context menu on right-click
-src/popup.ts        Toolbar popup logic — current repo + search
-popup.html          Popup UI
-icons/              SVG source + generated PNGs
+wxt.config.ts                   WXT config — manifest settings, permissions
+entrypoints/
+  background.ts                 Service worker — context menu on right-click (filters system pages)
+  content.ts                    Injected into github.com — detects repo URL, injects button, stores recents
+  popup/
+    index.html                  Popup UI — current repo, recent repos, search
+    main.ts                     Popup logic — chrome.storage for recent repos
+public/
+  icons/                        Pre-generated PNGs (16, 48, 128px)
+icons/
+  icon.svg                      SVG source for icon generation
+scripts/
+  generate-icons.mjs            Icon generation helper
 ```

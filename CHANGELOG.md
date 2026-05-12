@@ -5,6 +5,14 @@ Versioning : Semantic Versioning (MAJOR.MINOR.PATCH)
 
 ---
 
+## [0.4.6] — 2026-05-11
+
+### Features
+
+- **Chrome Extension (Manifest V3)** — Bouton "★ Map" injecté sur chaque page GitHub `/owner/repo` qui ouvre la carte StarMapper directement. Content script (`src/content.ts`) : détecte le pattern d'URL, injecte un bouton stylé avec les CSS variables GitHub (fonctionne en dark + light sans injection CSS custom), trois cibles de fallback (`pagehead-actions` → repo heading → bouton flottant fixe). Gère la navigation SPA de GitHub via Turbo (`turbo:render`, `turbo:load`, `popstate`) + `MutationObserver` sur le titre. Background service worker : menu contextuel "Open on StarMapper" au clic droit sur tout lien GitHub. Popup : affiche le slug du repo courant si on est sur GitHub, recherche par slug ou URL complète. Build : Vite + `@crxjs/vite-plugin` v2, cible Chrome 107+. Installation : `cd extension && npm install && npm run build` → charger `dist/` dans `chrome://extensions`.
+
+---
+
 ## [0.4.5] — 2026-05-11
 
 ### Features

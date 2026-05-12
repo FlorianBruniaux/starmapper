@@ -9,7 +9,6 @@
 
       body {
         width: 300px;
-        min-height: 160px;
         background: #0d1117;
         color: #f0f6fc;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
@@ -23,14 +22,8 @@
         padding: 12px 14px 10px;
         border-bottom: 1px solid #21262d;
       }
-
       .header svg { color: #58a6ff; flex-shrink: 0; }
-
-      .header-text {
-        font-weight: 600;
-        font-size: 14px;
-        color: #f0f6fc;
-      }
+      .header-text { font-weight: 600; font-size: 14px; color: #f0f6fc; }
 
       .section { padding: 10px 14px; }
 
@@ -56,34 +49,29 @@
         font-weight: 500;
         transition: border-color 0.15s, background 0.15s;
       }
+      #current-repo-link:hover { background: #1c2129; border-color: #58a6ff; }
+      #current-repo-link.no-repo { color: #8b949e; cursor: default; pointer-events: none; }
+      #current-repo-link.no-repo:hover { background: #161b22; border-color: #30363d; }
 
-      #current-repo-link:hover {
-        background: #1c2129;
-        border-color: #58a6ff;
-      }
+      .divider { height: 1px; background: #21262d; }
 
-      #current-repo-link.no-repo {
-        color: #8b949e;
-        cursor: default;
-        pointer-events: none;
-      }
-
-      #current-repo-link.no-repo:hover {
-        background: #161b22;
-        border-color: #30363d;
-      }
-
-      .divider {
-        height: 1px;
-        background: #21262d;
-        margin: 0 14px;
-      }
-
-      .search-row {
+      /* Recent repos */
+      .recent-item {
         display: flex;
-        gap: 6px;
         align-items: center;
+        gap: 6px;
+        padding: 6px 8px;
+        border-radius: 5px;
+        color: #c9d1d9;
+        text-decoration: none;
+        font-size: 12px;
+        transition: background 0.1s, color 0.1s;
       }
+      .recent-item:hover { background: #161b22; color: #58a6ff; }
+      .recent-item svg { flex-shrink: 0; color: #484f58; }
+      .recent-item:hover svg { color: #58a6ff; }
+
+      .search-row { display: flex; gap: 6px; align-items: center; }
 
       #search-input {
         flex: 1;
@@ -96,13 +84,8 @@
         outline: none;
         font-family: inherit;
       }
-
       #search-input::placeholder { color: #484f58; }
-
-      #search-input:focus {
-        border-color: #58a6ff;
-        box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.12);
-      }
+      #search-input:focus { border-color: #58a6ff; box-shadow: 0 0 0 3px rgba(88,166,255,.12); }
 
       #search-btn {
         background: #238636;
@@ -117,7 +100,6 @@
         white-space: nowrap;
         transition: background 0.15s;
       }
-
       #search-btn:hover { background: #2ea043; }
 
       .footer {
@@ -126,13 +108,7 @@
         display: flex;
         justify-content: center;
       }
-
-      .footer a {
-        font-size: 11px;
-        color: #8b949e;
-        text-decoration: none;
-      }
-
+      .footer a { font-size: 11px; color: #8b949e; text-decoration: none; }
       .footer a:hover { color: #58a6ff; }
     </style>
   </head>
@@ -152,6 +128,14 @@
         </svg>
         <span id="current-repo-name">Navigate to a GitHub repo</span>
       </a>
+    </div>
+
+    <div id="recent-section" style="display:none">
+      <div class="divider"></div>
+      <div class="section">
+        <div class="label">Recent</div>
+        <div id="recent-list"></div>
+      </div>
     </div>
 
     <div class="divider"></div>
@@ -176,6 +160,6 @@
       </a>
     </div>
 
-    <script type="module" src="src/popup.ts"></script>
+    <script type="module" src="./main.ts"></script>
   </body>
 </html>

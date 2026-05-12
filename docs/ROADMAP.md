@@ -1,6 +1,6 @@
 # StarMapper Roadmap
 
-*Last updated: 2026-05-11 — v0.4.3*
+*Last updated: 2026-05-11 — v0.4.6*
 
 ---
 
@@ -35,52 +35,22 @@
 - **Choropleth country highlight** — Selected country on `/explore` choropleth gets a blue fill overlay + white 2.5px border. Pill in map header to dismiss.
 - **Scan date in SVG badge** — `/api/map-image` footer shows `· May 2026` from last scan date.
 - **Map image README embed** — "README Badge" modal has two tabs: "Map image" (full SVG scatter map, `<picture>` dark/light via `/api/map-image/[owner]/[repo]?theme=`) and "Shield badge" (text shield). Copy HTML in one click.
+- **Chrome Extension (Manifest V3)** — Bouton "★ Map" sur chaque page GitHub `/owner/repo`. Content script, background service worker (context menu), popup avec recherche. Build Vite + @crxjs/vite-plugin v2. `cd extension && npm install && npm run build`.
+- **Watch mode** — Polling GitHub toutes les 60s pendant un launch. Affiche `+N ★ · India, Germany` avec un point vert pulsant. Arrêt automatique après 10 min sans nouvelle étoile. `GET /api/watch/[owner]/[repo]?since=<ISO>`, no-store, aucune écriture DB.
+- **Notable stargazers** — Top 5 par followers sous forme de chips d'avatars dans le modal Stats, visibles immédiatement sans changement d'onglet. Données depuis les points déjà en mémoire, aucun appel API.
+- **Geographic velocity** — Onglet "Rising" dans le modal Stats : compare le rythme quotidien 30j au rythme 31–90j par pays. Statuts : rising (×1.5+), new, stable, declining. `GET /api/stats/[owner]/[repo]/geo-velocity`, cache CDN 5 min.
 
 ---
 
 ## Next — prioritized
 
-### 1. Geographic velocity
-
-"India discovered your repo this quarter — +3× vs last quarter. Germany is a new market."
-
-Reads `star_event.starredAt + github_user.countryNormalized` already in DB. Groups by country × rolling 30/90 day windows. Surfaces in the stats panel as a "Rising countries" row. No one else does this — all competitors answer "how fast are you growing?", StarMapper can answer "where is your new growth coming from?".
-
-**Effort:** 1–2 days. **Lever:** unique differentiator, no competition.
-
----
-
-### 2. Star growth timeline
+### 1. Star growth timeline
 
 A chart on the `/[owner]/[repo]` page showing star accumulation over time — one data point per week/month. Complements the `+N/mo` velocity indicator already in the stats modal: the number tells you the rate, the chart shows the shape (steady growth? viral spike? plateau?).
 
 Data source: `star_event.starredAt` already in DB for indexed repos. No new data collection needed. Rendering: lightweight SVG or canvas chart (no heavy charting lib). Natural pairing with the timelapse feature already built.
 
 **Effort:** 1–2 days. **Lever:** completeness vs Star History, which does this better than anyone — but only StarMapper combines it with the geo view.
-
----
-
-### 3. Notable stargazers panel
-
-A "Notables" section in the stats panel / drawer: top 10 stargazers ranked by followers. "CEO of X, contributor to Y, 12k followers starred your repo." Data already in `github_user.followers`. Signals credibility to maintainers and gives them a reason to share the map ("look who's watching this").
-
-**Effort:** 0.5 day. **Lever:** insight with zero new data collection.
-
----
-
-### 4. Watch mode
-
-Poll every ~60s during a launch, display `+3 new stars — Paris, Toronto` with a pulsing badge. Stop after inactivity. Useful during HN/PH launches or Twitter spikes — the moment maintainers are most likely to share the map.
-
-**Effort:** 1 day. **Lever:** engagement at the highest-value moment.
-
----
-
-### 5. Chrome extension
-
-Button on each GitHub `/owner/repo` page opens the StarMapper map without leaving GitHub. Manifest V3, React content script. The most impactful single distribution move — meets users where they already are.
-
-**Effort:** 1–2 weeks. **Lever:** distribution at source, referenced growth lever for star-history.com.
 
 ---
 

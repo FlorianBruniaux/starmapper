@@ -4,15 +4,14 @@
   "private": true,
   "description": "Map the stargazers of any GitHub repo without leaving GitHub",
   "scripts": {
-    "dev": "vite build --watch",
-    "build": "vite build",
-    "typecheck": "tsc --noEmit",
+    "dev": "wxt",
+    "build": "wxt build",
+    "zip": "wxt zip",
+    "typecheck": "wxt prepare && tsc --noEmit",
     "icons": "node scripts/generate-icons.mjs"
   },
   "devDependencies": {
-    "@crxjs/vite-plugin": "^2.0.0-beta.23",
-    "@types/chrome": "^0.0.313",
     "typescript": "^5.8.3",
-    "vite": "^6.3.5"
+    "wxt": "^0.20.0"
   }
 }
