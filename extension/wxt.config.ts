@@ -4,7 +4,7 @@ export default defineConfig({
   manifest: {
     name: "StarMapper",
     description: "Map the stargazers of any GitHub repository on an interactive world map.",
-    version: "1.0.0",
+    version: "1.1.0",
     permissions: ["tabs", "contextMenus", "storage"],
     host_permissions: ["https://github.com/*"],
     icons: {

@@ -82,19 +82,15 @@ Any new permission (e.g. `notifications`) triggers a re-review and asks the user
 
 ## Extension roadmap
 
-### Next: "View profile on StarMapper" button
+### Done in 1.1.0: "View profile on StarMapper" button
 
-On GitHub profile pages (`github.com/[login]`), inject a "★ Profile" button next to the "Follow" button that opens `starmapper.bruniaux.com/profile/[login]`.
+On GitHub profile pages (`github.com/[login]`), a "★ StarMapper" button is injected in the sidebar that opens `starmapper.bruniaux.com/profile/[login]`.
 
-**Required changes:**
-- `wxt.config.ts`: `host_permissions` already includes `"https://github.com/*"` — extend the content script `matches`
-- `content.ts`: detect profile (1 path segment) vs repo (2 segments), inject the right button based on context
-- Bump to `1.1.0`
+**Changes made:**
+- `entrypoints/content.ts`: `matches` extended to `["https://github.com/*", "https://github.com/*/*"]`, added `getPageContext()` discriminated union, `injectProfileButton()` targeting `.js-profile-editable-area` then `[data-view-component="true"].Layout-sidebar`
+- `wxt.config.ts`: bumped to `1.1.0`
 
-**Target selector** for the Follow button on GitHub:
+### Ideas for next versions
 
-```ts
-// Container of the Follow button on github.com/[login]
-const profileActions = document.querySelector(".js-profile-editable-area")
-  ?? document.querySelector('[data-view-component="true"].Layout-sidebar');
-```
+- **Org pages** (`github.com/[org]`): inject a link to explore all repos from that org
+- **Search results**: inject StarMapper links on `github.com/search?q=...` repo cards
