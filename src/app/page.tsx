@@ -74,8 +74,8 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
-    // Fetch only 12 repos for the featured section — fast, no table needed
-    fetch("/api/repos?limit=12")
+    // Fetch 12 diversified repos for the featured section (max 3 per owner, min 100 stars)
+    fetch("/api/repos?limit=12&diverse=true")
       .then((r) => r.json())
       .then((data) => {
         if (Array.isArray(data.repos)) setRepos(data.repos);
@@ -330,7 +330,7 @@ export default function HomePage() {
                 colorClass: "text-accent-green",
                 bgClass: "bg-accent-green/8",
                 label: "Stats & export",
-                desc: "Top countries, cities, companies, followers. Export image, Markdown or LinkedIn.",
+                desc: "Top countries, cities, companies. Watch live stars during a launch. Export image, badge or LinkedIn post.",
                 icon: (
                   <path d="M1.5 1.75V13.5h13.75a.75.75 0 0 1 0 1.5H.75a.75.75 0 0 1-.75-.75V1.75a.75.75 0 0 1 1.5 0Zm14.28 2.53-5.25 5.25a.75.75 0 0 1-1.06 0L7 7.06 4.28 9.78a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042l3.25-3.25a.75.75 0 0 1 1.06 0L9 7.94l4.72-4.72a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042Z" />
                 ),
@@ -338,8 +338,8 @@ export default function HomePage() {
               {
                 colorClass: "text-accent-orange",
                 bgClass: "bg-accent-orange/8",
-                label: "Shared cache",
-                desc: "First scan populates a global cache — next visitor loads instantly.",
+                label: "Instant for everyone",
+                desc: "Already scanned? Loads in under a second for anyone who visits — no waiting, no re-scan.",
                 icon: (
                   <path d="M11.93 8.5a4.002 4.002 0 0 1-7.86 0H.75a.75.75 0 0 1 0-1.5h3.32a4.002 4.002 0 0 1 7.86 0h3.32a.75.75 0 0 1 0 1.5Zm-1.43-.75a2.5 2.5 0 1 0-5 0 2.5 2.5 0 0 0 5 0Z" />
                 ),
@@ -426,7 +426,7 @@ export default function HomePage() {
                     >
                       {repo.mappedPercent}% mapped
                     </span>
-                    <span>{repo.countryCount} countries</span>
+                    <span>{repo.countryCount === 1 ? "1 country" : `${repo.countryCount} countries`}</span>
                   </div>
                 </Link>
               ))}
@@ -444,7 +444,19 @@ export default function HomePage() {
             {[
               {
                 q: "Is StarMapper free?",
-                a: "Yes — no account, no login, no credit card. Paste a repo URL and click Map It.",
+                a: "Yes — no account, no login, no credit card. Paste a repo URL and click Map Stargazers.",
+              },
+              {
+                q: "How long does a scan take?",
+                a: "Small repos (under 500 stars) scan in under 10 seconds. Large repos (50k+ stars) take a few minutes — the GitHub API processes users in batches of 100. Once a repo is scanned, the result is cached globally: any subsequent visitor loads it instantly, no re-scan needed.",
+              },
+              {
+                q: "Will my GitHub token be stored?",
+                a: "No. Your token is saved in your browser's localStorage only — it never leaves your device except to authenticate directly with the GitHub API. StarMapper does not store tokens server-side.",
+              },
+              {
+                q: "Is StarMapper open source?",
+                a: "Yes. StarMapper is open source under the AGPL-3.0 license. The full source code is available on GitHub.",
               },
               {
                 q: "How accurate is the location data?",
@@ -456,7 +468,7 @@ export default function HomePage() {
               },
               {
                 q: "Can I embed a badge in my README?",
-                a: "Yes. After scanning a repo, StarMapper generates an embeddable SVG badge with the star count and number of mapped countries. Copy the Markdown snippet directly from the map page.",
+                a: "Yes. After scanning a repo, StarMapper generates two embeddable assets: an SVG shield badge (star count + countries mapped) and a full scatter map image. Copy the Markdown or HTML snippet directly from the map page.",
               },
               {
                 q: "Where does the stargazer data come from?",
@@ -464,7 +476,7 @@ export default function HomePage() {
               },
               {
                 q: "How do I request removal of my data?",
-                a: "Send an email to florian@bruniaux.com with your GitHub username and confirmation that you own the account. We will delete your profile data and star events within 30 days. Simpler alternative: remove your location from your GitHub profile settings — the next scan will reflect the change automatically.",
+                a: "Remove your location from your GitHub profile settings — the next scan will reflect the change automatically and your coordinates will no longer be geocoded. To delete existing data, email florian@bruniaux.com with your GitHub username. We will remove your profile data and star events within 30 days.",
               },
               {
                 q: "Not on the map?",

@@ -23,16 +23,21 @@ export type ReposResponse = {
   total: number;
 };
 
+const MAX_PER_OWNER = 3;
+const MIN_TOTAL_COUNT = 100;
+
 export const GET = async (req: Request) => {
   try {
     const url = new URL(req.url);
     const limitParam = url.searchParams.get("limit");
     const limit = limitParam ? Math.min(parseInt(limitParam, 10), 10000) : 10000;
+    const diverse = url.searchParams.get("diverse") === "true";
 
     const [rows, total] = await Promise.all([
       prisma.badgeCache.findMany({
         orderBy: { updatedAt: "desc" },
-        take: limit,
+        // Fetch a larger pool when diversifying so we have enough after filtering
+        take: diverse ? Math.min(limit * 40, 500) : limit,
         select: {
           owner: true,
           repo: true,
@@ -48,7 +53,21 @@ export const GET = async (req: Request) => {
       prisma.badgeCache.count(),
     ]);
 
-    const repos: MappedRepo[] = rows.map((r) => ({
+    let filtered = rows;
+    if (diverse) {
+      const ownerCount = new Map<string, number>();
+      filtered = [];
+      for (const r of rows) {
+        if (r.totalCount < MIN_TOTAL_COUNT) continue;
+        const n = ownerCount.get(r.owner) ?? 0;
+        if (n >= MAX_PER_OWNER) continue;
+        ownerCount.set(r.owner, n + 1);
+        filtered.push(r);
+        if (filtered.length >= limit) break;
+      }
+    }
+
+    const repos: MappedRepo[] = filtered.map((r) => ({
       owner: r.owner,
       repo: r.repo,
       mappedCount: r.mappedCount,
