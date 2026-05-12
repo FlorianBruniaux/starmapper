@@ -372,6 +372,65 @@ export default function HomePage() {
           </div>
         </section>
 
+        {/* ── More surfaces ── */}
+        <section className="w-full max-w-7xl mx-auto px-4 lg:px-6 pb-12">
+          <h2 className="text-muted-subtle text-2xs uppercase tracking-widest mb-4 text-center">
+            More to explore
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {[
+              {
+                href: "/explore",
+                label: "Explore",
+                desc: "Top stargazers by followers, company stats, cross-repo fans.",
+                colorClass: "text-accent-blue",
+                bgClass: "bg-accent-blue/8",
+                icon: <path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z" />,
+              },
+              {
+                href: "/profile/florianbruniaux",
+                label: "Developer profiles",
+                desc: "Any GitHub username → map, nearby devs, top repos, contact.",
+                colorClass: "text-accent-purple",
+                bgClass: "bg-accent-purple/8",
+                icon: <path d="M10.25 2.0a3.25 3.25 0 1 1-6.5 0 3.25 3.25 0 0 1 6.5 0ZM1 14a6 6 0 1 1 12 0H1Z" />,
+              },
+              {
+                href: "/devs",
+                label: "Dev Maps",
+                desc: "Interactive maps of developers filtered by programming language.",
+                colorClass: "text-accent-green",
+                bgClass: "bg-accent-green/8",
+                icon: <path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0ZM1.5 8a6.5 6.5 0 0 1 .75-3.054l1.61 1.61A2.999 2.999 0 0 0 3 8c0 .126.007.251.02.374l-1.546.682A6.47 6.47 0 0 1 1.5 8Zm1.23 4.065.886-1.328A2.999 2.999 0 0 0 8 11c.63 0 1.215-.19 1.701-.516l.886 1.328A6.5 6.5 0 0 1 2.73 12.065ZM8 9.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Zm4.52 2.565.886 1.328A6.5 6.5 0 0 0 14.5 8c0-.318-.026-.63-.074-.935l-1.546.682c.013.123.02.248.02.374a3 3 0 0 1-.38 1.444Z" />,
+              },
+              {
+                href: "/devs/atlas",
+                label: "Language Atlas",
+                desc: "Which language dominates each country? A choropleth of the dev world.",
+                colorClass: "text-accent-orange",
+                bgClass: "bg-accent-orange/8",
+                icon: <path d="M0 1.75A.75.75 0 0 1 .75 1h4.253c.712 0 1.373.333 1.75.88.377-.547 1.038-.88 1.75-.88h4.747a.75.75 0 0 1 .75.75v10.5a.75.75 0 0 1-.75.75h-4.747a1 1 0 0 0-1 1v.25a.75.75 0 0 1-1.5 0v-.25a1 1 0 0 0-1-1H.75a.75.75 0 0 1-.75-.75Zm7.5 10.931V3.455c-.32-.274-.717-.455-1.247-.455H1.5v9h3.247c.91 0 1.79.285 2.503.926Zm1.5-7.476v8.476a4.488 4.488 0 0 1 2.503-.926H14.5V3h-3.997c-.53 0-.927.18-1.247.455-.32.274-.506.62-.506 1.206Z" />,
+              },
+            ].map(({ href, label, desc, colorClass, bgClass, icon }) => (
+              <Link
+                key={href}
+                href={href}
+                className="flex flex-col gap-3 bg-surface border border-border-subtle rounded-lg p-4 hover:border-accent-blue/40 transition-colors group"
+              >
+                <div className={`size-7 shrink-0 flex items-center justify-center rounded-md ${bgClass}`}>
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" className={colorClass}>
+                    {icon}
+                  </svg>
+                </div>
+                <div>
+                  <div className={`text-xs font-semibold mb-1 ${colorClass} group-hover:underline`}>{label}</div>
+                  <div className="text-muted text-xs leading-relaxed">{desc}</div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+
         {/* ── Community Maps (featured) ── */}
         {reposLoading ? (
           <section className="w-full max-w-7xl mx-auto px-4 lg:px-6 pb-12" aria-hidden="true">
