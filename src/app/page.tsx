@@ -226,10 +226,7 @@ export default function HomePage() {
 
             <h1 className="text-4xl font-bold text-foreground leading-tight">
               Where in the world does<br />
-              your repo{" "}
-              <span className="bg-gradient-to-r from-accent-blue to-accent-purple bg-clip-text text-transparent">
-                shine?
-              </span>
+              your repo shine?
             </h1>
 
             <p className="text-muted text-base leading-relaxed max-w-sm">
@@ -376,71 +373,9 @@ export default function HomePage() {
           </div>
         ) : null}
 
-        {/* ── How it works ── */}
-        <section className="w-full max-w-7xl mx-auto px-4 lg:px-6 py-12">
+        {/* ── Features ── */}
+        <section className="w-full max-w-7xl mx-auto px-4 lg:px-6 py-16">
           <h2 className="text-muted-subtle text-2xs uppercase tracking-widest mb-6 text-center">
-            How it works
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {[
-              {
-                colorClass: "text-accent-blue",
-                bgClass: "bg-accent-blue/8",
-                label: "Interactive map",
-                desc: "Stargazers geocoded and plotted in real time as they load.",
-                icon: (
-                  <path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Zm4.94-2.06a.75.75 0 0 1 1.06 0l1.5 1.5 3-3a.75.75 0 1 1 1.06 1.06l-3.5 3.5a.75.75 0 0 1-1.06 0l-2-2a.75.75 0 0 1 0-1.06Z" />
-                ),
-              },
-              {
-                colorClass: "text-accent-green",
-                bgClass: "bg-accent-green/8",
-                label: "Stats & export",
-                desc: "Top countries, cities, companies. Watch live stars during a launch. Export image, badge or LinkedIn post.",
-                icon: (
-                  <path d="M1.5 1.75V13.5h13.75a.75.75 0 0 1 0 1.5H.75a.75.75 0 0 1-.75-.75V1.75a.75.75 0 0 1 1.5 0Zm14.28 2.53-5.25 5.25a.75.75 0 0 1-1.06 0L7 7.06 4.28 9.78a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042l3.25-3.25a.75.75 0 0 1 1.06 0L9 7.94l4.72-4.72a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042Z" />
-                ),
-              },
-              {
-                colorClass: "text-accent-orange",
-                bgClass: "bg-accent-orange/8",
-                label: "Instant for everyone",
-                desc: "Already scanned? Loads in under a second for anyone who visits — no waiting, no re-scan.",
-                icon: (
-                  <path d="M11.93 8.5a4.002 4.002 0 0 1-7.86 0H.75a.75.75 0 0 1 0-1.5h3.32a4.002 4.002 0 0 1 7.86 0h3.32a.75.75 0 0 1 0 1.5Zm-1.43-.75a2.5 2.5 0 1 0-5 0 2.5 2.5 0 0 0 5 0Z" />
-                ),
-              },
-            ].map(({ colorClass, bgClass, label, desc, icon }) => (
-              <div
-                key={label}
-                className="flex flex-col gap-3 bg-surface border border-border-subtle rounded-lg p-6"
-              >
-                <div
-                  className={`size-8 shrink-0 flex items-center justify-center rounded-md ${bgClass}`}
-                >
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 16 16"
-                    fill="currentColor"
-                    aria-hidden="true"
-                    className={colorClass}
-                  >
-                    {icon}
-                  </svg>
-                </div>
-                <div>
-                  <div className={`text-sm font-semibold mb-1 ${colorClass}`}>{label}</div>
-                  <div className="text-muted text-sm leading-relaxed">{desc}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* ── More surfaces ── */}
-        <section className="w-full max-w-7xl mx-auto px-4 lg:px-6 pb-12">
-          <h2 className="text-muted-subtle text-2xs uppercase tracking-widest mb-4 text-center">
             More to explore
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -489,7 +424,7 @@ export default function HomePage() {
                   </svg>
                 </div>
                 <div>
-                  <div className={`text-xs font-semibold mb-1 ${colorClass} group-hover:underline`}>{label}</div>
+                  <div className="text-xs font-semibold mb-1 text-foreground group-hover:underline">{label}</div>
                   <div className="text-muted text-xs leading-relaxed">{desc}</div>
                 </div>
               </Link>
@@ -497,32 +432,12 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* ── FAQ teaser ── */}
-        <section className="w-full max-w-7xl mx-auto px-4 lg:px-6 pb-8">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-surface border border-border-subtle rounded-xl px-5 py-4">
-            <div>
-              <p className="text-sm font-medium text-foreground mb-1.5">Common questions</p>
-              <div className="flex flex-wrap gap-x-1 gap-y-1 text-xs text-muted">
-                <span>Free to use?</span>
-                <span className="text-border mx-0.5">·</span>
-                <span>How long does a scan take?</span>
-                <span className="text-border mx-0.5">·</span>
-                <span>Is my GitHub token stored?</span>
-                <span className="text-border mx-0.5">·</span>
-                <span>Private repos?</span>
-              </div>
-            </div>
-            <Link
-              href="/faq"
-              className="flex items-center gap-1.5 text-xs text-accent-blue hover:underline shrink-0 font-medium"
-            >
-              See all answers
-              <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-                <path d="M6.22 3.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042L9.94 8 6.22 4.28a.75.75 0 0 1 0-1.06Z" />
-              </svg>
-            </Link>
-          </div>
-        </section>
+        {/* ── FAQ link ── */}
+        <div className="w-full max-w-7xl mx-auto px-4 lg:px-6 pb-8 text-right">
+          <Link href="/faq" className="text-xs text-muted-subtle hover:text-muted transition-colors">
+            Questions? See FAQ →
+          </Link>
+        </div>
 
         {/* ── Community Maps (featured) ── */}
         {reposLoading ? (
@@ -538,7 +453,7 @@ export default function HomePage() {
             </div>
           </section>
         ) : repos.length > 0 ? (
-          <section className="w-full max-w-7xl mx-auto px-4 lg:px-6 pb-12">
+          <section className="w-full max-w-7xl mx-auto px-4 lg:px-6 pt-4 pb-16">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-muted-subtle text-2xs uppercase tracking-widest">
                 Community maps
