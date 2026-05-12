@@ -25,8 +25,8 @@
 - **Page view tracking** — `POST /api/track` daily view counts per repo and profile. `pnpm stats:views` CLI.
 - **Organic Score** — 0–100 score based on forks, zero-dependency forks, watchers, open issues/PRs. `OrganicScorePill` on repo cards. `GET /api/organic-score/[owner]/[repo]`.
 - **News & RSS feeds** — Devs publish short announcements (280 chars) on their profile via GitHub PAT. RSS 2.0 + JSON Feed 1.1 per profile. Page `/feed/[login]` for subscriptions.
-- **Trending map** — `/trending`, carte agrégée des repos trending × stargazers géographiques. Source : GitHub Search API + cron quotidien. `trending_repos_mv`.
-- **Changelog page** — `/changelog`, timeline versionnée servie depuis `CHANGELOG.md` au build.
+- **Trending map** — `/trending`, aggregate map of trending repos × stargazer geography. Source: GitHub Search API + daily cron. `trending_repos_mv`.
+- **Changelog page** — `/changelog`, versioned timeline served from `CHANGELOG.md` at build time.
 - **GitHub Repos section on profile** — Top repos grid (up to 8, from `topRepos` in DB) on `/profile/[login]`.
 - **Map a repo modal** — Full repo picker on profile pages: up to 500 repos, searchable, sortable. Navigates directly to the StarMapper map.
 - **Deep link sharing** — Share modal encodes active filters (country, city, company, followers, date, tier, view mode) as URL params. "Shared view" pill on load.
@@ -35,10 +35,10 @@
 - **Choropleth country highlight** — Selected country on `/explore` choropleth gets a blue fill overlay + white 2.5px border. Pill in map header to dismiss.
 - **Scan date in SVG badge** — `/api/map-image` footer shows `· May 2026` from last scan date.
 - **Map image README embed** — "README Badge" modal has two tabs: "Map image" (full SVG scatter map, `<picture>` dark/light via `/api/map-image/[owner]/[repo]?theme=`) and "Shield badge" (text shield). Copy HTML in one click.
-- **Chrome Extension (Manifest V3)** — Bouton "★ Map" sur chaque page GitHub `/owner/repo`. Content script, background service worker (context menu), popup avec recherche. Build Vite + @crxjs/vite-plugin v2. `cd extension && npm install && npm run build`.
-- **Watch mode** — Polling GitHub toutes les 60s pendant un launch. Affiche `+N ★ · India, Germany` avec un point vert pulsant. Arrêt automatique après 10 min sans nouvelle étoile. `GET /api/watch/[owner]/[repo]?since=<ISO>`, no-store, aucune écriture DB.
-- **Notable stargazers** — Top 5 par followers sous forme de chips d'avatars dans le modal Stats, visibles immédiatement sans changement d'onglet. Données depuis les points déjà en mémoire, aucun appel API.
-- **Geographic velocity** — Onglet "Rising" dans le modal Stats : compare le rythme quotidien 30j au rythme 31–90j par pays. Statuts : rising (×1.5+), new, stable, declining. `GET /api/stats/[owner]/[repo]/geo-velocity`, cache CDN 5 min.
+- **Chrome Extension (Manifest V3)** — ★ Map button on every GitHub `/owner/repo` page. Content script, background service worker (context menu), toolbar popup with search and recent repos. Build: WXT. `cd extension && npm run build`.
+- **Watch mode** — Polls GitHub every 60s during a launch. Shows `+N ★ · India, Germany` with a pulsing green dot. Auto-stops after 10 min with no new star. `GET /api/watch/[owner]/[repo]?since=<ISO>`, no-store, no DB writes.
+- **Notable stargazers** — Top 5 by followers as avatar chips in the Stats modal, visible immediately without switching tabs. Data from in-memory scanned points, no API call.
+- **Geographic velocity** — "Rising" tab in the Stats modal: compares 30-day daily rate vs 31–90-day rate per country. Statuses: rising (×1.5+), new, stable, declining. `GET /api/stats/[owner]/[repo]/geo-velocity`, 5-min CDN cache.
 
 ---
 

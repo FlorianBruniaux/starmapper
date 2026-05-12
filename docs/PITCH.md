@@ -1,87 +1,83 @@
-# StarMapper : récap complet features + ce qui a évolué
+# StarMapper: full feature recap + what's changed
 
-## C'est quoi StarMapper ?
+## What is StarMapper?
 
-On donne un repo GitHub, on obtient une carte interactive de tous ses stargazers géolocalisés, avec clustering natif, stats par pays/ville/entreprise. Gratuit, open-source, pas de compte requis.
+Give it a GitHub repo URL, get an interactive map of all its stargazers with their locations, native clustering, and stats by country/city/company. Free, open-source, no account required.
 → https://starmapper.bruniaux.com
 
 ---
 
-## Pages disponibles aujourd'hui
+## Pages available today
 
-- https://starmapper.bruniaux.com : landing page avec champ URL + tableau des repos déjà mappés
-- https://starmapper.bruniaux.com/ruvnet/ruflo : carte des 45k stargazers de ruflo
-- https://starmapper.bruniaux.com/explore : découvrir des devs par username, leaderboard, carte sticky
+- https://starmapper.bruniaux.com : landing page with repo URL input + table of already-mapped repos
+- https://starmapper.bruniaux.com/ruvnet/ruflo : map of ruflo's 45k stargazers
+- https://starmapper.bruniaux.com/explore : discover devs by username, leaderboard, sticky map
 
 ### /profile
 
-- https://starmapper.bruniaux.com/profile/florianbruniaux : mon profil, mini-carte, stats, repos, nearby devs
-- https://starmapper.bruniaux.com/profile/ruvnet : profil ruvnet, 174 repos, carte, langages, top repos
+- https://starmapper.bruniaux.com/profile/florianbruniaux : my profile, mini-map, stats, repos, nearby devs
+- https://starmapper.bruniaux.com/profile/ruvnet : ruvnet's profile, 174 repos, map, languages, top repos
 
-### Autres
+### Other pages
 
-- https://starmapper.bruniaux.com/devs : cartes de devs filtrées par langage
-- https://starmapper.bruniaux.com/devs/atlas : carte choroplèthe, quel langage domine par pays ?
-- https://starmapper.bruniaux.com/feed/florianbruniaux : ma page d'abonnement RSS
-- https://starmapper.bruniaux.com/changelog : historique des versions
+- https://starmapper.bruniaux.com/devs : dev maps filtered by programming language
+- https://starmapper.bruniaux.com/devs/atlas : choropleth map, which language dominates by country?
+- https://starmapper.bruniaux.com/feed/florianbruniaux : my RSS subscription page
+- https://starmapper.bruniaux.com/changelog : version history
 
 ---
 
-## Ce qui a évolué ces dernières semaines
+## What's changed recently
 
-### Profils développeurs (0.3.3 → 0.4.2)
+### Developer profiles (0.3.3 → 0.4.2)
 
-La page profil est passée de "bio + followers" à un hub complet. Exemple concret avec https://starmapper.bruniaux.com/profile/ruvnet :
+The profile page went from "bio + followers" to a full hub. Concrete example with https://starmapper.bruniaux.com/profile/ruvnet:
 
-- **Section GitHub Repos** : ses top repos (ruflo, RuView, RuVector…) avec langages + étoiles, lien vers les 174 repos GitHub
-- **Bouton "Map a repo"** à côté du badge "174 repos" : picker complet, searchable, triable Stars ou A–Z. Un clic et on arrive sur la carte StarMapper du repo (on a indexé ses 5 premiers ce soir : ruflo 45k, RuView 52k, RuVector 4k, agentic-flow 685, Bot-Generator-Bot 565)
-- **Refresh** : met à jour location, followers, repos depuis GitHub et invalide le cache top repos pour repartir propre
-- **Nearby developers** : les devs géolocalisés à moins de Xkm, avec pins sur la carte
-- **Contact dropdown** : LinkedIn, email, GitHub, obfusqués contre le scraping
+- **GitHub Repos section**: top repos (ruflo, RuView, RuVector…) with language badges + stars, link to all 174 GitHub repos
+- **"Map a repo" button** next to the "174 repos" badge: full repo picker, searchable, sortable by Stars or A–Z. One click and you land on the StarMapper map for that repo (we indexed ruvnet's top 5: ruflo 45k, RuView 52k, RuVector 4k, agentic-flow 685, Bot-Generator-Bot 565)
+- **Refresh**: pulls fresh location, followers, and repos from GitHub, and resets the top repos cache so the next load re-fetches from GitHub
+- **Nearby developers**: devs located within Xkm, with pins on the mini-map
+- **Contact dropdown**: LinkedIn, email, GitHub, obfuscated against scraping
 
-### Système d'abonnement RSS (0.4.0)
+### RSS subscription system (0.4.0)
 
-Les devs publient de courtes annonces (280 chars) sur leur profil via GitHub PAT. Mon feed en exemple :
+Devs can publish short announcements (280 chars max) directly on their profile, authenticated via GitHub PAT. My feed as an example:
 
 - RSS 2.0 → https://starmapper.bruniaux.com/api/feed/florianbruniaux/rss
 - JSON Feed 1.1 → https://starmapper.bruniaux.com/api/feed/florianbruniaux/json
-- Page abonnement → https://starmapper.bruniaux.com/feed/florianbruniaux
+- Subscription page → https://starmapper.bruniaux.com/feed/florianbruniaux
 
-Cache CDN 1h, `If-Modified-Since` / 304 supporté. Chaque hit RSS comptabilisé en analytics.
+1h CDN cache, `If-Modified-Since` / 304 supported. Every RSS hit is tracked in analytics.
 
-### Explore (continu)
+### Explore (ongoing)
 
-https://starmapper.bruniaux.com/explore : leaderboard followers (top, power users, nearby), search par `@ruvnet` ou `ruvnet` (le `@` bloquait avant, fixé ce matin), carte sticky synchro avec les résultats.
+https://starmapper.bruniaux.com/explore: followers leaderboard (top, power users, nearby), search by `@ruvnet` or `ruvnet` (the `@` prefix was blocking results before, fixed), sticky map in sync with results.
 
 ### Organic Score (0.3.4)
 
-Score 0–100 par repo estimant si les étoiles sont organiques ou "farmées", basé sur 3 signaux publics :
+A 0–100 score per repo estimating whether stars are organic or farmed, based on 3 public signals:
 
-- Ratio forks/stars (40%)
-- Ratio watchers/stars (5%)
-- % de stargazers à zéro followers (55%)
+- Fork / star ratio (40%)
+- Watcher / star ratio (5%)
+- % zero-follower stargazers (55%)
 
-Affiché dans la liste repos avec un modal de détail au clic. 92% de classification correcte sur le corpus de calibration.
+Displayed in the repo list with a detail modal on click. 92% correct classification on the calibration corpus.
 
 ### Notable stargazers + Geographic velocity (0.4.4)
 
-- **Notable stargazers** : top-5 par followers affichés comme chips d'avatars dans la stats modal, visibles immédiatement à l'ouverture
-- **Geographic velocity** (onglet "📈 Rising") : identifie les pays en accélération en comparant le taux 30j vs 31–90j avec labels `rising / new / stable / declining`
+- **Notable stargazers**: top-5 by followers shown as avatar chips in the stats modal, visible immediately on open
+- **Geographic velocity** ("📈 Rising" tab): identifies accelerating countries by comparing 30-day vs 31–90-day rate, with `rising / new / stable / declining` labels
 
 ### Watch mode (0.4.5)
 
-Polling GitHub toutes les 60s pendant un lancement. Badge pulsant affiché en temps réel (`+N ★ · India, Germany`). Arrêt automatique après 10 min d'inactivité.
+Polls GitHub every 60s during a launch. Pulsing badge shows `+N ★ · India, Germany` in real time. Auto-stops after 10 min of inactivity.
 
 ### Chrome Extension (0.4.6)
 
-Extension Manifest V3 installable depuis le Chrome Web Store. Injecte un bouton ★ Map sur chaque page de repo GitHub, popup toolbar avec le repo courant + historique des 5 derniers + champ de recherche, menu contextuel au clic droit sur les liens de repos.
-
-### Language Atlas (0.3.0)
-
-https://starmapper.bruniaux.com/devs/atlas : quel langage prédomine par pays, calculé sur 4M+ devs en DB, mis à jour quotidiennement.
+Manifest V3 extension installable from the Chrome Web Store. Injects a ★ Map button on every GitHub repo page, toolbar popup with the current repo + last 5 recently viewed + search field, right-click context menu on repo links.
 
 ---
 
 ## Stack
 
-Next.js 16 (App Router) + TypeScript + MapLibre GL 5 + Prisma 7 + Neon Postgres + Jawg Maps, déployé sur Vercel, sponsorisé par Neon (100GB plan)
+Next.js 16 (App Router) + TypeScript + MapLibre GL 5 + Prisma 7 + Neon Postgres + Jawg Maps, deployed on Vercel, sponsored by Neon (100GB plan)

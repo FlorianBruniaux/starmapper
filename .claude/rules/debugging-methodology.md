@@ -2,70 +2,70 @@
 
 ## Golden Rule
 
-> **Lire le code de la feature bugguée AVANT de chercher ailleurs.**
+> **Read the code of the buggy feature BEFORE looking anywhere else.**
 
-Ne JAMAIS :
-- Modifier du code sans comprendre le root cause
-- Appliquer un fix "au cas où" sans test
-- Mélanger plusieurs fixes dans un commit
+NEVER:
+- Modify code without understanding the root cause
+- Apply a "just in case" fix without a test
+- Mix multiple fixes in a single commit
 
 ## Decision Tree
 
 ```
-Bug report reçu ?
-├─ Lire le code de la feature mentionnée EN PREMIER
-├─ Logger/tracer la requête/API complète
-├─ Formuler hypothèse TESTABLE
-├─ Tester l'hypothèse localement
-├─ Si confirmée → fix ciblé + test
-└─ Si rejetée → nouvelle hypothèse (pas de fix "au cas où")
+Bug report received?
+├─ Read the code of the mentioned feature FIRST
+├─ Log/trace the full request/API
+├─ Formulate a TESTABLE hypothesis
+├─ Test the hypothesis locally
+├─ If confirmed → targeted fix + test
+└─ If rejected → new hypothesis (no "just in case" fix)
 ```
 
-## Workflow Obligatoire
+## Mandatory Workflow
 
-### Étape 1 : Diagnostic AVANT tout code
-
-```
-□ Lire le code de la fonction/feature mentionnée
-□ Logger/tracer la requête (GraphQL, Nominatim, Prisma SQL)
-□ Identifier la ligne exacte qui cause le problème
-□ Formuler une hypothèse TESTABLE
-□ Tester l'hypothèse
-□ Si confirmée → fix ciblé
-□ Si rejetée → retour étape 3
-```
-
-### Étape 2 : Root Cause Analysis (5 Pourquoi)
+### Step 1: Diagnose BEFORE writing any code
 
 ```
-1. Pourquoi [symptôme visible] ?
-   → [conséquence directe]
-2. Pourquoi [conséquence] ?
-   → [cause intermédiaire]
-3-5. Continuer jusqu'à la cause racine
-→ FIX : Corriger la cause racine, pas le symptôme
+□ Read the code of the mentioned function/feature
+□ Log/trace the request (GraphQL, Nominatim, Prisma SQL)
+□ Identify the exact line causing the problem
+□ Formulate a TESTABLE hypothesis
+□ Test the hypothesis
+□ If confirmed → targeted fix
+□ If rejected → back to step 3
 ```
 
-### Étape 3 : Git workflow
+### Step 2: Root Cause Analysis (5 Whys)
+
+```
+1. Why [visible symptom]?
+   → [direct consequence]
+2. Why [consequence]?
+   → [intermediate cause]
+3-5. Continue until the root cause
+→ FIX: Fix the root cause, not the symptom
+```
+
+### Step 3: Git workflow
 
 ```bash
-# Investigation : branch temporaire
+# Investigation: temporary branch
 git checkout -b debug/feature-investigation
 
-# Root cause confirmé : branch propre
+# Root cause confirmed: clean branch
 git checkout -b fix/actual-root-cause
-# Retirer les console.log de debug avant commit
+# Remove debug console.log before committing
 
-git commit -m "fix(scope): description précise du root cause"
+git commit -m "fix(scope): precise description of root cause"
 ```
 
 ## NULL Handling (PostgreSQL / Prisma)
 
-Pattern courant avec LEFT JOIN + Neon :
+Common pattern with LEFT JOIN + Neon:
 
 ```sql
--- ❌ Bug potentiel
-WHERE vms.duration > 60  -- NULL si pas de données → row exclue silencieusement
+-- ❌ Potential bug
+WHERE vms.duration > 60  -- NULL if no data → row silently excluded
 
 -- ✅ Fix
 WHERE COALESCE(vms.duration, 0) > 60
@@ -75,20 +75,20 @@ WHERE COALESCE(vms.duration, 0) > 60
 
 | 🚩 Red Flag | Action |
 |------------|--------|
-| Fix "au cas où" | ❌ STOP — Tester d'abord |
+| "Just in case" fix | ❌ STOP — Test first |
 | Scope creep | ❌ One bug at a time |
-| Pas de repro local | ❌ Repro AVANT fix |
-| "Je ne sais pas pourquoi mais..." | ❌ Comprendre d'abord |
+| No local repro | ❌ Reproduce BEFORE fixing |
+| "I don't know why but..." | ❌ Understand first |
 
 ## Quick Reference
 
 | Situation | Action |
 |-----------|--------|
-| Bug report reçu | Lire le code EN PREMIER |
-| Hypothèse formulée | Tester localement AVANT de coder |
-| Fix appliqué | Vérifier que ça marche + ajouter test |
-| Avant commit | Fix minimal, testé, compris |
+| Bug report received | Read the code FIRST |
+| Hypothesis formulated | Test locally BEFORE coding |
+| Fix applied | Verify it works + add test |
+| Before commit | Minimal fix, tested, understood |
 
 ---
 
-**Auto-loaded** : Ce fichier est chargé automatiquement par Claude à chaque session.
+**Auto-loaded**: This file is loaded automatically at every Claude session start.

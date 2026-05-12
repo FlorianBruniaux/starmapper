@@ -1,16 +1,16 @@
 # Tailwind Standards (Auto-loaded)
 
-## RÈGLE ABSOLUE : Zéro valeur arbitraire
+## ABSOLUTE RULE: Zero Arbitrary Values
 
-**Interdit** : `w-[40px]`, `text-[12px]`, `gap-[8px]`, `h-[320px]`, `bg-[#58a6ff]`
-**Autorisé** : Classes Tailwind standard ou tokens CSS définis dans `@theme`
+**Forbidden**: `w-[40px]`, `text-[12px]`, `gap-[8px]`, `h-[320px]`, `bg-[#58a6ff]`
+**Allowed**: Standard Tailwind classes or CSS tokens defined in `@theme`
 
 ```tsx
-// ❌ JAMAIS
+// ❌ NEVER
 <div className="w-[320px] gap-[8px] text-[14px]">
 <div className="bg-[#0d1117]">
 
-// ✅ TOUJOURS
+// ✅ ALWAYS
 <div className="w-80 gap-2 text-sm">
 <div className="bg-background">
 ```
@@ -19,10 +19,10 @@
 
 ## Tailwind v4 — Inline Theme (StarMapper)
 
-StarMapper utilise Tailwind v4 avec `@theme inline` dans `globals.css`.
-**Pas de `tailwind.config.ts`** — les tokens sont des variables CSS.
+StarMapper uses Tailwind v4 with `@theme inline` in `globals.css`.
+**No `tailwind.config.ts`** — tokens are CSS variables.
 
-**Tokens définis dans `@theme`** :
+**Tokens defined in `@theme`**:
 
 ```css
 /* src/app/globals.css */
@@ -35,56 +35,56 @@ StarMapper utilise Tailwind v4 avec `@theme inline` dans `globals.css`.
 }
 ```
 
-**Règle** : Si une couleur GitHub-theme est utilisée plus d'une fois → l'ajouter dans `@theme` et utiliser le token.
+**Rule**: If a GitHub-theme color is used more than once → add it to `@theme` and use the token.
 
 ---
 
 ## Spacing Scale
 
-| Classe | px | Usage |
-|--------|----|-------|
-| `gap-1` | 4px | Serré |
+| Class | px | Usage |
+|-------|----|-------|
+| `gap-1` | 4px | Tight |
 | `gap-2` | 8px | Standard |
 | `gap-4` | 16px | Sections |
-| `p-4` | 16px | Padding card |
-| `p-6` | 24px | Padding page |
+| `p-4` | 16px | Card padding |
+| `p-6` | 24px | Page padding |
 
-**Interdit** : `gap-[8px]`, `p-[16px]`
+**Forbidden**: `gap-[8px]`, `p-[16px]`
 
 ---
 
 ## Font Size Scale
 
-| Classe | px |
-|--------|----|
+| Class | px |
+|-------|----|
 | `text-xs` | 12px |
 | `text-sm` | 14px |
 | `text-base` | 16px |
 | `text-lg` | 18px |
 | `text-xl` | 20px |
 
-**Interdit** : `text-[12px]`, `text-[14px]`
+**Forbidden**: `text-[12px]`, `text-[14px]`
 
 ---
 
 ## Icon / Square Sizes
 
-| Classe | px |
-|--------|----|
+| Class | px |
+|-------|----|
 | `size-4` | 16px |
 | `size-5` | 20px |
 | `size-6` | 24px |
 | `size-8` | 32px |
 
-**Interdit** : `h-[16px] w-[16px]` → `size-4`
+**Forbidden**: `h-[16px] w-[16px]` → use `size-4`
 
 ---
 
-## Exceptions légitimes (rares)
+## Legitimate Exceptions (rare)
 
-- MapLibre popups : styles inline injectés via `innerHTML` (hors portée Tailwind — OK dans `.starmapper-popup` CSS)
-- Canvas map : styles positionnels sur le container `ref` via MapLibre API
+- MapLibre popups: inline styles injected via `innerHTML` (outside Tailwind scope — OK in `.starmapper-popup` CSS)
+- Canvas map: positional styles on the container `ref` via MapLibre API
 
 ---
 
-**Auto-loaded** : Ce fichier est chargé automatiquement par Claude à chaque session.
+**Auto-loaded**: This file is loaded automatically at every Claude session start.

@@ -2,59 +2,59 @@
 
 ## Directive
 
-**Toute recherche exploratoire DOIT être écrite dans un fichier.**
+**All exploratory research MUST be written to a file.**
 
-Ne jamais résumer la recherche verbalement en réponse texte. La compaction de contexte efface les résumés verbaux — pas les fichiers.
+Never summarize research verbally in a text response. Context compaction erases verbal summaries — not files.
 
 ---
 
-## Format Obligatoire
+## Mandatory Format
 
-**Nom du fichier** : `research-{feature}.md` à la racine du projet
+**File name**: `research-{feature}.md` at the project root
 
 ```markdown
 # Research: {feature}
 
-**Date** : {date}
-**Feature** : {description courte}
+**Date**: {date}
+**Feature**: {short description}
 
 ## Files Found
 
-- `src/lib/geocoder.ts` — rôle dans la feature
-- `src/app/api/chunk/route.ts` — logique concernée
+- `src/lib/geocoder.ts` — role in the feature
+- `src/app/api/chunk/route.ts` — relevant logic
 
 ## Prisma Entities
 
-- `GeoCache` — champs clés, contraintes
+- `GeoCache` — key fields, constraints
 
-## Patterns Observés
+## Observed Patterns
 
-- Pattern 1 : description (fichier:ligne si pertinent)
+- Pattern 1: description (file:line if relevant)
 
-## Dépendances Non-Évidentes
+## Non-Obvious Dependencies
 
-- X dépend de Y parce que...
-- Rate limit: Nominatim 1 req/s → impact sur la feature
+- X depends on Y because...
+- Rate limit: Nominatim 1 req/s → impact on the feature
 
 ## Risks & Open Questions
 
-- [ ] Question ouverte à trancher avant implémentation
-- ⚠️ Risque identifié : ...
+- [ ] Open question to resolve before implementation
+- ⚠️ Identified risk: ...
 
 ## Existing Tests
 
-- Gap: pas de test sur Y
+- Gap: no test on Y
 ```
 
 ---
 
 ## Triggers
 
-Écrire `research-{feature}.md` quand :
-- Exploration d'une feature avant de planifier
-- Analyse de l'impact d'un changement sur le codebase
-- Investigation d'un bug nécessitant plusieurs fichiers
+Write `research-{feature}.md` when:
+- Exploring a feature before planning
+- Analyzing the impact of a change on the codebase
+- Investigating a bug that spans multiple files
 
 ---
 
-**Auto-loaded** : Ce fichier est chargé automatiquement par Claude à chaque session.
+**Auto-loaded**: This file is loaded automatically at every Claude session start.

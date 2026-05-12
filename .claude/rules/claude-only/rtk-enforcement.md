@@ -1,26 +1,26 @@
 # RTK Enforcement (Auto-loaded)
 
-## Directive CRITICAL
+## CRITICAL Directive
 
-**TOUTE commande CLI ayant un équivalent RTK DOIT utiliser `rtk` en prefix.**
+**ANY CLI command that has an RTK equivalent MUST use the `rtk` prefix.**
 
 ## Decision Tree
 
 ```
-Commande Bash à exécuter ?
+Bash command to run?
 ├─ Git operation → rtk git {status|diff|log|show}
 ├─ Build/Lint    → rtk {tsc|prettier --check}
 ├─ Tests         → rtk vitest run
 ├─ File read     → rtk {ls|read|grep}
 ├─ Prisma        → rtk prisma
-├─ Pipe complexe / heredoc / flag custom → Commande brute (OK)
-└─ Commande non supportée → Commande brute (OK)
+├─ Complex pipe / heredoc / custom flag → Raw command (OK)
+└─ Unsupported command → Raw command (OK)
 ```
 
 ## Top Mappings
 
-| Commande brute | RTK équivalent | Savings |
-|----------------|---------------|---------|
+| Raw command | RTK equivalent | Savings |
+|-------------|---------------|---------|
 | `git status` | `rtk git status` | 59% |
 | `git diff` | `rtk git diff` | 65% |
 | `git log -10` | `rtk git log -10` | 70% |
@@ -31,13 +31,13 @@ Commande Bash à exécuter ?
 | `cat file.ts` | `rtk read file.ts` | 50% |
 | `npx prisma ...` | `rtk prisma` | 60% |
 
-## Exceptions (ne PAS utiliser RTK)
+## Exceptions (do NOT use RTK)
 
-- `cat > file << 'EOF'` — heredoc/écriture
-- `git diff --cached` — flag non standard
-- `git log --pretty="%H %s"` — output personnalisé
-- Commandes interactives (`git rebase -i`)
+- `cat > file << 'EOF'` — heredoc/write
+- `git diff --cached` — non-standard flag
+- `git log --pretty="%H %s"` — custom output format
+- Interactive commands (`git rebase -i`)
 
 ---
 
-**Auto-loaded** : Ce fichier est chargé automatiquement par Claude à chaque session.
+**Auto-loaded**: This file is loaded automatically at every Claude session start.

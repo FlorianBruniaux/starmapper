@@ -1,12 +1,12 @@
-# Chrome Extension — Publication et maintenance
+# Chrome Extension — Publishing and maintenance
 
-## Compte développeur Chrome Web Store
+## Developer account
 
-Prérequis unique : créer un compte développeur sur [chrome.google.com/webstore/devconsole](https://chrome.google.com/webstore/devconsole) ($5 one-time fee).
+One-time prerequisite: create a developer account at [chrome.google.com/webstore/devconsole](https://chrome.google.com/webstore/devconsole) ($5 one-time fee).
 
 ---
 
-## Première publication
+## First publish
 
 ### 1. Build + zip
 
@@ -17,84 +17,84 @@ npm run zip
 # → .output/starmapper-extension-1.0.0-chrome.zip
 ```
 
-### 2. Assets requis pour la fiche Store
+### 2. Required Store listing assets
 
-Le Store demande au minimum :
+The Store requires at minimum:
 
-- 1 screenshot (1280×800 ou 640×400) — la popup en action sur une page GitHub suffit
-- Une icône promotionnelle 440×280 (optionnelle mais recommandée)
-- Description courte (≤132 chars) + description longue
+- 1 screenshot (1280×800 or 640×400) — the popup in action on a GitHub page is enough
+- A promotional icon 440×280 (optional but recommended)
+- Short description (≤132 chars) + long description
 
-Suggestion de description courte :
+Suggested short description:
 > Map the stargazers of any GitHub repository without leaving GitHub.
 
 ### 3. Upload
 
 1. Developer Dashboard → "New item"
-2. Upload le `.zip`
-3. Remplir : nom, description, catégorie "Developer Tools", screenshots
-4. Privacy disclosure : cocher "This extension does not collect user data" (seul `chrome.storage.local` est utilisé, localement)
-5. Soumettre
+2. Upload the `.zip`
+3. Fill in: name, description, category "Developer Tools", screenshots
+4. Privacy disclosure: check "This extension does not collect user data" (`chrome.storage.local` is used locally only)
+5. Submit
 
-Délai de review Google : 1–3 jours pour la première soumission.
+Google review time: 1–3 days for the first submission.
 
 ---
 
-## Mise à jour
+## Updates
 
-### Procédure
+### Process
 
-1. Bumper `version` dans `extension/wxt.config.ts` :
+1. Bump `version` in `extension/wxt.config.ts`:
    ```ts
-   version: "1.0.1",   // suivre semver : patch pour bugfixes, minor pour nouvelles features
+   version: "1.0.1",   // follow semver: patch for bugfixes, minor for new features
    ```
-2. Builder :
+2. Build:
    ```bash
    cd extension
    npm run zip
    ```
-3. Dashboard → sélectionner l'extension → "Upload new package" → upload le nouveau `.zip` → soumettre
+3. Dashboard → select the extension → "Upload new package" → upload the new `.zip` → submit
 
-Délai : quelques heures après la première approval (les updates passent plus vite).
+Turnaround: a few hours after the first approval (updates go through faster).
 
-### Quand bumper
+### When to bump
 
-| Changement | Version |
+| Change | Version |
 |---|---|
-| Bugfix mineur (injection, bfcache, popup) | `1.0.x` |
-| Nouveau bouton, nouvelle page supportée | `1.x.0` |
-| Changement de permissions manifest | `1.x.0` — déclenche re-review |
+| Minor bugfix (injection, bfcache, popup) | `1.0.x` |
+| New button or new supported page | `1.x.0` |
+| Manifest permission change | `1.x.0` — triggers re-review |
 
 ---
 
-## Permissions actuelles (manifest)
+## Current permissions (manifest)
 
 ```
-tabs            — lire l'URL de l'onglet actif (popup : détecter le repo courant)
-contextMenus    — menu clic droit sur les liens GitHub
-storage         — stocker les repos récents (chrome.storage.local, local uniquement)
+tabs            — read the active tab URL (popup: detect current repo)
+contextMenus    — right-click menu on GitHub links
+storage         — store recent repos (chrome.storage.local, local only)
 host_permissions: https://github.com/*
 ```
 
-Toute nouvelle permission (ex: `notifications`) déclenche une re-review et demande à l'utilisateur d'accepter.
+Any new permission (e.g. `notifications`) triggers a re-review and asks the user to accept.
 
 ---
 
-## Roadmap extension
+## Extension roadmap
 
-### Prochain : bouton "View profile on StarMapper"
+### Next: "View profile on StarMapper" button
 
-Sur les pages profil GitHub (`github.com/[login]`), injecter un bouton "★ Profile" à côté du bouton "Follow" qui ouvre `starmapper.bruniaux.com/profile/[login]`.
+On GitHub profile pages (`github.com/[login]`), inject a "★ Profile" button next to the "Follow" button that opens `starmapper.bruniaux.com/profile/[login]`.
 
-**Changements nécessaires :**
-- `wxt.config.ts` : ajouter `"https://github.com/*"` aux `host_permissions` (déjà présent) et élargir le `matches` du content script
-- `content.ts` : détecter profil (1 segment de path) vs repo (2 segments), injecter le bon bouton selon le contexte
-- Bumper en `1.1.0`
+**Required changes:**
+- `wxt.config.ts`: `host_permissions` already includes `"https://github.com/*"` — extend the content script `matches`
+- `content.ts`: detect profile (1 path segment) vs repo (2 segments), inject the right button based on context
+- Bump to `1.1.0`
 
-**Sélecteur cible** pour le bouton Follow sur GitHub :
+**Target selector** for the Follow button on GitHub:
 
 ```ts
-// Container du bouton Follow sur github.com/[login]
+// Container of the Follow button on github.com/[login]
 const profileActions = document.querySelector(".js-profile-editable-area")
   ?? document.querySelector('[data-view-component="true"].Layout-sidebar');
 ```

@@ -2,58 +2,58 @@
 
 > **Last verified:** 2026-05-09 — cross-checked with `src/app/globals.css`.
 
-> Guide de référence visuel et technique. Dark theme inspiré GitHub.
+> Visual and technical reference guide. GitHub-inspired dark theme.
 
 ---
 
-## 1. Identité Visuelle
+## 1. Visual Identity
 
-**Thème** : Dark GitHub, interface sombre, accents colorés, données au premier plan.
+**Theme**: Dark GitHub, dark interface, colored accents, data front and center.
 
-**Principes** :
-- Données > chrome (la carte prend 100% de l'espace)
-- Minimaliste en dehors de la carte
-- Familier pour les développeurs (couleurs GitHub)
+**Principles**:
+- Data > chrome (the map takes 100% of the space)
+- Minimal outside the map
+- Familiar for developers (GitHub colors)
 
 ---
 
-## 2. Palette de Couleurs
+## 2. Color Palette
 
 ### 2.1 Backgrounds & Surfaces
 
-| Token CSS | Hex (dark) | Usage |
+| CSS Token | Hex (dark) | Usage |
 |-----------|------------|-------|
 | `--color-background` | `#0d1117` | App background (dark navy) |
 | `--color-surface` | `#161b22` | Cards, popups, panels |
 | `--color-surface-alt` | `#1c2128` | Hover states, inputs |
-| `--color-border` | `#30363d` | Bordures |
-| `--color-border-subtle` | `#21262d` | Séparateurs légers |
+| `--color-border` | `#30363d` | Borders |
+| `--color-border-subtle` | `#21262d` | Light separators |
 
-### 2.2 Textes
+### 2.2 Text
 
-| Token CSS | Hex (dark) | Usage |
+| CSS Token | Hex (dark) | Usage |
 |-----------|------------|-------|
-| `--color-foreground` | `#f0f6fc` | Texte principal |
-| `--color-muted` | `#8b949e` | Texte secondaire |
-| `--color-muted-subtle` | `#848d97` | Texte très discret |
+| `--color-foreground` | `#f0f6fc` | Primary text |
+| `--color-muted` | `#8b949e` | Secondary text |
+| `--color-muted-subtle` | `#848d97` | Subtle text |
 
-### 2.3 Accents Fonctionnels
+### 2.3 Functional Accents
 
-| Token CSS | Hex (dark) | Classe Tailwind | Usage |
+| CSS Token | Hex (dark) | Tailwind class | Usage |
 |-----------|------------|-----------------|-------|
 | `--color-accent-blue` | `#58a6ff` | `text-accent-blue` | Links, info, primary repo |
-| `--color-accent-green` | `#3fb950` | `bg-accent-green` | CTA principal, succès |
-| `--color-accent-green-emphasis` | `#238636` | `bg-accent-green-emphasis` | Bouton CTA rempli |
-| `--color-accent-red` | `#f85149` | `text-accent-red` | Erreurs |
-| `--color-accent-orange` | `#f0883e` | `text-accent-orange` | Tier "moderate", bandeaux warning |
-| `--color-accent-orange-bg` | `color-mix(orange 15%)` | `bg-accent-orange-bg` | Fond pill/badge orange |
-| `--color-accent-orange-border` | `color-mix(orange 30%)` | `border-accent-orange-border` | Bordure pill/badge orange |
+| `--color-accent-green` | `#3fb950` | `bg-accent-green` | Primary CTA, success |
+| `--color-accent-green-emphasis` | `#238636` | `bg-accent-green-emphasis` | Filled CTA button |
+| `--color-accent-red` | `#f85149` | `text-accent-red` | Errors |
+| `--color-accent-orange` | `#f0883e` | `text-accent-orange` | "moderate" tier, warning banners |
+| `--color-accent-orange-bg` | `color-mix(orange 15%)` | `bg-accent-orange-bg` | Orange pill/badge background |
+| `--color-accent-orange-border` | `color-mix(orange 30%)` | `border-accent-orange-border` | Orange pill/badge border |
 | `--color-accent-purple` | `#a371f7` | `text-accent-purple` | Map: repo compare |
-| `--color-warning-subtle` | `#271d0e` | `bg-warning-subtle` | Fond avertissement discret |
+| `--color-warning-subtle` | `#271d0e` | `bg-warning-subtle` | Subtle warning background |
 
-### 2.4 Light mode overrides (valeurs clés)
+### 2.4 Light mode overrides (key values)
 
-| Token CSS | Hex (light) |
+| CSS Token | Hex (light) |
 |-----------|-------------|
 | `--color-background` | `#ffffff` |
 | `--color-surface` | `#f0f3f6` |
@@ -64,38 +64,38 @@
 | `--color-accent-green` | `#1a7f37` |
 | `--color-muted-subtle` | `#6e7681` |
 
-### 2.5 Map Layers (non-Tailwind, MapLibre uniquement)
+### 2.5 Map Layers (non-Tailwind, MapLibre only)
 
-Gradient couleur des points par followers (valeurs JS hardcodées dans `stargazer-map.tsx`) :
+Point color gradient by follower count (hardcoded JS values in `stargazer-map.tsx`):
 
 ```
-0–10 followers    → #58a6ff (bleu)
-11–100 followers  → #ffa657 (orange MapLibre — distinct du token DS)
-100+ followers    → #f85149 (rouge/corail)
+0–10 followers    → #58a6ff (blue)
+11–100 followers  → #ffa657 (MapLibre orange — distinct from DS token)
+100+ followers    → #f85149 (red/coral)
 ```
 
-Repo compare : `#a371f7` (violet) pour distinguer du repo principal.
+Repo compare: `#a371f7` (purple) to distinguish from the primary repo.
 
-> Note: `#ffa657` est la couleur orange utilisée dans les layers MapLibre JS. Le token DS `--color-accent-orange` vaut `#f0883e` (dark) / `#bc4c00` (light). Ces valeurs sont intentionnellement différentes.
+> Note: `#ffa657` is the orange used in MapLibre JS layers. The DS token `--color-accent-orange` is `#f0883e` (dark) / `#bc4c00` (light). These values are intentionally different.
 
 ---
 
-## 3. Typographie
+## 3. Typography
 
-| Usage | Classe Tailwind |
+| Usage | Tailwind class |
 |-------|----------------|
-| Titre page | `text-xl font-bold text-foreground` |
+| Page title | `text-xl font-bold text-foreground` |
 | Label | `text-sm font-medium text-foreground` |
-| Corps | `text-sm text-foreground` |
-| Secondaire | `text-sm text-muted` |
+| Body | `text-sm text-foreground` |
+| Secondary | `text-sm text-muted` |
 | Caption | `text-xs text-muted` |
-| Compact label | `text-2xs text-muted` (custom, défini dans `@theme`) |
+| Compact label | `text-2xs text-muted` (custom, defined in `@theme`) |
 
-**Police** : Geist Sans / Geist Mono (via `--font-geist-sans` / `--font-geist-mono`).
+**Font**: Geist Sans / Geist Mono (via `--font-geist-sans` / `--font-geist-mono`).
 
 ---
 
-## 4. Composants Clés
+## 4. Key Components
 
 ### 4.1 Input (repo URL)
 
@@ -108,7 +108,7 @@ Repo compare : `#a371f7` (violet) pour distinguer du repo principal.
 />
 ```
 
-### 4.2 Bouton Primary (CTA)
+### 4.2 Primary Button (CTA)
 
 ```tsx
 <button className="bg-accent-green text-white font-semibold
@@ -118,14 +118,14 @@ Repo compare : `#a371f7` (violet) pour distinguer du repo principal.
 </button>
 ```
 
-### 4.3 Bouton Secondary / Ghost
+### 4.3 Secondary / Ghost Button
 
 ```tsx
 <button className="border border-border text-muted
                    px-3 py-1.5 rounded-md text-sm
                    hover:text-foreground hover:border-accent-blue/50
                    transition-colors">
-  Comparer
+  Compare
 </button>
 ```
 
@@ -139,7 +139,7 @@ Repo compare : `#a371f7` (violet) pour distinguer du repo principal.
 </span>
 ```
 
-### 4.5 Badge "Experimental" / orange pill
+### 4.5 "Experimental" badge / orange pill
 
 ```tsx
 <span className="inline-flex items-center px-2 py-0.5 rounded-full
@@ -151,7 +151,7 @@ Repo compare : `#a371f7` (violet) pour distinguer du repo principal.
 
 ### 4.6 MapLibre Popup
 
-Style CSS dans `globals.css` (classe `.starmapper-popup`), hors Tailwind.
+CSS style in `globals.css` (`.starmapper-popup` class), outside Tailwind.
 
 ```css
 .starmapper-popup .maplibregl-popup-content {
@@ -168,7 +168,7 @@ Style CSS dans `globals.css` (classe `.starmapper-popup`), hors Tailwind.
 
 ### 5.1 Landing Page
 
-Layout deux colonnes sur desktop (`lg:flex-row`), colonne unique sur mobile.
+Two-column layout on desktop (`lg:flex-row`), single column on mobile.
 
 ```
 ┌──────────────────────────────────────────────────────┐
@@ -190,7 +190,7 @@ Layout deux colonnes sur desktop (`lg:flex-row`), colonne unique sur mobile.
 └───────────────────────┴──────────────────────────────┘
 ```
 
-Le tableau Community Maps est paginé (20 lignes/page) et trié par `updatedAt` desc par défaut. Colonnes triables : Stars, Mapped%, Countries, Last scan.
+The Community Maps table is paginated (20 rows/page) and sorted by `updatedAt` desc by default. Sortable columns: Stars, Mapped%, Countries, Last scan.
 
 ### 5.2 Map Page
 
@@ -205,65 +205,65 @@ Le tableau Community Maps est paginé (20 lignes/page) et trié par `updatedAt` 
 └─────────────────────────────────────┘
 ```
 
-**Règle** : La carte prend tout l'espace disponible. Les overlays sont `position: absolute`.
+**Rule**: The map takes all available space. Overlays are `position: absolute`.
 
 ---
 
 ## 6. Spacing
 
-Base unit : 4px (Tailwind default).
+Base unit: 4px (Tailwind default).
 
-| Classe | px | Usage |
+| Class | px | Usage |
 |--------|----|-------|
-| `gap-1` | 4px | Icône-texte |
+| `gap-1` | 4px | Icon-text |
 | `gap-2` | 8px | Standard |
 | `gap-4` | 16px | Sections |
-| `p-3` | 12px | Padding compact |
-| `p-4` | 16px | Padding standard |
+| `p-3` | 12px | Compact padding |
+| `p-4` | 16px | Standard padding |
 
-**Interdit** : Valeurs arbitraires (`gap-[8px]`, `p-[12px]`)
+**Forbidden**: Arbitrary values (`gap-[8px]`, `p-[12px]`)
 
 ---
 
 ## 7. Border Radius
 
-| Classe | px | Usage |
+| Class | px | Usage |
 |--------|----|-------|
 | `rounded-sm` | 4px | Inputs |
-| `rounded-md` | 6px | Boutons, cards |
+| `rounded-md` | 6px | Buttons, cards |
 | `rounded-lg` | 8px | Panels, modals |
 | `rounded-full` | varies | Pills, avatars |
 
 ---
 
-## 8. Accessibilité
+## 8. Accessibility
 
-- Focus ring : `*:focus-visible` → `outline: 2px solid var(--color-accent-blue)` (global dans `globals.css`)
-- Contraste texte principal : `#f0f6fc` sur `#0d1117` ≥ 4.5:1 ✅
-- Badge "New" : `#24292f` sur `#f0883e` = ~5.4:1 ✅ WCAG AA
-- Touch targets : min 44×44px sur mobile
-- Map clusters : `aria-label` sur les boutons de fermeture popup
+- Focus ring: `*:focus-visible` → `outline: 2px solid var(--color-accent-blue)` (global in `globals.css`)
+- Primary text contrast: `#f0f6fc` on `#0d1117` ≥ 4.5:1 ✅
+- "New" badge: `#24292f` on `#f0883e` = ~5.4:1 ✅ WCAG AA
+- Touch targets: min 44×44px on mobile
+- Map clusters: `aria-label` on popup close buttons
 
 ---
 
 ## 9. Dark / Light Mode
 
-StarMapper supporte les deux modes via un toggle dans le header. Le mode par défaut est **dark**.
+StarMapper supports both modes via a toggle in the header. The default mode is **dark**.
 
-### Architecture du système
+### System architecture
 
-Trois couches collaborent :
+Three layers work together:
 
-**1. `src/lib/theme.ts`** : logique pure, côté client uniquement (`"use client"`).
-- `getStoredTheme()` / `setStoredTheme()` : lit/écrit `starmapper:theme` dans `localStorage` (`"light" | "dark" | null`)
-- `getSystemTheme()` : lit `prefers-color-scheme`
-- `applyTheme(theme)` : applique la classe `"dark"` ou `"light"` sur `<html>` et retourne le thème résolu
+**1. `src/lib/theme.ts`**: pure logic, client-side only (`"use client"`).
+- `getStoredTheme()` / `setStoredTheme()`: reads/writes `starmapper:theme` in `localStorage` (`"light" | "dark" | null`)
+- `getSystemTheme()`: reads `prefers-color-scheme`
+- `applyTheme(theme)`: applies the `"dark"` or `"light"` class on `<html>` and returns the resolved theme
 
-**2. `src/app/layout.tsx`** : prévention du FOUC (Flash Of Unstyled Content).
-Un inline script synchrone s'exécute avant le premier paint pour lire `localStorage` et appliquer la classe correcte sur `<html>` immédiatement.
+**2. `src/app/layout.tsx`**: FOUC (Flash Of Unstyled Content) prevention.
+A synchronous inline script runs before the first paint to read `localStorage` and apply the correct class on `<html>` immediately.
 
 ```ts
-// Script injecté via dangerouslySetInnerHTML dans <head>
+// Script injected via dangerouslySetInnerHTML in <head>
 (function() {
   var stored = localStorage.getItem('starmapper:theme');
   var preferLight = window.matchMedia('(prefers-color-scheme: light)').matches;
@@ -272,43 +272,43 @@ Un inline script synchrone s'exécute avant le premier paint pour lire `localSto
 })();
 ```
 
-**3. `src/app/globals.css`** : tokens CSS définis en trois blocs :
+**3. `src/app/globals.css`**: CSS tokens defined in three blocks:
 
 ```css
-/* Base (dark, défaut si aucune classe) */
+/* Base (dark, default if no class) */
 :root { --color-background: #0d1117; ... }
 
-/* Override auto OS */
+/* Auto OS override */
 @media (prefers-color-scheme: light) {
   :root:not(.dark) { --color-background: #ffffff; ... }
 }
 
-/* Override manuel (classe appliquée par applyTheme()) */
+/* Manual override (class applied by applyTheme()) */
 html.light { --color-background: #ffffff; ... }
 html.dark  { --color-background: #0d1117; ... }
 ```
 
-**4. `src/components/theme-toggle.tsx`** : bouton dans le header, appelle `applyTheme()` + `setStoredTheme()` au clic.
+**4. `src/components/theme-toggle.tsx`**: button in the header, calls `applyTheme()` + `setStoredTheme()` on click.
 
-### Priorité de résolution
+### Resolution priority
 
 ```
 localStorage override ("light" | "dark")
     > prefers-color-scheme OS preference
-        > dark (défaut)
+        > dark (default)
 ```
 
-### Règles d'implémentation
+### Implementation rules
 
-- **Toujours utiliser les tokens CSS** (`bg-background`, `text-foreground`...), jamais de valeurs hex directes. Les tokens s'adaptent automatiquement au mode actif.
-- **Les tuiles MapLibre** sont swappées via style URL dans `map-style.ts`; le map écoute le changement de thème et recharge son style.
-- **`"use client"` obligatoire** sur tout composant qui importe de `theme.ts` (accès localStorage).
+- **Always use CSS tokens** (`bg-background`, `text-foreground`...), never direct hex values. Tokens adapt automatically to the active mode.
+- **MapLibre tiles** are swapped via style URL in `map-style.ts`; the map listens for theme changes and reloads its style.
+- **`"use client"` required** on any component that imports from `theme.ts` (localStorage access).
 
 ---
 
 ## 10. Anti-patterns
 
-| ❌ Interdit | ✅ Correct |
+| ❌ Forbidden | ✅ Correct |
 |------------|-----------|
 | `bg-[#0d1117]` | `bg-background` |
 | `text-[#8b949e]` | `text-muted` |
@@ -317,8 +317,8 @@ localStorage override ("light" | "dark")
 | `bg-orange-500/15` | `bg-accent-orange-bg` |
 | `text-orange-400` | `text-accent-orange` |
 | `border-orange-500/30` | `border-accent-orange-border` |
-| Popup styles en inline JSX | Popup styles dans `.starmapper-popup` CSS |
+| Popup styles as inline JSX | Popup styles in `.starmapper-popup` CSS |
 
 ---
 
-*Dernière mise à jour : 2026-05-09 (v0.4.2)*
+*Last updated: 2026-05-12 (v0.4.6)*
