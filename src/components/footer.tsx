@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 
+import { LogoMark } from "@/components/logo";
+
 const ECOSYSTEM_LINKS = [
   { href: "https://cc.bruniaux.com/", label: "Claude Code Guide" },
   { href: "https://cowork.bruniaux.com/", label: "Cowork Guide" },
@@ -22,11 +24,8 @@ export const Footer = () => (
         {/* Brand */}
         <div className="sm:col-span-1">
           <div className="flex items-center gap-2 mb-3">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5" className="text-accent-blue" />
-              <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" stroke="currentColor" strokeWidth="1.5" className="text-accent-blue" />
-            </svg>
-            <span className="text-foreground font-semibold text-sm">StarMapper</span>
+            <LogoMark />
+            <span className="font-semibold text-sm text-foreground">StarMapper</span>
           </div>
           <p className="text-muted text-xs leading-relaxed">
             See who stars your repo, on a map. Free, no login required.

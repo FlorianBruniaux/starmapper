@@ -155,8 +155,74 @@ export default function HomePage() {
       <main id="main" className="min-h-screen bg-background flex flex-col">
 
         {/* ── Hero + Search ── */}
-        <section className="w-full flex flex-col items-center px-6 pt-16 pb-12 lg:pt-24 lg:pb-16">
-          <div className="w-full max-w-xl flex flex-col items-center text-center gap-6">
+        <section className="relative w-full flex flex-col items-center px-6 pt-16 pb-12 lg:pt-24 lg:pb-16 overflow-hidden">
+
+          {/* Scatter map background — stargazer concentration cloud */}
+          <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+            <svg
+              viewBox="0 0 800 400"
+              className="w-full h-full opacity-[0.04] dark:opacity-[0.07]"
+              preserveAspectRatio="xMidYMid slice"
+            >
+              {/* North America */}
+              <circle cx="128" cy="116" r="3.5" fill="currentColor" />{/* SF */}
+              <circle cx="128" cy="94" r="2.5" fill="currentColor" />{/* Seattle */}
+              <circle cx="126" cy="91" r="2" fill="currentColor" />{/* Vancouver */}
+              <circle cx="138" cy="124" r="2.5" fill="currentColor" />{/* LA */}
+              <circle cx="236" cy="109" r="3" fill="currentColor" />{/* New York */}
+              <circle cx="242" cy="105" r="2" fill="currentColor" />{/* Boston */}
+              <circle cx="206" cy="107" r="2.5" fill="currentColor" />{/* Chicago */}
+              <circle cx="224" cy="102" r="2" fill="currentColor" />{/* Toronto */}
+              <circle cx="182" cy="132" r="2" fill="currentColor" />{/* Austin */}
+              <circle cx="180" cy="157" r="1.5" fill="currentColor" />{/* Mexico City */}
+              {/* South America */}
+              <circle cx="296" cy="252" r="3" fill="currentColor" />{/* São Paulo */}
+              <circle cx="271" cy="276" r="2" fill="currentColor" />{/* Buenos Aires */}
+              <circle cx="235" cy="190" r="1.5" fill="currentColor" />{/* Bogotá */}
+              {/* Europe */}
+              <circle cx="400" cy="86" r="3" fill="currentColor" />{/* London */}
+              <circle cx="405" cy="91" r="2.5" fill="currentColor" />{/* Paris */}
+              <circle cx="430" cy="83" r="2.5" fill="currentColor" />{/* Berlin */}
+              <circle cx="411" cy="83" r="2" fill="currentColor" />{/* Amsterdam */}
+              <circle cx="440" cy="68" r="1.5" fill="currentColor" />{/* Stockholm */}
+              <circle cx="419" cy="94" r="2" fill="currentColor" />{/* Zurich */}
+              <circle cx="392" cy="110" r="2" fill="currentColor" />{/* Madrid */}
+              <circle cx="380" cy="113" r="1.5" fill="currentColor" />{/* Lisbon */}
+              <circle cx="428" cy="107" r="2" fill="currentColor" />{/* Rome */}
+              <circle cx="447" cy="84" r="1.5" fill="currentColor" />{/* Warsaw */}
+              <circle cx="464" cy="109" r="2" fill="currentColor" />{/* Istanbul */}
+              <circle cx="484" cy="76" r="2" fill="currentColor" />{/* Moscow */}
+              <circle cx="468" cy="89" r="1.5" fill="currentColor" />{/* Kyiv */}
+              {/* Middle East & Africa */}
+              <circle cx="477" cy="129" r="1.5" fill="currentColor" />{/* Tel Aviv */}
+              <circle cx="469" cy="133" r="1.5" fill="currentColor" />{/* Cairo */}
+              <circle cx="520" cy="143" r="1.5" fill="currentColor" />{/* Dubai */}
+              <circle cx="408" cy="187" r="1.5" fill="currentColor" />{/* Lagos */}
+              <circle cx="482" cy="203" r="1" fill="currentColor" />{/* Nairobi */}
+              {/* South & Southeast Asia */}
+              <circle cx="572" cy="137" r="2.5" fill="currentColor" />{/* Delhi */}
+              <circle cx="562" cy="157" r="3" fill="currentColor" />{/* Mumbai */}
+              <circle cx="572" cy="171" r="2.5" fill="currentColor" />{/* Bangalore */}
+              <circle cx="578" cy="170" r="1.5" fill="currentColor" />{/* Chennai */}
+              <circle cx="631" cy="197" r="2" fill="currentColor" />{/* Singapore */}
+              {/* East Asia */}
+              <circle cx="678" cy="111" r="2.5" fill="currentColor" />{/* Beijing */}
+              <circle cx="691" cy="131" r="3" fill="currentColor" />{/* Shanghai */}
+              <circle cx="674" cy="150" r="2" fill="currentColor" />{/* Shenzhen */}
+              <circle cx="682" cy="116" r="2" fill="currentColor" />{/* Seoul */}
+              <circle cx="710" cy="121" r="2.5" fill="currentColor" />{/* Tokyo */}
+              {/* Australia */}
+              <circle cx="736" cy="275" r="2" fill="currentColor" />{/* Sydney */}
+              <circle cx="722" cy="284" r="1.5" fill="currentColor" />{/* Melbourne */}
+              {/* Constellation lines */}
+              <line x1="128" y1="116" x2="236" y2="109" stroke="currentColor" strokeWidth="0.5" opacity="0.4" />
+              <line x1="400" y1="86" x2="430" y2="83" stroke="currentColor" strokeWidth="0.5" opacity="0.4" />
+              <line x1="562" y1="157" x2="572" y2="171" stroke="currentColor" strokeWidth="0.5" opacity="0.4" />
+              <line x1="678" y1="111" x2="710" y2="121" stroke="currentColor" strokeWidth="0.5" opacity="0.4" />
+            </svg>
+          </div>
+
+          <div className="relative w-full max-w-xl flex flex-col items-center text-center gap-6">
 
             <h1 className="text-4xl font-bold text-foreground leading-tight">
               Where in the world does<br />
@@ -187,7 +253,7 @@ export default function HomePage() {
                 />
                 <button
                   type="submit"
-                  className="sm:shrink-0 bg-accent-green-emphasis hover:opacity-90 hover:shadow-[0_0_20px_rgba(35,134,54,0.4)] text-white font-bold py-3 px-6 rounded-lg transition-[opacity,box-shadow] text-base whitespace-nowrap"
+                  className="sm:shrink-0 bg-accent-green-emphasis hover:opacity-90 hover:shadow-[0_0_20px_rgba(14,152,86,0.4)] text-white font-bold py-3 px-6 rounded-lg transition-[opacity,box-shadow] text-base whitespace-nowrap"
                 >
                   Map Stargazers
                 </button>

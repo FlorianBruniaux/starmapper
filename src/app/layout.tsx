@@ -9,6 +9,7 @@ import { VitalsReporter } from "@/components/vitals-reporter";
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-geist-sans", display: "swap" });
 
+
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://starmapper.bruniaux.com";
 
 export const metadata: Metadata = {
@@ -170,7 +171,7 @@ const themeInitScript = `
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const nonce = (await headers()).get("x-nonce") ?? "";
   return (
-    <html lang="en" suppressHydrationWarning className={geist.variable}>
+    <html lang="en" suppressHydrationWarning className={`${geist.variable}`}>
       <head>
         <meta name="color-scheme" content="dark light" />
         {/* Preconnect to tile/geocoding origins — shaves 100-300ms off map LCP */}

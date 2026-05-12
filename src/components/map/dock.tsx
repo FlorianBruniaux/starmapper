@@ -319,7 +319,7 @@ export const Dock = ({
             text-white text-xs font-semibold
             backdrop-blur-md transition-all duration-150
             flex items-center gap-2 w-full
-            shadow-[0_0_12px_rgba(35,134,54,0.3)] hover:shadow-[0_0_20px_rgba(46,160,67,0.45)]"
+            shadow-[0_0_12px_rgba(14,152,86,0.3)] hover:shadow-[0_0_20px_rgba(16,208,112,0.35)]"
           aria-label="Share this stargazer map"
         >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" className="flex-shrink-0" aria-hidden="true">

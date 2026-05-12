@@ -12,13 +12,14 @@
   --color-muted-subtle: #848d97;
   --color-border: #30363d;
   --color-border-subtle: #21262d;
-  --color-accent-blue: #58a6ff;
-  --color-accent-green: #3fb950;
-  --color-accent-green-emphasis: #238636;
+  --color-accent-blue: #7eb8ff;
+  --color-accent-green: #10D070;
+  --color-accent-green-emphasis: #0E9856;
+  --color-accent-amber: #f0a050;
   --color-accent-orange: #f0883e;
   --color-accent-red: #f85149;
   --color-accent-purple: #a371f7;
-  --color-warning-subtle: #271d0e;
+  --color-warning-subtle: #1a1206;
 }
 
 /* ─── Light mode — system preference ─────────────────────────────────────── */
@@ -36,6 +37,7 @@
     --color-accent-blue: #0969da;
     --color-accent-green: #1a7f37;
     --color-accent-green-emphasis: #1a7f37;
+    --color-accent-amber: #b06010;
     --color-accent-orange: #bc4c00;
     --color-accent-red: #d1242f;
     --color-accent-purple: #8250df;
@@ -57,6 +59,7 @@ html.light {
   --color-accent-blue: #0969da;
   --color-accent-green: #1a7f37;
   --color-accent-green-emphasis: #1a7f37;
+  --color-accent-amber: #b06010;
   --color-accent-orange: #bc4c00;
   --color-accent-red: #d1242f;
   --color-accent-purple: #8250df;
@@ -74,13 +77,14 @@ html.dark {
   --color-muted-subtle: #848d97;
   --color-border: #30363d;
   --color-border-subtle: #21262d;
-  --color-accent-blue: #58a6ff;
-  --color-accent-green: #3fb950;
-  --color-accent-green-emphasis: #238636;
+  --color-accent-blue: #7eb8ff;
+  --color-accent-green: #10D070;
+  --color-accent-green-emphasis: #0E9856;
+  --color-accent-amber: #f0a050;
   --color-accent-orange: #f0883e;
   --color-accent-red: #f85149;
   --color-accent-purple: #a371f7;
-  --color-warning-subtle: #271d0e;
+  --color-warning-subtle: #1a1206;
 }
 
 /* ─── @theme — self-references force Tailwind to emit var() in utilities ──── */
@@ -102,13 +106,13 @@ html.dark {
   --color-accent-orange-bg: color-mix(in srgb, var(--color-accent-orange) 15%, transparent);
   --color-accent-orange-border: color-mix(in srgb, var(--color-accent-orange) 30%, transparent);
   --color-accent-red: var(--color-accent-red);
+  --color-accent-amber: var(--color-accent-amber);
   --color-accent-purple: var(--color-accent-purple);
   --color-warning-subtle: var(--color-warning-subtle);
 
   /* Fonts */
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-
   /* Custom text sizes */
   --text-2xs: 0.625rem; /* 10px — compact map labels, stat labels */
 
