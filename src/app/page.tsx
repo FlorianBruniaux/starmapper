@@ -155,187 +155,197 @@ export default function HomePage() {
       <main id="main" className="min-h-screen bg-background flex flex-col">
 
         {/* ── Hero + Search ── */}
-        <section className="relative w-full flex flex-col items-center px-6 pt-16 pb-12 lg:pt-24 lg:pb-16 overflow-hidden">
+        <section className="w-full px-6 pt-16 pb-12 lg:pt-24 lg:pb-20">
+          <div className="w-full max-w-7xl mx-auto">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
 
-          {/* Scatter map background — stargazer concentration cloud */}
-          <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
-            <svg
-              viewBox="0 0 800 400"
-              className="w-full h-full opacity-[0.04] dark:opacity-[0.07]"
-              preserveAspectRatio="xMidYMid slice"
-            >
-              {/* North America */}
-              <circle cx="128" cy="116" r="3.5" fill="currentColor" />{/* SF */}
-              <circle cx="128" cy="94" r="2.5" fill="currentColor" />{/* Seattle */}
-              <circle cx="126" cy="91" r="2" fill="currentColor" />{/* Vancouver */}
-              <circle cx="138" cy="124" r="2.5" fill="currentColor" />{/* LA */}
-              <circle cx="236" cy="109" r="3" fill="currentColor" />{/* New York */}
-              <circle cx="242" cy="105" r="2" fill="currentColor" />{/* Boston */}
-              <circle cx="206" cy="107" r="2.5" fill="currentColor" />{/* Chicago */}
-              <circle cx="224" cy="102" r="2" fill="currentColor" />{/* Toronto */}
-              <circle cx="182" cy="132" r="2" fill="currentColor" />{/* Austin */}
-              <circle cx="180" cy="157" r="1.5" fill="currentColor" />{/* Mexico City */}
-              {/* South America */}
-              <circle cx="296" cy="252" r="3" fill="currentColor" />{/* São Paulo */}
-              <circle cx="271" cy="276" r="2" fill="currentColor" />{/* Buenos Aires */}
-              <circle cx="235" cy="190" r="1.5" fill="currentColor" />{/* Bogotá */}
-              {/* Europe */}
-              <circle cx="400" cy="86" r="3" fill="currentColor" />{/* London */}
-              <circle cx="405" cy="91" r="2.5" fill="currentColor" />{/* Paris */}
-              <circle cx="430" cy="83" r="2.5" fill="currentColor" />{/* Berlin */}
-              <circle cx="411" cy="83" r="2" fill="currentColor" />{/* Amsterdam */}
-              <circle cx="440" cy="68" r="1.5" fill="currentColor" />{/* Stockholm */}
-              <circle cx="419" cy="94" r="2" fill="currentColor" />{/* Zurich */}
-              <circle cx="392" cy="110" r="2" fill="currentColor" />{/* Madrid */}
-              <circle cx="380" cy="113" r="1.5" fill="currentColor" />{/* Lisbon */}
-              <circle cx="428" cy="107" r="2" fill="currentColor" />{/* Rome */}
-              <circle cx="447" cy="84" r="1.5" fill="currentColor" />{/* Warsaw */}
-              <circle cx="464" cy="109" r="2" fill="currentColor" />{/* Istanbul */}
-              <circle cx="484" cy="76" r="2" fill="currentColor" />{/* Moscow */}
-              <circle cx="468" cy="89" r="1.5" fill="currentColor" />{/* Kyiv */}
-              {/* Middle East & Africa */}
-              <circle cx="477" cy="129" r="1.5" fill="currentColor" />{/* Tel Aviv */}
-              <circle cx="469" cy="133" r="1.5" fill="currentColor" />{/* Cairo */}
-              <circle cx="520" cy="143" r="1.5" fill="currentColor" />{/* Dubai */}
-              <circle cx="408" cy="187" r="1.5" fill="currentColor" />{/* Lagos */}
-              <circle cx="482" cy="203" r="1" fill="currentColor" />{/* Nairobi */}
-              {/* South & Southeast Asia */}
-              <circle cx="572" cy="137" r="2.5" fill="currentColor" />{/* Delhi */}
-              <circle cx="562" cy="157" r="3" fill="currentColor" />{/* Mumbai */}
-              <circle cx="572" cy="171" r="2.5" fill="currentColor" />{/* Bangalore */}
-              <circle cx="578" cy="170" r="1.5" fill="currentColor" />{/* Chennai */}
-              <circle cx="631" cy="197" r="2" fill="currentColor" />{/* Singapore */}
-              {/* East Asia */}
-              <circle cx="678" cy="111" r="2.5" fill="currentColor" />{/* Beijing */}
-              <circle cx="691" cy="131" r="3" fill="currentColor" />{/* Shanghai */}
-              <circle cx="674" cy="150" r="2" fill="currentColor" />{/* Shenzhen */}
-              <circle cx="682" cy="116" r="2" fill="currentColor" />{/* Seoul */}
-              <circle cx="710" cy="121" r="2.5" fill="currentColor" />{/* Tokyo */}
-              {/* Australia */}
-              <circle cx="736" cy="275" r="2" fill="currentColor" />{/* Sydney */}
-              <circle cx="722" cy="284" r="1.5" fill="currentColor" />{/* Melbourne */}
-              {/* Constellation lines */}
-              <line x1="128" y1="116" x2="236" y2="109" stroke="currentColor" strokeWidth="0.5" opacity="0.4" />
-              <line x1="400" y1="86" x2="430" y2="83" stroke="currentColor" strokeWidth="0.5" opacity="0.4" />
-              <line x1="562" y1="157" x2="572" y2="171" stroke="currentColor" strokeWidth="0.5" opacity="0.4" />
-              <line x1="678" y1="111" x2="710" y2="121" stroke="currentColor" strokeWidth="0.5" opacity="0.4" />
-            </svg>
-          </div>
+              {/* Left: headline + form */}
+              <div className="flex flex-col gap-6">
+                <h1 className="text-4xl lg:text-5xl font-bold text-foreground leading-tight">
+                  Where in the world does your repo shine?
+                </h1>
 
-          <div className="relative w-full max-w-xl flex flex-col items-center text-center gap-6">
-
-            <h1 className="text-4xl font-bold text-foreground leading-tight">
-              Where in the world does<br />
-              your repo shine?
-            </h1>
-
-            <p className="text-muted text-base leading-relaxed max-w-sm">
-              Paste a GitHub repo URL. Get an interactive world map of every stargazer in seconds.
-            </p>
-
-            <form onSubmit={handleSubmit} className="w-full flex flex-col gap-3">
-              <div className="flex flex-col sm:flex-row gap-2.5">
-                <input
-                  value={input}
-                  onChange={(e) => {
-                    setInput(e.target.value);
-                    setError("");
-                  }}
-                  placeholder="owner/repo or just a username"
-                  className="flex-1 bg-surface border border-border rounded-lg px-4 py-3 text-foreground placeholder-muted-subtle focus:outline-none focus:border-accent-blue text-sm transition-colors"
-                  autoFocus
-                  aria-label="GitHub repository URL or username"
-                  aria-invalid={!!error}
-                  aria-describedby={error ? "repo-input-error" : undefined}
-                />
-                <button
-                  type="submit"
-                  className="sm:shrink-0 bg-accent-green-emphasis hover:opacity-90 hover:shadow-[0_0_20px_rgba(14,152,86,0.4)] text-white font-bold py-3 px-6 rounded-lg transition-[opacity,box-shadow] text-base whitespace-nowrap"
-                >
-                  Map Stargazers
-                </button>
-              </div>
-
-              {/* Username hint */}
-              <p className="text-xs text-muted-subtle text-left" aria-live="polite" aria-atomic="true">
-                {parseUsername(input) && (
-                  <>
-                    Looks like a username — will scan all repos for{" "}
-                    <span className="text-foreground font-medium">{parseUsername(input)}</span>
-                  </>
-                )}
-              </p>
-
-              {/* Compare input */}
-              {showCompare && (
-                <div className="relative">
-                  <input
-                    value={compareInput}
-                    onChange={(e) => {
-                      setCompareInput(e.target.value);
-                      setError("");
-                    }}
-                    placeholder="Compare with: github.com/owner/repo"
-                    autoFocus
-                    className="w-full bg-surface border border-border rounded-lg px-4 py-3 pr-10 text-foreground placeholder-muted-subtle focus:outline-none focus:border-accent-purple text-sm transition-colors"
-                    aria-label="Compare with repository"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowCompare(false);
-                      setCompareInput("");
-                    }}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-subtle hover:text-muted transition-colors"
-                    aria-label="Remove compare"
-                  >
-                    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-                      <path d="M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l3.22-3.22a.749.749 0 0 1 1.275.326.749.749 0 0 1-.215.734L9.06 8l3.22 3.22a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215L8 9.06l-3.22 3.22a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042L6.94 8 3.72 4.78a.75.75 0 0 1 0-1.06Z" />
-                    </svg>
-                  </button>
-                </div>
-              )}
-
-              {error && (
-                <p id="repo-input-error" className="text-accent-red text-xs text-left" role="alert">
-                  {error}
+                <p className="text-muted text-base leading-relaxed max-w-md">
+                  Paste a GitHub repo URL. Get an interactive world map of every stargazer in seconds.
                 </p>
-              )}
 
-              {/* Compare text link — power-user feature, not prominent */}
-              {!showCompare && (
-                <button
-                  type="button"
-                  onClick={() => setShowCompare(true)}
-                  className="text-xs text-muted-subtle hover:text-muted transition-colors self-end"
-                >
-                  Compare two repos
-                </button>
-              )}
-            </form>
-
-            {/* Suggestion chips */}
-            {suggestions.length > 0 && (
-              <div className="flex gap-2 flex-wrap justify-center">
-                {suggestions.map((b) => {
-                  const key = `${b.owner}/${b.repo}`;
-                  const recent = isBookmark(b);
-                  return (
+                <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+                  <div className="flex flex-col sm:flex-row gap-2.5">
+                    <input
+                      value={input}
+                      onChange={(e) => {
+                        setInput(e.target.value);
+                        setError("");
+                      }}
+                      placeholder="owner/repo or just a username"
+                      className="flex-1 bg-surface border border-border rounded-lg px-4 py-3 text-foreground placeholder-muted-subtle focus:outline-none focus:border-accent-blue text-sm transition-colors"
+                      autoFocus
+                      aria-label="GitHub repository URL or username"
+                      aria-invalid={!!error}
+                      aria-describedby={error ? "repo-input-error" : undefined}
+                    />
                     <button
-                      key={key}
-                      onClick={() => handleSuggestion(b)}
-                      className={`text-xs rounded px-3 py-1.5 border transition-colors ${
-                        recent
-                          ? "bg-surface border-border text-muted hover:text-foreground hover:border-accent-blue"
-                          : "bg-transparent border-border-subtle text-muted-subtle hover:text-muted hover:border-border"
-                      }`}
+                      type="submit"
+                      className="sm:shrink-0 bg-accent-green-emphasis hover:opacity-90 hover:shadow-[0_0_20px_rgba(14,152,86,0.4)] text-white font-bold py-3 px-6 rounded-lg transition-[opacity,box-shadow] text-base whitespace-nowrap"
                     >
-                      {b.repo}
+                      Map Stargazers
                     </button>
-                  );
-                })}
+                  </div>
+
+                  {/* Username hint */}
+                  <p className="text-xs text-muted-subtle" aria-live="polite" aria-atomic="true">
+                    {parseUsername(input) && (
+                      <>
+                        Looks like a username — will scan all repos for{" "}
+                        <span className="text-foreground font-medium">{parseUsername(input)}</span>
+                      </>
+                    )}
+                  </p>
+
+                  {/* Compare input */}
+                  {showCompare && (
+                    <div className="relative">
+                      <input
+                        value={compareInput}
+                        onChange={(e) => {
+                          setCompareInput(e.target.value);
+                          setError("");
+                        }}
+                        placeholder="Compare with: github.com/owner/repo"
+                        autoFocus
+                        className="w-full bg-surface border border-border rounded-lg px-4 py-3 pr-10 text-foreground placeholder-muted-subtle focus:outline-none focus:border-accent-purple text-sm transition-colors"
+                        aria-label="Compare with repository"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowCompare(false);
+                          setCompareInput("");
+                        }}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-subtle hover:text-muted transition-colors"
+                        aria-label="Remove compare"
+                      >
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                          <path d="M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l3.22-3.22a.749.749 0 0 1 1.275.326.749.749 0 0 1-.215.734L9.06 8l3.22 3.22a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215L8 9.06l-3.22 3.22a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042L6.94 8 3.72 4.78a.75.75 0 0 1 0-1.06Z" />
+                        </svg>
+                      </button>
+                    </div>
+                  )}
+
+                  {error && (
+                    <p id="repo-input-error" className="text-accent-red text-xs" role="alert">
+                      {error}
+                    </p>
+                  )}
+
+                  {!showCompare && (
+                    <button
+                      type="button"
+                      onClick={() => setShowCompare(true)}
+                      className="text-xs text-muted-subtle hover:text-muted transition-colors self-start"
+                    >
+                      Compare two repos
+                    </button>
+                  )}
+                </form>
+
+                {/* Suggestion chips */}
+                {suggestions.length > 0 && (
+                  <div className="flex gap-2 flex-wrap">
+                    {suggestions.map((b) => {
+                      const key = `${b.owner}/${b.repo}`;
+                      const recent = isBookmark(b);
+                      return (
+                        <button
+                          key={key}
+                          onClick={() => handleSuggestion(b)}
+                          className={`text-xs rounded px-3 py-1.5 border transition-colors ${
+                            recent
+                              ? "bg-surface border-border text-muted hover:text-foreground hover:border-accent-blue"
+                              : "bg-transparent border-border-subtle text-muted-subtle hover:text-muted hover:border-border"
+                          }`}
+                        >
+                          {b.repo}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
-            )}
+
+              {/* Right: stargazer map preview */}
+              <div className="hidden lg:block" aria-hidden="true">
+                <div className="relative rounded-2xl overflow-hidden border border-border bg-surface aspect-[4/3]">
+                  <svg
+                    viewBox="0 0 800 480"
+                    className="w-full h-full text-accent-blue opacity-50"
+                    preserveAspectRatio="xMidYMid slice"
+                  >
+                    {/* North America */}
+                    <circle cx="128" cy="140" r="5" fill="currentColor" opacity="0.9" />
+                    <circle cx="128" cy="112" r="3.5" fill="currentColor" opacity="0.7" />
+                    <circle cx="138" cy="149" r="3.5" fill="currentColor" opacity="0.7" />
+                    <circle cx="236" cy="131" r="5" fill="currentColor" opacity="0.9" />
+                    <circle cx="206" cy="129" r="3.5" fill="currentColor" opacity="0.7" />
+                    <circle cx="224" cy="123" r="3" fill="currentColor" opacity="0.6" />
+                    <circle cx="182" cy="158" r="2.5" fill="currentColor" opacity="0.5" />
+                    {/* South America */}
+                    <circle cx="296" cy="302" r="4.5" fill="currentColor" opacity="0.8" />
+                    <circle cx="271" cy="331" r="3" fill="currentColor" opacity="0.6" />
+                    {/* Europe */}
+                    <circle cx="400" cy="103" r="5" fill="currentColor" opacity="0.9" />
+                    <circle cx="405" cy="109" r="4" fill="currentColor" opacity="0.8" />
+                    <circle cx="430" cy="100" r="4" fill="currentColor" opacity="0.8" />
+                    <circle cx="411" cy="100" r="3" fill="currentColor" opacity="0.7" />
+                    <circle cx="440" cy="82" r="2.5" fill="currentColor" opacity="0.5" />
+                    <circle cx="419" cy="113" r="3" fill="currentColor" opacity="0.6" />
+                    <circle cx="392" cy="132" r="3" fill="currentColor" opacity="0.6" />
+                    <circle cx="428" cy="128" r="3" fill="currentColor" opacity="0.6" />
+                    <circle cx="464" cy="131" r="3" fill="currentColor" opacity="0.6" />
+                    <circle cx="484" cy="91" r="3" fill="currentColor" opacity="0.6" />
+                    {/* Asia */}
+                    <circle cx="572" cy="165" r="4" fill="currentColor" opacity="0.8" />
+                    <circle cx="562" cy="188" r="5" fill="currentColor" opacity="0.9" />
+                    <circle cx="631" cy="236" r="3" fill="currentColor" opacity="0.6" />
+                    <circle cx="678" cy="133" r="4" fill="currentColor" opacity="0.8" />
+                    <circle cx="691" cy="157" r="5" fill="currentColor" opacity="0.9" />
+                    <circle cx="710" cy="145" r="4" fill="currentColor" opacity="0.8" />
+                    {/* Australia */}
+                    <circle cx="736" cy="330" r="3" fill="currentColor" opacity="0.6" />
+                    {/* Connection lines */}
+                    <line x1="128" y1="140" x2="236" y2="131" stroke="currentColor" strokeWidth="0.8" opacity="0.2" />
+                    <line x1="400" y1="103" x2="430" y2="100" stroke="currentColor" strokeWidth="0.8" opacity="0.2" />
+                    <line x1="562" y1="188" x2="572" y2="165" stroke="currentColor" strokeWidth="0.8" opacity="0.2" />
+                    <line x1="678" y1="133" x2="710" y2="145" stroke="currentColor" strokeWidth="0.8" opacity="0.2" />
+                    <line x1="236" y1="131" x2="400" y2="103" stroke="currentColor" strokeWidth="0.8" opacity="0.1" />
+                  </svg>
+                  {/* Stats overlay */}
+                  <div className="absolute bottom-0 left-0 right-0 p-5 bg-gradient-to-t from-surface via-surface/80 to-transparent">
+                    <div className="flex items-end justify-between">
+                      <div className="flex gap-6">
+                        <div>
+                          <p className="text-xl font-bold text-foreground tabular-nums">{reposTotal > 0 ? reposTotal.toLocaleString() : "1,839"}</p>
+                          <p className="text-xs text-muted mt-0.5">repos mapped</p>
+                        </div>
+                        <div>
+                          <p className="text-xl font-bold text-foreground">127</p>
+                          <p className="text-xs text-muted mt-0.5">countries</p>
+                        </div>
+                        <div>
+                          <p className="text-xl font-bold text-accent-green">Free</p>
+                          <p className="text-xs text-muted mt-0.5">forever</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-xs text-muted-subtle">
+                        <span className="inline-block size-1.5 rounded-full bg-accent-green animate-pulse" />
+                        Live
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
           </div>
         </section>
 
