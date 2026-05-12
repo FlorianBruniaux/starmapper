@@ -27,6 +27,7 @@ The core insight: stars are a proxy for developer community. Where those develop
 | https://starmapper.bruniaux.com/devs/atlas | Language Atlas — dominant language per country |
 | https://starmapper.bruniaux.com/trending | Trending repos × stargazer geography |
 | https://starmapper.bruniaux.com/feed/florianbruniaux | RSS subscription page |
+| https://starmapper.bruniaux.com/faq | Frequently asked questions |
 | https://starmapper.bruniaux.com/changelog | Version history |
 
 ---
@@ -103,6 +104,6 @@ Handles GitHub SPA navigation (Turbo + bfcache). Adapts to dark/light theme via 
 
 ## Stack
 
-Next.js 16.2.3 (App Router, Turbopack) + TypeScript 5 + MapLibre GL 5 + Prisma 7 + Neon Postgres (100GB, sponsored) + Jawg Maps (geocoding + tiles), deployed on Vercel.
+Next.js 16.2.6 (App Router, Turbopack) + TypeScript 5 + MapLibre GL 5 + Prisma 7 + Neon Postgres (100GB, sponsored) + Jawg Maps (geocoding + tiles), deployed on Vercel.
 
 GitHub GraphQL + REST for stargazer data. Upstash Redis for distributed rate limiting and PAT verification cache.
