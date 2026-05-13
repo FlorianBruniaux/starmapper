@@ -74,10 +74,14 @@ export const POST = async (
   if (!LOGIN_RE.test(login)) return jsonError("invalid_params", 400);
 
   try {
-    // Always case-insensitive + order by followers DESC to pick the most complete record
-    // when duplicate rows exist with different casings.
+    // IN clause over casing variants — each hits the btree PK index, no table scan.
+    const loginVariants = [...new Set([
+      login,
+      login.toLowerCase(),
+      login.charAt(0).toUpperCase() + login.slice(1).toLowerCase(),
+    ])];
     const user = await prisma.gitHubUser.findFirst({
-      where: { login: { equals: login, mode: "insensitive" } },
+      where: { login: { in: loginVariants } },
       orderBy: [{ followers: "desc" }, { fetchedAt: "desc" }],
       select: { login: true, location: true, fetchedAt: true, lat: true, lng: true },
     });

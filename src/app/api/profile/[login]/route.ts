@@ -45,11 +45,16 @@ export const GET = async (
 
   try {
     // Step 1 — resolve canonical login.
-    // Always use case-insensitive match + order by followers DESC so that when duplicate rows
-    // exist with different casings (e.g. "florianbruniaux" vs "FlorianBruniaux"), the most
-    // complete record (highest followers, most recent fetch) is returned.
+    // Use an IN clause over casing variants (exact, lowercase, titlecase) — each hits the btree
+    // PK index. Ordered by followers DESC so that when duplicate rows exist with different
+    // casings, the most complete record wins. Avoids ILIKE which causes a full table scan.
+    const loginVariants = [...new Set([
+      login,
+      login.toLowerCase(),
+      login.charAt(0).toUpperCase() + login.slice(1).toLowerCase(),
+    ])];
     const user = await prisma.gitHubUser.findFirst({
-      where: { login: { equals: login, mode: "insensitive" } },
+      where: { login: { in: loginVariants } },
       orderBy: [{ followers: "desc" }, { fetchedAt: "desc" }],
       select: {
         login: true,
