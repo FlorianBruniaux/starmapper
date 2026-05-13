@@ -153,15 +153,12 @@ export const GET = async (
             LIMIT 50
           `,
           prisma.$queryRaw<{ login: string; cnt: bigint }[]>`
-            WITH repo_logins AS (
-              SELECT DISTINCT login FROM star_event WHERE owner = ${key.owner} AND repo = ${key.repo}
+            SELECT mv.login, mv.cnt
+            FROM power_users_mv mv
+            WHERE mv.login IN (
+              SELECT login FROM star_event WHERE owner = ${key.owner} AND repo = ${key.repo}
             )
-            SELECT se.login, COUNT(*) AS cnt
-            FROM star_event se
-            INNER JOIN repo_logins USING (login)
-            GROUP BY se.login
-            HAVING COUNT(*) > 1
-            ORDER BY cnt DESC
+            ORDER BY mv.cnt DESC
             LIMIT 20
           `,
         ]);

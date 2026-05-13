@@ -14,15 +14,15 @@ const jawgBreaker = new CircuitBreaker(3, CIRCUIT_RESET_MS, "Jawg");
 const geoapifyBreaker = new CircuitBreaker(3, CIRCUIT_RESET_MS, "Geoapify");
 
 // --- Cache helpers ---
-async function cacheRead(key: string) {
+const cacheRead = async (key: string) => {
   try {
     return await prisma.geoCache.findUnique({ where: { key } });
   } catch {
     return undefined;
   }
-}
+};
 
-async function cacheWrite(key: string, lat: number | null, lng: number | null) {
+const cacheWrite = async (key: string, lat: number | null, lng: number | null) => {
   try {
     await prisma.geoCache.upsert({
       where: { key },
@@ -32,15 +32,15 @@ async function cacheWrite(key: string, lat: number | null, lng: number | null) {
   } catch {
     // non-fatal
   }
-}
+};
 
-async function cacheBulkRead(keys: string[]) {
+const cacheBulkRead = async (keys: string[]) => {
   try {
     return await prisma.geoCache.findMany({ where: { key: { in: keys } } });
   } catch {
     return [];
   }
-}
+};
 
 // --- API callers ---
 const fetchWithTimeout = (url: string, ms: number, options?: RequestInit): Promise<Response> => {

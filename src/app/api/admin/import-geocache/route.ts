@@ -4,6 +4,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAdminAuth, jsonError } from "@/lib/api-helpers";
+import { defineRoute } from "@/lib/define-route";
+import { adminImportGeocacheSchema } from "@/schemas/admin-import-geocache";
 
 export const POST = async (req: NextRequest) => {
   // Destructive operation — local dev only. Blocked in production.
@@ -16,8 +18,7 @@ export const POST = async (req: NextRequest) => {
   const contentLength = parseInt(req.headers.get("content-length") ?? "0", 10);
   if (contentLength > 5 * 1024 * 1024) return jsonError("payload_too_large", 413);
 
-  try {
-    const entries = await req.json() as Record<string, [number, number] | null>;
+  return defineRoute(adminImportGeocacheSchema, async (_req, entries) => {
     const rows = Object.entries(entries).map(([key, val]) => ({
       key,
       lat: val ? val[0] : null,
@@ -46,7 +47,5 @@ export const POST = async (req: NextRequest) => {
 
     const total = await prisma.geoCache.count();
     return NextResponse.json({ inserted, skipped, total });
-  } catch {
-    return jsonError("internal", 500);
-  }
+  })(req);
 }

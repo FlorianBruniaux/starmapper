@@ -2,8 +2,9 @@
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 
 import { NextRequest, NextResponse } from "next/server";
-import { LOGIN_RE } from "@/lib/api-validation";
 import { jsonError, extractGhToken, logError } from "@/lib/api-helpers";
+import { defineRoute } from "@/lib/define-route";
+import { userDetailsSchema } from "@/schemas/user-details";
 
 export type UserDetail = {
   login: string;
@@ -20,7 +21,7 @@ export type UserDetail = {
   avatarUrl: string;
 };
 
-async function fetchUser(login: string, token: string): Promise<UserDetail | null> {
+const fetchUser = async (login: string, token: string): Promise<UserDetail | null> => {
   try {
     const res = await fetch(`https://api.github.com/users/${encodeURIComponent(login)}`, {
       headers: { Authorization: `Bearer ${token}`, "X-GitHub-Api-Version": "2022-11-28" },
@@ -44,18 +45,11 @@ async function fetchUser(login: string, token: string): Promise<UserDetail | nul
   } catch {
     return null;
   }
-}
+};
 
-export const POST = async (req: NextRequest) => {
+export const POST = defineRoute(userDetailsSchema, async (req: NextRequest, body) => {
   try {
-    const { logins } = await req.json() as { logins: string[] };
-    if (!Array.isArray(logins) || logins.length === 0)
-      return jsonError("Missing logins", 400);
-    if (logins.length > 200)
-      return jsonError("Max 200 users per request", 400);
-
-    if (!logins.every((l) => typeof l === "string" && LOGIN_RE.test(l)))
-      return jsonError("invalid_login", 400);
+    const { logins } = body;
 
     const token = extractGhToken(req);
     if (!token) return jsonError("github_token_required", 401);
@@ -74,4 +68,4 @@ export const POST = async (req: NextRequest) => {
     logError("user-details", e);
     return jsonError("internal", 500);
   }
-}
+});
