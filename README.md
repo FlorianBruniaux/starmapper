@@ -192,6 +192,19 @@ By submitting a pull request, you certify that your contribution complies with t
 
 **Florian Bruniaux**, developer and builder based in France. StarMapper started as a weekend experiment to visualize my own repo's audience, kept evolving, and ended up being useful to others too.
 
+Other tools in the same ecosystem — most useful if you work with GitHub and Claude Code:
+
+| Project | What it does |
+|---------|-------------|
+| [claude-code-ultimate-guide](https://github.com/FlorianBruniaux/claude-code-ultimate-guide) | 24K+ lines on Claude Code: architecture, security, TDD/BDD, 271 quiz questions, 655 malicious skills DB |
+| [RTK](https://github.com/rtk-ai/rtk) | CLI proxy — 60-90% token reduction on git, tsc, vitest, prisma and more |
+| [ccboard](https://github.com/FlorianBruniaux/ccboard) | Real-time TUI/Web dashboard for Claude Code monitoring |
+| [cc-sessions](https://github.com/FlorianBruniaux/cc-sessions) | Fast CLI to search, browse and analyze Claude Code session history |
+| [ctxharness](https://github.com/FlorianBruniaux/ctxharness) | Detects stale facts in CLAUDE.md, AGENTS.md, .cursorrules before they reach your agents |
+| [dep-scope](https://github.com/FlorianBruniaux/node-dep-scope) | Symbol-level dependency analyzer for TypeScript/JS — shows what you actually use |
+| [cc-copilot-bridge](https://github.com/FlorianBruniaux/cc-copilot-bridge) | Route Claude Code through GitHub Copilot Pro+ for flat-rate billing |
+| [claude-cowork-guide](https://github.com/FlorianBruniaux/claude-cowork-guide) | Claude for non-coders: 28 business workflows, writers, ops managers, async teams |
+
 GitHub: [github.com/FlorianBruniaux](https://github.com/FlorianBruniaux) · Email: florian@bruniaux.com
 
 ---
