@@ -2,7 +2,7 @@
 
 <p align="center">
   <a href="https://starmapper.bruniaux.com"><img src="https://img.shields.io/badge/Live_Demo-starmapper.bruniaux.com-58a6ff?style=for-the-badge" alt="Live Demo"/></a>
-  <a href="https://starmapper.bruniaux.com/florianbruniaux/starmapper"><img src="https://starmapper.bruniaux.com/api/badge/florianbruniaux/starmapper" alt="StarMapper badge"/></a>
+  <a href="https://starmapper.bruniaux.com/FlorianBruniaux/starmapper"><img src="https://starmapper.bruniaux.com/api/badge/FlorianBruniaux/starmapper" alt="StarMapper badge"/></a>
 </p>
 
 <p align="center">
