@@ -32,6 +32,8 @@ type Props = {
   // When true, renders a self-contained 2D/3D toggle overlay button inside the map.
   // Default false — parent pages typically provide their own toggle in the nav bar.
   showProjectionToggle?: boolean;
+  // Initial map center [lng, lat]. In globe mode, the globe rotates to show this location.
+  initialCenter?: [number, number];
 };
 
 const JAWG_TOKEN = process.env.NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN ?? "";
@@ -525,7 +527,7 @@ const makePopupElement = (props: Record<string, unknown>): HTMLElement => {
   return el;
 }
 
-const StargazerMapInner = ({ points, comparePoints, flyTarget, onFlyDone, onReady, styleUrl, clusterRadius, showProjectionToggle = false }: Props) => {
+const StargazerMapInner = ({ points, comparePoints, flyTarget, onFlyDone, onReady, styleUrl, clusterRadius, showProjectionToggle = false, initialCenter }: Props) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const pointsRef = useRef<StargazerPoint[]>(points);
@@ -611,7 +613,7 @@ const StargazerMapInner = ({ points, comparePoints, flyTarget, onFlyDone, onRead
       const map = new maplibregl.Map({
         container: containerRef.current,
         style,
-        center: [10, 30],
+        center: initialCenter ?? [10, 30],
         zoom: 2,
         minZoom: 1,
         maxPitch: 85,

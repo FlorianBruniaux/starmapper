@@ -525,6 +525,11 @@ export default function ProfilePage({ params }: Props) {
               onFlyDone={() => setMapFlyTarget(null)}
               showProjectionToggle
               styleUrl={mapStyleUrl}
+              initialCenter={
+                profile?.lng != null && profile?.lat != null
+                  ? [profile.lng, profile.lat]
+                  : undefined
+              }
             />
           ) : (
             <div className="w-full h-full bg-surface-alt animate-pulse motion-reduce:animate-none" />
