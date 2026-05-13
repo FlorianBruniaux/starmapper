@@ -36,6 +36,30 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default function RepoLayout({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
+export default async function RepoLayout({
+  params,
+  children,
+}: {
+  params: Promise<{ owner: string; repo: string }>;
+  children: React.ReactNode;
+}) {
+  const { owner, repo } = await params;
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "StarMapper", item: APP_URL },
+      { "@type": "ListItem", position: 2, name: owner, item: `${APP_URL}/${owner}` },
+      { "@type": "ListItem", position: 3, name: `${owner}/${repo}`, item: `${APP_URL}/${owner}/${repo}` },
+    ],
+  };
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      {children}
+    </>
+  );
 }

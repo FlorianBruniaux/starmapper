@@ -6,9 +6,27 @@ import Link from "next/link";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://starmapper.bruniaux.com";
+
 export const metadata: Metadata = {
   title: "FAQ — StarMapper",
-  description: "Frequently asked questions about StarMapper — scan speed, data privacy, token storage, open source license, and more.",
+  description:
+    "Frequently asked questions about StarMapper — scan speed, data privacy, GitHub token storage, open source license, badge embeds, and how stargazer geocoding works.",
+  alternates: { canonical: "/faq" },
+  openGraph: {
+    title: "FAQ — StarMapper",
+    description:
+      "Frequently asked questions about StarMapper — scan speed, data privacy, GitHub token storage, open source license, badge embeds, and how stargazer geocoding works.",
+    url: `${APP_URL}/faq`,
+    siteName: "StarMapper",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "FAQ — StarMapper",
+    description:
+      "Frequently asked questions about StarMapper — scan speed, data privacy, GitHub token storage, open source license, badge embeds, and how stargazer geocoding works.",
+  },
 };
 
 const FAQS = [
@@ -54,9 +72,34 @@ const FAQS = [
   },
 ];
 
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Home", item: APP_URL },
+        { "@type": "ListItem", position: 2, name: "FAQ", item: `${APP_URL}/faq` },
+      ],
+    },
+    {
+      "@type": "FAQPage",
+      mainEntity: FAQS.map(({ q, a }) => ({
+        "@type": "Question",
+        name: q,
+        acceptedAnswer: { "@type": "Answer", text: a },
+      })),
+    },
+  ],
+};
+
 export default function FaqPage() {
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <Header sticky showNav innerMaxWidth="max-w-3xl" />
 
       <main id="main" className="w-full max-w-3xl mx-auto px-4 lg:px-6 pt-24 pb-20">

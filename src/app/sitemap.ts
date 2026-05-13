@@ -45,6 +45,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.7,
     },
     {
+      url: `${BASE}/faq`,
+      lastModified: new Date("2026-04-24"),
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    {
       url: `${BASE}/explore`,
       lastModified: new Date(),
       changeFrequency: "weekly",
@@ -55,6 +61,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: new Date(),
       changeFrequency: "daily",
       priority: 0.7,
+    },
+    {
+      url: `${BASE}/trending`,
+      lastModified: new Date(),
+      changeFrequency: "daily",
+      priority: 0.7,
+    },
+    {
+      url: `${BASE}/feeds`,
+      lastModified: new Date(),
+      changeFrequency: "weekly",
+      priority: 0.5,
+    },
+    {
+      url: `${BASE}/changelog`,
+      lastModified: new Date("2026-04-24"),
+      changeFrequency: "monthly",
+      priority: 0.5,
     },
     {
       url: `${BASE}/privacy`,

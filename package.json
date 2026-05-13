@@ -21,6 +21,7 @@
     "lint:fix": "eslint . --fix",
     "db:setup": "sh -c 'set -a && . .env.local && set +a && bash scripts/db-setup.sh'",
     "db:push": "sh -c 'set -a && . .env.local && set +a && prisma db push'",
+    "db:push:local": "sh -c 'set -a && . .env.local && set +a && DATABASE_DRIVER=standard DATABASE_URL=$DATABASE_URL_LOCAL prisma db push'",
     "db:generate": "prisma generate",
     "db:studio": "sh -c 'set -a && . .env.local && set +a && prisma studio'",
     "seed:geonames": "tsx scripts/seed-geocache-geonames.ts",

@@ -14,7 +14,8 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://starmapper.bruniaux.
 
 export const metadata: Metadata = {
   title: "StarMapper — Map your GitHub stargazers",
-  description: "See where in the world your GitHub repo's fans are — geocoded, clustered, and beautiful.",
+  description:
+    "See where in the world your GitHub repo's fans are. StarMapper geocodes every stargazer, plots them on an interactive world map, and breaks down your audience by country, city, and company — free, no login required.",
   metadataBase: new URL(APP_URL),
   alternates: { canonical: "/" },
   icons: {
@@ -23,21 +24,45 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "StarMapper — Map your GitHub stargazers",
-    description: "See where in the world your GitHub repo's fans are — geocoded, clustered, and beautiful.",
+    description:
+      "See where in the world your GitHub repo's fans are. StarMapper geocodes every stargazer, plots them on an interactive world map, and breaks down your audience by country, city, and company — free, no login required.",
     siteName: "StarMapper",
     type: "website",
     url: APP_URL,
+    images: [{ url: `${APP_URL}/opengraph-image`, width: 1200, height: 630 }],
   },
   twitter: {
     card: "summary_large_image",
     title: "StarMapper — Map your GitHub stargazers",
-    description: "See where in the world your GitHub repo's fans are — geocoded, clustered, and beautiful.",
+    description:
+      "See where in the world your GitHub repo's fans are. StarMapper geocodes every stargazer, plots them on an interactive world map, and breaks down your audience by country, city, and company — free, no login required.",
   },
 };
 
 const jsonLd = {
   "@context": "https://schema.org",
   "@graph": [
+    {
+      "@type": "WebPage",
+      "@id": `${APP_URL}/#webpage`,
+      name: "StarMapper — Map your GitHub stargazers",
+      description:
+        "See where in the world your GitHub repo's fans are. StarMapper geocodes every stargazer, plots them on an interactive world map, and breaks down your audience by country, city, and company — free, no login required.",
+      url: APP_URL,
+      inLanguage: "en-US",
+      isPartOf: { "@id": `${APP_URL}/#website` },
+      speakable: {
+        "@type": "SpeakableSpecification",
+        cssSelector: ["h1", ".hero-description", ".faq-answer"],
+      },
+    },
+    {
+      "@type": "WebSite",
+      "@id": `${APP_URL}/#website`,
+      name: "StarMapper",
+      url: APP_URL,
+      publisher: { "@id": `${APP_URL}/#org` },
+    },
     {
       "@type": "SoftwareApplication",
       "@id": `${APP_URL}/#app`,
@@ -48,6 +73,9 @@ const jsonLd = {
       applicationCategory: "DeveloperApplication",
       operatingSystem: "Web",
       browserRequirements: "Requires JavaScript",
+      datePublished: "2024-01-01",
+      softwareVersion: "0.4.1",
+      releaseNotes: `${APP_URL}/changelog`,
       offers: {
         "@type": "Offer",
         price: "0",
@@ -75,6 +103,10 @@ const jsonLd = {
       "@id": `${APP_URL}/#org`,
       name: "StarMapper",
       url: APP_URL,
+      sameAs: [
+        "https://github.com/FlorianBruniaux/starmapper",
+        "https://bruniaux.com",
+      ],
       founder: {
         "@type": "Person",
         name: "Florian Bruniaux",
