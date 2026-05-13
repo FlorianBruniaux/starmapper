@@ -71,26 +71,69 @@ test("geocoder works", async () => {
 
 ---
 
-## Vitest Setup
+## What to Skip (not practical without a browser)
 
-StarMapper uses Vitest. Tests live alongside source files or in `src/__tests__/`.
+| File | Reason |
+|------|--------|
+| `src/components/map/stargazer-map.tsx` | MapLibre GL requires WebGL — jsdom can't provide it. Test with Playwright. |
+| `src/components/theme-toggle.tsx` | Pure UI, no logic |
+| `src/lib/theme.ts` | browser-only localStorage, marginal value to unit test |
+| `src/lib/bookmarks.ts` | Same: browser localStorage, no business logic |
+| `src/app/[owner]/[repo]/page.tsx` | Server component + client chunk loop — integration/E2E territory |
+
+---
+
+## Mocking Strategy
+
+**Prisma** — mock at `@/lib/db` module level:
+```typescript
+vi.mock("@/lib/db", () => ({
+  prisma: {
+    geoCache: { findUnique: vi.fn(), upsert: vi.fn() },
+  },
+}));
+```
+
+**GitHub API / external fetch** — spy on `global.fetch`:
+```typescript
+vi.spyOn(global, "fetch").mockResolvedValueOnce(
+  new Response(JSON.stringify(...), { status: 200 })
+);
+// Reset in afterEach:
+vi.restoreAllMocks();
+```
+
+**Provider cascade** — chain `.mockResolvedValueOnce()` in cascade order (Jawg error → Geoapify response...).
+
+**Env vars** — `vi.stubEnv("KEY", "value")` / `vi.unstubAllEnvs()` in afterEach.
+
+**DB Health** — mock `@/lib/db-health` entirely. Default: `{ ok: true, usagePct: 10 }`. Add specific cases for `{ ok: false }` and `usagePct: 96`.
+
+---
+
+## Vitest Config Notes
+
+- `environment: "node"` — API routes and lib functions run in Node, not a browser
+- `pool: "forks"` — **required**: `geocoder.ts` has module-level circuit breaker state (`jawgErrorCount`). Without process isolation, a test triggering the breaker in one file poisons the next file.
+- `@/*` alias resolves to `./src/*` matching `tsconfig.json`
 
 ```bash
 pnpm test           # run all tests
 pnpm test:watch     # watch mode
 pnpm test:coverage  # coverage report
+rtk vitest run      # CI — failures only (~99% token reduction)
 ```
 
 ---
 
-## Coverage Roadmap
+## Coverage Status
 
-| Milestone | Target | Focus |
-|-----------|--------|-------|
-| **Current** | ~0% | Baseline |
-| **Phase 1** | 15% | geocoder.ts, github.ts, user-cache.ts |
-| **Phase 2** | 30% | Critical API routes (chunk, stargazer-cache) |
-| **Phase 3** | 60% | Full lib/, important routes |
+| Milestone | Target | Status |
+|-----------|--------|--------|
+| **Baseline** | 0% | ✅ Done (before OSS audit) |
+| **Phase 1** | 15% | ✅ Done — 313 tests: geocoder, github, countries, chunk route |
+| **Phase 2** | 30% | 🔲 Next — stargazer-cache, user-cache, countries edge cases |
+| **Phase 3** | 60% | 🔲 Future — full lib/, important routes |
 
 ---
 

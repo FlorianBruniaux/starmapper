@@ -93,7 +93,7 @@
 
 > **Note**: These are the deployed production weights as of v0.3.4. The grid-search above explored fork=70% as a top candidate, but post-calibration analysis showed zero-follower signal is the strongest discriminator (Anoma anomaly, langflow improvement). Deployed weights prioritise that signal. The "Top Weight Combinations" table above documents the grid-search candidates — the final choice is not the 85.7% row.
 
-**Rationale**: *(fill in manually after reviewing the table above)*
+**Rationale**: The grid-search best-fit (fork=70%, watcher=10%, zero-followers=20%) misclassifies Anoma/anoma — a confirmed suspicious repo that scores 91 (Healthy) under those weights because its fork/star ratio (0.121) is deceptively normal. The zero-follower signal correctly identifies it when weighted higher. Similarly, langflow-ai/langflow improved from Suspicious toward Moderate as its zero-follower rate decreased — the signal tracks real changes in account quality. Fork ratio alone is insufficient when a repo has both legitimate technical forks and farmed accounts. Deployed weights shift the balance toward zero-follower (55%) to prioritize the most direct behavioral proxy for inauthentic accounts, accepting the trade-off of a lower grid-search score on the limited 19-repo corpus.
 
 **Caveats**:
 - Fork/star gated on stars ≥ 5000 to avoid flagging small legit projects
