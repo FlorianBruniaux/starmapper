@@ -8,7 +8,7 @@ import { Redis } from "@upstash/redis";
 import { prisma } from "@/lib/db";
 import { hashApiKey } from "@/lib/api-key";
 import { validateOwnerRepo } from "@/lib/api-validation";
-import { jsonError, logError } from "@/lib/api-helpers";
+import { jsonError, logError, getIP } from "@/lib/api-helpers";
 import { parseLocation } from "@/lib/location-parser";
 import type { StargazerPoint } from "@/app/api/chunk/route";
 
@@ -23,11 +23,6 @@ const limiter = new Ratelimit({
   limiter: Ratelimit.slidingWindow(60, "60 s"),
   prefix: "rl:geo",
 });
-
-const getIP = (req: NextRequest): string =>
-  req.headers.get("cf-connecting-ip") ??
-  req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-  "unknown";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -66,21 +61,15 @@ export const GET = async (
   const apiKey = authHeader.slice(7).trim();
   if (!apiKey) return jsonError("unauthorized", 401);
 
-  // 3. Verify key exists and is not revoked.
-  // Look up by keyHash (SHA-256 of the raw key). Fall back to plaintext key
-  // lookup for rows that haven't been migrated yet (run backfill-api-key-hash.ts).
+  // 3. Verify key exists and is not revoked — lookup by keyHash (SHA-256) only.
+  // Backfill (scripts/backfill-api-key-hash.ts) has been run; plaintext fallback removed.
   const incomingHash = hashApiKey(apiKey);
   let keyRecord: { key: string; revokedAt: Date | null } | null;
   try {
-    keyRecord =
-      (await prisma.apiKey.findUnique({
-        where: { keyHash: incomingHash },
-        select: { key: true, revokedAt: true },
-      })) ??
-      (await prisma.apiKey.findUnique({
-        where: { key: apiKey },
-        select: { key: true, revokedAt: true },
-      }));
+    keyRecord = await prisma.apiKey.findUnique({
+      where: { keyHash: incomingHash },
+      select: { key: true, revokedAt: true },
+    });
   } catch (err) {
     logError("geo/api-key-lookup", err);
     return jsonError("internal_error", 500);

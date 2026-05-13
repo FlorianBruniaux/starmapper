@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 import { generateToken, verifyToken, COOKIE_NAME, TOKEN_TTL_MS } from "@/lib/api-token";
+import { getIP } from "@/lib/api-helpers";
 
 // ---------------------------------------------------------------------------
 // Types & config
@@ -77,11 +78,6 @@ const buildCsp = (nonce: string): string =>
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-const getIP = (req: NextRequest): string =>
-  req.headers.get("cf-connecting-ip") ??
-  req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-  "unknown";
 
 const appOrigin = (): string => {
   const url = process.env.NEXT_PUBLIC_APP_URL ?? "";

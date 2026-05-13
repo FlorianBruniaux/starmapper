@@ -18,8 +18,8 @@ const reverseGeocode = async (lat: number, lng: number): Promise<string | null> 
   const token = process.env.JAWGMAP_ACCESS_TOKEN;
   if (!token) return null;
   try {
-    const url = `${JAWG_REVERSE}?lon=${lng}&lat=${lat}&access-token=${token}`;
-    const res = await fetch(url, { next: { revalidate: 0 } });
+    const url = `${JAWG_REVERSE}?lon=${lng}&lat=${lat}`;
+    const res = await fetch(url, { next: { revalidate: 0 }, headers: { "x-api-key": token } });
     if (!res.ok) return null;
     const data = await res.json();
     const feature = data.features?.[0];

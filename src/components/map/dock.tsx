@@ -67,7 +67,7 @@ export const Dock = ({
       {!sidebarOpen && (
         <button
           onClick={() => setSidebarOpen(true)}
-          className="lg:hidden absolute bottom-6 left-4 z-10 bg-background/90 border border-border rounded-lg px-3 py-2.5 backdrop-blur-md flex items-center gap-2 text-xs text-muted hover:text-foreground hover:border-accent-blue/50 transition-all"
+          className="lg:hidden absolute bottom-6 left-4 z-10 bg-background/90 border border-border rounded-lg px-3 py-2.5 backdrop-blur-md flex items-center gap-2 text-xs text-muted hover:text-foreground hover:border-accent-blue/50 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/40"
           aria-label="Open controls"
         >
           <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
@@ -94,7 +94,7 @@ export const Dock = ({
                   onClick={() => !isDisabled && setViewMode(mode)}
                   disabled={isDisabled}
                   title={isDisabled ? "Disable compare mode first" : undefined}
-                  className={`flex-1 text-xs font-medium py-1 rounded transition-colors capitalize ${
+                  className={`flex-1 text-xs font-medium py-1 rounded transition-colors capitalize focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/40 ${
                     isDisabled
                       ? "opacity-40 cursor-not-allowed text-muted"
                       : isActive && mode === "clusters"
@@ -118,7 +118,7 @@ export const Dock = ({
               <span className="text-2xs text-muted-subtle uppercase tracking-widest">Map controls</span>
               <button
                 onClick={() => setSidebarOpen(false)}
-                className="lg:hidden text-muted hover:text-foreground transition-colors p-0.5 -mr-0.5 rounded"
+                className="lg:hidden text-muted hover:text-foreground transition-colors p-0.5 -mr-0.5 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/40"
                 aria-label="Close controls"
               >
                 <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
@@ -164,7 +164,7 @@ export const Dock = ({
                 <button
                   key={key}
                   onClick={() => setFollowerMapFilter(active && key !== "all" ? "all" : key)}
-                  className={`flex items-center gap-2 rounded px-1.5 py-0.5 text-xs transition-colors text-left ${
+                  className={`flex items-center gap-2 rounded px-1.5 py-2 text-xs transition-colors text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/40 ${
                     active ? "bg-surface-alt text-foreground" : "text-muted hover:bg-surface hover:text-foreground"
                   }`}
                 >
@@ -184,7 +184,8 @@ export const Dock = ({
             onClick={() => setStatsOpen(true)}
             className="bg-background/90 border border-border rounded-lg
               px-3 py-2.5 text-xs text-muted hover:text-foreground
-              hover:border-accent-blue/50 backdrop-blur-md transition-all flex items-center gap-2"
+              hover:border-accent-blue/50 backdrop-blur-md transition-all flex items-center gap-2
+              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/40"
             title="Stargazer stats"
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" className="text-accent-blue flex-shrink-0" aria-hidden="true">
@@ -199,7 +200,8 @@ export const Dock = ({
             onClick={() => setAllOpen(true)}
             className="bg-background/90 border border-border rounded-lg
               px-3 py-2.5 text-xs text-muted hover:text-foreground
-              hover:border-accent-purple/50 backdrop-blur-md transition-all flex items-center gap-2"
+              hover:border-accent-purple/50 backdrop-blur-md transition-all flex items-center gap-2
+              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/40"
             title="All stargazers"
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" className="text-accent-purple flex-shrink-0" aria-hidden="true">
@@ -217,7 +219,8 @@ export const Dock = ({
             onClick={() => setGrowthOpen(true)}
             className="bg-background/90 border border-border rounded-lg
               px-3 py-2.5 text-xs text-muted hover:text-foreground
-              hover:border-accent-green/50 backdrop-blur-md transition-all flex items-center gap-2"
+              hover:border-accent-green/50 backdrop-blur-md transition-all flex items-center gap-2
+              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/40"
             title="Star growth chart"
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-accent-green flex-shrink-0" aria-hidden="true">
@@ -230,7 +233,7 @@ export const Dock = ({
         {hasGrowthData && (
           <button
             onClick={watchActive ? onWatchStop : onWatchStart}
-            className={`border rounded-lg px-3 py-2.5 text-xs backdrop-blur-md transition-all flex items-center gap-2 ${
+            className={`border rounded-lg px-3 py-2.5 text-xs backdrop-blur-md transition-all flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/40 ${
               watchActive
                 ? "bg-accent-green/10 border-accent-green/50 text-accent-green"
                 : "bg-background/90 border-border text-muted hover:text-foreground hover:border-accent-green/50"
@@ -266,7 +269,8 @@ export const Dock = ({
           rel="noopener noreferrer"
           className="bg-background/90 border border-border rounded-lg
             px-3 py-2.5 text-xs text-muted hover:text-foreground
-            hover:border-accent-orange/50 backdrop-blur-md transition-all flex items-center gap-2"
+            hover:border-accent-orange/50 backdrop-blur-md transition-all flex items-center gap-2
+            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/40"
           title="View star history on star-history.com"
         >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" className="text-accent-orange flex-shrink-0" aria-hidden="true">
@@ -282,7 +286,8 @@ export const Dock = ({
               setTimelapseActive(!timelapseActive);
             }}
             className={`bg-background/90 border rounded-lg
-              px-3 py-2.5 text-xs backdrop-blur-md transition-all flex items-center gap-2 ${
+              px-3 py-2.5 text-xs backdrop-blur-md transition-all flex items-center gap-2
+              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/40 ${
               timelapseActive
                 ? "border-accent-blue/60 text-accent-blue bg-accent-blue/10"
                 : "border-border text-muted hover:text-foreground hover:border-accent-blue/50"
@@ -301,7 +306,8 @@ export const Dock = ({
           onClick={() => setBadgeOpen(true)}
           className="bg-background/90 border border-border rounded-lg
             px-3 py-2.5 text-xs text-muted hover:text-foreground
-            hover:border-accent-blue/50 backdrop-blur-md transition-all flex items-center gap-2"
+            hover:border-accent-blue/50 backdrop-blur-md transition-all flex items-center gap-2
+            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/40"
           title="Get README badge"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="text-accent-blue flex-shrink-0" aria-hidden="true">
@@ -319,7 +325,8 @@ export const Dock = ({
             text-white text-xs font-semibold
             backdrop-blur-md transition-all duration-150
             flex items-center gap-2 w-full
-            shadow-[0_0_12px_rgba(14,152,86,0.3)] hover:shadow-[0_0_20px_rgba(16,208,112,0.35)]"
+            shadow-[0_0_12px_rgba(14,152,86,0.3)] hover:shadow-[0_0_20px_rgba(16,208,112,0.35)]
+            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/40"
           aria-label="Share this stargazer map"
         >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" className="flex-shrink-0" aria-hidden="true">

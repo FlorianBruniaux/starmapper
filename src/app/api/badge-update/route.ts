@@ -9,7 +9,7 @@ import { computeOrganicScore } from "@/lib/organic-score";
 import { defineRoute } from "@/lib/define-route";
 import { badgeUpdateSchema } from "@/schemas/badge-update";
 
-const ORGANIC_ENABLED = process.env.NEXT_PUBLIC_ORGANIC_SCORE_ENABLED === "true";
+const ORGANIC_ENABLED = process.env.ORGANIC_SCORE_ENABLED === "true";
 
 export const POST = defineRoute(badgeUpdateSchema, async (req: NextRequest, body) => {
   // SM token anti-scraping check — runs after body validation, skipped when SM_TOKEN_SECRET is not configured

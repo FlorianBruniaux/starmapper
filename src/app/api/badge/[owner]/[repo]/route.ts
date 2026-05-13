@@ -58,6 +58,7 @@ export const GET = async (
   try {
     const cached = await prisma.badgeCache.findUnique({
       where: { owner_repo: key },
+      select: { mappedCount: true, countryCount: true },
     });
     if (cached) {
       mappedCount = cached.mappedCount;

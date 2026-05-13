@@ -16,9 +16,9 @@ const NOMINATIM_SEARCH  = "https://nominatim.openstreetmap.org/search";
 const fetchJawg = async (q: string): Promise<AutocompleteResult[]> => {
   const token = process.env.JAWGMAP_ACCESS_TOKEN;
   if (!token) return [];
-  const url = `${JAWG_AUTOCOMPLETE}?text=${encodeURIComponent(q)}&size=5&access-token=${token}`;
+  const url = `${JAWG_AUTOCOMPLETE}?text=${encodeURIComponent(q)}&size=5`;
   const res = await fetch(url, {
-    headers: { "Accept": "application/json" },
+    headers: { "Accept": "application/json", "x-api-key": token },
     next: { revalidate: 0 },
   });
   if (!res.ok) return [];

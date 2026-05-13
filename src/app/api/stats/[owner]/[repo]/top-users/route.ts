@@ -50,7 +50,7 @@ export const GET = async (
     }));
 
     return NextResponse.json({ topUsers }, {
-      headers: { "Cache-Control": "private, s-maxage=300, stale-while-revalidate=600" },
+      headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600" },
     });
   } catch (err) {
     logError("stats/top-users", err);

@@ -85,6 +85,7 @@ model GitHubUser {
   @@index([countryNormalized])
   @@index([cityNormalized])
   @@index([languagesFetchedAt])
+  @@index([fetchedAt])
   @@map("github_user")
 }
 

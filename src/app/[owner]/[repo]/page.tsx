@@ -144,6 +144,14 @@ const scanReducer = (state: ScanState, action: ScanAction): ScanState => {
   }
 };
 
+// Returns the YYYY-MM-DD of the Monday of the week containing dateStr (YYYY-MM-DD)
+const getWeekMonday = (dateStr: string): string => {
+  const d = new Date(dateStr + "T00:00:00Z");
+  const day = d.getUTCDay(); // 0=Sun, 1=Mon, …
+  d.setUTCDate(d.getUTCDate() - (day === 0 ? 6 : day - 1));
+  return d.toISOString().slice(0, 10);
+};
+
 export default function MapPage({
   params,
 }: {
@@ -471,7 +479,7 @@ export default function MapPage({
     }
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return (await res.json()) as ChunkResponse;
-  }, [owner, repo]);
+  }, [owner, repo, ghHeaders]);
 
   // Full scan from scratch
   const startScraping = useCallback(async () => {
@@ -789,14 +797,6 @@ export default function MapPage({
   const deferredAllStargazers = useDeferredValue(allStargazers);
 
   // Month buckets for timelapse — sorted YYYY-MM strings derived from starredAt
-  // Returns the YYYY-MM-DD of the Monday of the week containing dateStr (YYYY-MM-DD)
-  const getWeekMonday = (dateStr: string): string => {
-    const d = new Date(dateStr + "T00:00:00Z");
-    const day = d.getUTCDay(); // 0=Sun, 1=Mon, …
-    d.setUTCDate(d.getUTCDate() - (day === 0 ? 6 : day - 1));
-    return d.toISOString().slice(0, 10);
-  };
-
   // Weekly buckets — one entry per week (Monday YYYY-MM-DD) that has at least 1 star
   const weekBuckets = useMemo(() => {
     const weeks = new Set(
@@ -2312,7 +2312,7 @@ export default function MapPage({
       <Modal open={badgeOpen} onClose={() => setBadgeOpen(false)} title="README Badge">
             <div className="px-5 py-4 space-y-4">
               {/* Map image preview */}
-              <div className="rounded-lg border border-border-subtle overflow-hidden bg-[#010409]">
+              <div className="rounded-lg border border-border-subtle overflow-hidden bg-map-bg">
                 <img
                   src={`/api/map-image/${owner}/${repo}?theme=dark`}
                   alt="StarMapper map preview"

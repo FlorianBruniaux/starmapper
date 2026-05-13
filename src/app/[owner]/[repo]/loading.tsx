@@ -12,7 +12,7 @@ export default function Loading() {
         <div className="w-20 h-4 rounded bg-surface-alt animate-pulse" />
       </div>
       {/* Map area skeleton */}
-      <div className="flex-1 relative overflow-hidden bg-[#010409]">
+      <div className="flex-1 relative overflow-hidden bg-map-bg">
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="flex flex-col items-center gap-3 text-muted">
             <svg

@@ -47,6 +47,7 @@ const runCleanup = async () => {
     const staleUsers = await prisma.gitHubUser.findMany({
       where: { fetchedAt: { lt: cutoff } },
       select: { login: true },
+      take: 5000,
     });
 
     if (staleUsers.length === 0) {

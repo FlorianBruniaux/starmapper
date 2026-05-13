@@ -32,7 +32,7 @@ const isStale = (items: NewsItem[]): boolean => {
 
 
 export const NewsTimeline = ({ login, maxItems }: Props) => {
-  const appUrl = typeof window !== "undefined" ? window.location.origin : "";
+  const [appUrl, setAppUrl] = useState("");
   const [items, setItems] = useState<NewsItem[] | null>(null);
   const [isOwner, setIsOwner] = useState(false);
   const [showPublish, setShowPublish] = useState(false);
@@ -48,6 +48,10 @@ export const NewsTimeline = ({ login, maxItems }: Props) => {
       setItems([]);
     }
   }, [login]);
+
+  useEffect(() => {
+    setAppUrl(window.location.origin);
+  }, []);
 
   useEffect(() => {
     const storedLogin = getStoredUsername().toLowerCase();
@@ -154,7 +158,7 @@ export const NewsTimeline = ({ login, maxItems }: Props) => {
                     <button
                       onClick={() => handleDelete(item.id)}
                       disabled={deleteLoading === item.id}
-                      className="ml-auto text-xs text-muted hover:text-accent-red opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
+                      className="ml-auto text-xs text-muted hover:text-accent-red opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity disabled:opacity-50"
                     >
                       {deleteLoading === item.id ? "Deleting…" : "Delete"}
                     </button>

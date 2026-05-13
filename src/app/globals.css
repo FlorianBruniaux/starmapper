@@ -20,6 +20,7 @@
   --color-accent-red: #f85149;
   --color-accent-purple: #a371f7;
   --color-warning-subtle: #1a1206;
+  --color-map-bg: #010409;
 }
 
 /* ─── Light mode — system preference ─────────────────────────────────────── */
@@ -85,6 +86,7 @@ html.dark {
   --color-accent-red: #f85149;
   --color-accent-purple: #a371f7;
   --color-warning-subtle: #1a1206;
+  --color-map-bg: #010409;
 }
 
 /* ─── @theme — self-references force Tailwind to emit var() in utilities ──── */
@@ -109,6 +111,7 @@ html.dark {
   --color-accent-amber: var(--color-accent-amber);
   --color-accent-purple: var(--color-accent-purple);
   --color-warning-subtle: var(--color-warning-subtle);
+  --color-map-bg: var(--color-map-bg);
 
   /* Fonts */
   --font-sans: var(--font-geist-sans);

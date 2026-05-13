@@ -36,7 +36,8 @@ export const Modal = ({ open, onClose, title, maxWidth = "max-w-md", innerClassN
     const first = focusable[0];
     const last = focusable[focusable.length - 1];
 
-    first?.focus();
+    const autoFocusEl = el.querySelector<HTMLElement>("[autofocus]");
+    (autoFocusEl ?? first)?.focus();
 
     const trap = (e: KeyboardEvent) => {
       if (e.key !== "Tab") return;
