@@ -100,9 +100,9 @@ export default function FaqPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <Header sticky showNav innerMaxWidth="max-w-3xl" />
+      <Header sticky showNav innerMaxWidth="max-w-5xl" />
 
-      <main id="main" className="w-full max-w-3xl mx-auto px-4 lg:px-6 pt-24 pb-20">
+      <main id="main" className="w-full max-w-5xl mx-auto px-4 lg:px-6 pt-24 pb-20">
         <nav aria-label="Breadcrumb" className="mb-6">
           <ol className="flex items-center gap-2 list-none p-0 m-0">
             <li>

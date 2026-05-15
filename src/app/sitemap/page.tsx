@@ -10,19 +10,19 @@ import { LANGUAGE_SLUG_MAP } from "@/lib/languages";
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://starmapper.bruniaux.com";
 
 export const metadata: Metadata = {
-  title: "All Pages | StarMapper",
+  title: "Sitemap | StarMapper",
   description: "Complete directory of all StarMapper pages: stargazer maps, developer maps, language atlas, profiles, and tools.",
-  alternates: { canonical: "/pages" },
+  alternates: { canonical: "/sitemap" },
   openGraph: {
-    title: "All Pages | StarMapper",
+    title: "Sitemap | StarMapper",
     description: "Complete directory of all StarMapper pages: stargazer maps, developer maps, language atlas, profiles, and tools.",
-    url: `${APP_URL}/pages`,
+    url: `${APP_URL}/sitemap`,
     siteName: "StarMapper",
     type: "website",
   },
   twitter: {
     card: "summary",
-    title: "All Pages | StarMapper",
+    title: "Sitemap | StarMapper",
     description: "Complete directory of all StarMapper pages.",
   },
 };
@@ -60,6 +60,13 @@ const SECTIONS: Section[] = [
     ],
   },
   {
+    heading: "Comparisons",
+    description: "How StarMapper compares to similar tools.",
+    links: [
+      { href: "/vs/star-history", label: "vs GitHub Star History", desc: "Time charts vs geographic maps" },
+    ],
+  },
+  {
     heading: "Feeds",
     description: "Developer announcement feeds via RSS and JSON Feed.",
     links: [
@@ -79,12 +86,12 @@ const SECTIONS: Section[] = [
   },
 ];
 
-export default function PagesPage() {
+export default function SitemapPage() {
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "ItemList",
-    name: "StarMapper pages",
-    url: `${APP_URL}/pages`,
+    name: "StarMapper sitemap",
+    url: `${APP_URL}/sitemap`,
     numberOfItems: SECTIONS.reduce((acc, s) => acc + s.links.length, 0),
     itemListElement: SECTIONS.flatMap((s, si) =>
       s.links.map((l, li) => ({
@@ -102,9 +109,9 @@ export default function PagesPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <Header sticky showNav innerMaxWidth="max-w-3xl" />
+      <Header sticky showNav innerMaxWidth="max-w-7xl" />
 
-      <main id="main" className="w-full max-w-3xl mx-auto px-4 lg:px-6 pt-24 pb-20">
+      <main id="main" className="w-full max-w-7xl mx-auto px-4 lg:px-6 pt-24 pb-20">
         <nav aria-label="Breadcrumb" className="mb-6">
           <ol className="flex items-center gap-2 list-none p-0 m-0">
             <li>
@@ -114,12 +121,12 @@ export default function PagesPage() {
             </li>
             <li aria-hidden="true" className="text-muted-subtle text-xs">/</li>
             <li>
-              <span className="text-xs text-muted" aria-current="page">Pages</span>
+              <span className="text-xs text-muted" aria-current="page">Sitemap</span>
             </li>
           </ol>
         </nav>
 
-        <h1 className="text-2xl font-bold text-foreground mb-2">All pages</h1>
+        <h1 className="text-2xl font-bold text-foreground mb-2">Sitemap</h1>
         <p className="text-muted text-sm mb-10 leading-relaxed">
           Every page on StarMapper, organized by section.
         </p>

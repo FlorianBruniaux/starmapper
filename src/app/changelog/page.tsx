@@ -123,7 +123,7 @@ export default function ChangelogPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="mx-auto max-w-3xl px-6 py-14">
+      <div className="mx-auto max-w-5xl px-6 py-14">
 
         {/* Back */}
         <Link

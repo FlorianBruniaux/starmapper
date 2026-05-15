@@ -6,6 +6,7 @@ import { LogoMark } from "@/components/logo";
 
 const PRODUCT_LINKS = [
   { href: "/explore", label: "Explore" },
+  { href: "/trending", label: "Trending" },
   { href: "/repos", label: "Community maps" },
   { href: "/devs", label: "Dev maps" },
   { href: "/devs/atlas", label: "Language Atlas" },
@@ -24,6 +25,7 @@ const LEGAL_LINKS = [
   { href: "/privacy", label: "Privacy" },
   { href: "/terms", label: "Terms" },
   { href: "/legal", label: "Legal" },
+  { href: "/sitemap", label: "Sitemap" },
   { href: "/sponsor", label: "Sponsor" },
 ];
 

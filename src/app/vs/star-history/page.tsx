@@ -38,8 +38,8 @@ const COMPARISON = [
   },
   {
     criterion: "Main visual",
-    starHistory: "Line chart — star count vs date.",
-    starMapper: "Interactive world map — clustered points by location.",
+    starHistory: "Line chart, star count vs date.",
+    starMapper: "Interactive world map with clustered points by location.",
   },
   {
     criterion: "Data shown",
@@ -53,8 +53,8 @@ const COMPARISON = [
   },
   {
     criterion: "Login required",
-    starHistory: "No — paste a repo URL.",
-    starMapper: "No — paste a repo URL.",
+    starHistory: "No, paste a repo URL.",
+    starMapper: "No, paste a repo URL.",
   },
   {
     criterion: "Price",
@@ -66,11 +66,11 @@ const COMPARISON = [
 const FAQS = [
   {
     q: "Is StarMapper a replacement for GitHub Star History?",
-    a: "No. They answer different questions. GitHub Star History (star-history.com) tracks the growth of stars over time — ideal for spotting viral moments or measuring marketing campaigns. StarMapper shows the geographic distribution of your current stargazers — ideal for understanding where your open-source audience is located. Most maintainers use both.",
+    a: "No, they answer different questions. GitHub Star History (star-history.com) tracks star growth over time, which makes it useful for spotting viral moments or measuring marketing campaigns. StarMapper shows the geographic distribution of your current stargazers so you understand where your audience actually comes from. Most maintainers use both.",
   },
   {
     q: "Can I see both time charts and a world map for my repo?",
-    a: "Yes — use each tool independently. Paste your repo URL into star-history.com for a growth chart, then paste the same URL into StarMapper for a world map. Both are free and require no account.",
+    a: "Yes, use each tool independently. Paste your repo URL into star-history.com for a growth chart, then paste the same URL into StarMapper for a world map. Both are free and require no account.",
   },
   {
     q: "Does StarMapper show star history over time?",
@@ -111,9 +111,9 @@ export default function VsStarHistoryPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <Header sticky showNav innerMaxWidth="max-w-3xl" />
+      <Header sticky showNav innerMaxWidth="max-w-7xl" />
 
-      <main id="main" className="w-full max-w-3xl mx-auto px-4 lg:px-6 pt-24 pb-20 space-y-14">
+      <main id="main" className="w-full max-w-7xl mx-auto px-4 lg:px-6 pt-24 pb-20 space-y-14">
         {/* Breadcrumb */}
         <nav aria-label="Breadcrumb">
           <ol className="flex items-center gap-2 list-none p-0 m-0">
@@ -143,8 +143,7 @@ export default function VsStarHistoryPage() {
               star-history.com
             </a>{" "}
             answers <strong className="text-foreground">when</strong> your repo grew.
-            StarMapper answers <strong className="text-foreground">where</strong> your stargazers are.
-            Most maintainers use both.
+            StarMapper answers <strong className="text-foreground">where</strong> your stargazers are, and most maintainers end up using both.
           </p>
         </section>
 

@@ -291,7 +291,7 @@ export default function HomePage() {
           <h2 className="text-muted-subtle text-2xs uppercase tracking-widest mb-6 text-center">
             More to explore
           </h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
             {[
               {
                 href: "/explore",
@@ -325,6 +325,14 @@ export default function HomePage() {
                 bgClass: "bg-accent-orange/8",
                 icon: <path d="M0 1.75A.75.75 0 0 1 .75 1h4.253c.712 0 1.373.333 1.75.88.377-.547 1.038-.88 1.75-.88h4.747a.75.75 0 0 1 .75.75v10.5a.75.75 0 0 1-.75.75h-4.747a1 1 0 0 0-1 1v.25a.75.75 0 0 1-1.5 0v-.25a1 1 0 0 0-1-1H.75a.75.75 0 0 1-.75-.75Zm7.5 10.931V3.455c-.32-.274-.717-.455-1.247-.455H1.5v9h3.247c.91 0 1.79.285 2.503.926Zm1.5-7.476v8.476a4.488 4.488 0 0 1 2.503-.926H14.5V3h-3.997c-.53 0-.927.18-1.247.455-.32.274-.506.62-.506 1.206Z" />,
               },
+              {
+                href: "/trending",
+                label: "Trending",
+                desc: "Repos gaining stars the fastest right now, with a map of their stargazers.",
+                colorClass: "text-accent-red",
+                bgClass: "bg-accent-red/8",
+                icon: <path d="M1.5 2.5h2.5v11H1.5Zm4.5 4h2.5v7H6Zm4.5-2.5H13v9.5h-2.5Z" />,
+              },
             ].map(({ href, label, desc, colorClass, bgClass, icon }) => (
               <Link
                 key={href}
@@ -346,8 +354,11 @@ export default function HomePage() {
         </section>
         </div>{/* end border-y wrapper */}
 
-        {/* ── FAQ link ── */}
-        <div className="w-full max-w-7xl mx-auto px-4 lg:px-6 pb-8 text-right">
+        {/* ── FAQ + comparison links ── */}
+        <div className="w-full max-w-7xl mx-auto px-4 lg:px-6 pb-8 flex items-center justify-between">
+          <Link href="/vs/star-history" className="text-xs text-muted-subtle hover:text-muted transition-colors">
+            How does StarMapper compare to star-history.com? →
+          </Link>
           <Link href="/faq" className="text-xs text-muted-subtle hover:text-muted transition-colors">
             Questions? See FAQ →
           </Link>

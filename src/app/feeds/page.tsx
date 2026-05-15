@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 const FeedsPage = () => (
   <div className="min-h-screen bg-background text-foreground flex flex-col">
     <Header sticky showNav />
-    <main id="main" className="w-full max-w-5xl mx-auto px-4 py-10 pb-16 flex-1">
+    <main id="main" className="w-full max-w-7xl mx-auto px-4 py-10 pb-16 flex-1">
       <FeedsPageClient />
     </main>
     <Footer />

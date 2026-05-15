@@ -16,14 +16,14 @@ export default async function DevsLanguagePage({ params }: Props) {
   const canonicalName = slugToLanguage(decodedSlug) ?? decodedSlug;
   const displayName = displayLanguage(canonicalName);
 
-  // SSR developer count for SEO content — graceful fallback if DB is unavailable
+  // SSR developer count for SEO content, graceful fallback if DB is unavailable
   let devCount = 0;
   try {
     devCount = await prisma.gitHubUser.count({
       where: { languages: { has: canonicalName } },
     });
   } catch {
-    // DB unavailable — count stays 0, SSR content still renders without the number
+    // DB unavailable, count stays 0 and SSR content still renders without the number
   }
 
   const countLabel = devCount > 0

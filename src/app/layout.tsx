@@ -136,7 +136,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang="en" suppressHydrationWarning className={`${geist.variable}`}>
       <head>
         <meta name="color-scheme" content="dark light" />
-        {/* Preconnect to tile/geocoding origins — shaves 100-300ms off map LCP */}
+        {/* Preconnect to tile/geocoding origins, shaves 100-300ms off map LCP */}
         <link rel="preconnect" href="https://tile.jawg.io" crossOrigin="anonymous" />
         <link rel="preconnect" href="https://api.jawg.io" crossOrigin="anonymous" />
         <link rel="preconnect" href="https://starmapper.jawg.io" crossOrigin="anonymous" />

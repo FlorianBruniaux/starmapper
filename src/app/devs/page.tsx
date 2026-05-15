@@ -60,10 +60,10 @@ export default function DevsHubPage() {
         showToken
         hasToken={hasToken}
         onTokenClick={() => setTokenOpen(true)}
-        innerMaxWidth="max-w-6xl"
+        innerMaxWidth="max-w-7xl"
       />
 
-      <main id="main" className="flex-1 w-full max-w-6xl mx-auto px-4 lg:px-6 pt-20 pb-12">
+      <main id="main" className="flex-1 w-full max-w-7xl mx-auto px-4 lg:px-6 pt-20 pb-12">
 
         {/* Hero */}
         <div className="mb-8">

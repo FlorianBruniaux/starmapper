@@ -85,7 +85,7 @@ const FeedPage = async ({ params }: Props) => {
         }
       />
 
-      <main id="main" className="w-full max-w-3xl mx-auto px-4 py-10 pb-16 space-y-8">
+      <main id="main" className="w-full max-w-5xl mx-auto px-4 py-10 pb-16 space-y-8">
         {/* Identity hero */}
         <div className="flex items-start gap-4">
           <Image
