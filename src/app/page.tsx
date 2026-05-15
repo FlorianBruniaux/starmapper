@@ -4,6 +4,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import useSWR from "swr";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { getStoredToken } from "@/lib/token";
@@ -64,9 +65,6 @@ export default function HomePage() {
   const [tokenOpen, setTokenOpen] = useState(false);
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [hasToken, setHasToken] = useState(false);
-  const [repos, setRepos] = useState<MappedRepo[]>([]);
-  const [reposTotal, setReposTotal] = useState(0);
-  const [reposLoading, setReposLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
@@ -74,17 +72,12 @@ export default function HomePage() {
     setHasToken(!!getStoredToken());
   }, []);
 
-  useEffect(() => {
-    // Fetch 12 diversified repos for the featured section (max 3 per owner, min 100 stars)
-    fetch("/api/repos?limit=12&diverse=true")
-      .then((r) => r.json())
-      .then((data) => {
-        if (Array.isArray(data.repos)) setRepos(data.repos);
-        if (typeof data.total === "number") setReposTotal(data.total);
-      })
-      .catch(() => {})
-      .finally(() => setReposLoading(false));
-  }, []);
+  const { data: reposData, isLoading: reposLoading } = useSWR<{ repos: MappedRepo[]; total: number }>(
+    "/api/repos?limit=12&diverse=true",
+    (url: string) => fetch(url).then((r) => r.json()),
+  );
+  const repos = reposData?.repos ?? [];
+  const reposTotal = reposData?.total ?? 0;
 
   // Merge bookmarks + examples, deduplicate, bookmarks first — cap at 4
   const suggestions = useMemo<Suggestion[]>(() => {
