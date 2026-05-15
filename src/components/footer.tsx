@@ -11,6 +11,7 @@ const PRODUCT_LINKS = [
   { href: "/devs/atlas", label: "Language Atlas" },
   { href: "/faq", label: "FAQ" },
   { href: "/changelog", label: "Changelog" },
+  { href: "/vs/star-history", label: "vs Star History" },
 ];
 
 const AUTHOR_LINKS = [

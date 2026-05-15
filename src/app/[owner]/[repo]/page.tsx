@@ -2388,7 +2388,7 @@ export default function MapPage({
                     <div className="bg-background border border-border rounded-lg px-3 py-2.5 mt-2">
                       <code className="text-muted text-xs break-all select-all leading-relaxed">
                         {typeof window !== "undefined"
-                          ? `[![StarMapper](${window.location.origin}/api/badge/${owner}/${repo})](${window.location.origin}/${owner}/${repo})`
+                          ? `[![StarMapper](${window.location.origin}/api/badge/${owner}/${repo})](${window.location.origin}/${owner}/${repo}?utm_source=badge&utm_medium=readme&utm_campaign=stargazer-map)`
                           : ""}
                       </code>
                     </div>
@@ -2401,8 +2401,8 @@ export default function MapPage({
                 onClick={() => {
                   const origin = window.location.origin;
                   const text = badgeTab === "map"
-                    ? `## StarMapper\n\n<a href="${origin}/${owner}/${repo}">\n  <picture>\n    <source media="(prefers-color-scheme: dark)" srcset="${origin}/api/map-image/${owner}/${repo}?theme=dark" />\n    <source media="(prefers-color-scheme: light)" srcset="${origin}/api/map-image/${owner}/${repo}?theme=light" />\n    <img alt="StarMapper" src="${origin}/api/map-image/${owner}/${repo}" />\n  </picture>\n</a>`
-                    : `[![StarMapper](${origin}/api/badge/${owner}/${repo})](${origin}/${owner}/${repo})`;
+                    ? `## StarMapper\n\n<a href="${origin}/${owner}/${repo}?utm_source=map-embed&utm_medium=readme&utm_campaign=stargazer-map">\n  <picture>\n    <source media="(prefers-color-scheme: dark)" srcset="${origin}/api/map-image/${owner}/${repo}?theme=dark" />\n    <source media="(prefers-color-scheme: light)" srcset="${origin}/api/map-image/${owner}/${repo}?theme=light" />\n    <img alt="StarMapper" src="${origin}/api/map-image/${owner}/${repo}" />\n  </picture>\n</a>`
+                    : `[![StarMapper](${origin}/api/badge/${owner}/${repo})](${origin}/${owner}/${repo}?utm_source=badge&utm_medium=readme&utm_campaign=stargazer-map)`;
                   navigator.clipboard.writeText(text).catch(() => {});
                   setBadgeCopied(true);
                   setTimeout(() => setBadgeCopied(false), 2000);

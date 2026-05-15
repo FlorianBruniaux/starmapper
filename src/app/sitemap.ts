@@ -79,6 +79,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE}/repos`, lastModified: now, changeFrequency: "daily", priority: 0.7 },
     { url: `${BASE}/feeds`, lastModified: now, changeFrequency: "weekly", priority: 0.5 },
     { url: `${BASE}/pages`, lastModified: now, changeFrequency: "monthly", priority: 0.4 },
+    { url: `${BASE}/vs/star-history`, lastModified: now, changeFrequency: "monthly", priority: 0.7 },
     { url: `${BASE}/faq`, lastModified: new Date("2026-04-24"), changeFrequency: "monthly", priority: 0.8 },
     { url: `${BASE}/changelog`, lastModified: new Date("2026-04-24"), changeFrequency: "monthly", priority: 0.5 },
     { url: `${BASE}/privacy`, lastModified: new Date("2026-04-06"), changeFrequency: "yearly", priority: 0.3 },
