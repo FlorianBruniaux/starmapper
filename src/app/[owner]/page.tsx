@@ -252,7 +252,7 @@ export default function UserPage({ params }: { params: Promise<{ owner: string }
       />
 
       <main id="main" className="min-h-screen bg-background pt-14">
-        <div className="max-w-2xl mx-auto px-6 py-10">
+        <div className="max-w-5xl mx-auto px-6 py-10">
 
           {/* Loading */}
           {step === "loading" && (

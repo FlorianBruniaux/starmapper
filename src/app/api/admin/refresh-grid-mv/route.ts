@@ -8,6 +8,7 @@
 // Sequential loop — parallel refresh exhausts Neon's connection pool and causes cascading failures.
 
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { requireAdminAuth, jsonError, logError } from "@/lib/api-helpers";
 import { safeEqual } from "@/lib/api-token";
@@ -36,28 +37,31 @@ export const GET = async (req: NextRequest) => {
   return runRefresh();
 };
 
-const MV_NAMES = [
-  "github_user_grid_mv",
-  "country_stats_mv",
-  "power_users_mv",
-  "company_stats_mv",
-  "country_language_stats_mv",
-  "user_repo_count_mv",
-  "trending_repos_mv",
-] as const;
+// Pre-built static SQL — no string interpolation, eliminates $executeRawUnsafe footgun.
+// MV names are identifiers (not values), so they cannot be parameterized; pre-building the
+// Prisma.sql tagged templates is the correct way to use $executeRaw safely here.
+const MV_REFRESH_SQL: ReadonlyArray<{ name: string; sql: Prisma.Sql }> = [
+  { name: "github_user_grid_mv", sql: Prisma.sql`REFRESH MATERIALIZED VIEW CONCURRENTLY github_user_grid_mv` },
+  { name: "country_stats_mv", sql: Prisma.sql`REFRESH MATERIALIZED VIEW CONCURRENTLY country_stats_mv` },
+  { name: "power_users_mv", sql: Prisma.sql`REFRESH MATERIALIZED VIEW CONCURRENTLY power_users_mv` },
+  { name: "company_stats_mv", sql: Prisma.sql`REFRESH MATERIALIZED VIEW CONCURRENTLY company_stats_mv` },
+  { name: "country_language_stats_mv", sql: Prisma.sql`REFRESH MATERIALIZED VIEW CONCURRENTLY country_language_stats_mv` },
+  { name: "user_repo_count_mv", sql: Prisma.sql`REFRESH MATERIALIZED VIEW CONCURRENTLY user_repo_count_mv` },
+  { name: "trending_repos_mv", sql: Prisma.sql`REFRESH MATERIALIZED VIEW CONCURRENTLY trending_repos_mv` },
+];
 
 const runRefresh = async () => {
   const start = Date.now();
   const results: { mv: string; durationMs: number; error?: string }[] = [];
 
-  for (const mv of MV_NAMES) {
+  for (const { name, sql } of MV_REFRESH_SQL) {
     const t = Date.now();
     try {
-      await prisma.$executeRawUnsafe(`REFRESH MATERIALIZED VIEW CONCURRENTLY ${mv}`);
-      results.push({ mv, durationMs: Date.now() - t });
+      await prisma.$executeRaw(sql);
+      results.push({ mv: name, durationMs: Date.now() - t });
     } catch (err) {
-      logError(`admin/refresh-grid-mv [${mv}]`, err);
-      results.push({ mv, durationMs: Date.now() - t, error: String(err) });
+      logError(`admin/refresh-grid-mv [${name}]`, err);
+      results.push({ mv: name, durationMs: Date.now() - t, error: String(err) });
     }
   }
 
