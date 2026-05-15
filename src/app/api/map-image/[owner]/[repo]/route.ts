@@ -171,7 +171,10 @@ export const GET = async (
 
   try {
     const [cached, badge] = await Promise.all([
-      prisma.stargazerCache.findUnique({ where: { owner_repo: key } }),
+      prisma.stargazerCache.findUnique({
+        where: { owner_repo: key },
+        select: { points: true, totalCount: true, scannedAt: true },
+      }),
       prisma.badgeCache.findUnique({ where: { owner_repo: key } }),
     ]);
 
