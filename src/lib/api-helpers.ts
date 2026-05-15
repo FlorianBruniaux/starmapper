@@ -18,7 +18,7 @@ export const getIP = (req: NextRequest): string =>
   "unknown";
 
 /**
- * Returns a 401/403 response if the request is not authenticated as admin,
+ * Returns a 404 (not found) response if the request is not authenticated as admin,
  * or `null` if authentication passes (caller may proceed).
  *
  * Two layers of protection:
