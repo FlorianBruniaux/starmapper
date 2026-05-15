@@ -3,6 +3,8 @@
 
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Header } from "@/components/header";
+import { Footer } from "@/components/footer";
 
 export const metadata: Metadata = {
   title: "Sponsor StarMapper",
@@ -13,19 +15,25 @@ export const metadata: Metadata = {
 
 export default function SponsorPage() {
   return (
-    <div className="min-h-screen bg-background">
-      <div className="mx-auto max-w-3xl px-6 py-14">
+    <>
+      <Header sticky showNav />
 
-        {/* Back */}
-        <Link
-          href="/"
-          className="inline-flex items-center gap-1.5 text-xs text-muted hover:text-foreground mb-10 transition-colors"
-        >
-          <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-            <path d="M7.78 12.53a.75.75 0 0 1-1.06 0L2.47 8.28a.75.75 0 0 1 0-1.06l4.25-4.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042L4.81 7h7.44a.75.75 0 0 1 0 1.5H4.81l2.97 2.97a.75.75 0 0 1 0 1.06Z" />
-          </svg>
-          Back to StarMapper
-        </Link>
+      <main id="main" className="w-full max-w-7xl mx-auto px-4 lg:px-6 pt-24 pb-20">
+
+        {/* Breadcrumb */}
+        <nav aria-label="Breadcrumb" className="mb-6">
+          <ol className="flex items-center gap-2 list-none p-0 m-0">
+            <li>
+              <Link href="/" className="text-xs text-muted-subtle hover:text-muted transition-colors">
+                Home
+              </Link>
+            </li>
+            <li aria-hidden="true" className="text-muted-subtle text-xs">/</li>
+            <li>
+              <span className="text-xs text-muted" aria-current="page">Sponsor</span>
+            </li>
+          </ol>
+        </nav>
 
         <h1 className="text-2xl font-bold text-foreground mb-2">Support StarMapper</h1>
         <p className="text-sm text-muted mb-10 leading-relaxed">
@@ -152,7 +160,9 @@ export default function SponsorPage() {
           </a>
         </div>
 
-      </div>
-    </div>
+      </main>
+
+      <Footer />
+    </>
   );
 }

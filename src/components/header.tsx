@@ -54,8 +54,9 @@ export const Header = ({
     ? "sticky top-0 bg-surface/80"
     : "fixed top-0 left-0 right-0 bg-background/80";
 
-  const px = innerMaxWidth ? "px-4" : "px-6";
-  const widthCls = innerMaxWidth ? `${innerMaxWidth} mx-auto` : "";
+  const resolvedMaxWidth = innerMaxWidth ?? "max-w-7xl";
+  const px = "px-4";
+  const widthCls = `${resolvedMaxWidth} mx-auto`;
 
   const tokenButton = showToken && (
     <button
