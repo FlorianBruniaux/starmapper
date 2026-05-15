@@ -49,12 +49,12 @@ describe("POST /api/admin/clear-geocache", () => {
     expect(res.status).toBe(404);
   });
 
-  it("returns 401 when admin auth fails (non-prod)", async () => {
+  it("returns 404 when admin auth fails (non-prod)", async () => {
     mockRequireAdminAuth.mockReturnValue(
-      new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 }),
+      new Response(JSON.stringify({ error: "not_found" }), { status: 404 }),
     );
     const res = await POST(makeReq());
-    expect(res.status).toBe(401);
+    expect(res.status).toBe(404);
   });
 
   it("deletes null geocache entries and returns counts", async () => {

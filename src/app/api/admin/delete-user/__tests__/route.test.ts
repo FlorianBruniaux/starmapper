@@ -60,12 +60,12 @@ describe("POST /api/admin/delete-user", () => {
     mockUserDelete.mockResolvedValue({});
   });
 
-  it("returns 401 when admin auth fails", async () => {
+  it("returns 404 when admin auth fails", async () => {
     mockRequireAdminAuth.mockReturnValue(
-      new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 }),
+      new Response(JSON.stringify({ error: "not_found" }), { status: 404 }),
     );
     const res = await POST(makeReq({ login: "octocat" }));
-    expect(res.status).toBe(401);
+    expect(res.status).toBe(404);
   });
 
   it("returns 400 for invalid login (spaces)", async () => {

@@ -48,12 +48,12 @@ describe("POST /api/admin/refresh-grid-mv", () => {
     mockSafeEqual.mockReturnValue(true);
   });
 
-  it("returns 401 when admin auth fails", async () => {
+  it("returns 404 when admin auth fails", async () => {
     mockRequireAdminAuth.mockReturnValue(
-      new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 }),
+      new Response(JSON.stringify({ error: "not_found" }), { status: 404 }),
     );
     const res = await POST(makePost());
-    expect(res.status).toBe(401);
+    expect(res.status).toBe(404);
   });
 
   it("returns { ok: true } when refresh succeeds", async () => {
