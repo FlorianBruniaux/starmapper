@@ -37,6 +37,34 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default function ProfileLayout({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
+export default async function ProfileLayout({
+  params,
+  children,
+}: {
+  params: Promise<{ login: string }>;
+  children: React.ReactNode;
+}) {
+  const { login } = await params;
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    "@id": `${APP_URL}/profile/${login}`,
+    name: login,
+    url: `https://github.com/${login}`,
+    image: `https://github.com/${login}.png`,
+    sameAs: [`https://github.com/${login}`],
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": `${APP_URL}/profile/${login}`,
+    },
+  };
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      {children}
+    </>
+  );
 }

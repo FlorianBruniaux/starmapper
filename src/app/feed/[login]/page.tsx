@@ -18,11 +18,30 @@ export const generateMetadata = async ({ params }: Props): Promise<Metadata> => 
   const { login: rawLogin } = await params;
   if (!isValidLogin(rawLogin)) return {};
   const login = normalizeLogin(rawLogin);
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://starmapper.bruniaux.com";
   const user = await prisma.gitHubUser.findUnique({ where: { login }, select: { name: true } });
   const displayName = user?.name ?? login;
+  const title = `${displayName} announcements | StarMapper`;
+  const description = `Subscribe to ${displayName}'s project announcements via RSS or JSON Feed on StarMapper.`;
+  const url = `${appUrl}/feed/${login}`;
   return {
-    title: `${displayName} — Announcements`,
-    description: `Subscribe to ${displayName}'s project announcements via RSS or JSON Feed on StarMapper.`,
+    title,
+    description,
+    alternates: { canonical: `/feed/${login}` },
+    openGraph: {
+      title,
+      description,
+      url,
+      siteName: "StarMapper",
+      type: "website",
+      images: [`https://github.com/${login}.png`],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [`https://github.com/${login}.png`],
+    },
   };
 };
 

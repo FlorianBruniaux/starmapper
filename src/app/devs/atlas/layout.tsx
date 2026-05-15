@@ -5,24 +5,23 @@ import type { Metadata } from "next";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://starmapper.bruniaux.com";
 
+const DESC = "Interactive choropleth map showing the most popular programming language per country, based on GitHub developer data.";
+
 export const metadata: Metadata = {
-  title: "Language Atlas — Dominant Programming Language by Country | StarMapper",
-  description:
-    "Interactive choropleth map showing the most popular programming language per country, based on GitHub developer data.",
+  title: "Language Atlas: Dominant Programming Language by Country | StarMapper",
+  description: DESC,
   alternates: { canonical: "/devs/atlas" },
   openGraph: {
-    title: "Language Atlas — Dominant Programming Language by Country | StarMapper",
-    description:
-      "Interactive choropleth map showing the most popular programming language per country.",
+    title: "Language Atlas: Dominant Programming Language by Country | StarMapper",
+    description: DESC,
     url: `${APP_URL}/devs/atlas`,
     siteName: "StarMapper",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Language Atlas — Dominant Programming Language by Country | StarMapper",
-    description:
-      "Interactive choropleth map showing the most popular programming language per country.",
+    title: "Language Atlas: Dominant Programming Language by Country | StarMapper",
+    description: DESC,
   },
 };
 

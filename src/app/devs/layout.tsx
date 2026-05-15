@@ -5,24 +5,23 @@ import type { Metadata } from "next";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://starmapper.bruniaux.com";
 
+const DESC = "Explore interactive maps of GitHub developers filtered by programming language. See where Rust, Python, TypeScript, and Go developers are located worldwide.";
+
 export const metadata: Metadata = {
-  title: "Dev Maps — Explore GitHub Developers by Language | StarMapper",
-  description:
-    "Explore interactive maps of GitHub developers filtered by programming language. See where Rust, Python, TypeScript, and Go developers are located worldwide.",
+  title: "Dev Maps: Explore GitHub Developers by Language | StarMapper",
+  description: DESC,
   alternates: { canonical: "/devs" },
   openGraph: {
-    title: "Dev Maps — Explore GitHub Developers by Language | StarMapper",
-    description:
-      "Explore interactive maps of GitHub developers filtered by programming language.",
+    title: "Dev Maps: Explore GitHub Developers by Language | StarMapper",
+    description: DESC,
     url: `${APP_URL}/devs`,
     siteName: "StarMapper",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Dev Maps — Explore GitHub Developers by Language | StarMapper",
-    description:
-      "Explore interactive maps of GitHub developers filtered by programming language.",
+    title: "Dev Maps: Explore GitHub Developers by Language | StarMapper",
+    description: DESC,
   },
 };
 

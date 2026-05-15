@@ -55,6 +55,7 @@ export default async function RepoLayout({
   };
   return (
     <>
+      <h1 className="sr-only">{owner}/{repo} stargazers map</h1>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
