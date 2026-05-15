@@ -36,14 +36,14 @@ export const requireAdminAuth = (req: NextRequest): NextResponse | null => {
     const allowed = allowedIPs.split(",").map((s) => s.trim()).filter(Boolean);
     if (!allowed.includes(ip)) {
       logAdminAudit(req, "denied_ip");
-      return jsonError("Forbidden", 403);
+      return jsonError("not_found", 404);
     }
   }
 
   const secret = process.env.ADMIN_SECRET;
   if (!secret || !safeEqual(req.headers.get("x-admin-secret") ?? "", secret)) {
     logAdminAudit(req, "denied_secret");
-    return jsonError("Unauthorized", 401);
+    return jsonError("not_found", 404);
   }
 
   logAdminAudit(req, "allowed");
