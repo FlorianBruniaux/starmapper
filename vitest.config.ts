@@ -21,6 +21,7 @@ export default defineConfig({
         "src/lib/db.ts",        // Prisma singleton — tested via mocks
         "src/lib/theme.ts",     // Browser-only (localStorage)
         "src/lib/bookmarks.ts", // Browser-only (localStorage)
+        "src/lib/token.ts",     // Browser-only (sessionStorage)
         "**/__tests__/**",
       ],
       thresholds: {
