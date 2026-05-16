@@ -2,6 +2,8 @@
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { OWNER_REPO_RE } from "@/lib/api-validation";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://starmapper.bruniaux.com";
 
@@ -12,6 +14,7 @@ type Props = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { owner, repo } = await params;
+  if (!OWNER_REPO_RE.test(owner) || !OWNER_REPO_RE.test(repo)) notFound();
 
   const title = `${owner}/${repo} stargazers map | StarMapper`;
   const description = `Explore who stars ${owner}/${repo} on an interactive world map. See geographic distribution, top countries, cities, and companies.`;
@@ -44,6 +47,7 @@ export default async function RepoLayout({
   children: React.ReactNode;
 }) {
   const { owner, repo } = await params;
+  if (!OWNER_REPO_RE.test(owner) || !OWNER_REPO_RE.test(repo)) notFound();
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
@@ -58,7 +62,7 @@ export default async function RepoLayout({
       <h1 className="sr-only">{owner}/{repo} stargazers map</h1>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
       />
       {children}
     </>

@@ -41,9 +41,12 @@ const keyLimiter = new Ratelimit({
  * The stargazer_cache stores points as gzip+base64 (compressed client-side
  * via Web CompressionStream). Node's zlib.gunzipSync handles the decompression.
  */
+const safeReviver = (key: string, value: unknown) =>
+  key === "__proto__" || key === "constructor" || key === "prototype" ? undefined : value;
+
 const decompressPoints = (gz: string): StargazerPoint[] => {
   const json = gunzipSync(Buffer.from(gz, "base64")).toString("utf-8");
-  return JSON.parse(json) as StargazerPoint[];
+  return JSON.parse(json, safeReviver) as StargazerPoint[];
 };
 
 // ---------------------------------------------------------------------------

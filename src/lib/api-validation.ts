@@ -5,7 +5,9 @@
 // Centralises the regex that was duplicated across 7 route files.
 
 export const OWNER_REPO_RE = /^[a-zA-Z0-9._-]{1,100}$/;
-export const LOGIN_RE = /^[a-zA-Z0-9_-]{1,39}$/;
+// Strict GitHub login format: starts and ends with alphanumeric, hyphens allowed in between.
+// Matches the regex used by isValidLogin() in github-auth.ts.
+export const LOGIN_RE = /^[a-zA-Z0-9][a-zA-Z0-9-]{0,37}[a-zA-Z0-9]$|^[a-zA-Z0-9]$/;
 
 /** Returns normalised `{ owner, repo }` or `null` if either value is invalid. */
 export const validateOwnerRepo = (

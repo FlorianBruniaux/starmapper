@@ -735,7 +735,7 @@ export default function ProfilePage({ params }: Props) {
                                   @{contactDetails.twitter}
                                 </a>
                               )}
-                              {contactDetails.blog && (
+                              {contactDetails.blog?.startsWith("http") && (
                                 <a
                                   href={contactDetails.blog}
                                   target="_blank"

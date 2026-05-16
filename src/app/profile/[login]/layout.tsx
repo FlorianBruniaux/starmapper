@@ -2,6 +2,8 @@
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { LOGIN_RE } from "@/lib/api-validation";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://starmapper.bruniaux.com";
 
@@ -12,6 +14,7 @@ type Props = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { login } = await params;
+  if (!LOGIN_RE.test(login)) notFound();
 
   const title = `${login} on StarMapper — repos, location & starred projects`;
   const description = `See the GitHub repositories, location, and starred projects of ${login} on StarMapper's interactive world map.`;
@@ -45,6 +48,7 @@ export default async function ProfileLayout({
   children: React.ReactNode;
 }) {
   const { login } = await params;
+  if (!LOGIN_RE.test(login)) notFound();
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Person",
@@ -62,7 +66,7 @@ export default async function ProfileLayout({
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
       />
       {children}
     </>

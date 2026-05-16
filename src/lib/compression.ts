@@ -17,10 +17,14 @@ export const compressToGzBase64 = (value: unknown): string => {
  */
 const MAX_DECOMPRESSED_BYTES = 200 * 1024 * 1024; // 200 MB guard against zip bombs
 
+// Defense-in-depth: prevent prototype pollution from malformed cache entries.
+const safeReviver = (key: string, value: unknown) =>
+  key === "__proto__" || key === "constructor" || key === "prototype" ? undefined : value;
+
 export const decompressGzBase64 = <T>(value: string): T[] => {
   const buf = gunzipSync(Buffer.from(value, "base64"));
   if (buf.byteLength > MAX_DECOMPRESSED_BYTES) {
     throw new Error(`Decompressed payload exceeds limit (${MAX_DECOMPRESSED_BYTES / 1024 / 1024} MB)`);
   }
-  return JSON.parse(buf.toString("utf8")) as T[];
+  return JSON.parse(buf.toString("utf8"), safeReviver) as T[];
 };
