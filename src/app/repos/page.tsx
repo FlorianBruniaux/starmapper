@@ -20,7 +20,7 @@ export default function ReposPage() {
 
   useEffect(() => {
     setHasToken(!!getStoredToken());
-    fetch("/api/repos")
+    fetch("/api/repos?limit=5000")
       .then((r) => r.json())
       .then((data) => {
         if (Array.isArray(data.repos)) setRepos(data.repos);
