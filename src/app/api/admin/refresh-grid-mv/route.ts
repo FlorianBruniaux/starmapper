@@ -27,11 +27,11 @@ export const GET = async (req: NextRequest) => {
     if (process.env.NODE_ENV === "production") {
       console.warn("[cron/refresh-grid-mv] CRON_SECRET not set — MV refresh will never run (materialized views will go stale)");
     }
-    return jsonError("Unauthorized", 401);
+    return jsonError("not_found", 404);
   }
   const authHeader = req.headers.get("authorization");
   if (!safeEqual(authHeader ?? "", `Bearer ${cronSecret}`)) {
-    return jsonError("Unauthorized", 401);
+    return jsonError("not_found", 404);
   }
 
   return runRefresh();

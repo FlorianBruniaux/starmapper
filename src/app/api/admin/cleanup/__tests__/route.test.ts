@@ -98,16 +98,16 @@ describe("GET /api/admin/cleanup (cron)", () => {
     mockSafeEqual.mockReturnValue(false);
   });
 
-  it("returns 401 when CRON_SECRET is not set", async () => {
+  it("returns 404 when CRON_SECRET is not set", async () => {
     const res = await GET(makeGet());
-    expect(res.status).toBe(401);
+    expect(res.status).toBe(404);
   });
 
-  it("returns 401 when secret does not match", async () => {
+  it("returns 404 when secret does not match", async () => {
     vi.stubEnv("CRON_SECRET", "correct-secret");
     mockSafeEqual.mockReturnValue(false);
     const res = await GET(makeGet("Bearer wrong-secret"));
-    expect(res.status).toBe(401);
+    expect(res.status).toBe(404);
   });
 
   it("runs cleanup when CRON_SECRET matches", async () => {
