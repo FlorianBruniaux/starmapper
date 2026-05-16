@@ -130,19 +130,13 @@ describe("GET /api/geo/[owner]/[repo]", () => {
       expect(firstCall.where).not.toHaveProperty("key");
     });
 
-    it("falls back to plaintext key lookup when keyHash lookup returns null", async () => {
-      mockApiFindUnique
-        .mockResolvedValueOnce(null)      // keyHash lookup misses
-        .mockResolvedValueOnce(validKey); // plaintext fallback hits
-      mockCacheFindUnique.mockResolvedValue(validCache);
-      mockBadgeFindUnique.mockResolvedValue(null);
-
+    it("returns 401 when keyHash lookup returns null (no plaintext fallback)", async () => {
+      mockApiFindUnique.mockResolvedValueOnce(null); // keyHash lookup misses — no fallback
       const [req, ctx] = makeReq({ owner: "octocat", repo: "hello" }, { authorization: `Bearer ${KNOWN_KEY}` });
       const res = await GET(req, ctx);
-      expect(res.status).toBe(200);
-
-      const secondCall = mockApiFindUnique.mock.calls[1][0] as { where: Record<string, unknown> };
-      expect(secondCall.where).toHaveProperty("key", KNOWN_KEY);
+      expect(res.status).toBe(401);
+      // Only one lookup is made (keyHash only — plaintext fallback was removed after backfill)
+      expect(mockApiFindUnique).toHaveBeenCalledTimes(1);
     });
   });
 

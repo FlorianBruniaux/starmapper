@@ -14,6 +14,9 @@ export const validateOwnerRepo = (
 ): { owner: string; repo: string } | null => {
   if (typeof owner !== "string" || !OWNER_REPO_RE.test(owner)) return null;
   if (typeof repo !== "string" || !OWNER_REPO_RE.test(repo)) return null;
+  // Reject dot-only segments (".", "..") — path traversal latent risk even though
+  // currently inert (Prisma finds no rows, GitHub normalises the URL to a 404).
+  if (/^\.+$/.test(owner) || /^\.+$/.test(repo)) return null;
   return { owner: owner.toLowerCase(), repo: repo.toLowerCase() };
 };
 

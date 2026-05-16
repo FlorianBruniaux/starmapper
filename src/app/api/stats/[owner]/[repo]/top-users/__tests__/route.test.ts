@@ -96,10 +96,11 @@ describe("GET /api/stats/[owner]/[repo]/top-users", () => {
       expect(typeof user.followers).toBe("number");
     });
 
-    it("returns Cache-Control with private", async () => {
+    it("returns Cache-Control with public s-maxage", async () => {
       const [req, ctx] = makeReq("facebook", "react");
       const res = await GET(req, ctx);
-      expect(res.headers.get("cache-control")).toContain("private");
+      expect(res.headers.get("cache-control")).toContain("public");
+      expect(res.headers.get("cache-control")).toContain("s-maxage");
     });
   });
 

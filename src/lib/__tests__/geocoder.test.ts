@@ -178,7 +178,7 @@ describe("geocode()", () => {
       );
     });
 
-    it("includes the Jawg token in the request URL", async () => {
+    it("sends the Jawg token as x-api-key header", async () => {
       const fetchSpy = vi
         .spyOn(global, "fetch")
         .mockResolvedValueOnce(makeJsonResponse(jawgFound(48.8566, 2.3522)));
@@ -186,8 +186,9 @@ describe("geocode()", () => {
       await geocode("Paris");
 
       const calledUrl = fetchSpy.mock.calls[0][0] as string;
-      expect(calledUrl).toContain("test_jawg_token");
+      const calledInit = fetchSpy.mock.calls[0][1] as RequestInit;
       expect(calledUrl).toContain("jawg.io");
+      expect((calledInit.headers as Record<string, string>)["x-api-key"]).toBe("test_jawg_token");
     });
 
     it("returns null and writes negative cache when Jawg returns empty features", async () => {

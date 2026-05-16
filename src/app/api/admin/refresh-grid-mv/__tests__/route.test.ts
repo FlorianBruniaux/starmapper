@@ -64,10 +64,13 @@ describe("POST /api/admin/refresh-grid-mv", () => {
     expect(typeof json.durationMs).toBe("number");
   });
 
-  it("returns 500 when DB throws during refresh", async () => {
+  it("returns 200 with errors in results when DB throws during refresh", async () => {
     mockExecuteRaw.mockRejectedValue(new Error("MV locked"));
     const res = await POST(makePost());
-    expect(res.status).toBe(500);
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json.ok).toBe(true);
+    expect(json.results.some((r: { error?: string }) => r.error !== undefined)).toBe(true);
   });
 });
 

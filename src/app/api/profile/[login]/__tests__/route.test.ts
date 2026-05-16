@@ -152,7 +152,7 @@ describe("GET /api/profile/[login]", () => {
 
   describe("error handling", () => {
     it("returns 500 when DB throws", async () => {
-      mockUserFindUnique.mockRejectedValue(new Error("connection lost"));
+      mockUserFindFirst.mockRejectedValue(new Error("connection lost"));
       const [req, ctx] = makeReq("octocat");
       const res = await GET(req, ctx);
       expect(res.status).toBe(500);

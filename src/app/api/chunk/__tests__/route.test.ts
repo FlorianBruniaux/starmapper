@@ -50,6 +50,12 @@ vi.mock("@/lib/user-cache", () => ({
   bulkReadUsers: vi.fn().mockResolvedValue(new Map()),
 }));
 
+// hashApiKey imported by route — mock to avoid pulling in node:crypto and
+// disrupting Vitest's ESM mock hoisting for @upstash/ratelimit/@upstash/redis.
+vi.mock("@/lib/api-key", () => ({
+  hashApiKey: (k: string) => `hash:${k}`,
+}));
+
 import { POST } from "@/app/api/chunk/route";
 import { fetchStargazersPage, GitHubRateLimitError } from "@/lib/github";
 import { geocodeBatch } from "@/lib/geocoder";

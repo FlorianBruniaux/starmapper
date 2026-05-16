@@ -115,13 +115,13 @@ describe("POST /api/user-details", () => {
   // ── Error handling ─────────────────────────────────────────────────────────
 
   describe("error handling", () => {
-    it("returns 500 for invalid JSON body", async () => {
+    it("returns 400 for invalid JSON body", async () => {
       const req = new NextRequest("http://localhost/api/user-details", {
         method: "POST",
         body: "not-json",
       });
       const res = await POST(req);
-      expect(res.status).toBe(500);
+      expect(res.status).toBe(400);
     });
   });
 });

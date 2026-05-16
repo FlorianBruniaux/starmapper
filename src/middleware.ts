@@ -11,7 +11,7 @@ import { getIP } from "@/lib/api-helpers";
 // Types & config
 // ---------------------------------------------------------------------------
 
-type Tier = "strict-get" | "stargazer-cache-get" | "moderate-get" | "admin" | "post" | "public" | "exempt";
+type Tier = "strict-get" | "stargazer-cache-get" | "moderate-get" | "admin" | "post" | "public";
 
 const redis = Redis.fromEnv();
 
@@ -45,6 +45,14 @@ const POST_ROUTES: PostRoute[] = [
   // Organic score refresh — 3 GitHub API calls per invocation, route has 1h internal cooldown
   { match: (p) => /^\/api\/organic-score\/[^/]+\/[^/]+\/refresh$/.test(p), limiter: new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(10, "60 m"), prefix: "rl:organic-refresh" }) },
 ];
+
+// Fallback rate limiter for POST routes not registered in POST_ROUTES.
+// Applied after origin + HMAC checks — ensures every mutating request has a rate limit.
+const DEFAULT_POST_LIMITER = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(5, "60 s"),
+  prefix: "rl:post-default",
+});
 
 // Tier limiters for GET routes
 const TIER_LIMITERS: Record<"strict-get" | "stargazer-cache-get" | "moderate-get" | "admin", Ratelimit> = {
@@ -113,11 +121,9 @@ const classifyRoute = (method: string, pathname: string): Tier => {
   // Admin routes — rate limit only (called from CLI/scripts, no referer)
   if (pathname.startsWith("/api/admin/")) return "admin";
 
-  // POST/mutating methods
-  if (method !== "GET" && method !== "HEAD") {
-    if (POST_ROUTES.some((r) => r.match(pathname))) return "post";
-    return "exempt";
-  }
+  // POST/mutating methods — fail-closed: every unknown route gets the default POST tier
+  // (origin check + HMAC + default rate limit) rather than bypassing middleware silently.
+  if (method !== "GET" && method !== "HEAD") return "post";
 
   // Stargazer-cache GET — returns up to 50k users in one shot, dedicated tight limiter
   if (pathname.startsWith("/api/stargazer-cache/")) return "stargazer-cache-get";
@@ -261,8 +267,8 @@ export const middleware = async (req: NextRequest): Promise<NextResponse> => {
 
   const tier = classifyRoute(method, pathname);
 
-  // ── Public / exempt ───────────────────────────────────────────────────────
-  if (tier === "public" || tier === "exempt") return withCors(NextResponse.next(), tier === "public");
+  // ── Public ────────────────────────────────────────────────────────────────
+  if (tier === "public") return withCors(NextResponse.next(), true);
 
   const ip = getIP(req);
 
@@ -286,10 +292,9 @@ export const middleware = async (req: NextRequest): Promise<NextResponse> => {
       }
     }
     const route = POST_ROUTES.find((r) => r.match(pathname));
-    if (route) {
-      const blocked = await rateLimit(route.limiter, ip, true);
-      if (blocked) return blocked;
-    }
+    const postLimiter = route?.limiter ?? DEFAULT_POST_LIMITER;
+    const blocked = await rateLimit(postLimiter, ip, true);
+    if (blocked) return blocked;
     return withCors(NextResponse.next(), false);
   }
 

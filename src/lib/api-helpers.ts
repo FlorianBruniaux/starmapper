@@ -11,11 +11,30 @@ import { safeEqual } from "@/lib/api-token";
 export const jsonError = (message: string, status: number) =>
   NextResponse.json({ error: message }, { status });
 
-/** Extract the real client IP — Vercel injects cf-connecting-ip on production. */
-export const getIP = (req: NextRequest): string =>
-  req.headers.get("cf-connecting-ip") ??
-  req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-  "unknown";
+/**
+ * Extract the real client IP — resistant to spoofing on Vercel deployments.
+ *
+ * Priority:
+ *  1. req.ip            — set by Vercel edge runtime (middleware), not client-controlled
+ *  2. x-real-ip         — set by Vercel for Node.js handlers, stripped from incoming requests
+ *  3. Last x-forwarded-for segment — Vercel appends the real IP; earlier segments are client-controlled
+ *
+ * cf-connecting-ip is intentionally omitted: it is only injected by Cloudflare and is freely
+ * controllable by any client when Cloudflare is not in the proxy chain (as on starmapper.bruniaux.com).
+ */
+export const getIP = (req: NextRequest): string => {
+  // req.ip is injected by Vercel's edge runtime but not declared in the Next.js type definition.
+  const runtimeIp = (req as NextRequest & { ip?: string }).ip;
+  if (runtimeIp) return runtimeIp;
+  const realIp = req.headers.get("x-real-ip");
+  if (realIp) return realIp.trim();
+  const xff = req.headers.get("x-forwarded-for");
+  if (xff) {
+    const last = xff.split(",").at(-1)?.trim();
+    if (last) return last;
+  }
+  return "unknown";
+};
 
 /**
  * Returns a 404 (not found) response if the request is not authenticated as admin,

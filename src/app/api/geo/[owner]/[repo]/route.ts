@@ -24,6 +24,14 @@ const limiter = new Ratelimit({
   prefix: "rl:geo",
 });
 
+// Secondary limiter per API key hash — prevents a single stolen key from DoS-ing
+// the endpoint from many IPs. 300 req/h is generous for legitimate automation.
+const keyLimiter = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(300, "60 m"),
+  prefix: "rl:geo-key",
+});
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -99,6 +107,19 @@ export const GET = async (
     }
   } catch {
     // Redis unavailable — fail open, never block legitimate API consumers
+  }
+
+  // 4b. Rate limit by API key hash — defense against distributed IP spoofing with one stolen key.
+  try {
+    const { success } = await keyLimiter.limit(incomingHash);
+    if (!success) {
+      return NextResponse.json(
+        { error: "rate_limit" },
+        { status: 429, headers: { "Cache-Control": "private, no-store" } },
+      );
+    }
+  } catch {
+    // Redis unavailable — fail open
   }
 
   // 5. Update lastUsedAt (fire-and-forget — non-critical, must not delay response)

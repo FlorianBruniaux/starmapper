@@ -10,6 +10,7 @@ import { checkDbHealth, DB_WARN_PCT } from "@/lib/db-health";
 import { bulkUpsertUsers, bulkUpsertStarEvents, bulkReadUsers, type UserWritePayload } from "@/lib/user-cache";
 import { parseLocation } from "@/lib/location-parser";
 import { jsonError, extractGhToken, logError, sanitizeError, getIP } from "@/lib/api-helpers";
+import { hashApiKey } from "@/lib/api-key";
 import { defineRoute } from "@/lib/define-route";
 import { chunkSchema } from "@/schemas/chunk";
 
@@ -75,6 +76,26 @@ const getChunkLimiter = (): Ratelimit | null => {
   return _chunkLimiter;
 };
 
+// Per-PAT rate limiter — 300 req/h per client token. Prevents a single stolen PAT
+// from exhausting the GitHub API quota (5000 req/h) via distributed IP spoofing.
+// Only applied when the client provides x-gh-token (not the server fallback token).
+let _chunkPatLimiter: Ratelimit | null = null;
+let _chunkPatLimiterReady = false;
+const getChunkPatLimiter = (): Ratelimit | null => {
+  if (_chunkPatLimiterReady) return _chunkPatLimiter;
+  _chunkPatLimiterReady = true;
+  try {
+    _chunkPatLimiter = new Ratelimit({
+      redis: Redis.fromEnv(),
+      limiter: Ratelimit.slidingWindow(300, "60 m"),
+      prefix: "rl:chunk-pat",
+    });
+  } catch {
+    _chunkPatLimiter = null;
+  }
+  return _chunkPatLimiter;
+};
+
 // In-memory rate limiter — max 3 concurrent geocoding sessions across all users.
 // Vercel serverless: each instance has its own counter, so this is a per-instance
 // limit. Good enough to prevent a single deploy from hammering Jawg on spikes.
@@ -86,6 +107,17 @@ export const POST = async (req: NextRequest) => {
   if (limiter) {
     const { success } = await limiter.limit(getIP(req));
     if (!success) return jsonError("Rate limit exceeded. Retry in a few seconds.", 429);
+  }
+
+  // Per-PAT rate limit — only when the client provides their own x-gh-token.
+  // Prevents exhausting the server GitHub quota (5000 req/h) via distributed IPs with one token.
+  const clientPat = req.headers.get("x-gh-token");
+  if (clientPat) {
+    const patLimiter = getChunkPatLimiter();
+    if (patLimiter) {
+      const { success } = await patLimiter.limit(hashApiKey(clientPat));
+      if (!success) return jsonError("Rate limit exceeded. Retry in a few minutes.", 429);
+    }
   }
 
   if (activeSessions >= MAX_CONCURRENT) {
