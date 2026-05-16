@@ -25,6 +25,8 @@
  *   --cursor <login>      Resume from this login (followers desc, login asc order)
  *   --batch <N>           Users per GraphQL request (default: 50, max: 50)
  *   --force               Re-fetch even if languagesFetchedAt is already set
+ *   --since <N>           Re-fetch users whose languagesFetchedAt is older than N days
+ *                         (also processes users with languagesFetchedAt IS NULL)
  *   --dry-run             Query GitHub but don't write to DB
  *   --from-cache          Pre-fill languages from star_event + badge_cache (no API calls)
  */
@@ -68,19 +70,21 @@ const { values: argv } = parseArgs({
     "batch":         { type: "string",  default: "30" },
     "cursor":        { type: "string",  default: "" },
     "token-index":   { type: "string",  default: "-1" },
+    "since":         { type: "string",  default: "0" },
   },
   strict: true,
 });
 
-const DRY_RUN      = argv["dry-run"];
-const USE_PROD     = argv.prod;
-const FORCE        = argv.force;
-const FROM_CACHE   = argv["from-cache"];
-const TOP_USERS     = parseInt(argv.top,           10); // 0 = all
+const DRY_RUN       = argv["dry-run"];
+const USE_PROD      = argv.prod;
+const FORCE         = argv.force;
+const FROM_CACHE    = argv["from-cache"];
+const TOP_USERS     = parseInt(argv.top,            10); // 0 = all
 const MIN_FOLLOWERS = parseInt(argv["min-followers"], 10); // 0 = all
-const BATCH_SIZE    = Math.min(parseInt(argv.batch, 10), 50);
+const BATCH_SIZE    = Math.min(parseInt(argv.batch,  10), 50);
 const START_CURSOR  = argv.cursor;
-const TOKEN_INDEX   = parseInt(argv["token-index"], 10); // -1 = all tokens
+const TOKEN_INDEX   = parseInt(argv["token-index"],  10); // -1 = all tokens
+const SINCE_DAYS    = parseInt(argv.since,           10); // 0 = disabled
 
 const DB_URL = USE_PROD
   ? (process.env.DATABASE_URL ?? "")
@@ -312,7 +316,8 @@ const main = async () => {
   console.log(`  Top users:     ${TOP_USERS > 0 ? TOP_USERS : "all"}`);
   console.log(`  Cursor:        ${START_CURSOR || "(none)"}`);
   console.log(`  Tokens:        ${FROM_CACHE ? "(none — cache mode)" : TOKEN_POOL.map((t) => t.token.slice(0, 8) + "…").join(", ")}`);
-  console.log(`  Force refetch: ${FORCE}`);
+  const fetchMode = FORCE ? "all (--force)" : SINCE_DAYS > 0 ? `new + older than ${SINCE_DAYS}d (--since)` : "new only";
+  console.log(`  Fetch mode:    ${fetchMode}`);
   console.log(`  From cache:    ${FROM_CACHE}`);
   console.log(`  Dry run:       ${DRY_RUN}`);
   console.log(`  Run start:     ${runStartTs}`);
@@ -327,9 +332,23 @@ const main = async () => {
     return;
   }
 
+  // Build the languagesFetchedAt filter:
+  //   --force          → no filter (re-fetch all)
+  //   --since N        → null OR older than N days
+  //   default          → null only (never fetched)
+  const staleCutoff = SINCE_DAYS > 0
+    ? new Date(Date.now() - SINCE_DAYS * 24 * 60 * 60 * 1000)
+    : null;
+
+  const fetchedAtFilter = FORCE
+    ? {}
+    : staleCutoff
+      ? { OR: [{ languagesFetchedAt: null }, { languagesFetchedAt: { lt: staleCutoff } }] }
+      : { languagesFetchedAt: null };
+
   const baseWhere = {
     lat: { not: null },   // only geocoded users — unmapped users won't appear on /devs anyway
-    ...(FORCE ? {} : { languagesFetchedAt: null }),
+    ...fetchedAtFilter,
     ...(MIN_FOLLOWERS > 0 ? { followers: { gte: MIN_FOLLOWERS } } : {}),
   };
 
