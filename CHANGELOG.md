@@ -113,25 +113,24 @@ Versioning: Semantic Versioning (MAJOR.MINOR.PATCH)
 - **RSS 2.0 + JSON Feed 1.1 per developer** — Each profile exposes two subscribable feeds: `GET /api/feed/[login]/rss` (RSS 2.0 with `<atom:link>`, `If-Modified-Since`, 304 response) and `GET /api/feed/[login]/json` (JSON Feed 1.1). Cached 1h CDN. Subscribe link (RSS icon + "Subscribe") displayed at the top of the News section on the profile.
 - **`/feed/[login]` page** — Dedicated subscription page: hero with avatar + identity, subscribe card with copyable RSS/JSON URLs, full list of announcements, back link to the map profile. Accessible via the "Subscribe" link on the profile or "View all" on the timeline.
 - **`NewsPublishModal`** — Publish modal with char counter (280), optional URL field, display of copyable feed URLs post-publication. Error handling: remaining cooldown displayed in h/min, invalid token clearly indicated.
-- **`verifyPat()` + Upstash cache** — `src/lib/github-auth.ts`: verification of a GitHub PAT via the REST API (`/user`), result cached in Upstash Redis for 5 min. Cache key = SHA-256 prefix of the PAT (never the raw token). Graceful fallback if Redis is unavailable.
+- **`verifyPat()` + Upstash cache** — GitHub PAT verification via the REST API, result cached in Upstash Redis. Raw token never stored. Graceful fallback if Redis is unavailable.
 - **RSS subscriber tracking** — Every hit on `/api/feed/[login]/rss` is recorded in `page_view` (type `"feed_rss"`, slug = login). Queryable via `pnpm stats:views`.
 
 ### Security
 
-- **Dynamic CSP nonces** — Middleware generates a nonce per request (`crypto.randomUUID()`), passes it via the `x-nonce` header, and builds a `Content-Security-Policy` with `'nonce-{n}'` — removes `unsafe-inline`. `layout.tsx` reads the nonce and applies it to both inline scripts. The static CSP directive in `next.config.ts` is removed (handled dynamically).
-- **HMAC cookie on POST routes** — When `SM_TOKEN_SECRET` is set, the middleware verifies an HMAC session cookie on all POST routes. curl/server-side calls without a cookie are blocked; browsers automatically send the HttpOnly cookie.
-- **Rate limit fail-closed** — `rateLimit()` with `failClosed=true` on all POST routes: if Redis is unavailable, returns 503 instead of silently passing through.
-- **HMAC-signed PAT cache** — `pat:*` entries in Upstash are signed via HMAC-SHA256 (`CACHE_SIGN_SECRET`). An attacker with Redis access cannot forge a value without the signing key. Falls back to plain string if `CACHE_SIGN_SECRET` is absent.
-- **Reduced PAT cache TTL** — 300s → 60s: token revocation window reduced from 5 min to 1 min.
-- **Redis nx-lock on news publish** — `SET NX` lock before the cooldown check + creation to prevent TOCTOU (two concurrent requests passing the cooldown simultaneously → duplicate).
+- **Dynamic CSP nonces** — Per-request nonces on inline scripts, replacing static `unsafe-inline` in CSP.
+- **POST route protection** — HMAC session verification on all POST routes.
+- **Rate limit resilience** — Rate limits fail safely when the Redis backend is unavailable.
+- **PAT cache hardening** — Token cache entries are integrity-protected. Revocation window reduced.
+- **News publish anti-race** — Concurrent publish requests are serialized to prevent duplicate posts.
 
 ### Bug Fixes
 
 - **TokenModal — unresolved username** — The modal was storing only the token, never the username. On pages other than the map (e.g. `/profile/[login]`), `getStoredUsername()` returned `""`, which set `isOwner` to `false` and hid the "Publish" button even for the profile owner. `handleSave` now resolves the login via `GET /api.github.com/user` and stores it. "Verifying…" shown during verification; `handleRemove` also clears the username.
-- **Middleware** — `POST_LIMITERS` was using an exact match on POST routes, missing routes with dynamic segments (e.g. `/api/news/item/123`). Replaced with regex.
-- **News cooldown** — Soft-deleted posts were not counted in the 24h window, allowing publish → delete → immediate re-publish. The cooldown now includes deleted entries.
-- **Organic score** — The `/api/organic-score/refresh` endpoint had no server-side guard on the feature flag. Guard added: returns 404 if `NEXT_PUBLIC_ORGANIC_SCORE_ENABLED !== "true"`.
-- **Web Vitals** — Whitelist of valid metric names (`CLS`, `FID`, `FCP`, `LCP`, `TTFB`, `INP`) + validation that numeric fields are actually numbers. Prevents arbitrary data injection into the `web_vitals` table.
+- **Middleware** — Rate limiting now correctly covers routes with dynamic segments.
+- **News cooldown** — Cooldown window now correctly includes deleted posts.
+- **Organic score** — Feature flag enforcement added on the refresh endpoint.
+- **Web Vitals** — Input validation strengthened on the vitals endpoint.
 
 ### Internal
 
@@ -167,7 +166,7 @@ Versioning: Semantic Versioning (MAJOR.MINOR.PATCH)
 - **Organic Score** — "Organic" popularity score per repo (0–100), computed from activity signals independent of stars: forks, zero-dependency forks, watchers, open issues, open PRs. Weights: ZF 55% / forks 40% / watchers 5%. Score displayed via `OrganicScorePill` fetched independently from the rest of the page.
 - **Organic score column in repos list** — Sortable column on the landing page, color-coded by tier (🟢 great / 🟡 good / 🟠 moderate / ⚫ low), with a detail modal on click (signal breakdown + StarScout comparison).
 - **`openPRsCount` in `BadgeCache`** — Separation of issues / PRs in the model (previously: mixed `openIssuesCount` field). Organic score modal displays both badges separately and as clickable links (GitHub links).
-- **Organic score calibration page** — `/api/admin/calibrate-organic-score` — debug page to compare scores on a real sample, accessible locally.
+- **Organic score calibration** — Debug tool to compare scores on a real sample (local dev only).
 
 ### Bug Fixes
 
@@ -201,9 +200,9 @@ Versioning: Semantic Versioning (MAJOR.MINOR.PATCH)
 
 ### Internal
 
-- **`CircuitBreaker` class** — Extracted from `geocoder.ts` into a reusable class. Unit tests added.
-- **Cache refactor** — `compressToGzBase64` centralized in `compression.ts`. `buildUserWritePayload` extracted into the chunk route.
-- **Pre-open-source hardening** — Secrets audit, hardened `.gitignore`, reduced timing attacks.
+- **`CircuitBreaker` class** — Extracted into a reusable class. Unit tests added.
+- **Cache refactor** — Compression utilities centralized.
+- **Pre-open-source hardening** — Secrets audit, hardened `.gitignore`.
 
 ---
 
@@ -216,9 +215,9 @@ Versioning: Semantic Versioning (MAJOR.MINOR.PATCH)
 
 ### Internal
 
-- **Tests** — CircuitBreaker suite (pre-extraction). Fixed `chunk route` + `github` stubs that were silently failing.
-- **SEO / a11y / perf audit** — Robots, sitemap, structured data, focus management, missing aria labels, bundle size.
-- **Security** — Pre-open-source hardening: secrets excluded from the repo, hardened `.gitignore`, reduced timing side-channels.
+- **Tests** — CircuitBreaker suite added. Fixed stubs that were silently passing.
+- **SEO / a11y / perf audit** — Robots, sitemap, structured data, focus management, aria labels, bundle size.
+- **Security** — Pre-open-source hardening.
 
 ---
 
@@ -270,22 +269,16 @@ Versioning: Semantic Versioning (MAJOR.MINOR.PATCH)
 
 ### Security
 
-- **HMAC session token** — `sm-token` cookie (HttpOnly + SameSite=Strict), signed HMAC-SHA256 via Web Crypto API (Edge-compatible). Issued on each page load, verified on all strict-get endpoints. Requires `SM_TOKEN_SECRET`. Blocks scraping via forged Referer even with a valid cookie.
-- **Distributed rate limiting** — Replaced in-memory counters (per-instance Vercel) with Upstash Redis sliding windows. Limits survive serverless scaling. Tiers: chunk 100/min, strict-get 30/min, moderate-get 60/min, admin 10/min, stargazer-cache-get 3/min (dedicated).
-- **Cloudflare IP** — Middleware reads `CF-Connecting-IP` before `x-forwarded-for`: per-IP limits use the real visitor IP behind Cloudflare (previously: ~15 fixed Cloudflare IPs seen by Upstash).
-- **Dedicated stargazer-cache tier** — `GET /api/stargazer-cache/*` gets its own 3 req/min limiter instead of sharing the strict-get 30/min pool. A single cache hit returns up to 50k users.
-- **Route promotion** — `/api/repos` and `/api/explore/global-map` moved from moderate-get to strict-get (Referer + HMAC). Both were enumeration entry points without origin validation.
-- **Pagination caps** — `explore/top` and `explore/power`: `MAX_SKIP=500`. `explore/top`: minimum 2-character filter to block single-character cross-product enumeration.
-- **Referer verification** on all strict-get endpoints (stargazer-cache, stats, explore/top|power|user-repos|global-map, repos, profile).
-- **Origin check** — POST endpoints reject non-localhost origins when `NEXT_PUBLIC_APP_URL` is absent (previously: check silently ignored).
-- **Stargazer-cache write protection** — POST validates: timestamp freshness (±5min), plausibility (totalCount within ±50% of existing value), maximum 100k users.
-- **XSS fix** — `stargazer-map.tsx` popup: replaced `innerHTML` template literal with `createTextNode` + `createElement`. Eliminates the XSS vector on the `topLogin` field.
-- **Hardened CSP** — `unsafe-eval` removed from `script-src` in production (dev only). `Strict-Transport-Security` added (max-age=2y). `X-Robots-Tag: noindex, nofollow` on all `/api/*` routes.
-- **Input validation** — Unicode character whitelist on `country`/`search` params in `explore/top`.
-- **Error sanitization** — `sanitizeError`/`logError` in `api-helpers` strips Postgres URLs, Bearer tokens, and GitHub PATs from server logs before they reach the Vercel dashboard.
-- **GET side-effect removed** — `explore/user-repos` no longer performs DB writes on GET.
-- **Reduced lat/lng precision** — API responses round coordinates to 2 decimal places (~1.1km). Full precision preserved in DB.
-- **Semgrep SAST CI** — Workflow on push/PR to main and weekly (Sunday 02:00 UTC). Covers typescript, owasp-top-ten, secrets, nodejs.
+- **HMAC session token** — HttpOnly session cookie issued on each page load, verified on sensitive endpoints.
+- **Distributed rate limiting** — Per-IP Redis sliding windows replacing per-instance in-memory counters. Survives serverless scaling. Tiers per endpoint sensitivity.
+- **Referer + origin verification** — All sensitive endpoints validate request origin.
+- **Stargazer-cache write protection** — Freshness and plausibility checks on cache writes.
+- **XSS fix** — Map popup switched from `innerHTML` to DOM API construction.
+- **CSP hardening** — `unsafe-eval` removed in production. HSTS added.
+- **Input validation** — Character filtering on search parameters in the Explore tab.
+- **Error sanitization** — Credentials stripped from server logs before they reach Vercel dashboard.
+- **Coordinate precision** — API responses return rounded coordinates (~1km). Full precision stays in DB.
+- **Semgrep SAST CI** — Automated OWASP/secrets scan on push and weekly.
 
 ### Features
 
