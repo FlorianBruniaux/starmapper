@@ -4,6 +4,7 @@
 "use client";
 
 import { useState } from "react";
+import { AlertCircle, GitPullRequest, Star, RefreshCw } from "lucide-react";
 import { Modal } from "@/components/modal";
 import type { RepoOrganic } from "@/app/api/stats/[owner]/[repo]/route";
 
@@ -287,11 +288,7 @@ export const OrganicScoreModal = ({ open, onClose, organic, owner, repo, onRecal
                   rel="noopener noreferrer"
                   className="flex items-center gap-1.5 bg-surface-alt rounded-md px-2.5 py-1.5 border border-border-subtle hover:border-accent-blue/40 transition-colors"
                 >
-                  <svg className="size-3.5 text-muted flex-shrink-0" fill="none" viewBox="0 0 16 16"
-                    stroke="currentColor" strokeWidth="1.5">
-                    <circle cx="8" cy="8" r="6.25"/>
-                    <path d="M8 5v3.5M8 11v.5" strokeLinecap="round"/>
-                  </svg>
+                  <AlertCircle className="size-3.5 text-muted flex-shrink-0" aria-hidden="true" />
                   <span className="text-sm font-semibold text-foreground tabular-nums">
                     {issuesOnlyCount.toLocaleString()}
                   </span>
@@ -306,13 +303,7 @@ export const OrganicScoreModal = ({ open, onClose, organic, owner, repo, onRecal
                   rel="noopener noreferrer"
                   className="flex items-center gap-1.5 bg-surface-alt rounded-md px-2.5 py-1.5 border border-border-subtle hover:border-accent-blue/40 transition-colors"
                 >
-                  <svg className="size-3.5 text-muted flex-shrink-0" fill="none" viewBox="0 0 16 16"
-                    stroke="currentColor" strokeWidth="1.5">
-                    <circle cx="4" cy="4" r="1.75"/>
-                    <circle cx="12" cy="12" r="1.75"/>
-                    <circle cx="12" cy="4" r="1.75"/>
-                    <path d="M4 5.75v4.5M12 5.75v2.5a2 2 0 01-2 2H7" strokeLinecap="round"/>
-                  </svg>
+                  <GitPullRequest className="size-3.5 text-muted flex-shrink-0" aria-hidden="true" />
                   <span className="text-sm font-semibold text-foreground tabular-nums">
                     {organic.openPRsCount.toLocaleString()}
                   </span>
@@ -327,11 +318,7 @@ export const OrganicScoreModal = ({ open, onClose, organic, owner, repo, onRecal
                   rel="noopener noreferrer"
                   className="flex items-center gap-1.5 bg-surface-alt rounded-md px-2.5 py-1.5 border border-border-subtle hover:border-accent-blue/40 transition-colors"
                 >
-                  <svg className="size-3.5 text-muted flex-shrink-0" fill="none" viewBox="0 0 16 16"
-                    stroke="currentColor" strokeWidth="1.5">
-                    <circle cx="8" cy="8" r="6.25"/>
-                    <path d="M8 5v3.5M8 11v.5" strokeLinecap="round"/>
-                  </svg>
+                  <AlertCircle className="size-3.5 text-muted flex-shrink-0" aria-hidden="true" />
                   <span className="text-sm font-semibold text-foreground tabular-nums">
                     {organic.openIssuesCount.toLocaleString()}
                   </span>
@@ -346,11 +333,7 @@ export const OrganicScoreModal = ({ open, onClose, organic, owner, repo, onRecal
                   rel="noopener noreferrer"
                   className="flex items-center gap-1.5 bg-surface-alt rounded-md px-2.5 py-1.5 border border-border-subtle hover:border-accent-blue/40 transition-colors"
                 >
-                  <svg className="size-3.5 text-muted flex-shrink-0" fill="none" viewBox="0 0 16 16"
-                    stroke="currentColor" strokeWidth="1.5">
-                    <path d="M8 2l1.5 3 3.5.5-2.5 2.5.5 3.5L8 10l-3 1.5.5-3.5L3 5.5 6.5 5z"
-                      strokeLinejoin="round"/>
-                  </svg>
+                  <Star className="size-3.5 text-muted flex-shrink-0" aria-hidden="true" />
                   <span className="text-sm font-semibold text-foreground">{organic.latestReleaseTag}</span>
                   {organic.latestReleaseAt && (
                     <span className="text-xs text-muted">
@@ -383,17 +366,12 @@ export const OrganicScoreModal = ({ open, onClose, organic, owner, repo, onRecal
             >
               {recalculating ? (
                 <>
-                  <svg className="size-3 animate-spin" fill="none" viewBox="0 0 16 16" stroke="currentColor" strokeWidth="2">
-                    <path d="M8 2a6 6 0 100 12A6 6 0 008 2z" strokeDasharray="20" strokeDashoffset="15"/>
-                  </svg>
+                  <RefreshCw className="size-3 animate-spin" aria-hidden="true" />
                   Recalculating…
                 </>
               ) : (
                 <>
-                  <svg className="size-3" fill="none" viewBox="0 0 16 16" stroke="currentColor" strokeWidth="1.5">
-                    <path d="M3 8a5 5 0 005 5 5 5 0 004.33-2.5M13 8a5 5 0 00-5-5 5 5 0 00-4.33 2.5" strokeLinecap="round"/>
-                    <path d="M11 2.5L13 5l-2.5 1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
+                  <RefreshCw className="size-3" aria-hidden="true" />
                   Recompute
                 </>
               )}

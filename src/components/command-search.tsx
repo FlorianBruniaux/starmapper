@@ -5,6 +5,7 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import { Search, Star } from "lucide-react";
 import type { MappedRepo } from "@/app/api/repos/route";
 
 const formatCount = (n: number) =>
@@ -136,16 +137,7 @@ export const CommandSearch = ({ repos: reposProp }: CommandSearchProps) => {
       >
         {/* Search input */}
         <div className="flex items-center gap-3 px-5 py-4 border-b border-border-subtle">
-          <svg
-            width="15"
-            height="15"
-            viewBox="0 0 16 16"
-            fill="currentColor"
-            className="shrink-0 text-muted-subtle"
-            aria-hidden="true"
-          >
-            <path d="M10.68 11.74a6 6 0 0 1-7.922-8.982 6 6 0 0 1 8.982 7.922l3.04 3.04a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215ZM11.5 7a4.499 4.499 0 1 0-8.997 0A4.499 4.499 0 0 0 11.5 7Z" />
-          </svg>
+          <Search size={15} className="shrink-0 text-muted-subtle" aria-hidden="true" />
           <input
             ref={inputRef}
             value={query}
@@ -200,16 +192,7 @@ export const CommandSearch = ({ repos: reposProp }: CommandSearchProps) => {
                 </div>
                 <div className="flex items-center gap-3 shrink-0 text-xs text-muted">
                   <span className="flex items-center gap-1">
-                    <svg
-                      width="11"
-                      height="11"
-                      viewBox="0 0 16 16"
-                      fill="currentColor"
-                      className="text-accent-orange"
-                      aria-hidden="true"
-                    >
-                      <path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.751.751 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z" />
-                    </svg>
+                    <Star size={11} className="text-accent-orange" aria-hidden="true" />
                     {formatCount(r.totalCount)}
                   </span>
                   <span className="text-accent-blue">{r.mappedPercent}%</span>

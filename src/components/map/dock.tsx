@@ -3,6 +3,7 @@
 
 "use client";
 
+import { Menu, X, TrendingUp, Users, Activity, Radio, Star, Clock, Layers, Share2 } from "lucide-react";
 import { CLUSTER_RADIUS } from "@/components/map/stargazer-map";
 
 type ViewMode = "clusters" | "heatmap";
@@ -70,9 +71,7 @@ export const Dock = ({
           className="lg:hidden absolute bottom-6 left-4 z-10 bg-background/90 border border-border rounded-lg px-3 py-2.5 backdrop-blur-md flex items-center gap-2 text-xs text-muted hover:text-foreground hover:border-accent-blue/50 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/40"
           aria-label="Open controls"
         >
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-            <path d="M1 2.75A.75.75 0 0 1 1.75 2h12.5a.75.75 0 0 1 0 1.5H1.75A.75.75 0 0 1 1 2.75Zm0 5A.75.75 0 0 1 1.75 7h12.5a.75.75 0 0 1 0 1.5H1.75A.75.75 0 0 1 1 7.75ZM1.75 12h12.5a.75.75 0 0 1 0 1.5H1.75a.75.75 0 0 1 0-1.5Z" />
-          </svg>
+          <Menu size={14} aria-hidden="true" />
           Controls
           {followerMapFilter !== "all" && (
             <span className="size-1.5 rounded-full bg-accent-blue inline-block" />
@@ -121,9 +120,7 @@ export const Dock = ({
                 className="lg:hidden text-muted hover:text-foreground transition-colors p-0.5 -mr-0.5 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/40"
                 aria-label="Close controls"
               >
-                <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-                  <path d="M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l3.22-3.22a.749.749 0 0 1 1.275.326.749.749 0 0 1-.215.734L9.06 8l3.22 3.22a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215L8 9.06l-3.22 3.22a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042L6.94 8 3.72 4.78a.75.75 0 0 1 0-1.06Z" />
-                </svg>
+                <X size={12} aria-hidden="true" />
               </button>
             </div>
 
@@ -188,9 +185,7 @@ export const Dock = ({
               focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/40"
             title="Stargazer stats"
           >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" className="text-accent-blue flex-shrink-0" aria-hidden="true">
-              <path d="M1.5 1.75a.75.75 0 00-1.5 0v12.5c0 .414.336.75.75.75h14.5a.75.75 0 000-1.5H1.5V1.75zm13.28 4.47a.75.75 0 00-1.06-1.06L10 8.94 7.53 6.47a.75.75 0 00-1.06 0L3.22 9.72a.75.75 0 001.06 1.06L7 8.06l2.47 2.47a.75.75 0 001.06 0l4.25-4.32z"/>
-            </svg>
+            <TrendingUp size={16} className="text-accent-blue flex-shrink-0" aria-hidden="true" />
             <span>Stats</span>
           </button>
         )}
@@ -204,9 +199,7 @@ export const Dock = ({
               focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/40"
             title="All stargazers"
           >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" className="text-accent-purple flex-shrink-0" aria-hidden="true">
-              <path d="M2 5.5a3.5 3.5 0 115.898 2.549 5.508 5.508 0 013.034 4.084.75.75 0 11-1.482.235 4 4 0 00-7.9 0 .75.75 0 01-1.482-.236A5.507 5.507 0 013.102 8.05 3.493 3.493 0 012 5.5zM11 4a3 3 0 102.22 5.018 5.01 5.01 0 012.56 3.012.75.75 0 11-1.45.39 3.504 3.504 0 00-6.66 0 .75.75 0 11-1.45-.39A5.01 5.01 0 018.78 9.018 3 3 0 0111 4z"/>
-            </svg>
+            <Users size={16} className="text-accent-purple flex-shrink-0" aria-hidden="true" />
             <span>Stargazers</span>
             <span className="bg-border text-muted text-2xs px-1.5 py-px rounded-full tabular-nums leading-none ml-auto">
               {allStargazersCount.toLocaleString()}
@@ -223,9 +216,7 @@ export const Dock = ({
               focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/40"
             title="Star growth chart"
           >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-accent-green flex-shrink-0" aria-hidden="true">
-              <path d="M1.5 12.5 5 8l3 3 3.5-5 3 3"/>
-            </svg>
+            <Activity size={16} className="text-accent-green flex-shrink-0" aria-hidden="true" />
             <span>Growth</span>
           </button>
         )}
@@ -254,9 +245,7 @@ export const Dock = ({
               </>
             ) : (
               <>
-                <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" className="flex-shrink-0" aria-hidden="true">
-                  <path d="M8 2a6 6 0 1 0 0 12A6 6 0 0 0 8 2Zm0 10.5a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9Zm0-7a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5Z"/>
-                </svg>
+                <Radio size={14} className="flex-shrink-0" aria-hidden="true" />
                 <span>Watch</span>
               </>
             )}
@@ -273,9 +262,7 @@ export const Dock = ({
             focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/40"
           title="View star history on star-history.com"
         >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" className="text-accent-orange flex-shrink-0" aria-hidden="true">
-            <path d="M8 .25a.75.75 0 01.673.418l1.882 3.815 4.21.612a.75.75 0 01.416 1.279l-3.046 2.97.719 4.192a.75.75 0 01-1.088.791L8 12.347l-3.766 1.98a.75.75 0 01-1.088-.79l.72-4.194L.818 6.374a.75.75 0 01.416-1.28l4.21-.611L7.327.668A.75.75 0 018 .25z"/>
-          </svg>
+          <Star size={16} className="text-accent-orange flex-shrink-0" aria-hidden="true" />
           <span>History</span>
         </a>
 
@@ -294,9 +281,7 @@ export const Dock = ({
             }`}
             title="Replay stars over time"
           >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" className="flex-shrink-0" aria-hidden="true">
-              <path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Zm7-3.25v3.67l2.069 1.238a.75.75 0 0 1-.756 1.292l-2.421-1.45A.75.75 0 0 1 7 9.75v-5a.75.75 0 0 1 1.5 0Z"/>
-            </svg>
+            <Clock size={16} className="flex-shrink-0" aria-hidden="true" />
             <span>Timelapse</span>
           </button>
         )}
@@ -310,9 +295,7 @@ export const Dock = ({
             focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/40"
           title="Get README badge"
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="text-accent-blue flex-shrink-0" aria-hidden="true">
-            <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
-          </svg>
+          <Layers size={16} className="text-accent-blue flex-shrink-0" aria-hidden="true" />
           <span>Badge</span>
         </button>
 
@@ -329,9 +312,7 @@ export const Dock = ({
             focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/40"
           aria-label="Share this stargazer map"
         >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" className="flex-shrink-0" aria-hidden="true">
-            <path d="M2.75 3.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h2a.75.75 0 010 1.5h-2A1.75 1.75 0 011 11.25v-7.5C1 2.784 1.784 2 2.75 2h2.5a.75.75 0 010 1.5h-2.5zm10.5 0a.75.75 0 010-1.5h-4.5a.75.75 0 00-.75.75v3.5a.75.75 0 001.5 0V4.56L13.47 8l-3.97 3.44V9.75a.75.75 0 00-1.5 0v3.5c0 .414.336.75.75.75h4.5a.75.75 0 000-1.5h-2.5z"/>
-          </svg>
+          <Share2 size={16} className="flex-shrink-0" aria-hidden="true" />
           Share
         </button>
       </div>

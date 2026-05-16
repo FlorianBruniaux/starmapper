@@ -4,21 +4,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Rss, Check } from "lucide-react";
 import { addSubscription, hasSubscription, removeSubscription } from "@/lib/subscriptions";
 
 type Props = { login: string; minimal?: boolean };
-
-const RssIcon = () => (
-  <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-    <path d="M6.18 15.64a2.18 2.18 0 0 1 2.18 2.18C8.36 19.01 7.38 20 6.18 20C4.98 20 4 19.01 4 17.82a2.18 2.18 0 0 1 2.18-2.18M4 4.44A15.56 15.56 0 0 1 19.56 20h-2.83A12.73 12.73 0 0 0 4 7.27V4.44m0 5.66a9.9 9.9 0 0 1 9.9 9.9h-2.83A7.07 7.07 0 0 0 4 12.93V10.1z" />
-  </svg>
-);
-
-const CheckIcon = () => (
-  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-    <path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-);
 
 export const FollowButton = ({ login, minimal = false }: Props) => {
   const [following, setFollowing] = useState<boolean | null>(null);
@@ -68,7 +57,7 @@ export const FollowButton = ({ login, minimal = false }: Props) => {
         disabled
         className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-md border border-border text-muted opacity-50 cursor-default"
       >
-        <RssIcon />
+        <Rss size={11} aria-hidden="true" />
         Follow
       </button>
     );
@@ -87,7 +76,7 @@ export const FollowButton = ({ login, minimal = false }: Props) => {
             : "border-border text-muted hover:text-foreground hover:border-accent-blue/50"
         }`}
       >
-        <RssIcon />
+        <Rss size={11} aria-hidden="true" />
         {following ? "Following" : "Follow"}
       </button>
     );
@@ -107,7 +96,7 @@ export const FollowButton = ({ login, minimal = false }: Props) => {
             : "border-border text-muted hover:text-foreground hover:border-accent-blue/50"
         }`}
       >
-        <RssIcon />
+        <Rss size={11} aria-hidden="true" />
         {following ? "Following" : "Follow"}
       </button>
 
@@ -131,7 +120,7 @@ export const FollowButton = ({ login, minimal = false }: Props) => {
                 following ? "border-accent-green bg-accent-green/10" : "border-border"
               }`}
             >
-              {following && <CheckIcon />}
+              {following && <Check size={10} aria-hidden="true" />}
             </span>
             <span>Follow on StarMapper</span>
           </button>

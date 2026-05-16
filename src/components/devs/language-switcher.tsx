@@ -4,6 +4,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ChevronDown } from "lucide-react";
 
 export type LanguageOption = {
   slug: string;
@@ -89,9 +90,7 @@ export const LanguageSwitcher = ({
       >
         <span className="font-semibold">{currentName}</span>
         {!loading && (
-          <svg width="9" height="9" viewBox="0 0 8 8" fill="currentColor" className="shrink-0 opacity-60">
-            <path d="M1 2.5L4 5.5L7 2.5" stroke="currentColor" strokeWidth="1.2" fill="none" strokeLinecap="round"/>
-          </svg>
+          <ChevronDown size={9} className="shrink-0 opacity-60" aria-hidden="true" />
         )}
       </button>
 

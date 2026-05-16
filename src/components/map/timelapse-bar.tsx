@@ -3,6 +3,8 @@
 
 "use client";
 
+import { X, Pause, Play } from "lucide-react";
+
 const MONTHS_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 // weekBucket = YYYY-MM-DD of the Monday of that week
@@ -59,9 +61,7 @@ export const TimelapseBar = ({
             aria-label="Close timelapse"
             className="text-muted hover:text-foreground transition-colors p-0.5 rounded"
           >
-            <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-              <path d="M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l3.22-3.22a.749.749 0 0 1 1.275.326.749.749 0 0 1-.215.734L9.06 8l3.22 3.22a.749.749 0 0 1-.326 1.275.749.749 0 0 1-.734-.215L8 9.06l-3.22 3.22a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042L6.94 8 3.72 4.78a.75.75 0 0 1 0-1.06Z" />
-            </svg>
+            <X size={12} aria-hidden="true" />
           </button>
         </div>
 
@@ -125,16 +125,12 @@ export const TimelapseBar = ({
             >
               {autoPlay ? (
                 <>
-                  <svg width="9" height="9" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-                    <path d="M4 3h2.5v10H4V3zm5.5 0H12v10H9.5V3z" />
-                  </svg>
+                  <Pause size={9} aria-hidden="true" />
                   Pause
                 </>
               ) : (
                 <>
-                  <svg width="9" height="9" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-                    <path d="M3.5 2.5l10 5.5-10 5.5V2.5z" />
-                  </svg>
+                  <Play size={9} aria-hidden="true" />
                   Play
                 </>
               )}

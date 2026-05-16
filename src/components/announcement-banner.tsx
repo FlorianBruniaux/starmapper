@@ -5,6 +5,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { ArrowRight, X } from "lucide-react";
 
 // Bump this ID whenever you want the banner to reappear for users who dismissed it.
 const BANNER_ID = "announce-may-2026-v1";
@@ -58,9 +59,7 @@ export const AnnouncementBanner = () => {
             className="text-sm text-muted hover:text-foreground transition-colors flex items-center gap-1"
           >
             {link.label}
-            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-              <path d="M3 8h10M9 4l4 4-4 4"/>
-            </svg>
+            <ArrowRight size={12} aria-hidden="true" />
             {i < LINKS.length - 1 && (
               <span className="ml-2 text-border-subtle select-none">·</span>
             )}
@@ -74,9 +73,7 @@ export const AnnouncementBanner = () => {
         className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded
                    text-muted-subtle hover:text-foreground transition-colors"
       >
-        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-          <path d="M2 2l12 12M14 2L2 14"/>
-        </svg>
+        <X size={12} aria-hidden="true" />
       </button>
     </div>
   );

@@ -4,6 +4,7 @@
 "use client";
 
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { ChevronDown, Check } from "lucide-react";
 
 type FilterComboboxProps = {
   value: string;
@@ -143,9 +144,7 @@ export const FilterCombobox = ({ value, onChange, options, placeholder }: Filter
         ].join(" ")}
       >
         <span className="max-w-[80px] truncate" aria-hidden="true">{label}</span>
-        <svg width="8" height="8" viewBox="0 0 8 8" fill="currentColor" className="shrink-0 opacity-60" aria-hidden="true">
-          <path d="M1 2.5L4 5.5L7 2.5" stroke="currentColor" strokeWidth="1.2" fill="none" strokeLinecap="round"/>
-        </svg>
+        <ChevronDown size={8} className="shrink-0 opacity-60" aria-hidden="true" />
       </button>
 
       {open && (
@@ -218,9 +217,7 @@ export const FilterCombobox = ({ value, onChange, options, placeholder }: Filter
                 >
                   <span className="truncate">{opt}</span>
                   {value === opt && (
-                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none" className="shrink-0 text-accent-blue" aria-hidden="true">
-                      <path d="M2 5L4 7L8 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
+                    <Check size={10} className="shrink-0 text-accent-blue" aria-hidden="true" />
                   )}
                 </li>
               ))

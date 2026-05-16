@@ -4,6 +4,7 @@
 "use client";
 
 import { useState } from "react";
+import { Search, ChevronRight, Check, Lock, User } from "lucide-react";
 import Image from "next/image";
 import type { StargazerPoint } from "@/app/api/chunk/route";
 import type { TimeEstimate } from "@/lib/format";
@@ -109,13 +110,7 @@ export const TopPanel = ({
             border border-border-subtle rounded-full px-2 py-0.5
             hover:border-border transition-colors flex-shrink-0"
         >
-          <svg
-            width="10" height="10" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" strokeWidth="2.5"
-            strokeLinecap="round" strokeLinejoin="round"
-          >
-            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-          </svg>
+          <Search size={10} aria-hidden="true" />
           Search
         </a>
 
@@ -217,14 +212,7 @@ export const TopPanel = ({
             <span className="text-xs font-medium text-muted-subtle tabular-nums">
               {unmapped.length.toLocaleString()}
             </span>
-            <svg
-              width="10" height="10" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" strokeWidth="2.5"
-              strokeLinecap="round" strokeLinejoin="round"
-              className="text-muted-subtle group-hover:text-muted transition-colors"
-            >
-              <path d="m9 18 6-6-6-6"/>
-            </svg>
+            <ChevronRight size={10} className="text-muted-subtle group-hover:text-muted transition-colors" aria-hidden="true" />
           </div>
         </button>
       </div>
@@ -272,13 +260,7 @@ export const TopPanel = ({
         <div className="mt-2 pt-2 border-t border-border-subtle
           flex items-center justify-between gap-2">
           <span className="text-2xs text-accent-green flex items-center gap-1">
-            <svg
-              width="10" height="10" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" strokeWidth="2.5"
-              strokeLinecap="round" strokeLinejoin="round"
-            >
-              <path d="M20 6 9 17l-5-5"/>
-            </svg>
+            <Check size={10} aria-hidden="true" />
             {status === "done" ? "Indexed" : `Cached ${timeAgo(cachedAt)}`}
           </span>
           <div className="flex items-center gap-2">
@@ -288,9 +270,7 @@ export const TopPanel = ({
                 className="text-2xs text-accent-blue hover:underline flex items-center gap-1"
               >
                 {!hasToken && (
-                  <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="opacity-60">
-                    <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                  </svg>
+                  <Lock size={9} className="opacity-60" aria-hidden="true" />
                 )}
                 ↻ {newStarsCount > 0 ? `${newStarsCount} new stars` : "Refresh"}
               </button>
@@ -300,9 +280,7 @@ export const TopPanel = ({
               className="text-2xs text-muted-subtle hover:text-muted transition-colors flex items-center gap-1"
             >
               {!hasToken && (
-                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="opacity-60">
-                  <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                </svg>
+                <Lock size={9} className="opacity-60" aria-hidden="true" />
               )}
               Full rescan
             </button>
@@ -319,14 +297,7 @@ export const TopPanel = ({
       <div className="mt-2.5 pt-2.5 border-t border-border-subtle">
         <div className="relative flex items-center">
           {/* Loupe inline dans le field */}
-          <svg
-            width="12" height="12" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" strokeWidth="2.5"
-            strokeLinecap="round" strokeLinejoin="round"
-            className="absolute left-3 text-muted-subtle pointer-events-none"
-          >
-            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-          </svg>
+          <Search size={12} className="absolute left-3 text-muted-subtle pointer-events-none" aria-hidden="true" />
           <input
             value={findInput}
             onChange={(e) => { setFindInput(e.target.value); setFindStatus("idle"); }}
@@ -362,11 +333,7 @@ export const TopPanel = ({
         {/* Find feedback */}
         {findStatus === "found" && (
           <p className="mt-1.5 text-2xs text-accent-green flex items-center gap-1">
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" strokeWidth="2.5"
-              strokeLinecap="round" strokeLinejoin="round">
-              <path d="M20 6 9 17l-5-5"/>
-            </svg>
+            <Check size={10} aria-hidden="true" />
             Found — flying to location
           </p>
         )}
@@ -389,9 +356,7 @@ export const TopPanel = ({
                 onClick={findMe}
                 className="text-2xs text-accent-blue hover:underline flex items-center gap-1 flex-shrink-0"
               >
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/>
-                </svg>
+                <User size={10} aria-hidden="true" />
                 Find me
               </button>
               <span className="text-2xs text-muted-subtle truncate">@{storedUsername}</span>
@@ -442,9 +407,7 @@ export const TopPanel = ({
               onClick={() => setAskingUsername(true)}
               className="text-2xs text-muted-subtle hover:text-muted transition-colors flex items-center gap-1"
             >
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/>
-              </svg>
+              <User size={10} aria-hidden="true" />
               Set my username for quick Find me
             </button>
           )}
