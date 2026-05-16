@@ -121,8 +121,8 @@ Versioning: Semantic Versioning (MAJOR.MINOR.PATCH)
 - **Dynamic CSP nonces** — Per-request nonces on inline scripts, replacing static `unsafe-inline` in CSP.
 - **POST route protection** — HMAC session verification on all POST routes.
 - **Rate limit resilience** — Rate limits fail safely when the Redis backend is unavailable.
-- **PAT cache hardening** — Token cache entries are integrity-protected. Revocation window reduced.
-- **News publish anti-race** — Concurrent publish requests are serialized to prevent duplicate posts.
+- **PAT cache hardening** — Token verification cache security hardened. Revocation window reduced.
+- **News publish anti-race** — Concurrency handling improved on the news publish flow.
 
 ### Bug Fixes
 
