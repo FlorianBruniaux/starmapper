@@ -23,8 +23,8 @@ export const stargazerCacheEnvelopeSchema = z.object({
   latestStarredAt: z.string().optional(),
   pointsGz: z.string().optional(),
   unmappedGz: z.string().optional(),
-  points: z.array(z.unknown()).optional(),
-  unmapped: z.array(z.unknown()).optional(),
+  points: z.array(z.unknown()).max(MAX_CACHEABLE_STARS, { message: "invalid_params" }).optional(),
+  unmapped: z.array(z.unknown()).max(MAX_CACHEABLE_STARS, { message: "invalid_params" }).optional(),
 });
 
 export type StargazerCacheEnvelope = z.infer<typeof stargazerCacheEnvelopeSchema>;

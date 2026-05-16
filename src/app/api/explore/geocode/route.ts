@@ -2,8 +2,29 @@
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 
 import { NextRequest, NextResponse } from "next/server";
+import { Ratelimit } from "@upstash/ratelimit";
+import { Redis } from "@upstash/redis";
 import { geocode } from "@/lib/geocoder";
-import { jsonError, logError } from "@/lib/api-helpers";
+import { jsonError, logError, getIP } from "@/lib/api-helpers";
+
+// Dedicated fail-closed limiter — each call may trigger Jawg or Nominatim,
+// so 10 req/min per IP is enforced regardless of the middleware strict-get tier.
+let _geocodeLimiter: Ratelimit | null = null;
+let _geocodeLimiterReady = false;
+const getGeocodeLimiter = (): Ratelimit | null => {
+  if (_geocodeLimiterReady) return _geocodeLimiter;
+  _geocodeLimiterReady = true;
+  try {
+    _geocodeLimiter = new Ratelimit({
+      redis: Redis.fromEnv(),
+      limiter: Ratelimit.slidingWindow(10, "60 s"),
+      prefix: "rl:explore-geocode",
+    });
+  } catch {
+    _geocodeLimiter = null;
+  }
+  return _geocodeLimiter;
+};
 
 export type GeocodeResponse = {
   lat: number;
@@ -31,6 +52,17 @@ const reverseGeocode = async (lat: number, lng: number): Promise<string | null> 
 };
 
 export const GET = async (req: NextRequest) => {
+  const limiter = getGeocodeLimiter();
+  if (limiter) {
+    try {
+      const { success } = await limiter.limit(getIP(req));
+      if (!success) return jsonError("rate_limit", 429);
+    } catch {
+      // Fail-closed: Redis unavailable → block to protect external geocoding APIs.
+      return jsonError("service_unavailable", 503);
+    }
+  }
+
   const { searchParams } = new URL(req.url);
   const q   = (searchParams.get("q") ?? "").trim().substring(0, 200);
   const lat = parseFloat(searchParams.get("lat") ?? "");

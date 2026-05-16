@@ -176,7 +176,8 @@ const rateLimit = async (
         },
       );
     }
-  } catch {
+  } catch (err) {
+    console.warn(`[rl] Upstash error ip=${ip}: ${err instanceof Error ? err.message : String(err)}`);
     if (failClosed) {
       return NextResponse.json({ error: "service_unavailable" }, { status: 503 });
     }
@@ -316,7 +317,8 @@ export const middleware = async (req: NextRequest): Promise<NextResponse> => {
     if (!checkReferer(req)) {
       return NextResponse.json({ error: "forbidden" }, { status: 403 });
     }
-    const blocked = await rateLimit(TIER_LIMITERS["stargazer-cache-get"], ip);
+    // Per-endpoint key: prevents a single endpoint from exhausting the shared tier quota.
+    const blocked = await rateLimit(TIER_LIMITERS["stargazer-cache-get"], `${ip}:${pathname}`);
     if (blocked) return blocked;
     return withCors(NextResponse.next(), false);
   }
@@ -336,13 +338,15 @@ export const middleware = async (req: NextRequest): Promise<NextResponse> => {
     if (!checkReferer(req)) {
       return NextResponse.json({ error: "forbidden" }, { status: 403 });
     }
-    const blocked = await rateLimit(TIER_LIMITERS["strict-get"], ip);
+    // Per-endpoint key: each strict-get route gets its own 30/min quota per IP.
+    const blocked = await rateLimit(TIER_LIMITERS["strict-get"], `${ip}:${pathname}`);
     if (blocked) return blocked;
     return withCors(NextResponse.next(), false);
   }
 
   // ── Moderate GET: rate limit only ─────────────────────────────────────────
-  const blocked = await rateLimit(TIER_LIMITERS["moderate-get"], ip);
+  // Per-endpoint key: browsing multiple pages doesn't exhaust a shared quota.
+  const blocked = await rateLimit(TIER_LIMITERS["moderate-get"], `${ip}:${pathname}`);
   if (blocked) return blocked;
   return withCors(NextResponse.next(), false);
 };

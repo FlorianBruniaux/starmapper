@@ -6,6 +6,17 @@ import { NextRequest } from "next/server";
 
 // ─── Mocks ───────────────────────────────────────────────────────────────────
 
+// Upstash — stub so getGeocodeLimiter() fails-open in tests.
+vi.mock("@upstash/ratelimit", () => ({
+  Ratelimit: class {
+    static slidingWindow() { return {}; }
+    async limit() { return { success: true }; }
+  },
+}));
+vi.mock("@upstash/redis", () => ({
+  Redis: { fromEnv: () => ({}) },
+}));
+
 const mockGeocode = vi.fn();
 
 vi.mock("@/lib/geocoder", () => ({

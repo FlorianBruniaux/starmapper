@@ -161,6 +161,18 @@ export const GET = async (
   if (!validated) return new NextResponse("Invalid repository", { status: 400 });
   const { owner, repo } = validated;
   const theme = req.nextUrl.searchParams.get("theme") === "light" ? "light" : "dark";
+  // Redirect to canonical URL to prevent CDN cache busting via extra query params.
+  // Only fires when unknown params are present (e.g. ?theme=dark&_=1234 → ?theme=dark).
+  // Does NOT fire for unknown theme values — those are silently normalized to "dark".
+  const hasExtraParams = [...req.nextUrl.searchParams.keys()].some((k) => k !== "theme");
+  if (hasExtraParams) {
+    const canonical = new URL(req.nextUrl.href);
+    canonical.search = `?theme=${theme}`;
+    return NextResponse.redirect(canonical, {
+      status: 301,
+      headers: { "Cache-Control": "no-store" },
+    });
+  }
   const key = { owner, repo };
 
   let points: Point[] = [];

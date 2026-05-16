@@ -34,7 +34,7 @@ export const POST = async (req: NextRequest) => {
     let lockAcquired = false;
     if (redis) {
       try {
-        const acquired = await redis.set(lockKey, "1", { nx: true, ex: 5 });
+        const acquired = await redis.set(lockKey, "1", { nx: true, ex: 60 });
         lockAcquired = acquired !== null;
       } catch { /* Redis unavailable — proceed without lock (TOCTOU risk accepted) */ }
       if (!lockAcquired) return NextResponse.json({ error: "cooldown_active", retryAfterSec: 5 }, { status: 429 });
