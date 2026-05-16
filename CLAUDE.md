@@ -570,7 +570,8 @@ import type { StargazerPoint } from "@/app/api/chunk/route";
 | `JAWG_TOKEN_HEADER` | Recommended | Jawg dedicated token — main stargazer geocoding via `starmapper.jawg.io` (x-api-key header + access-token query param) |
 | `JAWGMAP_ACCESS_TOKEN` | Recommended | Jawg token for explore autocomplete + reverse geocoding (`api.jawg.io`) |
 | `GEOAPIFY_APIKEY` | Recommended | Geoapify — geocoding fallback 1 |
-| `NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN` | Yes (client) | Jawg token for MapLibre tile style URL |
+| `NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN` | Yes (client) | Jawg token for MapLibre tile style URL (primary) |
+| `NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN_2` | No | Jawg fallback token — auto-used when primary hits Map Views limit (401/402/403/429) |
 | `NEXT_PUBLIC_APP_URL` | No | App URL for metadata |
 | `SM_TOKEN_SECRET` | Recommended | HMAC secret for session token anti-scraping (min 32 chars). Generate: `openssl rand -hex 32`. When unset, falls back to Referer check only. |
 | `UPSTASH_REDIS_REST_URL` | Recommended | Upstash Redis URL for distributed rate limiting |

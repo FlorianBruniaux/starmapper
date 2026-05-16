@@ -17,6 +17,47 @@ const styleCache = new Map<string, string | StyleSpecification>();
 const SESSION_PREFIX = "sm-style:";
 const SESSION_TTL_MS = 24 * 60 * 60 * 1000; // 24h
 
+// ─── Jawg token manager ───────────────────────────────────────────────────────
+// Supports two tokens: when the primary account hits its Map Views limit (25k/month),
+// fetchAndPatchStyle automatically falls back to the secondary token.
+// The active slot is persisted in sessionStorage so the switch survives hard refreshes.
+
+const JAWG_TOKEN_1 = process.env.NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN ?? "";
+const JAWG_TOKEN_2 = process.env.NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN_2 ?? "";
+const TOKEN_SLOT_KEY = "sm-jawg:token-slot";
+const QUOTA_STATUSES = new Set([401, 402, 403, 429]);
+
+let activeSlot: "1" | "2" = (() => {
+  if (typeof window !== "undefined" && JAWG_TOKEN_2) {
+    try {
+      if (sessionStorage.getItem(TOKEN_SLOT_KEY) === "2") return "2";
+    } catch { /* private browsing / quota */ }
+  }
+  return "1";
+})();
+
+/** Returns the Jawg access token currently active (primary or fallback). */
+export const getActiveJawgToken = (): string =>
+  activeSlot === "2" && JAWG_TOKEN_2 ? JAWG_TOKEN_2 : JAWG_TOKEN_1;
+
+const swapAccessToken = (url: string, token: string): string => {
+  try {
+    const u = new URL(url);
+    u.searchParams.set("access-token", token);
+    return u.toString();
+  } catch {
+    return url;
+  }
+};
+
+const switchToFallback = (): boolean => {
+  if (!JAWG_TOKEN_2 || activeSlot === "2") return false;
+  activeSlot = "2";
+  styleCache.clear(); // discard all token-1 cached entries
+  try { sessionStorage.setItem(TOKEN_SLOT_KEY, "2"); } catch {}
+  return true;
+};
+
 type StoredStyle = { value: StyleSpecification | string; storedAt: number };
 
 const readFromSession = (key: string): StyleSpecification | string | undefined => {
@@ -66,7 +107,13 @@ export const fetchAndPatchStyle = async (
   url: string,
   projection: MapProjection = "mercator",
 ): Promise<string | StyleSpecification> => {
-  const cacheKey = `${url}#${projection}`;
+  // If primary token is exhausted (previous failure or previous session), swap proactively
+  // so we don't fire a doomed request before detecting the error.
+  const effectiveUrl = activeSlot === "2" && JAWG_TOKEN_2
+    ? swapAccessToken(url, JAWG_TOKEN_2)
+    : url;
+
+  const cacheKey = `${effectiveUrl}#${projection}`;
 
   // 1. In-memory hit — cheapest possible path
   const inMemory = styleCache.get(cacheKey);
@@ -81,10 +128,16 @@ export const fetchAndPatchStyle = async (
 
   // 3. Network fetch + patch
   try {
-    const res = await fetch(url);
-    if (!res.ok) return url;
+    const res = await fetch(effectiveUrl);
+    if (!res.ok) {
+      // Quota / auth error on primary token → switch to fallback and retry once
+      if (QUOTA_STATUSES.has(res.status) && activeSlot === "1" && switchToFallback()) {
+        return fetchAndPatchStyle(swapAccessToken(url, JAWG_TOKEN_2), projection);
+      }
+      return effectiveUrl;
+    }
     const json = await res.json() as StyleSpecification;
-    if (!json || typeof json !== "object") return url;
+    if (!json || typeof json !== "object") return effectiveUrl;
     json.projection = { type: projection };
     for (const layer of json.layers ?? []) {
       const fonts = (layer as { layout?: { "text-font"?: string[] } }).layout?.["text-font"];
@@ -115,7 +168,7 @@ export const fetchAndPatchStyle = async (
     writeToSession(cacheKey, json);
     return json;
   } catch {
-    styleCache.set(cacheKey, url);
-    return url;
+    styleCache.set(cacheKey, effectiveUrl);
+    return effectiveUrl;
   }
 };
