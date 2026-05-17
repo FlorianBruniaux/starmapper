@@ -1,0 +1,1667 @@
+{
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/middleware.ts": {
+    "mtime": 1778997639.8309283,
+    "ast_hash": "919bafddddd983a5aab2817285338edd",
+    "semantic_hash": "919bafddddd983a5aab2817285338edd"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/robots.ts": {
+    "mtime": 1776174528.31961,
+    "ast_hash": "1e4774f6fd9679760d3aeeb281e9077b",
+    "semantic_hash": "1e4774f6fd9679760d3aeeb281e9077b"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/opengraph-image.tsx": {
+    "mtime": 1775495345.146206,
+    "ast_hash": "bbf7c82bd839c4434b4e917609671f8d",
+    "semantic_hash": "bbf7c82bd839c4434b4e917609671f8d"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/sitemap.ts": {
+    "mtime": 1778858130.192642,
+    "ast_hash": "c4019bc0534e9d34cb5dd93f2083cc9e",
+    "semantic_hash": "c4019bc0534e9d34cb5dd93f2083cc9e"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/layout.tsx": {
+    "mtime": 1778857552.9146676,
+    "ast_hash": "410a3d0786260bdf22dcb74a397d53e5",
+    "semantic_hash": "410a3d0786260bdf22dcb74a397d53e5"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/error.tsx": {
+    "mtime": 1778664294.846494,
+    "ast_hash": "365ea4b41dcbf594d67f028191f0157b",
+    "semantic_hash": "365ea4b41dcbf594d67f028191f0157b"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/page.tsx": {
+    "mtime": 1778864400.3436158,
+    "ast_hash": "fe3a9c89af4b10140f4afce7cca975bd",
+    "semantic_hash": "fe3a9c89af4b10140f4afce7cca975bd"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/vs/star-history/page.tsx": {
+    "mtime": 1778858775.3967876,
+    "ast_hash": "bea33858de105b307bee7dc1fa7532d9",
+    "semantic_hash": "bea33858de105b307bee7dc1fa7532d9"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/repos/layout.tsx": {
+    "mtime": 1776174672.4624658,
+    "ast_hash": "2e1f960e8c44b300a55d20581b140441",
+    "semantic_hash": "2e1f960e8c44b300a55d20581b140441"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/repos/page.tsx": {
+    "mtime": 1778959620.4076018,
+    "ast_hash": "bfdd6ec882e8c3ff2a94ee4721228c61",
+    "semantic_hash": "bfdd6ec882e8c3ff2a94ee4721228c61"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/privacy/page.tsx": {
+    "mtime": 1775495345.1459541,
+    "ast_hash": "48b7d6916927cc0fca3278784683d7bf",
+    "semantic_hash": "48b7d6916927cc0fca3278784683d7bf"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/devs/layout.tsx": {
+    "mtime": 1778846770.5105243,
+    "ast_hash": "486d919b970c5b53414c74c649e5b4f7",
+    "semantic_hash": "486d919b970c5b53414c74c649e5b4f7"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/devs/page.tsx": {
+    "mtime": 1778858679.2895682,
+    "ast_hash": "94aa0f4ce925211fd2e4cc16791e2392",
+    "semantic_hash": "94aa0f4ce925211fd2e4cc16791e2392"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/devs/[language]/page.client.tsx": {
+    "mtime": 1778855310.8409097,
+    "ast_hash": "4db919c50fd4497f7bc7ea9dacabcf80",
+    "semantic_hash": "4db919c50fd4497f7bc7ea9dacabcf80"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/devs/[language]/layout.tsx": {
+    "mtime": 1776174702.5355768,
+    "ast_hash": "dd19c20d560c32a401736425d71c00f2",
+    "semantic_hash": "dd19c20d560c32a401736425d71c00f2"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/devs/[language]/page.tsx": {
+    "mtime": 1778857533.8910267,
+    "ast_hash": "f2fd47c245e80df344061095ef158356",
+    "semantic_hash": "f2fd47c245e80df344061095ef158356"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/devs/atlas/layout.tsx": {
+    "mtime": 1778846790.1009128,
+    "ast_hash": "4206ed7e8303251d6720165df12c66cb",
+    "semantic_hash": "4206ed7e8303251d6720165df12c66cb"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/devs/atlas/page.tsx": {
+    "mtime": 1778617489.2979128,
+    "ast_hash": "22c03f3455b16d080d5220330782087a",
+    "semantic_hash": "22c03f3455b16d080d5220330782087a"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/changelog/page.tsx": {
+    "mtime": 1778858722.7166295,
+    "ast_hash": "ac8cb489290062f3eb4b40db4142985b",
+    "semantic_hash": "ac8cb489290062f3eb4b40db4142985b"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/faq/page.tsx": {
+    "mtime": 1778858692.6929293,
+    "ast_hash": "494d8b3ba870fed4f1b9a7e0a096f59b",
+    "semantic_hash": "494d8b3ba870fed4f1b9a7e0a096f59b"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/terms/page.tsx": {
+    "mtime": 1775495345.1465633,
+    "ast_hash": "9391dafc3bbf0cfb6ec386a5cf95e9d0",
+    "semantic_hash": "9391dafc3bbf0cfb6ec386a5cf95e9d0"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/sitemap/page.tsx": {
+    "mtime": 1778858792.3792827,
+    "ast_hash": "58e941cf86e7494159b52ddde9b8daf2",
+    "semantic_hash": "58e941cf86e7494159b52ddde9b8daf2"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/organic-score/calibration/page.tsx": {
+    "mtime": 1778353289.7812033,
+    "ast_hash": "738e44c6770adb77d9e7def7e68ffdf3",
+    "semantic_hash": "738e44c6770adb77d9e7def7e68ffdf3"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/explore/layout.tsx": {
+    "mtime": 1778846813.3999538,
+    "ast_hash": "9ae84ff1c6ef756b165b280347fe92b5",
+    "semantic_hash": "9ae84ff1c6ef756b165b280347fe92b5"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/explore/page.tsx": {
+    "mtime": 1778617545.668289,
+    "ast_hash": "35ae671ed6c8b7783178c27028eb643a",
+    "semantic_hash": "35ae671ed6c8b7783178c27028eb643a"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/feeds/page.client.tsx": {
+    "mtime": 1777650123.911625,
+    "ast_hash": "16946c1fecbcbd1c43a3fae486856b1d",
+    "semantic_hash": "16946c1fecbcbd1c43a3fae486856b1d"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/feeds/page.tsx": {
+    "mtime": 1778858634.8651729,
+    "ast_hash": "8cf242f688226bc61e6e0da5a9d0d3ae",
+    "semantic_hash": "8cf242f688226bc61e6e0da5a9d0d3ae"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/profile/[login]/layout.tsx": {
+    "mtime": 1779021700.1970813,
+    "ast_hash": "30b4ba208722b42b4c75070c52849907",
+    "semantic_hash": "30b4ba208722b42b4c75070c52849907"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/profile/[login]/page.tsx": {
+    "mtime": 1779001335.5810552,
+    "ast_hash": "5d795223f36902b8f466592d7b673bfa",
+    "semantic_hash": "5d795223f36902b8f466592d7b673bfa"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/feed/[login]/page.client.tsx": {
+    "mtime": 1777651715.7203243,
+    "ast_hash": "7c9619b57ef35acf659d7de19a6cc596",
+    "semantic_hash": "7c9619b57ef35acf659d7de19a6cc596"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/feed/[login]/page.tsx": {
+    "mtime": 1778858705.227142,
+    "ast_hash": "fa7bab6e5de574f975a52f969ec96706",
+    "semantic_hash": "fa7bab6e5de574f975a52f969ec96706"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/sponsor/page.tsx": {
+    "mtime": 1778859178.5572376,
+    "ast_hash": "b19bc7c52dce84c19fce4bb8b65c5061",
+    "semantic_hash": "b19bc7c52dce84c19fce4bb8b65c5061"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/vitals/route.ts": {
+    "mtime": 1778588167.3259773,
+    "ast_hash": "f23d393caddb6f3d9b90501b3830d0a3",
+    "semantic_hash": "f23d393caddb6f3d9b90501b3830d0a3"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/vitals/__tests__/route.test.ts": {
+    "mtime": 1778330510.1280189,
+    "ast_hash": "9d52f0c00f5c8a48376f2a24025427e9",
+    "semantic_hash": "9d52f0c00f5c8a48376f2a24025427e9"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/repos/route.ts": {
+    "mtime": 1779021356.030015,
+    "ast_hash": "4568b45bb7744a4548d98d7a3de01b6e",
+    "semantic_hash": "4568b45bb7744a4548d98d7a3de01b6e"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/repos/__tests__/route.test.ts": {
+    "mtime": 1778330346.835066,
+    "ast_hash": "f235c861598b05ac344d85b857572bbe",
+    "semantic_hash": "f235c861598b05ac344d85b857572bbe"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/stargazer-cache/route.ts": {
+    "mtime": 1778588167.3239374,
+    "ast_hash": "c26f0380926253453baf53337ecb01b8",
+    "semantic_hash": "c26f0380926253453baf53337ecb01b8"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/stargazer-cache/__tests__/route.test.ts": {
+    "mtime": 1778322370.9428332,
+    "ast_hash": "f5cefad20f743f25d2c52db652a0fb0f",
+    "semantic_hash": "f5cefad20f743f25d2c52db652a0fb0f"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/stargazer-cache/[owner]/[repo]/route.ts": {
+    "mtime": 1778998024.2123573,
+    "ast_hash": "eae211038a6723dc56793841eea66e59",
+    "semantic_hash": "eae211038a6723dc56793841eea66e59"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/stargazer-cache/[owner]/[repo]/__tests__/route.test.ts": {
+    "mtime": 1778328992.527622,
+    "ast_hash": "45dfd3238121f4910a9c0c572727beba",
+    "semantic_hash": "45dfd3238121f4910a9c0c572727beba"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/track/route.test.ts": {
+    "mtime": 1778311698.4109387,
+    "ast_hash": "22dafd7fd2467ffaf3497cb57311143e",
+    "semantic_hash": "22dafd7fd2467ffaf3497cb57311143e"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/track/route.ts": {
+    "mtime": 1778588167.325569,
+    "ast_hash": "bb772ae459d6ca88d3dddc7c6ee89048",
+    "semantic_hash": "bb772ae459d6ca88d3dddc7c6ee89048"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/track/__tests__/route.test.ts": {
+    "mtime": 1778331524.5246277,
+    "ast_hash": "71dc1f87d4d4d6694342eab0cc5ec0ee",
+    "semantic_hash": "71dc1f87d4d4d6694342eab0cc5ec0ee"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/user-repos/route.ts": {
+    "mtime": 1778998024.2124665,
+    "ast_hash": "de08e2ff9d432efd5785100ee94faa84",
+    "semantic_hash": "de08e2ff9d432efd5785100ee94faa84"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/user-repos/__tests__/route.test.ts": {
+    "mtime": 1778330118.5391667,
+    "ast_hash": "deedf928f60ac90aa0c4bbc308662668",
+    "semantic_hash": "deedf928f60ac90aa0c4bbc308662668"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/chunk/route.ts": {
+    "mtime": 1778998024.2122762,
+    "ast_hash": "9e94e88687ed982f9674d9abcdc3cd36",
+    "semantic_hash": "9e94e88687ed982f9674d9abcdc3cd36"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/chunk/__tests__/route.test.ts": {
+    "mtime": 1779025181.9415638,
+    "ast_hash": "4f551c4e9cd29cf21e86c0b3f24d7903",
+    "semantic_hash": "4f551c4e9cd29cf21e86c0b3f24d7903"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/devs/route.ts": {
+    "mtime": 1775851393.8221207,
+    "ast_hash": "b8fb61f12ae7c9e5f75b55b5645e2f25",
+    "semantic_hash": "b8fb61f12ae7c9e5f75b55b5645e2f25"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/devs/[language]/route.ts": {
+    "mtime": 1776010871.5258732,
+    "ast_hash": "3af1ef9022bd0b74db6a8ca26daa1eec",
+    "semantic_hash": "3af1ef9022bd0b74db6a8ca26daa1eec"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/devs/[language]/__tests__/route.test.ts": {
+    "mtime": 1778331019.159118,
+    "ast_hash": "d7383fb0e34e378d166cf23019f9d650",
+    "semantic_hash": "d7383fb0e34e378d166cf23019f9d650"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/devs/__tests__/route.test.ts": {
+    "mtime": 1775680114.4687502,
+    "ast_hash": "0f79911cf62b2b93789615706521f62b",
+    "semantic_hash": "0f79911cf62b2b93789615706521f62b"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/devs/atlas/route.test.ts": {
+    "mtime": 1775748025.2606487,
+    "ast_hash": "fd7f150bcb085c319862875507f65d9b",
+    "semantic_hash": "fd7f150bcb085c319862875507f65d9b"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/devs/atlas/route.ts": {
+    "mtime": 1775748003.350156,
+    "ast_hash": "bcbd4f285a837f352aad260be734ed48",
+    "semantic_hash": "bcbd4f285a837f352aad260be734ed48"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/devs/atlas/__tests__/route.test.ts": {
+    "mtime": 1778338672.29881,
+    "ast_hash": "9b3cdc7d38497b8b4e7c02829b28df25",
+    "semantic_hash": "9b3cdc7d38497b8b4e7c02829b28df25"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/repo-info/route.ts": {
+    "mtime": 1778998024.2123666,
+    "ast_hash": "b15911427c864bb60f52f2a5d559b761",
+    "semantic_hash": "b15911427c864bb60f52f2a5d559b761"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/repo-info/__tests__/route.test.ts": {
+    "mtime": 1778329899.9335868,
+    "ast_hash": "a7078d973bb76b259556446086984cbf",
+    "semantic_hash": "a7078d973bb76b259556446086984cbf"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/admin/refresh-grid-mv/route.ts": {
+    "mtime": 1778998024.2122583,
+    "ast_hash": "ac9e3c62d754aaf93336dbf656da6186",
+    "semantic_hash": "ac9e3c62d754aaf93336dbf656da6186"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/admin/refresh-grid-mv/__tests__/route.test.ts": {
+    "mtime": 1778947600.3621626,
+    "ast_hash": "43a809e87b14fb49c243a57c6894606d",
+    "semantic_hash": "43a809e87b14fb49c243a57c6894606d"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/admin/organic-score-stats/route.ts": {
+    "mtime": 1778998024.212249,
+    "ast_hash": "a46389fed0fc9b5ce30c35d86a013c5c",
+    "semantic_hash": "a46389fed0fc9b5ce30c35d86a013c5c"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/admin/organic-score-stats/__tests__/route.test.ts": {
+    "mtime": 1778864716.893627,
+    "ast_hash": "d950d1dcfde9820f09c7bc1962c8ce5e",
+    "semantic_hash": "d950d1dcfde9820f09c7bc1962c8ce5e"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/admin/cleanup/route.ts": {
+    "mtime": 1778998024.212203,
+    "ast_hash": "a6eb8491a37fbc92187df265d2515fb3",
+    "semantic_hash": "a6eb8491a37fbc92187df265d2515fb3"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/admin/cleanup/__tests__/route.test.ts": {
+    "mtime": 1778941831.3434622,
+    "ast_hash": "d71f685e8925291cdd621bfa489115ea",
+    "semantic_hash": "d71f685e8925291cdd621bfa489115ea"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/admin/import-geocache/route.ts": {
+    "mtime": 1778998024.2122364,
+    "ast_hash": "b32b320127b4f7adce6993a234fa5630",
+    "semantic_hash": "b32b320127b4f7adce6993a234fa5630"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/admin/import-geocache/__tests__/route.test.ts": {
+    "mtime": 1778864693.5118606,
+    "ast_hash": "08197bbf476742b327653dd22a5ca7e2",
+    "semantic_hash": "08197bbf476742b327653dd22a5ca7e2"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/admin/clear-geocache/route.ts": {
+    "mtime": 1778998024.2122214,
+    "ast_hash": "76b98b82d61f0ce121738634bcc5ca28",
+    "semantic_hash": "76b98b82d61f0ce121738634bcc5ca28"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/admin/clear-geocache/__tests__/route.test.ts": {
+    "mtime": 1778864685.695182,
+    "ast_hash": "a7725d221a84bcc4ce3e0bcbf5c38380",
+    "semantic_hash": "a7725d221a84bcc4ce3e0bcbf5c38380"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/admin/delete-user/route.ts": {
+    "mtime": 1778998024.21223,
+    "ast_hash": "65e592559094f8923667f9d224523c26",
+    "semantic_hash": "65e592559094f8923667f9d224523c26"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/admin/delete-user/__tests__/route.test.ts": {
+    "mtime": 1778864725.0561678,
+    "ast_hash": "0493e5adadc93841e28e9caa326d84cd",
+    "semantic_hash": "0493e5adadc93841e28e9caa326d84cd"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/geo/[owner]/[repo]/route.ts": {
+    "mtime": 1778998024.212321,
+    "ast_hash": "0d3ede5b3c85b165e3b27af5d94634d4",
+    "semantic_hash": "0d3ede5b3c85b165e3b27af5d94634d4"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/geo/[owner]/[repo]/__tests__/route.test.ts": {
+    "mtime": 1778947600.3633902,
+    "ast_hash": "b5ac8fb4fdb6c9152b8477f801dae65e",
+    "semantic_hash": "b5ac8fb4fdb6c9152b8477f801dae65e"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/user-details/route.ts": {
+    "mtime": 1778998024.2124712,
+    "ast_hash": "5dca5abb4b6c0fe045149560f5052a8e",
+    "semantic_hash": "5dca5abb4b6c0fe045149560f5052a8e"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/user-details/__tests__/route.test.ts": {
+    "mtime": 1778947600.3660839,
+    "ast_hash": "33809c28b68a45ebb11546d0b09ca754",
+    "semantic_hash": "33809c28b68a45ebb11546d0b09ca754"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/organic-score/[owner]/[repo]/route.ts": {
+    "mtime": 1778998024.212345,
+    "ast_hash": "c3fb7e08506c117b7988853b8eee7dbc",
+    "semantic_hash": "c3fb7e08506c117b7988853b8eee7dbc"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/organic-score/[owner]/[repo]/refresh/route.ts": {
+    "mtime": 1778998024.2123399,
+    "ast_hash": "21c0bc544063fd21ba7f674d82f901a2",
+    "semantic_hash": "21c0bc544063fd21ba7f674d82f901a2"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/organic-score/[owner]/[repo]/refresh/__tests__/route.test.ts": {
+    "mtime": 1778338860.7415338,
+    "ast_hash": "9bdf54c547ebd7ae6d73b3065b069620",
+    "semantic_hash": "9bdf54c547ebd7ae6d73b3065b069620"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/organic-score/[owner]/[repo]/__tests__/route.test.ts": {
+    "mtime": 1778338693.6706042,
+    "ast_hash": "74e4cdbe611e0059b6c55fd05f6a5dfc",
+    "semantic_hash": "74e4cdbe611e0059b6c55fd05f6a5dfc"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/explore/route.ts": {
+    "mtime": 1775639333.2189198,
+    "ast_hash": "e115dae14297bd9e57bccdf363571375",
+    "semantic_hash": "e115dae14297bd9e57bccdf363571375"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/explore/top/route.ts": {
+    "mtime": 1778998024.212319,
+    "ast_hash": "69fcdce9234e73071e39e3e96b21c98f",
+    "semantic_hash": "69fcdce9234e73071e39e3e96b21c98f"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/explore/top/__tests__/route.test.ts": {
+    "mtime": 1778329992.612053,
+    "ast_hash": "c44f76f7c5f6f9e791c9a2a37e1da3c9",
+    "semantic_hash": "c44f76f7c5f6f9e791c9a2a37e1da3c9"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/explore/global-map/route.ts": {
+    "mtime": 1775721831.598051,
+    "ast_hash": "7971c92585d6f833e05a45b2106841d4",
+    "semantic_hash": "7971c92585d6f833e05a45b2106841d4"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/explore/global-map/__tests__/route.test.ts": {
+    "mtime": 1778331305.8339303,
+    "ast_hash": "e8111081afd526de4ceda93aaf04c3b7",
+    "semantic_hash": "e8111081afd526de4ceda93aaf04c3b7"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/explore/power/route.ts": {
+    "mtime": 1778998024.2123082,
+    "ast_hash": "5bf2187a817efa868c1626dabbab1fb0",
+    "semantic_hash": "5bf2187a817efa868c1626dabbab1fb0"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/explore/power/__tests__/route.test.ts": {
+    "mtime": 1778330452.6034184,
+    "ast_hash": "6ced833bf0279b4c5f726880045afa5b",
+    "semantic_hash": "6ced833bf0279b4c5f726880045afa5b"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/explore/user-repos/route.test.ts": {
+    "mtime": 1778078843.6992226,
+    "ast_hash": "252a7ab2b26e47633173b665b222552e",
+    "semantic_hash": "252a7ab2b26e47633173b665b222552e"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/explore/user-repos/route.ts": {
+    "mtime": 1778998024.212309,
+    "ast_hash": "beb91f86ab2719fad6c894f3b81a63d8",
+    "semantic_hash": "beb91f86ab2719fad6c894f3b81a63d8"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/explore/user-repos/__tests__/route.test.ts": {
+    "mtime": 1778338944.4204135,
+    "ast_hash": "3e0ec983dc3a473778362101582c7f18",
+    "semantic_hash": "3e0ec983dc3a473778362101582c7f18"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/explore/autocomplete/route.ts": {
+    "mtime": 1778998024.2122872,
+    "ast_hash": "c2c4a4ffe6a487414e290aab9d71245a",
+    "semantic_hash": "c2c4a4ffe6a487414e290aab9d71245a"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/explore/autocomplete/__tests__/route.test.ts": {
+    "mtime": 1778330045.980522,
+    "ast_hash": "4486fdca6207ba2f53b904391900755b",
+    "semantic_hash": "4486fdca6207ba2f53b904391900755b"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/explore/nearby/route.ts": {
+    "mtime": 1778998024.2123091,
+    "ast_hash": "e627312d78fd8315dfd58b861783ffe5",
+    "semantic_hash": "e627312d78fd8315dfd58b861783ffe5"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/explore/nearby/__tests__/route.test.ts": {
+    "mtime": 1778330019.0552027,
+    "ast_hash": "f09528b5039d85ce9c2452dd109e80f4",
+    "semantic_hash": "f09528b5039d85ce9c2452dd109e80f4"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/explore/__tests__/route.test.ts": {
+    "mtime": 1778338877.9156878,
+    "ast_hash": "54018d340fd27ba694c4581a3802ce43",
+    "semantic_hash": "54018d340fd27ba694c4581a3802ce43"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/explore/locations/route.ts": {
+    "mtime": 1778998024.2123067,
+    "ast_hash": "adf16ecb8194c1082283f0ba30b72531",
+    "semantic_hash": "adf16ecb8194c1082283f0ba30b72531"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/explore/locations/__tests__/route.test.ts": {
+    "mtime": 1778330764.5010283,
+    "ast_hash": "ddef1833b55bb703a64eab3797153013",
+    "semantic_hash": "ddef1833b55bb703a64eab3797153013"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/explore/companies/route.ts": {
+    "mtime": 1778998024.2122905,
+    "ast_hash": "4096f521072cb4563329f28daff32292",
+    "semantic_hash": "4096f521072cb4563329f28daff32292"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/explore/companies/__tests__/route.test.ts": {
+    "mtime": 1778330819.6479778,
+    "ast_hash": "bd3c1a05d25d25f361bb88fd70e2cdf6",
+    "semantic_hash": "bd3c1a05d25d25f361bb88fd70e2cdf6"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/explore/geocode/route.ts": {
+    "mtime": 1778998024.212294,
+    "ast_hash": "d06fe84bd2f0b5abe68447ec513804a8",
+    "semantic_hash": "d06fe84bd2f0b5abe68447ec513804a8"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/explore/geocode/__tests__/route.test.ts": {
+    "mtime": 1778956642.0513587,
+    "ast_hash": "c55c451f70f37c2c7d58e108a268b3be",
+    "semantic_hash": "c55c451f70f37c2c7d58e108a268b3be"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/badge-update/route.ts": {
+    "mtime": 1778998024.2122953,
+    "ast_hash": "0425c23864954ef003f43a447f53f214",
+    "semantic_hash": "0425c23864954ef003f43a447f53f214"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/badge-update/__tests__/route.test.ts": {
+    "mtime": 1778329804.0283911,
+    "ast_hash": "57eee32ed6beea3c2d3b074ca508509f",
+    "semantic_hash": "57eee32ed6beea3c2d3b074ca508509f"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/recalculate-location/route.ts": {
+    "mtime": 1778998024.2123396,
+    "ast_hash": "844b9e8564932f5af0a42e78d290adf2",
+    "semantic_hash": "844b9e8564932f5af0a42e78d290adf2"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/recalculate-location/__tests__/route.test.ts": {
+    "mtime": 1778331544.8462374,
+    "ast_hash": "5baea84e701dd7007eedf60bb124bc55",
+    "semantic_hash": "5baea84e701dd7007eedf60bb124bc55"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/profile/[login]/route.ts": {
+    "mtime": 1778998024.2123566,
+    "ast_hash": "7e4db87936cda85196c9224205de19f4",
+    "semantic_hash": "7e4db87936cda85196c9224205de19f4"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/profile/[login]/refresh/route.ts": {
+    "mtime": 1778998024.2123492,
+    "ast_hash": "21ed6f842853f2894e4102bc9e2124ff",
+    "semantic_hash": "21ed6f842853f2894e4102bc9e2124ff"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/profile/[login]/refresh/__tests__/route.test.ts": {
+    "mtime": 1778947600.3653693,
+    "ast_hash": "45f7b62d2db1bd7d66d59f61247d2f41",
+    "semantic_hash": "45f7b62d2db1bd7d66d59f61247d2f41"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/profile/[login]/__tests__/route.test.ts": {
+    "mtime": 1778947600.3649554,
+    "ast_hash": "235972b3f908e681168e18f6399fb024",
+    "semantic_hash": "235972b3f908e681168e18f6399fb024"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/news/route.ts": {
+    "mtime": 1778998024.2123327,
+    "ast_hash": "65f786378d02a76dee3124a4eefb2721",
+    "semantic_hash": "65f786378d02a76dee3124a4eefb2721"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/news/__tests__/route.test.ts": {
+    "mtime": 1778329269.8690646,
+    "ast_hash": "f1e764d69b43309ebc7e7415e84d9c61",
+    "semantic_hash": "f1e764d69b43309ebc7e7415e84d9c61"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/news/item/[id]/route.ts": {
+    "mtime": 1778998024.2123268,
+    "ast_hash": "86012056630313dbc004c9c293592bfd",
+    "semantic_hash": "86012056630313dbc004c9c293592bfd"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/news/item/[id]/__tests__/route.test.ts": {
+    "mtime": 1778329876.198749,
+    "ast_hash": "b08c6c5c16fe9f9cc1917810f2fb7721",
+    "semantic_hash": "b08c6c5c16fe9f9cc1917810f2fb7721"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/news/[login]/route.ts": {
+    "mtime": 1778998024.2123308,
+    "ast_hash": "816359d188f69746bee5b26009f52297",
+    "semantic_hash": "816359d188f69746bee5b26009f52297"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/news/[login]/__tests__/route.test.ts": {
+    "mtime": 1778329850.4272053,
+    "ast_hash": "413ef12953db6241e47c79fd05fdbbdb",
+    "semantic_hash": "413ef12953db6241e47c79fd05fdbbdb"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/feed/[login]/rss/route.ts": {
+    "mtime": 1778998024.2123227,
+    "ast_hash": "2d8a03b2fe6d21c744c04aad9be87716",
+    "semantic_hash": "2d8a03b2fe6d21c744c04aad9be87716"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/feed/[login]/rss/__tests__/route.test.ts": {
+    "mtime": 1778330720.6190722,
+    "ast_hash": "c9b5c8d61563dcebdfb86d5fc98e2372",
+    "semantic_hash": "c9b5c8d61563dcebdfb86d5fc98e2372"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/feed/[login]/json/route.ts": {
+    "mtime": 1778998024.2123175,
+    "ast_hash": "241c98b8a8fdd97b11923d6217bac1d0",
+    "semantic_hash": "241c98b8a8fdd97b11923d6217bac1d0"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/feed/[login]/json/__tests__/route.test.ts": {
+    "mtime": 1778331328.7910523,
+    "ast_hash": "7229c6a7076a327dea6424d6674390a9",
+    "semantic_hash": "7229c6a7076a327dea6424d6674390a9"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/trending/route.ts": {
+    "mtime": 1776411998.7733085,
+    "ast_hash": "71b0fa52e6f50f9ee75c9381a9aedcfe",
+    "semantic_hash": "71b0fa52e6f50f9ee75c9381a9aedcfe"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/trending/__tests__/route.test.ts": {
+    "mtime": 1778330742.309649,
+    "ast_hash": "4a359b3d52d00486cd361c4c5dfedff0",
+    "semantic_hash": "4a359b3d52d00486cd361c4c5dfedff0"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/watch/[owner]/[repo]/route.ts": {
+    "mtime": 1778998024.212521,
+    "ast_hash": "76482ebe90cb7ea30b2cc809624de2a9",
+    "semantic_hash": "76482ebe90cb7ea30b2cc809624de2a9"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/watch/[owner]/[repo]/__tests__/route.test.ts": {
+    "mtime": 1778958249.6756597,
+    "ast_hash": "d59d0556a0bfd196b568c69724700569",
+    "semantic_hash": "d59d0556a0bfd196b568c69724700569"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/map-image/[owner]/[repo]/route.ts": {
+    "mtime": 1778998024.2123299,
+    "ast_hash": "e7f3c0854a5b3cb69a1e5cfe388e464a",
+    "semantic_hash": "e7f3c0854a5b3cb69a1e5cfe388e464a"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/map-image/[owner]/[repo]/__tests__/route.test.ts": {
+    "mtime": 1778328957.79489,
+    "ast_hash": "0c7d877a74b9538e2ee53278281c035e",
+    "semantic_hash": "0c7d877a74b9538e2ee53278281c035e"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/stats/[owner]/[repo]/route.ts": {
+    "mtime": 1778998024.2123632,
+    "ast_hash": "133b7ae21b46c1b5aab9f5f60231f247",
+    "semantic_hash": "133b7ae21b46c1b5aab9f5f60231f247"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/stats/[owner]/[repo]/geo-velocity/route.ts": {
+    "mtime": 1778998024.212353,
+    "ast_hash": "e7c3acdc2bfc01ce80f3232381f555c8",
+    "semantic_hash": "e7c3acdc2bfc01ce80f3232381f555c8"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/stats/[owner]/[repo]/geo-velocity/__tests__/route.test.ts": {
+    "mtime": 1778958224.3406508,
+    "ast_hash": "a766069fda563f77ca32bf7ac53e420c",
+    "semantic_hash": "a766069fda563f77ca32bf7ac53e420c"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/stats/[owner]/[repo]/growth/route.ts": {
+    "mtime": 1778998024.2123556,
+    "ast_hash": "ef839740c21930de418de7916e9007f3",
+    "semantic_hash": "ef839740c21930de418de7916e9007f3"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/stats/[owner]/[repo]/growth/__tests__/route.test.ts": {
+    "mtime": 1778958199.1656275,
+    "ast_hash": "8e634c830bc4116a0c42e1a388b15f68",
+    "semantic_hash": "8e634c830bc4116a0c42e1a388b15f68"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/stats/[owner]/[repo]/__tests__/route.test.ts": {
+    "mtime": 1778331361.6582685,
+    "ast_hash": "72c22e5c7de974509d6692507b255431",
+    "semantic_hash": "72c22e5c7de974509d6692507b255431"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/stats/[owner]/[repo]/top-users/route.ts": {
+    "mtime": 1778998024.2123654,
+    "ast_hash": "428a4c57bdf8148806378e845257a426",
+    "semantic_hash": "428a4c57bdf8148806378e845257a426"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/stats/[owner]/[repo]/top-users/__tests__/route.test.ts": {
+    "mtime": 1778947600.3658106,
+    "ast_hash": "fdd8966aea744b5222bc3de555f2c1ad",
+    "semantic_hash": "fdd8966aea744b5222bc3de555f2c1ad"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/badge/[owner]/[repo]/route.ts": {
+    "mtime": 1778998024.2122812,
+    "ast_hash": "17dab93fdf626f39d6a570e05e8d1147",
+    "semantic_hash": "17dab93fdf626f39d6a570e05e8d1147"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/api/badge/[owner]/[repo]/__tests__/route.test.ts": {
+    "mtime": 1778329826.08675,
+    "ast_hash": "ce409c095e2eba09f3f7158b157df107",
+    "semantic_hash": "ce409c095e2eba09f3f7158b157df107"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/trending/page.tsx": {
+    "mtime": 1776412079.9218225,
+    "ast_hash": "d04ba50b97b8297201861da7b3eaa28d",
+    "semantic_hash": "d04ba50b97b8297201861da7b3eaa28d"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/legal/page.tsx": {
+    "mtime": 1775495345.1563406,
+    "ast_hash": "eb62fba5d6a8bde30e0119c6527820fc",
+    "semantic_hash": "eb62fba5d6a8bde30e0119c6527820fc"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/[owner]/page.tsx": {
+    "mtime": 1778858757.8286793,
+    "ast_hash": "90b388f4c296f352319f2f5ec6c872f4",
+    "semantic_hash": "90b388f4c296f352319f2f5ec6c872f4"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/[owner]/[repo]/opengraph-image.tsx": {
+    "mtime": 1778998024.2122123,
+    "ast_hash": "fa265c9292c4ab8d5690cc5af47894de",
+    "semantic_hash": "fa265c9292c4ab8d5690cc5af47894de"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/[owner]/[repo]/repo-cache.test.ts": {
+    "mtime": 1779025319.7870803,
+    "ast_hash": "adbdfc64e27a72057da9c64c0c60e64e",
+    "semantic_hash": "adbdfc64e27a72057da9c64c0c60e64e"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/[owner]/[repo]/layout.tsx": {
+    "mtime": 1779021599.032993,
+    "ast_hash": "d38701314ae5f63cf1502a5b4969aaf7",
+    "semantic_hash": "d38701314ae5f63cf1502a5b4969aaf7"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/[owner]/[repo]/loading.tsx": {
+    "mtime": 1778663929.7281663,
+    "ast_hash": "2e604cd8954bf8d1c28b1b2efd4810f8",
+    "semantic_hash": "2e604cd8954bf8d1c28b1b2efd4810f8"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/[owner]/[repo]/page.tsx": {
+    "mtime": 1779025255.1172738,
+    "ast_hash": "fb5cd635945555e7e7a016af46a4578d",
+    "semantic_hash": "fb5cd635945555e7e7a016af46a4578d"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/[owner]/[repo]/repo-cache.ts": {
+    "mtime": 1779025319.736615,
+    "ast_hash": "6919e8dc9c77e6b5bc47fd401c7d7ede",
+    "semantic_hash": "6919e8dc9c77e6b5bc47fd401c7d7ede"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/schemas/admin-delete-user.ts": {
+    "mtime": 1778673512.5677507,
+    "ast_hash": "22d624fc8cb30113e1816777ca728753",
+    "semantic_hash": "22d624fc8cb30113e1816777ca728753"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/schemas/vitals.ts": {
+    "mtime": 1778588167.343153,
+    "ast_hash": "d0ff978aa21dba672cdcac63e5735582",
+    "semantic_hash": "d0ff978aa21dba672cdcac63e5735582"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/schemas/badge-update.ts": {
+    "mtime": 1778588167.3366578,
+    "ast_hash": "f1cf8f9d2c76472d6a0698df8c5dceb3",
+    "semantic_hash": "f1cf8f9d2c76472d6a0698df8c5dceb3"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/schemas/news.ts": {
+    "mtime": 1778588167.3414707,
+    "ast_hash": "2ae3d9a3888bfd64d88c2a3b84b5ec3a",
+    "semantic_hash": "2ae3d9a3888bfd64d88c2a3b84b5ec3a"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/schemas/admin-import-geocache.ts": {
+    "mtime": 1778673509.9468117,
+    "ast_hash": "d3f2aa8ec2fa36a2a757a977fcfafb30",
+    "semantic_hash": "d3f2aa8ec2fa36a2a757a977fcfafb30"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/schemas/chunk.ts": {
+    "mtime": 1778588167.3402584,
+    "ast_hash": "f6c5c018d78d8e705250990ae2470437",
+    "semantic_hash": "f6c5c018d78d8e705250990ae2470437"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/schemas/track.ts": {
+    "mtime": 1778588167.3428211,
+    "ast_hash": "d36030200a14f462699c4a05629d88af",
+    "semantic_hash": "d36030200a14f462699c4a05629d88af"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/schemas/user-details.ts": {
+    "mtime": 1778673482.4587595,
+    "ast_hash": "a47c357181c36bb97d6fb96188fe3cf6",
+    "semantic_hash": "a47c357181c36bb97d6fb96188fe3cf6"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/schemas/recalculate-location.ts": {
+    "mtime": 1778588167.3416848,
+    "ast_hash": "c695b337105d302a2a840909abc84693",
+    "semantic_hash": "c695b337105d302a2a840909abc84693"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/schemas/stargazer-cache.ts": {
+    "mtime": 1778956413.6327796,
+    "ast_hash": "6e19ab43b43ca95237a64183d5ee4455",
+    "semantic_hash": "6e19ab43b43ca95237a64183d5ee4455"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/components/news-publish-modal.tsx": {
+    "mtime": 1778928563.888409,
+    "ast_hash": "a37c954cc7815f7b1a5972cb81ddc208",
+    "semantic_hash": "a37c954cc7815f7b1a5972cb81ddc208"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/components/organic-score-pill.tsx": {
+    "mtime": 1778353289.7824326,
+    "ast_hash": "0190c3a37aec9e084cba46936df36bcd",
+    "semantic_hash": "0190c3a37aec9e084cba46936df36bcd"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/components/stats-list.tsx": {
+    "mtime": 1775495345.1591337,
+    "ast_hash": "6e4779d489f43b19805be6c32d34564f",
+    "semantic_hash": "6e4779d489f43b19805be6c32d34564f"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/components/command-search.tsx": {
+    "mtime": 1779001416.9235537,
+    "ast_hash": "8980df32eb9bdf9e2ebbe7de1853fe36",
+    "semantic_hash": "8980df32eb9bdf9e2ebbe7de1853fe36"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/components/announcement-banner.tsx": {
+    "mtime": 1778928439.549831,
+    "ast_hash": "e0ff944b6ce0bb24427f2c5c6d893f7c",
+    "semantic_hash": "e0ff944b6ce0bb24427f2c5c6d893f7c"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/components/repo-table.tsx": {
+    "mtime": 1778928593.1137798,
+    "ast_hash": "9d728f74e7850310ff027b3b2f23b040",
+    "semantic_hash": "9d728f74e7850310ff027b3b2f23b040"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/components/footer.tsx": {
+    "mtime": 1778858552.4140875,
+    "ast_hash": "4b14811d6e4cac47f20c4e12b6864819",
+    "semantic_hash": "4b14811d6e4cac47f20c4e12b6864819"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/components/hero-globe.tsx": {
+    "mtime": 1778621622.296543,
+    "ast_hash": "95a2cb2b784f9f0f3ea13597e88eeaae",
+    "semantic_hash": "95a2cb2b784f9f0f3ea13597e88eeaae"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/components/sponsors-block.tsx": {
+    "mtime": 1778928659.5649114,
+    "ast_hash": "42367a39b9f986aba8d72272e4c73836",
+    "semantic_hash": "42367a39b9f986aba8d72272e4c73836"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/components/organic-score-modal.tsx": {
+    "mtime": 1778928645.1717117,
+    "ast_hash": "c39481fba52e6acc7d87c2e51b00b151",
+    "semantic_hash": "c39481fba52e6acc7d87c2e51b00b151"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/components/filter-combobox.tsx": {
+    "mtime": 1778928475.850573,
+    "ast_hash": "af5b64f74f21a519fea8dbe016711635",
+    "semantic_hash": "af5b64f74f21a519fea8dbe016711635"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/components/external-link.tsx": {
+    "mtime": 1776152160.4080198,
+    "ast_hash": "4634c54c9617e80b6d29a4ad95bee32e",
+    "semantic_hash": "4634c54c9617e80b6d29a4ad95bee32e"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/components/hero-globe-dynamic.tsx": {
+    "mtime": 1778620217.6904056,
+    "ast_hash": "1556fc0e8365e289bebe0c7b5a14c62f",
+    "semantic_hash": "1556fc0e8365e289bebe0c7b5a14c62f"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/components/logo.tsx": {
+    "mtime": 1778616080.7325683,
+    "ast_hash": "86a10f70f9bad37355bb9995a99a5d54",
+    "semantic_hash": "86a10f70f9bad37355bb9995a99a5d54"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/components/header.tsx": {
+    "mtime": 1778928574.7329316,
+    "ast_hash": "8ccae8f083ef51709dd14d7f741a69d0",
+    "semantic_hash": "8ccae8f083ef51709dd14d7f741a69d0"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/components/modal.tsx": {
+    "mtime": 1778664132.789207,
+    "ast_hash": "892806cfe3680d85811b298275da00c1",
+    "semantic_hash": "892806cfe3680d85811b298275da00c1"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/components/theme-toggle.tsx": {
+    "mtime": 1778928404.154301,
+    "ast_hash": "eb55a8b217bf3ad0b47876930a1ad09d",
+    "semantic_hash": "eb55a8b217bf3ad0b47876930a1ad09d"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/components/news-timeline.tsx": {
+    "mtime": 1778928541.2452798,
+    "ast_hash": "fcf6bc7957213c644a68aa7cf4b7b55f",
+    "semantic_hash": "fcf6bc7957213c644a68aa7cf4b7b55f"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/components/vitals-reporter.tsx": {
+    "mtime": 1776158368.8263268,
+    "ast_hash": "4ab07c7d272a5f400b474b1e85b8304b",
+    "semantic_hash": "4ab07c7d272a5f400b474b1e85b8304b"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/components/follow-button.tsx": {
+    "mtime": 1778928514.909189,
+    "ast_hash": "dbcfd16400103104a429d2623b9ac7c9",
+    "semantic_hash": "dbcfd16400103104a429d2623b9ac7c9"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/components/devs/language-switcher.tsx": {
+    "mtime": 1778928616.28072,
+    "ast_hash": "857fdcd9d0311c3937e7d9e99a40cfe0",
+    "semantic_hash": "857fdcd9d0311c3937e7d9e99a40cfe0"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/components/map/country-choropleth-dynamic.tsx": {
+    "mtime": 1778664117.21276,
+    "ast_hash": "66be6b6bfa4406484b1bb7ad893da06b",
+    "semantic_hash": "66be6b6bfa4406484b1bb7ad893da06b"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/components/map/stargazer-map-dynamic.tsx": {
+    "mtime": 1776151770.2315927,
+    "ast_hash": "cb3309ab17953bdbfe9c80563ce1c988",
+    "semantic_hash": "cb3309ab17953bdbfe9c80563ce1c988"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/components/map/map-floating-nav.tsx": {
+    "mtime": 1778928722.5729234,
+    "ast_hash": "2551202fe0a1db95090adefc4e019c8d",
+    "semantic_hash": "2551202fe0a1db95090adefc4e019c8d"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/components/map/language-choropleth-dynamic.tsx": {
+    "mtime": 1776151785.7925394,
+    "ast_hash": "baba8843de1db63ad27c7bddb08a7942",
+    "semantic_hash": "baba8843de1db63ad27c7bddb08a7942"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/components/map/jawg-badge.tsx": {
+    "mtime": 1776073754.5404952,
+    "ast_hash": "f2228a67d49981b4fcd76752910b004c",
+    "semantic_hash": "f2228a67d49981b4fcd76752910b004c"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/components/map/dock.tsx": {
+    "mtime": 1778928545.1454787,
+    "ast_hash": "d314d79326eafa301355c78bcf936bd9",
+    "semantic_hash": "d314d79326eafa301355c78bcf936bd9"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/components/map/constants.ts": {
+    "mtime": 1776175552.8002522,
+    "ast_hash": "0e12069b9da288497242dd3e6ccf385c",
+    "semantic_hash": "0e12069b9da288497242dd3e6ccf385c"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/components/map/top-panel.tsx": {
+    "mtime": 1778928779.269635,
+    "ast_hash": "c6cd3aede309fd699a82fe83cd9b0a2b",
+    "semantic_hash": "c6cd3aede309fd699a82fe83cd9b0a2b"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/components/map/country-choropleth.tsx": {
+    "mtime": 1779025255.17367,
+    "ast_hash": "c482fe7b34c7dfbaa8fe60f22e3f630a",
+    "semantic_hash": "c482fe7b34c7dfbaa8fe60f22e3f630a"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/components/map/timelapse-bar.tsx": {
+    "mtime": 1778928690.2659626,
+    "ast_hash": "d725faf9614e665d70bf2e636a3a9060",
+    "semantic_hash": "d725faf9614e665d70bf2e636a3a9060"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/components/map/language-choropleth.tsx": {
+    "mtime": 1779025255.225372,
+    "ast_hash": "3804da2db39262e247563c635093d24f",
+    "semantic_hash": "3804da2db39262e247563c635093d24f"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/components/map/stargazer-map.tsx": {
+    "mtime": 1778683174.0273225,
+    "ast_hash": "027ab6d29f12324f4005961e92903de5",
+    "semantic_hash": "027ab6d29f12324f4005961e92903de5"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/hooks/useTheme.ts": {
+    "mtime": 1775495345.1648633,
+    "ast_hash": "44f1cf6bfd828a3fb4f079dd7d25b686",
+    "semantic_hash": "44f1cf6bfd828a3fb4f079dd7d25b686"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/hooks/use-fetch.ts": {
+    "mtime": 1775495345.1652014,
+    "ast_hash": "1a310319733928bdc118863ac533b3e3",
+    "semantic_hash": "1a310319733928bdc118863ac533b3e3"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/lib/db-health.ts": {
+    "mtime": 1778057696.2090938,
+    "ast_hash": "36f425cd2db1676618406e2f22860d3a",
+    "semantic_hash": "36f425cd2db1676618406e2f22860d3a"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/lib/compression.test.ts": {
+    "mtime": 1778311512.5254676,
+    "ast_hash": "d41fb0f332e6112219ae60032c93653c",
+    "semantic_hash": "d41fb0f332e6112219ae60032c93653c"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/lib/language-colors.ts": {
+    "mtime": 1775984563.4856858,
+    "ast_hash": "b643b5dfd9f57f0c6ba4d2f5553fb1e2",
+    "semantic_hash": "b643b5dfd9f57f0c6ba4d2f5553fb1e2"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/lib/map-style.test.ts": {
+    "mtime": 1778323572.6677635,
+    "ast_hash": "740545c0076d2723b78e7096062f6f66",
+    "semantic_hash": "740545c0076d2723b78e7096062f6f66"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/lib/country-geo-names.ts": {
+    "mtime": 1775495345.1660435,
+    "ast_hash": "6b9992a482dd43163a9223e6d99c3aee",
+    "semantic_hash": "6b9992a482dd43163a9223e6d99c3aee"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/lib/api-helpers.ts": {
+    "mtime": 1778997622.1731057,
+    "ast_hash": "de82ca73e3a88789590afe4c89b213d5",
+    "semantic_hash": "de82ca73e3a88789590afe4c89b213d5"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/lib/grid-to-points.ts": {
+    "mtime": 1775495345.168477,
+    "ast_hash": "ca7c5d641b289cf49c9c3ceb096ca9ec",
+    "semantic_hash": "ca7c5d641b289cf49c9c3ceb096ca9ec"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/lib/languages.ts": {
+    "mtime": 1776017850.083404,
+    "ast_hash": "8e63b800a030a9c777c911a59d93c312",
+    "semantic_hash": "8e63b800a030a9c777c911a59d93c312"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/lib/define-route.ts": {
+    "mtime": 1778588167.3354409,
+    "ast_hash": "bff5fabc6f8505624aa05d9b8de9aab5",
+    "semantic_hash": "bff5fabc6f8505624aa05d9b8de9aab5"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/lib/location-parser.ts": {
+    "mtime": 1775495345.170326,
+    "ast_hash": "70de937068ae7b1bd0cc260d4b5d26a5",
+    "semantic_hash": "70de937068ae7b1bd0cc260d4b5d26a5"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/lib/github.ts": {
+    "mtime": 1776145814.8393614,
+    "ast_hash": "57c868035477a1d7600af8f94bcf9493",
+    "semantic_hash": "57c868035477a1d7600af8f94bcf9493"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/lib/bookmarks.ts": {
+    "mtime": 1775495345.1741085,
+    "ast_hash": "1391ed7bc3b348ef862f124161689df4",
+    "semantic_hash": "1391ed7bc3b348ef862f124161689df4"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/lib/api-key.test.ts": {
+    "mtime": 1778323537.8957715,
+    "ast_hash": "fc615d336a1c1387148c64861cdd547a",
+    "semantic_hash": "fc615d336a1c1387148c64861cdd547a"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/lib/compress-client.ts": {
+    "mtime": 1775495345.1745076,
+    "ast_hash": "d00d068312f45848ffb7bd58db5d6c12",
+    "semantic_hash": "d00d068312f45848ffb7bd58db5d6c12"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/lib/format.test.ts": {
+    "mtime": 1778957350.4835677,
+    "ast_hash": "c94977d3d21c48214b59373e822f265d",
+    "semantic_hash": "c94977d3d21c48214b59373e822f265d"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/lib/user-cache.test.ts": {
+    "mtime": 1778315562.0957983,
+    "ast_hash": "585659520ba85145e89a6fdb21a0f019",
+    "semantic_hash": "585659520ba85145e89a6fdb21a0f019"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/lib/map-style.ts": {
+    "mtime": 1778935077.8529081,
+    "ast_hash": "cdf758ff9002ff6860bae0b9879a485e",
+    "semantic_hash": "cdf758ff9002ff6860bae0b9879a485e"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/lib/geocoder.ts": {
+    "mtime": 1779025072.662388,
+    "ast_hash": "12675d47265b7e67040278f365bb60a2",
+    "semantic_hash": "12675d47265b7e67040278f365bb60a2"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/lib/circuit-breaker.ts": {
+    "mtime": 1776177543.7049062,
+    "ast_hash": "fdf8af9a8d64bc88af3a3a642e9d5e0e",
+    "semantic_hash": "fdf8af9a8d64bc88af3a3a642e9d5e0e"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/lib/github.test.ts": {
+    "mtime": 1778315816.453979,
+    "ast_hash": "86c542c2f73c353e4a70eafe7c1e8bea",
+    "semantic_hash": "86c542c2f73c353e4a70eafe7c1e8bea"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/lib/organic-score.test.ts": {
+    "mtime": 1778588167.3358338,
+    "ast_hash": "6271fe745f51b527c8d8d6e8481e8458",
+    "semantic_hash": "6271fe745f51b527c8d8d6e8481e8458"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/lib/api-validation.ts": {
+    "mtime": 1778956902.8092735,
+    "ast_hash": "1bb628a63bd95b1cfb614fdb2703d215",
+    "semantic_hash": "1bb628a63bd95b1cfb614fdb2703d215"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/lib/feed-builders.ts": {
+    "mtime": 1776812648.2086976,
+    "ast_hash": "1ff39e7e7b094634b490bcc138e01fd0",
+    "semantic_hash": "1ff39e7e7b094634b490bcc138e01fd0"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/lib/geocoder-nominatim-queue.test.ts": {
+    "mtime": 1779025098.2319999,
+    "ast_hash": "077e29d3e9ee9a19a9e6200fc15057fa",
+    "semantic_hash": "077e29d3e9ee9a19a9e6200fc15057fa"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/lib/organic-score.ts": {
+    "mtime": 1778588167.3363407,
+    "ast_hash": "65cea77eca6e20a5266f26d8b91c2495",
+    "semantic_hash": "65cea77eca6e20a5266f26d8b91c2495"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/lib/format.ts": {
+    "mtime": 1775495345.1773043,
+    "ast_hash": "2a4bbfcf550fd6c2bab2d8a6e2587995",
+    "semantic_hash": "2a4bbfcf550fd6c2bab2d8a6e2587995"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/lib/feed-builders.test.ts": {
+    "mtime": 1778957379.5147998,
+    "ast_hash": "e9151e6f058701b3503f292c38fed50e",
+    "semantic_hash": "e9151e6f058701b3503f292c38fed50e"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/lib/api-helpers.test.ts": {
+    "mtime": 1778957419.1389182,
+    "ast_hash": "c904851e5ae426ee54869fb40cf4c9ac",
+    "semantic_hash": "c904851e5ae426ee54869fb40cf4c9ac"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/lib/subscriptions.ts": {
+    "mtime": 1777649729.6262517,
+    "ast_hash": "be2599b8dded2714a30ce88fa725e09a",
+    "semantic_hash": "be2599b8dded2714a30ce88fa725e09a"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/lib/db-health.test.ts": {
+    "mtime": 1778957465.6287248,
+    "ast_hash": "79aa1a74e8d013c1cf0b6799d8c71a36",
+    "semantic_hash": "79aa1a74e8d013c1cf0b6799d8c71a36"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/lib/countries.test.ts": {
+    "mtime": 1778315532.3502963,
+    "ast_hash": "c3bb43b8e1acf2f76aa4841247945910",
+    "semantic_hash": "c3bb43b8e1acf2f76aa4841247945910"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/lib/compression.ts": {
+    "mtime": 1778957046.2958062,
+    "ast_hash": "0148cb0e025ef8e4929fe57601e8806a",
+    "semantic_hash": "0148cb0e025ef8e4929fe57601e8806a"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/lib/user-cache.ts": {
+    "mtime": 1776935630.7359638,
+    "ast_hash": "f48158f5449a24e16a6d7b61e09223dd",
+    "semantic_hash": "f48158f5449a24e16a6d7b61e09223dd"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/lib/define-route.test.ts": {
+    "mtime": 1778588167.3307462,
+    "ast_hash": "224592c7fdf424dabc0e3cc085922a2b",
+    "semantic_hash": "224592c7fdf424dabc0e3cc085922a2b"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/lib/github-auth.test.ts": {
+    "mtime": 1778315703.4747758,
+    "ast_hash": "9ad7244d06a822fa9f83848c80520451",
+    "semantic_hash": "9ad7244d06a822fa9f83848c80520451"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/lib/github-auth.ts": {
+    "mtime": 1778272460.0693486,
+    "ast_hash": "89ab042191ce5326cb2097b4a67540eb",
+    "semantic_hash": "89ab042191ce5326cb2097b4a67540eb"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/lib/theme.ts": {
+    "mtime": 1776106148.409672,
+    "ast_hash": "2eac01bb9aa11c7b1b1cd980ce4535ad",
+    "semantic_hash": "2eac01bb9aa11c7b1b1cd980ce4535ad"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/lib/api-key.ts": {
+    "mtime": 1778322576.9660034,
+    "ast_hash": "761bac5734735e63152fce907545c9a5",
+    "semantic_hash": "761bac5734735e63152fce907545c9a5"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/lib/geocoder.test.ts": {
+    "mtime": 1778311481.9608746,
+    "ast_hash": "d7d28e725ab58ea8d566d39763308076",
+    "semantic_hash": "d7d28e725ab58ea8d566d39763308076"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/lib/countries.ts": {
+    "mtime": 1775495345.182265,
+    "ast_hash": "2f0b4e9912ecd5830e544670bda521ee",
+    "semantic_hash": "2f0b4e9912ecd5830e544670bda521ee"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/lib/db.ts": {
+    "mtime": 1776197251.8826284,
+    "ast_hash": "505edd1fb336e43c591408db36910b11",
+    "semantic_hash": "505edd1fb336e43c591408db36910b11"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/lib/__tests__/subscriptions.test.ts": {
+    "mtime": 1777650864.0327172,
+    "ast_hash": "c050439b12fd2047d813024b80b09dc6",
+    "semantic_hash": "c050439b12fd2047d813024b80b09dc6"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/lib/__tests__/circuit-breaker.test.ts": {
+    "mtime": 1776179906.3205478,
+    "ast_hash": "1b4c47385ec7d84c5857e72a19d72394",
+    "semantic_hash": "1b4c47385ec7d84c5857e72a19d72394"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/lib/__tests__/github.test.ts": {
+    "mtime": 1776179745.4426782,
+    "ast_hash": "b20600627f1a227eed97056212c2d4ab",
+    "semantic_hash": "b20600627f1a227eed97056212c2d4ab"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/lib/__tests__/countries.test.ts": {
+    "mtime": 1775495345.1783545,
+    "ast_hash": "ed1f6c611a60ecf955c6d6761289bed2",
+    "semantic_hash": "ed1f6c611a60ecf955c6d6761289bed2"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/lib/__tests__/geocoder.test.ts": {
+    "mtime": 1778947600.3664067,
+    "ast_hash": "005a38c789ca841b78874fbe216e2bbb",
+    "semantic_hash": "005a38c789ca841b78874fbe216e2bbb"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/scripts/geocache-preview.json": {
+    "mtime": 1774537415.2067492,
+    "ast_hash": "99f7e0aab865e370fdadc3222dbfb73b",
+    "semantic_hash": "99f7e0aab865e370fdadc3222dbfb73b"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/scripts/repos-jvm.json": {
+    "mtime": 1776019070.6471474,
+    "ast_hash": "12397528d28432076d77c54dac04f3d5",
+    "semantic_hash": "12397528d28432076d77c54dac04f3d5"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/scripts/fix-country-normalized-linkedin.ts": {
+    "mtime": 1775509670.9971862,
+    "ast_hash": "bbbf5ed579238fcbc0a1ddba724e9323",
+    "semantic_hash": "bbbf5ed579238fcbc0a1ddba724e9323"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/scripts/repos-medium.json": {
+    "mtime": 1774623627.45148,
+    "ast_hash": "0f6032665d270cd00f1e7bda25d90b9b",
+    "semantic_hash": "0f6032665d270cd00f1e7bda25d90b9b"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/scripts/backfill-api-key-hash.ts": {
+    "mtime": 1778322848.9334733,
+    "ast_hash": "cd2f903c0febf547d17ef8ccbd75150d",
+    "semantic_hash": "cd2f903c0febf547d17ef8ccbd75150d"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/scripts/backfill-linkedin.ts": {
+    "mtime": 1776106148.4270277,
+    "ast_hash": "ee0e0f3914c3a28f9c008a272c96e701",
+    "semantic_hash": "ee0e0f3914c3a28f9c008a272c96e701"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/scripts/create-trending-mv.sql": {
+    "mtime": 1776411924.7187731,
+    "ast_hash": "b1fdf039b89c8cd4fd369ae4e328245d",
+    "semantic_hash": "b1fdf039b89c8cd4fd369ae4e328245d"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/scripts/repos-giants.json": {
+    "mtime": 1774623637.0462778,
+    "ast_hash": "c69bac6ef13baf4170e5c3fb4b9c5dd6",
+    "semantic_hash": "c69bac6ef13baf4170e5c3fb4b9c5dd6"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/scripts/migrate-legacy-cache.ts": {
+    "mtime": 1775142341.997301,
+    "ast_hash": "5a3fd12656f3ddae2a3a716f66c74f87",
+    "semantic_hash": "5a3fd12656f3ddae2a3a716f66c74f87"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/scripts/create-language-grid-mv.sql": {
+    "mtime": 1776017146.3611758,
+    "ast_hash": "f9888df6f9f0a6730cd3cb2615815f0f",
+    "semantic_hash": "f9888df6f9f0a6730cd3cb2615815f0f"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/scripts/fix-slash-locations.ts": {
+    "mtime": 1776106148.4296038,
+    "ast_hash": "66b4348b186fbc35af87ed0c5ffa97d0",
+    "semantic_hash": "66b4348b186fbc35af87ed0c5ffa97d0"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/scripts/setup-mvs.ts": {
+    "mtime": 1778395798.8194735,
+    "ast_hash": "2a88060de9f482006ddf1e8d9661d41a",
+    "semantic_hash": "2a88060de9f482006ddf1e8d9661d41a"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/scripts/create-languages-gin-idx.sql": {
+    "mtime": 1778057624.7231205,
+    "ast_hash": "cca6b9488b14a78fb60320b7215318bc",
+    "semantic_hash": "cca6b9488b14a78fb60320b7215318bc"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/scripts/create-login-index.sql": {
+    "mtime": 1777044430.4313083,
+    "ast_hash": "d9c8d465cbbea588f8b7cad305b9934a",
+    "semantic_hash": "d9c8d465cbbea588f8b7cad305b9934a"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/scripts/db-sync-to-neon.sh": {
+    "mtime": 1775983233.7122252,
+    "ast_hash": "2d14fd272bdb87b4488437573cdc2b13",
+    "semantic_hash": "2d14fd272bdb87b4488437573cdc2b13"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/scripts/repos-florian-starred.json": {
+    "mtime": 1774645144.9399734,
+    "ast_hash": "ea9bbbd55acfc2996d5ae8e8f9f36716",
+    "semantic_hash": "ea9bbbd55acfc2996d5ae8e8f9f36716"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/scripts/ruvnet-top5.json": {
+    "mtime": 1778158569.7909467,
+    "ast_hash": "9f8180906a523ee3b353151a39ab75c4",
+    "semantic_hash": "9f8180906a523ee3b353151a39ab75c4"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/scripts/repos-popular.json": {
+    "mtime": 1774617281.7879343,
+    "ast_hash": "156bda6b88fa7b2720de49833e2b6af2",
+    "semantic_hash": "156bda6b88fa7b2720de49833e2b6af2"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/scripts/create-country-stats-mv.sql": {
+    "mtime": 1777024391.32417,
+    "ast_hash": "894b21b2635643055ba6fd5565d0671c",
+    "semantic_hash": "894b21b2635643055ba6fd5565d0671c"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/scripts/clean-geocache-garbage.ts": {
+    "mtime": 1776106148.428254,
+    "ast_hash": "e025c3e568424f8baab2f3e47f2598f5",
+    "semantic_hash": "e025c3e568424f8baab2f3e47f2598f5"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/scripts/db-local-init.sh": {
+    "mtime": 1774620823.7806487,
+    "ast_hash": "b9737c270a871a6190bf68b07956e7a0",
+    "semantic_hash": "b9737c270a871a6190bf68b07956e7a0"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/scripts/view-stats.ts": {
+    "mtime": 1776376687.363226,
+    "ast_hash": "40e8a80171d81c75e64de64c824b2145",
+    "semantic_hash": "40e8a80171d81c75e64de64c824b2145"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/scripts/backfill-user-top-repos.ts": {
+    "mtime": 1778082042.5992515,
+    "ast_hash": "c2074b52fa4c70270ca8063f489793fd",
+    "semantic_hash": "c2074b52fa4c70270ca8063f489793fd"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/scripts/starmapper-update.sh": {
+    "mtime": 1777023825.0340905,
+    "ast_hash": "4ceeaec34aaf06fef301d64b9282da69",
+    "semantic_hash": "4ceeaec34aaf06fef301d64b9282da69"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/scripts/create-grid-mv.ts": {
+    "mtime": 1775036673.0007849,
+    "ast_hash": "d604570cbc8e1439be5b210a59bfa5c4",
+    "semantic_hash": "d604570cbc8e1439be5b210a59bfa5c4"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/scripts/db-sync-from-neon.sh": {
+    "mtime": 1776962418.4447582,
+    "ast_hash": "3d05f745282f9a5484815d0a985530cc",
+    "semantic_hash": "3d05f745282f9a5484815d0a985530cc"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/scripts/backfill-repo-metrics.ts": {
+    "mtime": 1778019873.3326018,
+    "ast_hash": "5c079f9edd85a23152af61cff5844f28",
+    "semantic_hash": "5c079f9edd85a23152af61cff5844f28"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/scripts/repos-from-users.json": {
+    "mtime": 1777833722.0215347,
+    "ast_hash": "be72848de56c3e7e54f11b9906252568",
+    "semantic_hash": "be72848de56c3e7e54f11b9906252568"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/scripts/backfill-repo-languages.ts": {
+    "mtime": 1776106148.427435,
+    "ast_hash": "5fd71ea78bad90d579813b1bcbaaa28a",
+    "semantic_hash": "5fd71ea78bad90d579813b1bcbaaa28a"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/scripts/create-user-repo-count-mv.sql": {
+    "mtime": 1776378255.726828,
+    "ast_hash": "d051e1dafffb231f973290160e366f6e",
+    "semantic_hash": "d051e1dafffb231f973290160e366f6e"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/scripts/collect-user-repos.ts": {
+    "mtime": 1776106148.4290566,
+    "ast_hash": "e889847a103fddeeaf313e9286999a68",
+    "semantic_hash": "e889847a103fddeeaf313e9286999a68"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/scripts/generate-api-key.ts": {
+    "mtime": 1776344371.6168687,
+    "ast_hash": "e301cc9248519187c6b4f51acfbe0336",
+    "semantic_hash": "e301cc9248519187c6b4f51acfbe0336"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/scripts/calibrate-organic-score.ts": {
+    "mtime": 1776789510.2492373,
+    "ast_hash": "baf6efdcac05cba1dc8df3332a122e7e",
+    "semantic_hash": "baf6efdcac05cba1dc8df3332a122e7e"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/scripts/repos-scripting.json": {
+    "mtime": 1776019159.449548,
+    "ast_hash": "200dbeb4eb5aa06a04665a3b80e28753",
+    "semantic_hash": "200dbeb4eb5aa06a04665a3b80e28753"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/scripts/repos-new-giants.json": {
+    "mtime": 1774659429.8581452,
+    "ast_hash": "92c7bf539c6ba165acb39dcb8a5b641a",
+    "semantic_hash": "92c7bf539c6ba165acb39dcb8a5b641a"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/scripts/fix-bad-locations.ts": {
+    "mtime": 1776106148.4294076,
+    "ast_hash": "93588976660171f68cfe92ce510eda58",
+    "semantic_hash": "93588976660171f68cfe92ce510eda58"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/scripts/probe-star-burst.ts": {
+    "mtime": 1776873660.68527,
+    "ast_hash": "4f5564572935f59f9a33282d4217e4a8",
+    "semantic_hash": "4f5564572935f59f9a33282d4217e4a8"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/scripts/create-trgm-indexes.sql": {
+    "mtime": 1776378166.5908804,
+    "ast_hash": "b8e1ec1fcd1188fc51c4e0e84f713679",
+    "semantic_hash": "b8e1ec1fcd1188fc51c4e0e84f713679"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/scripts/repos-above-100k.json": {
+    "mtime": 1775242050.9552925,
+    "ast_hash": "266e0d6aad38d6c8bfa88db67bce9e74",
+    "semantic_hash": "266e0d6aad38d6c8bfa88db67bce9e74"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/scripts/repos-systems.json": {
+    "mtime": 1776019089.7058394,
+    "ast_hash": "03243d53ef21189830e216d6620ca7e7",
+    "semantic_hash": "03243d53ef21189830e216d6620ca7e7"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/scripts/test-jawg-geocoding.ts": {
+    "mtime": 1775983863.8763087,
+    "ast_hash": "6cbffe3405f4f61e5dd85631b47c8058",
+    "semantic_hash": "6cbffe3405f4f61e5dd85631b47c8058"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/scripts/repos-all.json": {
+    "mtime": 1777834510.3498962,
+    "ast_hash": "1abd37206fc60c62ca3c970bb3282d3b",
+    "semantic_hash": "1abd37206fc60c62ca3c970bb3282d3b"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/scripts/batch-scan.ts": {
+    "mtime": 1776106148.4279146,
+    "ast_hash": "ca3396bb070ec441b0c682846a1a99b8",
+    "semantic_hash": "ca3396bb070ec441b0c682846a1a99b8"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/scripts/repos-neon.json": {
+    "mtime": 1776352265.9934485,
+    "ast_hash": "0550c7a288fb14df2926fb33f8266cbe",
+    "semantic_hash": "0550c7a288fb14df2926fb33f8266cbe"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/scripts/backfill-languages.ts": {
+    "mtime": 1778943303.1529088,
+    "ast_hash": "aab0f27e373239ea1de1730c50aeb33b",
+    "semantic_hash": "aab0f27e373239ea1de1730c50aeb33b"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/scripts/collect-trending-repos.ts": {
+    "mtime": 1776106148.428629,
+    "ast_hash": "a2b6b5ff0bdc65d02998511b9a1df32d",
+    "semantic_hash": "a2b6b5ff0bdc65d02998511b9a1df32d"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/scripts/backfill-location-columns.ts": {
+    "mtime": 1775036697.1995897,
+    "ast_hash": "5a0953ec78941c4e74be75cc531c43e7",
+    "semantic_hash": "5a0953ec78941c4e74be75cc531c43e7"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/scripts/backfill-latest-starred-at.sql": {
+    "mtime": 1775417051.640186,
+    "ast_hash": "cceb451d28182fd0aa9d727cfaa778af",
+    "semantic_hash": "cceb451d28182fd0aa9d727cfaa778af"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/scripts/fix-country-normalized-linkedin.sql": {
+    "mtime": 1775537592.7179477,
+    "ast_hash": "2e12fc9d7e526bdfe1d0ac7554d15582",
+    "semantic_hash": "2e12fc9d7e526bdfe1d0ac7554d15582"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/scripts/repos-neon2.json": {
+    "mtime": 1776354042.821412,
+    "ast_hash": "9109ce4ec37175a753d0e21f984f307e",
+    "semantic_hash": "9109ce4ec37175a753d0e21f984f307e"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/scripts/create-country-language-mv.sql": {
+    "mtime": 1775747954.9425507,
+    "ast_hash": "557d04edc28eb778319401dabf167d8a",
+    "semantic_hash": "557d04edc28eb778319401dabf167d8a"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/scripts/export-linkedin.ts": {
+    "mtime": 1775501386.3162847,
+    "ast_hash": "e8c17f9400d7a31a27c3fd02b896f41c",
+    "semantic_hash": "e8c17f9400d7a31a27c3fd02b896f41c"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/scripts/fix-country-normalization.sql": {
+    "mtime": 1775113033.3470285,
+    "ast_hash": "5b1a4a326c7a9d8fc6b5be4cd31185ec",
+    "semantic_hash": "5b1a4a326c7a9d8fc6b5be4cd31185ec"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/scripts/maintenance.sh": {
+    "mtime": 1778944496.55282,
+    "ast_hash": "d4067cd85302fff0e61d373e95360a8f",
+    "semantic_hash": "d4067cd85302fff0e61d373e95360a8f"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/scripts/repos-trending.json": {
+    "mtime": 1777833826.9349778,
+    "ast_hash": "4c1ccec59473d2fbc2e964263f72b34c",
+    "semantic_hash": "4c1ccec59473d2fbc2e964263f72b34c"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/scripts/repos-mine.json": {
+    "mtime": 1776106435.1705136,
+    "ast_hash": "95d4bdeb001b2c5dfc951943b32551d7",
+    "semantic_hash": "95d4bdeb001b2c5dfc951943b32551d7"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/scripts/db-setup.sh": {
+    "mtime": 1778273640.5576148,
+    "ast_hash": "7139a8fd0a848756829187e89ebfc96f",
+    "semantic_hash": "7139a8fd0a848756829187e89ebfc96f"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/scripts/backfill-organic-score.ts": {
+    "mtime": 1778355162.4076908,
+    "ast_hash": "26a7182d942c8c8a1a3592d615fa467a",
+    "semantic_hash": "26a7182d942c8c8a1a3592d615fa467a"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/scripts/seed-geocache-geonames.ts": {
+    "mtime": 1776106148.4299116,
+    "ast_hash": "c634c9a2cf3ee47bbe090f692d1fcf04",
+    "semantic_hash": "c634c9a2cf3ee47bbe090f692d1fcf04"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/extension/wxt.config.ts": {
+    "mtime": 1778588167.3167841,
+    "ast_hash": "61e05532bd13ab7777d57bbf8482acc8",
+    "semantic_hash": "61e05532bd13ab7777d57bbf8482acc8"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/extension/package.json": {
+    "mtime": 1778588167.3146687,
+    "ast_hash": "5bb875cecd3935785ac364456af8a96d",
+    "semantic_hash": "5bb875cecd3935785ac364456af8a96d"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/extension/tsconfig.json": {
+    "mtime": 1778588167.3163435,
+    "ast_hash": "0852ab7930fefe755846a41d0b314586",
+    "semantic_hash": "0852ab7930fefe755846a41d0b314586"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/extension/.output/chrome-mv3/background.js": {
+    "mtime": 1778573326.143494,
+    "ast_hash": "e6292e72306b0754593df0c375da2a17",
+    "semantic_hash": "e6292e72306b0754593df0c375da2a17"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/extension/.output/chrome-mv3/manifest.json": {
+    "mtime": 1778573326.2402844,
+    "ast_hash": "3faffe53a9883639366e58ddd3f80c2d",
+    "semantic_hash": "3faffe53a9883639366e58ddd3f80c2d"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/extension/.output/chrome-mv3/chunks/popup-BYwN22s5.js": {
+    "mtime": 1778573326.2370658,
+    "ast_hash": "e24134c5639da4377d7e2c76806093be",
+    "semantic_hash": "e24134c5639da4377d7e2c76806093be"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/extension/.output/chrome-mv3/content-scripts/content.js": {
+    "mtime": 1778573326.1805177,
+    "ast_hash": "0cb887a4885fda8dd9c47700070f3641",
+    "semantic_hash": "0cb887a4885fda8dd9c47700070f3641"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/extension/.wxt/eslint-auto-imports.mjs": {
+    "mtime": 1778562887.305912,
+    "ast_hash": "d57eb3ea6b7c90a4c0cc7e3807ed0e9a",
+    "semantic_hash": "d57eb3ea6b7c90a4c0cc7e3807ed0e9a"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/extension/.wxt/wxt.d.ts": {
+    "mtime": 1778562887.305928,
+    "ast_hash": "92ca6f5692efc20d01424b22b06426e0",
+    "semantic_hash": "92ca6f5692efc20d01424b22b06426e0"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/extension/.wxt/tsconfig.json": {
+    "mtime": 1778562887.3063369,
+    "ast_hash": "ece2f2ba74bf492a1c6d71816f17b1d4",
+    "semantic_hash": "ece2f2ba74bf492a1c6d71816f17b1d4"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/extension/.wxt/types/globals.d.ts": {
+    "mtime": 1778562887.3059323,
+    "ast_hash": "a82bafa6c4165766424a854dd6c5973c",
+    "semantic_hash": "a82bafa6c4165766424a854dd6c5973c"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/extension/.wxt/types/imports-module.d.ts": {
+    "mtime": 1778562887.3058815,
+    "ast_hash": "a4f6a9503e8398edf0ceda61946c041e",
+    "semantic_hash": "a4f6a9503e8398edf0ceda61946c041e"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/extension/.wxt/types/i18n.d.ts": {
+    "mtime": 1778562887.3059065,
+    "ast_hash": "7ce822646c190a269105bf42abe05127",
+    "semantic_hash": "7ce822646c190a269105bf42abe05127"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/extension/.wxt/types/paths.d.ts": {
+    "mtime": 1778562887.3058765,
+    "ast_hash": "f37ec7271d2b12847708320496502a78",
+    "semantic_hash": "f37ec7271d2b12847708320496502a78"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/extension/.wxt/types/imports.d.ts": {
+    "mtime": 1778562887.3059068,
+    "ast_hash": "850252da110de4c0c23108683011f87a",
+    "semantic_hash": "850252da110de4c0c23108683011f87a"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/extension/scripts/generate-icons.mjs": {
+    "mtime": 1778588167.3162081,
+    "ast_hash": "a17be5ef1e0c26595b3ce07337056dd7",
+    "semantic_hash": "a17be5ef1e0c26595b3ce07337056dd7"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/extension/entrypoints/content.ts": {
+    "mtime": 1778588167.3098242,
+    "ast_hash": "9574328c8601e1581634a4c71af2e49a",
+    "semantic_hash": "9574328c8601e1581634a4c71af2e49a"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/extension/entrypoints/background.ts": {
+    "mtime": 1778588167.3094604,
+    "ast_hash": "8f07e0116d56e9ef8eebc3bf706086ae",
+    "semantic_hash": "8f07e0116d56e9ef8eebc3bf706086ae"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/extension/entrypoints/popup/main.ts": {
+    "mtime": 1778588167.3108125,
+    "ast_hash": "3fa7834a8213e9eb825d6899b37044ab",
+    "semantic_hash": "3fa7834a8213e9eb825d6899b37044ab"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/docs/organic-score-calibration.md": {
+    "mtime": 1778683090.014837,
+    "ast_hash": "9f347c2392936d2c8cc1375326c85401",
+    "semantic_hash": "9f347c2392936d2c8cc1375326c85401"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/docs/ARCHITECTURE.md": {
+    "mtime": 1778588167.3028011,
+    "ast_hash": "e5b65ed09fc93364c7c47fd0fa937683",
+    "semantic_hash": "e5b65ed09fc93364c7c47fd0fa937683"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/docs/ROADMAP.md": {
+    "mtime": 1778588167.3037376,
+    "ast_hash": "a91826546fd754c1a6ce3a26d9475db3",
+    "semantic_hash": "a91826546fd754c1a6ce3a26d9475db3"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/docs/design-system.md": {
+    "mtime": 1778588167.3051248,
+    "ast_hash": "453befcf87952cc66a7a3661de6a89d8",
+    "semantic_hash": "453befcf87952cc66a7a3661de6a89d8"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/docs/FEATURES.md": {
+    "mtime": 1778622839.3600075,
+    "ast_hash": "12d4dfdbdf13bd3362cc56cb7f9317d8",
+    "semantic_hash": "12d4dfdbdf13bd3362cc56cb7f9317d8"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/docs/organic-score.md": {
+    "mtime": 1777020427.7287428,
+    "ast_hash": "8d9ef204896b579635ea1542100f491b",
+    "semantic_hash": "8d9ef204896b579635ea1542100f491b"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/docs/superpowers/plans/2026-05-16-coverage-improvement.md": {
+    "mtime": 1778956971.9920182,
+    "ast_hash": "660ac7d846a5cb4c07b22d0bd0457676",
+    "semantic_hash": "660ac7d846a5cb4c07b22d0bd0457676"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/docs/superpowers/plans/2026-05-12-security-hardening.md": {
+    "mtime": 1778597185.036628,
+    "ast_hash": "befa747d1bbb4d77decc0656abff87b5",
+    "semantic_hash": "befa747d1bbb4d77decc0656abff87b5"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/docs/superpowers/plans/2026-05-15-changelog-admin-hardening.md": {
+    "mtime": 1778864250.1399207,
+    "ast_hash": "a99d1c835ddc3e8adaccc8d2b9acbf19",
+    "semantic_hash": "a99d1c835ddc3e8adaccc8d2b9acbf19"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/docs/superpowers/specs/2026-05-12-identity-redesign.md": {
+    "mtime": 1778615590.516255,
+    "ast_hash": "9218bdd499e3c99c2cc2b49d99ce12d1",
+    "semantic_hash": "9218bdd499e3c99c2cc2b49d99ce12d1"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/extension/README.md": {
+    "mtime": 1778588167.3091729,
+    "ast_hash": "c40d5c33cde4909c149f5c1bde5a894d",
+    "semantic_hash": "c40d5c33cde4909c149f5c1bde5a894d"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/extension/.output/chrome-mv3/popup.html": {
+    "mtime": 1778573326.2371714,
+    "ast_hash": "ed76a58df3b6ff090e69050cf1b4cddb",
+    "semantic_hash": "ed76a58df3b6ff090e69050cf1b4cddb"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/extension/entrypoints/popup/index.html": {
+    "mtime": 1778588167.3105652,
+    "ast_hash": "6543f572f666291efe4ea0416359169f",
+    "semantic_hash": "6543f572f666291efe4ea0416359169f"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/src/app/icon.svg": {
+    "mtime": 1776010277.9064069,
+    "ast_hash": "3df9bca24df4dafd7678617bb4b1f3a5",
+    "semantic_hash": "3df9bca24df4dafd7678617bb4b1f3a5"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/extension/.output/chrome-mv3/icons/icon16.png": {
+    "mtime": 1778573326.2390752,
+    "ast_hash": "b46babe38a67f1ca076dda3b92dd05c7",
+    "semantic_hash": "b46babe38a67f1ca076dda3b92dd05c7"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/extension/.output/chrome-mv3/icons/icon48.png": {
+    "mtime": 1778573326.2392945,
+    "ast_hash": "65f756783caddc7ae2ccd802367524a7",
+    "semantic_hash": "65f756783caddc7ae2ccd802367524a7"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/extension/.output/chrome-mv3/icons/icon128.png": {
+    "mtime": 1778573326.2387671,
+    "ast_hash": "0411392ecc38fbf327e4a69e7ac3f72f",
+    "semantic_hash": "0411392ecc38fbf327e4a69e7ac3f72f"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/extension/public/icons/icon16.png": {
+    "mtime": 1778588167.3158636,
+    "ast_hash": "b46babe38a67f1ca076dda3b92dd05c7",
+    "semantic_hash": "b46babe38a67f1ca076dda3b92dd05c7"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/extension/public/icons/icon48.png": {
+    "mtime": 1778588167.3159547,
+    "ast_hash": "65f756783caddc7ae2ccd802367524a7",
+    "semantic_hash": "65f756783caddc7ae2ccd802367524a7"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/extension/public/icons/icon128.png": {
+    "mtime": 1778588167.314895,
+    "ast_hash": "0411392ecc38fbf327e4a69e7ac3f72f",
+    "semantic_hash": "0411392ecc38fbf327e4a69e7ac3f72f"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/extension/icons/icon16.png": {
+    "mtime": 1778588167.3115375,
+    "ast_hash": "b46babe38a67f1ca076dda3b92dd05c7",
+    "semantic_hash": "b46babe38a67f1ca076dda3b92dd05c7"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/extension/icons/icon48.png": {
+    "mtime": 1778588167.3118129,
+    "ast_hash": "65f756783caddc7ae2ccd802367524a7",
+    "semantic_hash": "65f756783caddc7ae2ccd802367524a7"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/extension/icons/icon.svg": {
+    "mtime": 1778588167.311036,
+    "ast_hash": "c7479409c90709727d4d5f8e506b8c6c",
+    "semantic_hash": "c7479409c90709727d4d5f8e506b8c6c"
+  },
+  "/Users/florianbruniaux/Sites/perso/starmapper/extension/icons/icon128.png": {
+    "mtime": 1778588167.311246,
+    "ast_hash": "0411392ecc38fbf327e4a69e7ac3f72f",
+    "semantic_hash": "0411392ecc38fbf327e4a69e7ac3f72f"
+  }
+}
