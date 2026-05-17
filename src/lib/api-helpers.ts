@@ -4,7 +4,7 @@
 // Shared helpers for Next.js Route Handlers.
 // Eliminates duplicated error responses, admin auth checks, and token extraction.
 
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { safeEqual } from "@/lib/api-token";
 
 /** Standardised JSON error response. */

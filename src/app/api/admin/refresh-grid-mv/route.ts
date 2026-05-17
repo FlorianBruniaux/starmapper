@@ -7,7 +7,8 @@
 // CONCURRENTLY = does not block reads during refresh.
 // Sequential loop — parallel refresh exhausts Neon's connection pool and causes cascading failures.
 
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest} from "next/server";
+import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { requireAdminAuth, jsonError, logError } from "@/lib/api-helpers";

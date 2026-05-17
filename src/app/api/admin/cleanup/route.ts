@@ -5,7 +5,8 @@
 // Purges github_user and star_event records older than 12 months.
 // Runs monthly via Vercel Cron (see vercel.json). Also callable manually via admin auth.
 
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest} from "next/server";
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAdminAuth, jsonError, logError } from "@/lib/api-helpers";
 import { safeEqual } from "@/lib/api-token";

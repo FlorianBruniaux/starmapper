@@ -603,8 +603,8 @@ export default function MapPage({
     runningRef.current = true;
     setStatus("refreshing");
     let cursor: string | null = null;
-    let newPoints: StargazerPoint[] = [];
-    let newUnmapped: { login: string; name: string | null; followers: number; starredAt: string | null }[] = [];
+    const newPoints: StargazerPoint[] = [];
+    const newUnmapped: { login: string; name: string | null; followers: number; starredAt: string | null }[] = [];
     let newestStarredAt: string | null = null;
     let latestTotalCount = total;
 
@@ -999,7 +999,7 @@ export default function MapPage({
     setAllSort((prev) => ({ key, dir: prev.key === key ? (-prev.dir as 1 | -1) : (key === "followers" || key === "starredAt") ? -1 : 1 }));
 
   const toggleRow = (login: string) =>
-    setSelected((prev) => { const s = new Set(prev); s.has(login) ? s.delete(login) : s.add(login); return s; });
+    setSelected((prev) => { const s = new Set(prev); if (s.has(login)) { s.delete(login); } else { s.add(login); } return s; });
 
   const toggleAll = () =>
     setSelected((prev) =>

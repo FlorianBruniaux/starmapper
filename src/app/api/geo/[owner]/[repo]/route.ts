@@ -2,7 +2,8 @@
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 
 import { gunzipSync } from "zlib";
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest} from "next/server";
+import { NextResponse } from "next/server";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 import { prisma } from "@/lib/db";

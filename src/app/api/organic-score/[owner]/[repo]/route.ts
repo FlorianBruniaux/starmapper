@@ -5,7 +5,8 @@
 // Lightweight endpoint: reads organic data directly from badge_cache.
 // No star_event dependency — works even when stats API returns 404.
 
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest} from "next/server";
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { normalizeOwnerRepo, OWNER_REPO_RE } from "@/lib/api-validation";
 import { jsonError, logError } from "@/lib/api-helpers";

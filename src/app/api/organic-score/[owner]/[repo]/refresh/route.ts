@@ -5,7 +5,8 @@
 // Re-fetches GitHub data and recomputes organic score for a repo.
 // Rate limited to once per hour per repo (checked via organicComputedAt).
 
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest} from "next/server";
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { computeOrganicScore } from "@/lib/organic-score";
 import { normalizeOwnerRepo, OWNER_REPO_RE } from "@/lib/api-validation";

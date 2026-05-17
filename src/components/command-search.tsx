@@ -76,7 +76,7 @@ export const CommandSearch = ({ repos: reposProp }: CommandSearchProps) => {
     const handler = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
-        open ? closeSearch() : openSearch();
+        if (open) { closeSearch(); } else { openSearch(); }
       }
     };
     window.addEventListener("keydown", handler);
@@ -112,11 +112,6 @@ export const CommandSearch = ({ repos: reposProp }: CommandSearchProps) => {
     }
   }, [open]);
 
-  // Reset highlight when query changes
-  useEffect(() => {
-    setHighlighted(0);
-  }, [query]);
-
   if (!open) return null;
 
   return (
@@ -141,7 +136,7 @@ export const CommandSearch = ({ repos: reposProp }: CommandSearchProps) => {
           <input
             ref={inputRef}
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => { setQuery(e.target.value); setHighlighted(0); }}
             placeholder="Search mapped repos..."
             className="flex-1 bg-transparent text-base text-foreground placeholder:text-muted-subtle outline-none"
             aria-label="Search repos"

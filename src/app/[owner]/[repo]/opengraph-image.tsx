@@ -46,7 +46,7 @@ export default async function Image({ params }: { params: Promise<{ owner: strin
         {/* Header: avatar + repo name */}
         <div style={{ display: "flex", alignItems: "center", gap: 20, marginBottom: 32 }}>
           {avatar && (
-            // eslint-disable-next-line @next/next/no-img-element
+             
             <img src={avatar} width={64} height={64} style={{ borderRadius: 32, border: "2px solid #30363d" }} alt="" />
           )}
           <div style={{ display: "flex", flexDirection: "column" }}>

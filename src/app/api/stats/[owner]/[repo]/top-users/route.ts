@@ -5,7 +5,8 @@
 // Classified as strict-get in middleware — requires sm-token cookie + Referer check.
 // Separated from the public /stats endpoint to prevent unauthenticated PII scraping.
 
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest} from "next/server";
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { normalizeOwnerRepo, OWNER_REPO_RE } from "@/lib/api-validation";
 import { jsonError, logError } from "@/lib/api-helpers";

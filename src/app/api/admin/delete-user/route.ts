@@ -5,7 +5,8 @@
 // Deletes all personal data associated with a GitHub login, logs the deletion for audit.
 // Authentication: x-admin-secret header (same pattern as other admin routes).
 
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest} from "next/server";
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAdminAuth, jsonError, logError } from "@/lib/api-helpers";
 import { defineRoute } from "@/lib/define-route";

@@ -149,13 +149,15 @@ export default function ProfilePage({ params }: Props) {
 
   // Token modal
   const [tokenOpen, setTokenOpen] = useState(false);
-  const [hasToken, setHasToken] = useState(false);
+  const [hasToken, setHasToken] = useState(() => !!getStoredToken());
 
   // Contact dropdown
   const [contactOpen, setContactOpen] = useState(false);
   const [contactDetails, setContactDetails] = useState<{ email: string | null; twitter: string | null; blog: string | null } | null>(null);
   const [contactLoading, setContactLoading] = useState(false);
   const [emailCopied, setEmailCopied] = useState(false);
+  const [starredLang, setStarredLang] = useState<string | null>(null);
+  const [starredSort, setStarredSort] = useState<"date" | "stars" | "mapped">("date");
 
   const { theme } = useTheme();
   const JAWG_TOKEN = process.env.NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN ?? "";
@@ -257,10 +259,6 @@ export default function ProfilePage({ params }: Props) {
   useEffect(() => {
     params.then(({ login: l }) => setLogin(l));
   }, [params]);
-
-  useEffect(() => {
-    setHasToken(!!getStoredToken());
-  }, []);
 
   // Fetch profile
   useEffect(() => {
@@ -403,6 +401,40 @@ export default function ProfilePage({ params }: Props) {
     });
   };
 
+  const starredLangs = useMemo(() => {
+    const langs = new Set<string>();
+    for (const r of profile?.starredRepos ?? []) if (r.language) langs.add(r.language);
+    return [...langs].sort();
+  }, [profile?.starredRepos]);
+
+  const starredFiltered = useMemo(() => {
+    let repos = profile?.starredRepos ?? [];
+    if (starredLang) repos = repos.filter((r) => r.language === starredLang);
+    return [...repos].sort((a, b) => {
+      if (starredSort === "stars") return b.totalCount - a.totalCount;
+      if (starredSort === "mapped")
+        return (b.mappedCount / Math.max(b.totalCount, 1)) - (a.mappedCount / Math.max(a.totalCount, 1));
+      return new Date(b.starredAt ?? 0).getTime() - new Date(a.starredAt ?? 0).getTime();
+    });
+  }, [profile?.starredRepos, starredLang, starredSort]);
+
+  const scanFiltered = useMemo(() => {
+    if (!scanRepos) return [];
+    const q = scanSearch.toLowerCase().trim();
+    const filtered = q
+      ? scanRepos.filter(
+          (r) => r.name.toLowerCase().includes(q) || (r.description ?? "").toLowerCase().includes(q),
+        )
+      : [...scanRepos];
+    if (scanSort === "name") filtered.sort((a, b) => a.name.localeCompare(b.name));
+    else filtered.sort((a, b) => b.stars - a.stars);
+    return filtered;
+  }, [scanRepos, scanSearch, scanSort]);
+
+  const ownedVisible = showAllOwned ? profile?.ownedRepos : profile?.ownedRepos?.slice(0, 12);
+  const starredVisible = showAllStarred ? starredFiltered : starredFiltered.slice(0, 12);
+  const hasMap = !!(profile?.lat && profile?.lng);
+
   // ── Fetching live from GitHub ──────────────────────────────────────────────
   if (loadState === "fetching-live") {
     return (
@@ -456,43 +488,6 @@ export default function ProfilePage({ params }: Props) {
       </div>
     );
   }
-
-  const [starredLang, setStarredLang] = useState<string | null>(null);
-  const [starredSort, setStarredSort] = useState<"date" | "stars" | "mapped">("date");
-
-  const starredLangs = useMemo(() => {
-    const langs = new Set<string>();
-    for (const r of profile?.starredRepos ?? []) if (r.language) langs.add(r.language);
-    return [...langs].sort();
-  }, [profile?.starredRepos]);
-
-  const starredFiltered = useMemo(() => {
-    let repos = profile?.starredRepos ?? [];
-    if (starredLang) repos = repos.filter((r) => r.language === starredLang);
-    return [...repos].sort((a, b) => {
-      if (starredSort === "stars") return b.totalCount - a.totalCount;
-      if (starredSort === "mapped")
-        return (b.mappedCount / Math.max(b.totalCount, 1)) - (a.mappedCount / Math.max(a.totalCount, 1));
-      return new Date(b.starredAt ?? 0).getTime() - new Date(a.starredAt ?? 0).getTime();
-    });
-  }, [profile?.starredRepos, starredLang, starredSort]);
-
-  const ownedVisible = showAllOwned ? profile?.ownedRepos : profile?.ownedRepos.slice(0, 12);
-  const starredVisible = showAllStarred ? starredFiltered : starredFiltered.slice(0, 12);
-  const hasMap = !!(profile?.lat && profile?.lng);
-
-  const scanFiltered = useMemo(() => {
-    if (!scanRepos) return [];
-    const q = scanSearch.toLowerCase().trim();
-    const filtered = q
-      ? scanRepos.filter(
-          (r) => r.name.toLowerCase().includes(q) || (r.description ?? "").toLowerCase().includes(q),
-        )
-      : [...scanRepos];
-    if (scanSort === "name") filtered.sort((a, b) => a.name.localeCompare(b.name));
-    else filtered.sort((a, b) => b.stars - a.stars);
-    return filtered;
-  }, [scanRepos, scanSearch, scanSort]);
 
   // ── Main render ───────────────────────────────────────────────────────────
   return (

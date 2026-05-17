@@ -11,6 +11,9 @@ export default tseslint.config(
       "prisma/generated/**",
       "next-env.d.ts",
       "scripts/**",
+      ".claude/**",
+      ".worktrees/**",
+      "extension/**",
       "**/*.test.ts",
       "**/*.spec.ts",
       "**/*.test.tsx",
@@ -29,15 +32,26 @@ export default tseslint.config(
     ],
     rules: {
       ...reactHooks.configs.recommended.rules,
+      // Downgrade new react-hooks rules that flag valid-but-not-ideal patterns.
+      // These were introduced in react-hooks v5+ after the codebase was written.
+      "react-hooks/set-state-in-effect": "warn",
+      "react-hooks/refs": "warn",
       ...Object.fromEntries(
-        Object.entries(jsxA11y.configs.recommended.rules).map(
-          ([key, value]) => [key, value === "error" ? "warn" : value],
-        ),
+        Object.entries(jsxA11y.configs.recommended.rules).map(([key, value]) => {
+          // Handle both string and array-form rule configs
+          if (value === "error" || value === 2) return [key, "warn"];
+          if (Array.isArray(value) && (value[0] === "error" || value[0] === 2))
+            return [key, ["warn", ...value.slice(1)]];
+          return [key, value];
+        }),
       ),
       ...Object.fromEntries(
-        Object.entries(nextPlugin.configs.recommended.rules).map(
-          ([key, value]) => [key, value === "error" ? "warn" : value],
-        ),
+        Object.entries(nextPlugin.configs.recommended.rules).map(([key, value]) => {
+          if (value === "error" || value === 2) return [key, "warn"];
+          if (Array.isArray(value) && (value[0] === "error" || value[0] === 2))
+            return [key, ["warn", ...value.slice(1)]];
+          return [key, value];
+        }),
       ),
       // Enforce type-only imports (consistent with StarMapper conventions)
       "@typescript-eslint/consistent-type-imports": [
