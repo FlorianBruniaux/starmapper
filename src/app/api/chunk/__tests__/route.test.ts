@@ -6,11 +6,19 @@ import { NextRequest } from "next/server";
 
 // ─── Mocks (must come before importing the route) ─────────────────────────────
 
+const mockRateLimit = vi.hoisted(() => vi.fn(async () => ({ success: true })));
+const afterTasks = vi.hoisted((): Promise<unknown>[] => []);
+const mockAfter = vi.hoisted(() =>
+  vi.fn((cb: () => void | Promise<void>) => {
+    afterTasks.push(Promise.resolve(cb()));
+  }),
+);
+
 // Upstash rate limiter — stub so getChunkLimiter() returns null (fail-open) in tests.
 vi.mock("@upstash/ratelimit", () => ({
   Ratelimit: class {
     static slidingWindow() { return {}; }
-    async limit() { return { success: true }; }
+    async limit(...args: unknown[]) { return mockRateLimit(...args); }
   },
 }));
 vi.mock("@upstash/redis", () => ({
@@ -20,7 +28,7 @@ vi.mock("@upstash/redis", () => ({
 // after() throws outside Next.js request scope — replace with synchronous no-op.
 vi.mock("next/server", async (importOriginal) => {
   const original = await importOriginal<typeof import("next/server")>();
-  return { ...original, after: vi.fn() };
+  return { ...original, after: mockAfter };
 });
 
 vi.mock("@/lib/github", () => ({
@@ -59,7 +67,8 @@ vi.mock("@/lib/api-key", () => ({
 import { POST } from "@/app/api/chunk/route";
 import { fetchStargazersPage, GitHubRateLimitError } from "@/lib/github";
 import { geocodeBatch } from "@/lib/geocoder";
-import { bulkReadUsers } from "@/lib/user-cache";
+import { checkDbHealth } from "@/lib/db-health";
+import { bulkReadUsers, bulkUpsertStarEvents, bulkUpsertUsers } from "@/lib/user-cache";
 
 // ─── Type helpers ─────────────────────────────────────────────────────────────
 
@@ -70,6 +79,13 @@ type MockBulkReadUsers = ReturnType<typeof vi.fn>;
 const mockFetchStargazers = fetchStargazersPage as unknown as MockFetchStargazers;
 const mockGeocodeBatch = geocodeBatch as unknown as MockGeocodeBatch;
 const mockBulkReadUsers = bulkReadUsers as unknown as MockBulkReadUsers;
+const mockBulkUpsertUsers = bulkUpsertUsers as unknown as ReturnType<typeof vi.fn>;
+const mockBulkUpsertStarEvents = bulkUpsertStarEvents as unknown as ReturnType<typeof vi.fn>;
+const mockCheckDbHealth = checkDbHealth as unknown as ReturnType<typeof vi.fn>;
+
+const flushAfterTasks = async () => {
+  await Promise.all(afterTasks.splice(0));
+};
 
 // ─── Fixtures ─────────────────────────────────────────────────────────────────
 
@@ -124,10 +140,15 @@ const makeRequest = (body: Record<string, unknown>, headers: Record<string, stri
 describe("POST /api/chunk", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    afterTasks.length = 0;
+    mockRateLimit.mockResolvedValue({ success: true });
     // Sensible defaults for happy path
     mockFetchStargazers.mockResolvedValue(makeStargazersPage());
     mockGeocodeBatch.mockResolvedValue(new Map([["Paris, France", [48.8566, 2.3522]]]));
     mockBulkReadUsers.mockResolvedValue(new Map());
+    mockBulkUpsertUsers.mockResolvedValue(true);
+    mockBulkUpsertStarEvents.mockResolvedValue(undefined);
+    mockCheckDbHealth.mockResolvedValue({ ok: true, usagePct: 10 });
   });
 
   afterEach(() => {
@@ -342,9 +363,144 @@ describe("POST /api/chunk", () => {
       const geocodedLocations = mockGeocodeBatch.mock.calls[0][0] as string[];
       expect(geocodedLocations).toHaveLength(0);
     });
+
+    it("re-geocodes stale cached users", async () => {
+      const sg = makeStargazer({ login: "staleuser", location: "Paris, France" });
+      mockFetchStargazers.mockResolvedValueOnce(makeStargazersPage({ stargazers: [sg] }));
+      mockBulkReadUsers.mockResolvedValueOnce(
+        new Map([
+          [
+            "staleuser",
+            {
+              lat: 48.8566,
+              lng: 2.3522,
+              location: "Paris, France",
+              fetchedAt: new Date(Date.now() - 31 * 24 * 60 * 60 * 1000),
+              dataVersion: 1,
+            },
+          ],
+        ]),
+      );
+
+      const req = makeRequest({ owner: "octocat", repo: "starmapper" });
+      await POST(req);
+
+      expect(mockGeocodeBatch).toHaveBeenCalledWith(["Paris, France"]);
+    });
+
+    it("re-geocodes cached users when their location changed", async () => {
+      const sg = makeStargazer({ login: "moveduser", location: "Berlin, Germany" });
+      mockFetchStargazers.mockResolvedValueOnce(makeStargazersPage({ stargazers: [sg] }));
+      mockGeocodeBatch.mockResolvedValueOnce(
+        new Map([["Berlin, Germany", [52.52, 13.405]]]),
+      );
+      mockBulkReadUsers.mockResolvedValueOnce(
+        new Map([
+          [
+            "moveduser",
+            {
+              lat: 48.8566,
+              lng: 2.3522,
+              location: "Paris, France",
+              fetchedAt: new Date(),
+              dataVersion: 1,
+            },
+          ],
+        ]),
+      );
+
+      const req = makeRequest({ owner: "octocat", repo: "starmapper" });
+      const res = await POST(req);
+      const body = await res.json();
+
+      expect(mockGeocodeBatch).toHaveBeenCalledWith(["Berlin, Germany"]);
+      expect(body.points[0].lat).toBe(52.52);
+      expect(body.points[0].lng).toBe(13.41);
+    });
+  });
+
+  describe("background persistence", () => {
+    it("writes users before star events after the response is scheduled", async () => {
+      const sg = makeStargazer({
+        login: "writer",
+        location: "Paris, France",
+        starredAt: "2024-05-01T00:00:00Z",
+      });
+      mockFetchStargazers.mockResolvedValueOnce(makeStargazersPage({ stargazers: [sg] }));
+
+      const req = makeRequest({ owner: "octocat", repo: "starmapper" });
+      const res = await POST(req);
+      await flushAfterTasks();
+
+      expect(res.status).toBe(200);
+      expect(mockBulkUpsertUsers).toHaveBeenCalledWith(
+        [
+          expect.objectContaining({
+            login: "writer",
+            countryNormalized: "France",
+            cityNormalized: "Paris",
+          }),
+        ],
+        { ok: true, usagePct: 10 },
+      );
+      expect(mockBulkUpsertStarEvents).toHaveBeenCalledWith(
+        [{ login: "writer", owner: "octocat", repo: "starmapper", starredAt: "2024-05-01T00:00:00Z" }],
+        { ok: true, usagePct: 10 },
+      );
+      expect(mockBulkUpsertUsers.mock.invocationCallOrder[0]).toBeLessThan(
+        mockBulkUpsertStarEvents.mock.invocationCallOrder[0],
+      );
+    });
+
+    it("logs background write failures without breaking the chunk response", async () => {
+      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      mockBulkUpsertUsers.mockRejectedValueOnce(new Error("write failed"));
+
+      const req = makeRequest({ owner: "octocat", repo: "starmapper" });
+      const res = await POST(req);
+      await flushAfterTasks();
+      const body = await res.json();
+
+      expect(res.status).toBe(200);
+      expect(body.points).toHaveLength(1);
+      expect(consoleSpy).toHaveBeenCalledWith(
+        "[chunk] background write failed:",
+        expect.any(Error),
+      );
+    });
   });
 
   describe("error handling", () => {
+    it("returns 429 when the IP rate limiter rejects the request", async () => {
+      mockRateLimit.mockResolvedValueOnce({ success: false });
+
+      const req = makeRequest({ owner: "octocat", repo: "starmapper" });
+      const res = await POST(req);
+      const body = await res.json();
+
+      expect(res.status).toBe(429);
+      expect(body.error).toBe("Rate limit exceeded. Retry in a few seconds.");
+      expect(mockFetchStargazers).not.toHaveBeenCalled();
+    });
+
+    it("returns 429 when the per-PAT limiter rejects the request", async () => {
+      mockRateLimit
+        .mockResolvedValueOnce({ success: true })
+        .mockResolvedValueOnce({ success: false });
+
+      const req = makeRequest(
+        { owner: "octocat", repo: "starmapper" },
+        { "x-gh-token": "ghp_user_pat" },
+      );
+      const res = await POST(req);
+      const body = await res.json();
+
+      expect(res.status).toBe(429);
+      expect(body.error).toBe("Rate limit exceeded. Retry in a few minutes.");
+      expect(mockFetchStargazers).not.toHaveBeenCalled();
+      expect(mockRateLimit).toHaveBeenLastCalledWith("hash:ghp_user_pat");
+    });
+
     it("returns 429 with resetAt when GitHub rate limit is hit", async () => {
       const { GitHubRateLimitError: RateLimitError } = await import("@/lib/github");
       const resetAt = Date.now() + 3600_000;
