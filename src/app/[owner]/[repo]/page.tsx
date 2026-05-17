@@ -541,35 +541,16 @@ export default function MapPage({
       });
       saveBookmark(owner, repo, allPoints.length + allUnmapped.length);
 
-      // Update badge cache (fire-and-forget)
+      // Save to DB cache first (shared across users), then update badge cache.
+      // Order matters: badge-update fires only after stargazer-cache succeeds so we never
+      // create a badge_cache entry without its corresponding stargazer_cache (ghost repo).
+      // Compress client-side to stay under Vercel's 4.5MB request body limit.
+      const finalTotal = allPoints.length + allUnmapped.length;
       const countrySet = new Set(
         allPoints
           .map((p) => { const s = p.location?.split(",").pop()?.trim(); return s && isCountry(s) ? normalizeCountry(s) : null; })
           .filter(Boolean),
       );
-      fetch("/api/badge-update", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          owner,
-          repo,
-          mappedCount: allPoints.length,
-          countryCount: countrySet.size,
-          totalCount: allPoints.length + allUnmapped.length,
-          language: repoInfo?.language ?? null,
-          ...(repoInfo?.forksCount !== undefined && { forksCount: repoInfo.forksCount }),
-          ...(repoInfo?.watchersCount !== undefined && { watchersCount: repoInfo.watchersCount }),
-        }),
-      })
-        .then(() => fetch(`/api/stats/${owner}/${repo}`))
-        .then((r) => r.ok ? r.json() : null)
-        .then((data) => { if (data) setServerStats(data); })
-        .catch(() => {});
-
-      // Save to DB cache (shared across users, fire-and-forget).
-      // Compress client-side first to stay under Vercel's 4.5MB request body limit —
-      // raw JSON for large repos (e.g. 50k stars) exceeds that limit without compression.
-      const finalTotal = allPoints.length + allUnmapped.length;
       if (finalTotal > 0) {
         (async () => {
           try {
@@ -579,11 +560,31 @@ export default function MapPage({
               compressToBase64(slim),
               compressToBase64(allUnmapped),
             ]);
-            await fetch("/api/stargazer-cache", {
+            const cacheRes = await fetch("/api/stargazer-cache", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ owner, repo, pointsGz, unmappedGz, totalCount: finalTotal, latestStarredAt: newestStarredAt, ts: Date.now() }),
             });
+            if (!cacheRes.ok) return;
+            // badge-update only if scan cache was persisted — prevents ghost repos
+            fetch("/api/badge-update", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                owner,
+                repo,
+                mappedCount: allPoints.length,
+                countryCount: countrySet.size,
+                totalCount: finalTotal,
+                language: repoInfo?.language ?? null,
+                ...(repoInfo?.forksCount !== undefined && { forksCount: repoInfo.forksCount }),
+                ...(repoInfo?.watchersCount !== undefined && { watchersCount: repoInfo.watchersCount }),
+              }),
+            })
+              .then(() => fetch(`/api/stats/${owner}/${repo}`))
+              .then((r) => r.ok ? r.json() : null)
+              .then((data) => { if (data) setServerStats(data); })
+              .catch(() => {});
           } catch { /* fire-and-forget, non-critical */ }
         })();
       }

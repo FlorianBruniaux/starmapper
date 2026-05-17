@@ -26,6 +26,20 @@ export type ReposResponse = {
 const MAX_PER_OWNER = 3;
 const MIN_TOTAL_COUNT = 100;
 
+// Repos with a badge_cache entry but no stargazer_cache are "ghosts" — they appear scanned
+// but serve no map data when visited. Filter them out so the community list stays consistent.
+type BadgeCacheRow = {
+  owner: string;
+  repo: string;
+  mappedCount: number;
+  countryCount: number;
+  totalCount: number;
+  language: string | null;
+  updatedAt: Date;
+  organicScore: number | null;
+  organicTier: string | null;
+};
+
 export const GET = async (req: Request) => {
   try {
     const url = new URL(req.url);
@@ -33,25 +47,29 @@ export const GET = async (req: Request) => {
     const limit = limitParam ? Math.min(parseInt(limitParam, 10), 10000) : 500;
     const diverse = url.searchParams.get("diverse") === "true";
 
-    const [rows, total] = await Promise.all([
-      prisma.badgeCache.findMany({
-        orderBy: { updatedAt: "desc" },
-        // Fetch a larger pool when diversifying so we have enough after filtering
-        take: diverse ? Math.min(limit * 40, 500) : limit,
-        select: {
-          owner: true,
-          repo: true,
-          mappedCount: true,
-          countryCount: true,
-          totalCount: true,
-          language: true,
-          updatedAt: true,
-          organicScore: true,
-          organicTier: true,
-        },
-      }),
-      prisma.badgeCache.count(),
+    const pool = diverse ? Math.min(limit * 40, 500) : limit;
+
+    const [rows, [{ count: totalBigInt }]] = await Promise.all([
+      prisma.$queryRaw<BadgeCacheRow[]>`
+        SELECT bc.owner, bc.repo, bc."mappedCount", bc."countryCount", bc."totalCount",
+               bc.language, bc."updatedAt", bc."organicScore", bc."organicTier"
+        FROM badge_cache bc
+        WHERE EXISTS (
+          SELECT 1 FROM stargazer_cache sc
+          WHERE sc.owner = bc.owner AND sc.repo = bc.repo
+        )
+        ORDER BY bc."updatedAt" DESC
+        LIMIT ${pool}
+      `,
+      prisma.$queryRaw<[{ count: bigint }]>`
+        SELECT COUNT(*) FROM badge_cache bc
+        WHERE EXISTS (
+          SELECT 1 FROM stargazer_cache sc
+          WHERE sc.owner = bc.owner AND sc.repo = bc.repo
+        )
+      `,
     ]);
+    const total = Number(totalBigInt);
 
     let filtered = rows;
     if (diverse) {
@@ -83,7 +101,8 @@ export const GET = async (req: Request) => {
     return NextResponse.json({ repos, total } satisfies ReposResponse, {
       headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600" },
     });
-  } catch {
+  } catch (err) {
+    console.error("[repos] error", err);
     return jsonError("internal", 500);
   }
 };

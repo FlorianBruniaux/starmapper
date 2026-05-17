@@ -66,6 +66,7 @@ export default async function ProfileLayout({
     <>
       <script
         type="application/ld+json"
+        // nosemgrep: typescript.react.security.audit.react-dangerouslysetinnerhtml.react-dangerouslysetinnerhtml
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
       />
       {children}

@@ -62,6 +62,7 @@ export default async function RepoLayout({
       <h1 className="sr-only">{owner}/{repo} stargazers map</h1>
       <script
         type="application/ld+json"
+        // nosemgrep: typescript.react.security.audit.react-dangerouslysetinnerhtml.react-dangerouslysetinnerhtml
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
       />
       {children}
