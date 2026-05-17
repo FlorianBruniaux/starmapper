@@ -108,6 +108,28 @@ const callNominatim = async (location: string): Promise<[number, number] | null>
 };
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+const NOMINATIM_DELAY_MS = 1100;
+let nominatimQueue: Promise<void> = Promise.resolve();
+let lastNominatimStartedAt: number | null = null;
+
+const callNominatimQueued = (location: string): Promise<[number, number] | null> => {
+  const run = async (): Promise<[number, number] | null> => {
+    if (lastNominatimStartedAt !== null) {
+      const elapsed = Date.now() - lastNominatimStartedAt;
+      const waitMs = Math.max(0, NOMINATIM_DELAY_MS - elapsed);
+      if (waitMs > 0) await sleep(waitMs);
+    }
+    lastNominatimStartedAt = Date.now();
+    return callNominatim(location);
+  };
+
+  const queued = nominatimQueue.then(run, run);
+  nominatimQueue = queued.then(
+    () => undefined,
+    () => undefined,
+  );
+  return queued;
+};
 
 // --- Geocoding providers (Strategy pattern) ---
 // Each provider is an independent object: circuit breaker + availability check + geocode call.
@@ -136,7 +158,7 @@ const geoapifyProvider: GeocodingProvider = {
 const nominatimProvider: GeocodingProvider = {
   name: "Nominatim",
   isAvailable: () => true,
-  geocode: callNominatim,
+  geocode: callNominatimQueued,
 };
 
 const PROVIDERS: readonly GeocodingProvider[] = [jawgProvider, geoapifyProvider, nominatimProvider];
@@ -320,11 +342,10 @@ export async function geocodeBatch(
       missResults.push(...results);
     }
   } else {
-    // Both Jawg and Geoapify down: sequential Nominatim with 1100ms delay (polite use policy)
+    // Both Jawg and Geoapify down: queued Nominatim with 1100ms delay (polite use policy)
     for (let i = 0; i < misses.length; i++) {
       const result = await resolveLocation(misses[i]);
       missResults.push(result);
-      if (i < misses.length - 1) await sleep(1100);
     }
   }
 
