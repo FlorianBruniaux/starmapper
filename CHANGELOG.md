@@ -5,6 +5,51 @@ Versioning: Semantic Versioning (MAJOR.MINOR.PATCH)
 
 ---
 
+## [0.4.9] — 2026-05-17
+
+### Features
+
+- **Landing redesign** — Hero split layout: input form on the left, live map preview on the right. Hero background replaced with an animated 3D canvas globe. New accent palette (cooler blues, sharper contrast). `/faq` dedicated page replaces the inline FAQ section; a compact teaser remains on the landing with a "See all" link.
+- **Jawg dual-token failover** — `fetchAndPatchStyle` auto-switches to `NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN_2` when the primary token returns 401/402/403/429 (Map Views limit). Transparent to users, no reload required.
+- **Geocoder: promise queue** — Sequential Nominatim calls now use a shared promise queue instead of a sleep-in-loop. Correct rate limiting without blocking the event loop; circuit breaker logic preserved.
+- **localStorage scan cache utility** — `src/lib/scan-cache.ts` added (preparatory, not yet wired into the chunk loop). Persists scan results between page reloads for returning visitors.
+
+### SEO / GEO
+
+- **Trending page** — `/trending` added to sitemap and navigation.
+- **Comparison page** — `/vs/star-history` with structured data and UTM tracking on outbound badge/embed links.
+- **Schema markup** — Extended structured data across map, profile, and language pages. GEO optimization pass: `description`, `og:*`, `twitter:*` fixed on all pages.
+- **Server/client split on language pages** — H1 and dev count now rendered server-side for crawlers.
+
+### Security
+
+- **Phase 2 — rate limit hardening** — Sliding window tightened on sensitive endpoints; Redis unavailability handled safely.
+- **Phase 3 — defense in depth** — `$executeRawUnsafe` replaced with `$executeRaw + Prisma.sql` on all MV refresh paths. Admin endpoints return 404 (not 401/403) on auth failure to avoid endpoint discovery.
+
+### Performance
+
+- **`/repos` page** — Replaced `useEffect + useState` fetch with `useSWR`; stale-while-revalidate reduces perceived latency.
+- **`/api/map-image`** — `stargazer_cache` SELECT restricted to `points` only (was fetching the full row including `unmapped`).
+- **Profile lookup** — `ILIKE` search on `login` replaced with an `IN` clause to avoid a full table scan.
+
+### Bug Fixes
+
+- **`/repos` sort** — Fetches all repos before sorting client-side; previous version only sorted the first page.
+- **Header alignment** — Content width unified to `max-w-7xl` across all pages.
+- **Profile URL casing** — `FlorianBruniaux` (camelCase) used consistently in profile and badge URLs.
+- **Profile duplicates** — When `github_user` has multiple casing variants for the same login, the record with the most data is selected instead of throwing.
+- **Globe on profile pages** — Map centers on the user's own coordinates on load.
+
+### Internal
+
+- **Tests** — 9 new test files added (user cache integration, background persistence, chunk route). Line coverage 79% → 87%.
+- **lucide-react** — Inline SVGs replaced across all components.
+- **CI** — Node.js 20 → 22 (required by pnpm 11); `pnpm/action-setup` reads `packageManager` from `package.json` instead of hardcoded version. Semgrep false positives on JSON-LD suppressed.
+- **Deps** — Prisma 7.8, MapLibre GL 5.24, Zod 4.4, web-vitals 5.
+- **Repo hygiene** — `graphify-out/` untracked (328 files, 5.8MB of generated cache removed from git history going forward). `.gitignore` extended with `.pnpm-store/`, `.codex/`, `.code-review-graph/`.
+
+---
+
 ## [0.4.8] — 2026-05-12
 
 ### Features
