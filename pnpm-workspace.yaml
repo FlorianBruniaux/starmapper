@@ -6,3 +6,7 @@ allowBuilds:
 ignoredBuiltDependencies:
   - sharp
   - unrs-resolver
+overrides:
+  '@hono/node-server': 1.19.13
+  postcss: 8.5.14
+  vite: 8.0.5

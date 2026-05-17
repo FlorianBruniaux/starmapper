@@ -245,7 +245,6 @@ export const CountryChoropleth = memo(({ countryData, selectedCountry, onCountry
     };
   // styleUrl triggers a full map rebuild (simplest + most reliable approach for theme swap)
   // countryData + onCountryClick are stable refs — not needed in deps
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [styleUrl]);
 
   // Update source data when geoJson becomes available or changes.

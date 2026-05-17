@@ -1125,7 +1125,6 @@ export default function MapPage({
 
     const id = setInterval(poll, 60_000);
     return () => clearInterval(id);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [watchActive, watchSince, owner, repo]);
 
   const handleWatchStart = useCallback(() => {

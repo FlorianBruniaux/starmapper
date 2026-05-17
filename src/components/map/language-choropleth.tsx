@@ -292,7 +292,6 @@ export const LanguageChoropleth = memo(({ countries, onCountryClick }: Props) =>
       mapRef.current = null;
     };
   // styleUrl triggers full map rebuild on theme swap — intentional
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [styleUrl]);
 
   // Update source data when countries prop changes (no full map rebuild).
