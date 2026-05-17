@@ -94,3 +94,13 @@ cyber-defense-*.md
 # Analysis/audit artifacts
 dep-scope-report.md
 vercel-logs.txt
+
+# Graphify — generated knowledge graph + AST/semantic cache
+graphify-out/
+
+# pnpm local store (when store-dir is inside the repo)
+.pnpm-store/
+
+# AI tool caches and local configs
+.codex/
+.code-review-graph/
