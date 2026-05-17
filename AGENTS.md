@@ -38,3 +38,12 @@ pnpm db:setup
 ```
 
 See `scripts/db-setup.sh` and `docs/ARCHITECTURE.md` for details.
+
+
+<claude-mem-context>
+# Memory Context
+
+# [starmapper] recent context, 2026-05-17 11:48am GMT+2
+
+No previous sessions found.
+</claude-mem-context>

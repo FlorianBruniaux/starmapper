@@ -1,0 +1,79 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "'/Users/florianbruniaux/Sites/perso/starmapper/.codex/hooks/dangerous-actions-blocker.sh'",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "'/Users/florianbruniaux/Sites/perso/starmapper/.codex/hooks/security-gate.sh'",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "'/Users/florianbruniaux/Sites/perso/starmapper/.codex/hooks/rtk-suggest.sh'",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "'/Users/florianbruniaux/Sites/perso/starmapper/.codex/hooks/auto-format.sh'",
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "'/Users/florianbruniaux/Sites/perso/starmapper/.codex/hooks/typecheck-feedback.sh'",
+            "timeout": 30
+          },
+          {
+            "type": "command",
+            "command": "'/Users/florianbruniaux/Sites/perso/starmapper/.codex/hooks/ts-lint-feedback.sh'",
+            "timeout": 15
+          },
+          {
+            "type": "command",
+            "command": "'/Users/florianbruniaux/Sites/perso/starmapper/.codex/hooks/banner-reminder.sh'",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "'/Users/florianbruniaux/Sites/perso/starmapper/.codex/hooks/git-context.sh'",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "'/Users/florianbruniaux/Sites/perso/starmapper/.codex/hooks/smart-suggest.sh'",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}
