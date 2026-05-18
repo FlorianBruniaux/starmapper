@@ -34,6 +34,10 @@ type MvRow = {
   total_count: bigint;
 };
 
+/**
+ * @deprecated Use /api/trending/repos (list) + /api/trending/map (geo points) instead.
+ * Kept for backward compatibility — will be removed in a future release.
+ */
 export const GET = async () => {
   try {
     const rows = await prisma.$queryRaw<MvRow[]>`
@@ -94,7 +98,7 @@ export const GET = async () => {
 
     return NextResponse.json(
       { repos, mapPoints, meta: { total: rows.length } } satisfies TrendingResponse,
-      { headers: { "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=600" } },
+      { headers: { "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400" } },
     );
   } catch {
     return NextResponse.json({ error: "internal" }, { status: 500 });

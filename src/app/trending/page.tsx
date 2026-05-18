@@ -8,7 +8,8 @@ import Link from "next/link";
 import { Header } from "@/components/header";
 import { StargazerMapDynamic } from "@/components/map/stargazer-map-dynamic";
 import { LANGUAGE_COLORS } from "@/lib/language-colors";
-import type { TrendingResponse, TrendingRepo } from "@/app/api/trending/route";
+import type { TrendingRepo, TrendingReposResponse } from "@/app/api/trending/repos/route";
+import type { TrendingMapResponse } from "@/app/api/trending/map/route";
 import type { StargazerPoint } from "@/app/api/chunk/route";
 
 type Window = "7d" | "30d" | "90d";
@@ -45,41 +46,55 @@ const SkeletonRow = () => (
 );
 
 export default function TrendingPage() {
-  const [data, setData] = useState<TrendingResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [repos, setRepos] = useState<TrendingRepo[]>([]);
+  const [meta, setMeta] = useState<{ total: number } | null>(null);
+  const [mapPoints, setMapPoints] = useState<StargazerPoint[]>([]);
+  const [reposLoading, setReposLoading] = useState(true);
+  const [mapLoading, setMapLoading] = useState(true);
+  const [reposError, setReposError] = useState<string | null>(null);
   const [window, setWindow] = useState<Window>("7d");
 
   useEffect(() => {
     const ctrl = new AbortController();
-    fetch("/api/trending", { signal: ctrl.signal })
+    fetch("/api/trending/repos", { signal: ctrl.signal })
       .then(async (res) => {
         if (!res.ok) {
           const body = await res.json().catch(() => ({})) as { error?: string };
-          if (body.error === "trending_mv_empty") {
-            setError("Trending data is being initialized — check back soon.");
-          } else {
-            setError("Could not load trending data.");
-          }
+          setReposError(body.error === "trending_mv_empty"
+            ? "Trending data is being initialized — check back soon."
+            : "Could not load trending data.");
           return;
         }
-        setData(await res.json() as TrendingResponse);
+        const json = await res.json() as TrendingReposResponse;
+        setRepos(json.repos);
+        setMeta(json.meta);
       })
       .catch((e) => {
-        if (e.name !== "AbortError") setError("Could not load trending data.");
+        if (e.name !== "AbortError") setReposError("Could not load trending data.");
       })
-      .finally(() => setLoading(false));
+      .finally(() => setReposLoading(false));
+    return () => ctrl.abort();
+  }, []);
+
+  useEffect(() => {
+    const ctrl = new AbortController();
+    fetch("/api/trending/map", { signal: ctrl.signal })
+      .then(async (res) => {
+        if (!res.ok) return;
+        const json = await res.json() as TrendingMapResponse;
+        setMapPoints(json.mapPoints);
+      })
+      .catch(() => {})
+      .finally(() => setMapLoading(false));
     return () => ctrl.abort();
   }, []);
 
   const sorted = useMemo<TrendingRepo[]>(() => {
-    if (!data) return [];
     const key = velKey(window);
-    return [...data.repos].sort((a, b) => (b[key] as number) - (a[key] as number));
-  }, [data, window]);
+    return [...repos].sort((a, b) => (b[key] as number) - (a[key] as number));
+  }, [repos, window]);
 
-  const mapPoints = useMemo<StargazerPoint[]>(() => data?.mapPoints ?? [], [data]);
-  const reposWithMap = useMemo(() => data?.repos.filter((r) => r.hasMap).length ?? 0, [data]);
+  const reposWithMap = useMemo(() => repos.filter((r) => r.hasMap).length, [repos]);
 
   return (
     <div className="h-screen flex flex-col bg-background overflow-hidden">
@@ -94,9 +109,9 @@ export default function TrendingPage() {
           {/* Panel header */}
           <div className="px-4 pt-4 pb-3 border-b border-border">
             <h1 className="text-base font-semibold text-foreground">Trending on StarMapper</h1>
-            {!loading && data && (
+            {!reposLoading && meta && (
               <p className="text-xs text-muted mt-0.5 tabular-nums">
-                {data.meta.total} repos tracked
+                {meta.total} repos tracked
                 {reposWithMap > 0 && ` · ${reposWithMap} on map`}
               </p>
             )}
@@ -121,16 +136,16 @@ export default function TrendingPage() {
           </div>
 
           {/* List */}
-          <ol className="flex-1 overflow-y-auto divide-y divide-border-subtle" aria-busy={loading}>
-            {loading ? (
+          <ol className="flex-1 overflow-y-auto divide-y divide-border-subtle" aria-busy={reposLoading}>
+            {reposLoading ? (
               Array.from({ length: 12 }).map((_, i) => (
                 <li key={i} className="px-4">
                   <SkeletonRow />
                 </li>
               ))
-            ) : error ? (
+            ) : reposError ? (
               <li className="px-4 py-8 text-center">
-                <p className="text-muted text-sm">{error}</p>
+                <p className="text-muted text-sm">{reposError}</p>
               </li>
             ) : sorted.length === 0 ? (
               <li className="px-4 py-8 text-center">
@@ -191,7 +206,7 @@ export default function TrendingPage() {
 
         {/* Right — map */}
         <div className="flex-1 relative">
-          {!loading && mapPoints.length === 0 && !error && (
+          {!mapLoading && mapPoints.length === 0 && !reposError && (
             <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
               <p className="text-muted text-sm bg-surface/80 px-4 py-2 rounded-lg border border-border">
                 No geo data yet for top repos — scan them first.
