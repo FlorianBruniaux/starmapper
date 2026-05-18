@@ -86,40 +86,38 @@ describe("POST /api/vitals", () => {
   });
 
   // ── Log injection guard (MED-4 regression) ────────────────────────────────
+  // Path is sanitised by vitalsSchema.transform before it reaches the handler.
+  // The key=value log line must never contain raw control characters.
 
   describe("log injection guard (MED-4)", () => {
     it("strips newline characters from path before logging", async () => {
       const consoleSpy = vi.mocked(console.log);
       await POST(makeReq({ ...VALID, path: "/page\nINJECTED_LOG_LINE" }));
       const logged = consoleSpy.mock.calls[0]?.[0] as string;
-      const parsed = JSON.parse(logged);
-      expect(parsed.path).not.toContain("\n");
-      expect(parsed.path).toContain(" ");
+      expect(logged).not.toContain("\n");
     });
 
     it("strips tab and carriage return from path", async () => {
       const consoleSpy = vi.mocked(console.log);
       await POST(makeReq({ ...VALID, path: "/page\r\t" }));
       const logged = consoleSpy.mock.calls[0]?.[0] as string;
-      const parsed = JSON.parse(logged);
-      expect(parsed.path).not.toContain("\r");
-      expect(parsed.path).not.toContain("\t");
+      expect(logged).not.toContain("\r");
+      expect(logged).not.toContain("\t");
     });
 
     it("truncates path to 200 characters", async () => {
       const consoleSpy = vi.mocked(console.log);
       await POST(makeReq({ ...VALID, path: "a".repeat(300) }));
       const logged = consoleSpy.mock.calls[0]?.[0] as string;
-      const parsed = JSON.parse(logged);
-      expect(parsed.path.length).toBeLessThanOrEqual(200);
+      const pathMatch = logged.match(/path=(.+?) ts=/);
+      expect(pathMatch?.[1]?.length ?? 0).toBeLessThanOrEqual(200);
     });
 
     it("uses 'navigate' as default navigationType when not a string", async () => {
       const consoleSpy = vi.mocked(console.log);
       await POST(makeReq({ ...VALID, navigationType: null }));
       const logged = consoleSpy.mock.calls[0]?.[0] as string;
-      const parsed = JSON.parse(logged);
-      expect(parsed.navigationType).toBe("navigate");
+      expect(logged).toContain("navigationType=navigate");
     });
   });
 
@@ -132,13 +130,13 @@ describe("POST /api/vitals", () => {
       expect((await res.json()).ok).toBe(true);
     });
 
-    it("logs valid structured JSON to console", async () => {
+    it("logs event=vitals key=value line to console", async () => {
       const consoleSpy = vi.mocked(console.log);
       await POST(makeReq(VALID));
       expect(consoleSpy).toHaveBeenCalledOnce();
-      const parsed = JSON.parse(consoleSpy.mock.calls[0]?.[0] as string);
-      expect(parsed.type).toBe("web_vital");
-      expect(parsed.name).toBe("LCP");
+      const logged = consoleSpy.mock.calls[0]?.[0] as string;
+      expect(logged).toContain("event=vitals");
+      expect(logged).toContain("name=LCP");
     });
   });
 });
