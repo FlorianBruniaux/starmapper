@@ -30,6 +30,8 @@ import type { TimeEstimate } from "@/lib/format";
 import { GrowthChart } from "@/components/map/growth-chart";
 import { useWatchMode } from "@/hooks/useWatchMode";
 import { useTimelapse } from "@/hooks/useTimelapse";
+import { loadCache, saveCache, clearCache } from "@/lib/repo-cache";
+import type { LocalCache } from "@/lib/repo-cache";
 
 type AnyStargazer = {
   login: string;
@@ -57,40 +59,6 @@ type RepoInfo = {
   avatar: string | null;
   forksCount: number;
   watchersCount: number;
-};
-
-type LocalCache = {
-  version: 1;
-  points: StargazerPoint[];
-  unmapped: { login: string; name: string | null; followers: number; starredAt: string | null }[];
-  totalCount: number;
-  scannedAt: number; // ms timestamp
-  latestStarredAt: string | null; // ISO timestamp of most recent star
-}
-
-const cacheKey = (owner: string, repo: string) => `starmapper:${owner}/${repo}`;
-
-const loadCache = (owner: string, repo: string): LocalCache | null => {
-  try {
-    const raw = localStorage.getItem(cacheKey(owner, repo));
-    if (!raw) return null;
-    const c = JSON.parse(raw) as LocalCache;
-    return c.version === 1 ? c : null;
-  } catch {
-    return null;
-  }
-};
-
-const saveCache = (owner: string, repo: string, data: Omit<LocalCache, "version">) => {
-  try {
-    localStorage.setItem(cacheKey(owner, repo), JSON.stringify({ version: 1, ...data }));
-  } catch {
-    // localStorage quota exceeded — non-fatal
-  }
-};
-
-const clearCache = (owner: string, repo: string) => {
-  try { localStorage.removeItem(cacheKey(owner, repo)); } catch { /* ignore */ }
 };
 
 const TOKEN_REQUIRED_STARS = 50_000;
@@ -328,48 +296,8 @@ export default function MapPage({
     return () => ac.abort();
   }, [owner, repo]);
 
-  // Load from localStorage cache on mount
-  useEffect(() => {
-    const cache = loadCache(owner, repo);
-    if (!cache) return;
-    dispatch({ type: "set", points: cache.points, unmapped: cache.unmapped });
-    setTotal(cache.totalCount);
-    setCachedAt(cache.scannedAt);
-    setLatestStarredAt(cache.latestStarredAt);
-    setStatus("cached");
-    saveBookmark(owner, repo, cache.totalCount);
-
-    // Sync badge_cache from localStorage (repos scanned before badge-update existed)
-    const countrySet = new Set(
-      cache.points
-        .map((p) => { const s = p.location?.split(",").pop()?.trim(); return s && isCountry(s) ? normalizeCountry(s) : null; })
-        .filter(Boolean),
-    );
-    fetch("/api/badge-update", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        owner,
-        repo,
-        mappedCount: cache.points.length,
-        countryCount: countrySet.size,
-        totalCount: cache.totalCount,
-        ...(repoInfo?.forksCount !== undefined && { forksCount: repoInfo.forksCount }),
-        ...(repoInfo?.watchersCount !== undefined && { watchersCount: repoInfo.watchersCount }),
-      }),
-    })
-      .then(() => fetch(`/api/stats/${owner}/${repo}`))
-      .then((r) => r.ok ? r.json() : null)
-      .then((data) => { if (data) setServerStats(data); })
-      .catch(() => {});
-  // repoInfo?.forksCount/watchersCount are bonus fields — intentionally excluded:
-  // adding them would re-run this one-shot badge-sync on every repoInfo update.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [owner, repo]);
-
-  // Check DB cache on mount — falls back to badge_cache metadata (last scan date).
-  // localStorage is shown immediately for instant UX, but we always revalidate against
-  // the DB so that a server-side rescan (full rescan button) is reflected on next load.
+  // Load localStorage cache + revalidate against DB cache — single effect, one loadCache call.
+  // localStorage is shown immediately for instant UX; DB is checked to pick up server-side rescans.
   useEffect(() => {
     const local = loadCache(owner, repo);
     if (local) {
@@ -380,7 +308,32 @@ export default function MapPage({
       setStatus("cached");
       saveBookmark(owner, repo, local.totalCount);
       setCacheCheckDone(true);
+
+      // Sync badge_cache from localStorage (repos scanned before badge-update existed)
+      const countrySet = new Set(
+        local.points
+          .map((p) => { const s = p.location?.split(",").pop()?.trim(); return s && isCountry(s) ? normalizeCountry(s) : null; })
+          .filter(Boolean),
+      );
+      fetch("/api/badge-update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          owner,
+          repo,
+          mappedCount: local.points.length,
+          countryCount: countrySet.size,
+          totalCount: local.totalCount,
+          ...(repoInfo?.forksCount !== undefined && { forksCount: repoInfo.forksCount }),
+          ...(repoInfo?.watchersCount !== undefined && { watchersCount: repoInfo.watchersCount }),
+        }),
+      })
+        .then(() => fetch(`/api/stats/${owner}/${repo}`))
+        .then((r) => r.ok ? r.json() : null)
+        .then((data) => { if (data) setServerStats(data); })
+        .catch(() => {});
     }
+
     // Upload localStorage data to DB so other users can load the map without rescanning.
     // Called when the DB has no scan data (206 = badge only, 404 = nothing) but we have a local cache.
     const donateLocalCacheToDb = (cache: LocalCache) => {
@@ -443,6 +396,9 @@ export default function MapPage({
       .catch(() => {})
       .finally(() => setCacheCheckDone(true));
     return () => ac.abort();
+  // repoInfo?.forksCount/watchersCount are bonus fields — intentionally excluded:
+  // adding them would re-run this one-shot badge-sync on every repoInfo update.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [owner, repo]);
 
   // Fetch server-side stats from DB (fallback for repos not in StargazerCache, or >15k stars)
