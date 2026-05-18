@@ -2,6 +2,7 @@
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 
 import { ImageResponse } from "next/og";
+import { logError } from "@/lib/api-helpers";
 
 export const runtime = "edge";
 export const size = { width: 1200, height: 630 };
@@ -10,7 +11,7 @@ export const contentType = "image/png";
 export default async function Image({ params }: { params: Promise<{ owner: string; repo: string }> }) {
   const { owner, repo } = await params;
 
-  let stars = 0;
+  let stars: number | null = null;
   let description = "";
   let avatar = "";
   try {
@@ -20,11 +21,13 @@ export default async function Image({ params }: { params: Promise<{ owner: strin
     });
     if (res.ok) {
       const data = await res.json() as { stargazers_count?: number; description?: string; owner?: { avatar_url?: string } };
-      stars = data.stargazers_count ?? 0;
+      stars = data.stargazers_count ?? null;
       description = data.description ?? "";
       avatar = data.owner?.avatar_url ?? "";
     }
-  } catch {}
+  } catch (err) {
+    logError("opengraph-image", err);
+  }
 
   return new ImageResponse(
     (
@@ -65,7 +68,11 @@ export default async function Image({ params }: { params: Promise<{ owner: strin
         {/* Stars stat */}
         <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginTop: "auto" }}>
           <span style={{ color: "#f0f6fc", fontSize: 72, fontWeight: 800 }}>
-            {stars >= 1000 ? `${(stars / 1000).toFixed(1)}k` : stars.toLocaleString()}
+            {stars === null
+              ? "unknown"
+              : stars >= 1000
+                ? `${(stars / 1000).toFixed(1)}k`
+                : stars.toLocaleString()}
           </span>
           <span style={{ color: "#ffa657", fontSize: 32, fontWeight: 600 }}>★ stars</span>
         </div>

@@ -389,7 +389,7 @@ const LocationInput = ({
         <div className="absolute top-full left-0 right-0 mt-1 bg-surface border border-border rounded-xl shadow-lg z-50 overflow-hidden">
           {suggestions.map((item, i) => (
             <button
-              key={i}
+              key={item.label ?? i}
               onMouseDown={(e) => { e.preventDefault(); handleSelect(item); }}
               onMouseEnter={() => setActiveIndex(i)}
               className={`w-full text-left px-3 py-2.5 text-sm text-foreground transition-colors
