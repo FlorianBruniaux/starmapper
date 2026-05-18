@@ -4,6 +4,8 @@
 "use client";
 
 import { use, useEffect, useRef, useState, useCallback, useMemo, useDeferredValue, useReducer, startTransition } from "react";
+import { useScanController, scanReducer } from "@/hooks/useScanController";
+import { StatsModal } from "@/components/map/stats-modal";
 import NextImage from "next/image";
 import { StargazerMapDynamic } from "@/components/map/stargazer-map-dynamic";
 import { MapFloatingNav } from "@/components/map/map-floating-nav";
@@ -11,14 +13,12 @@ import { CLUSTER_RADIUS } from "@/components/map/constants";
 import type { StargazerPoint, ChunkResponse } from "@/app/api/chunk/route";
 import type { MapProjection } from "@/lib/theme";
 import type { RepoStats, RepoOrganic } from "@/app/api/stats/[owner]/[repo]/route";
-import type { GeoVelocityItem } from "@/app/api/stats/[owner]/[repo]/geo-velocity/route";
 import type { GrowthResponse } from "@/app/api/stats/[owner]/[repo]/growth/route";
 import { TokenModal, getStoredToken, getStoredUsername, setStoredUsername } from "@/components/token-modal";
 import { Modal } from "@/components/modal";
 import { saveBookmark } from "@/lib/bookmarks";
 import { FilterCombobox } from "@/components/filter-combobox";
 import { isCountry, normalizeCountry } from "@/lib/countries";
-import { StatsList } from "@/components/stats-list";
 import { useTheme } from "@/hooks/useTheme";
 import { MAP_STYLE_DARK, MAP_STYLE_LIGHT } from "@/lib/theme";
 import { compressToBase64 } from "@/lib/compress-client";
@@ -30,7 +30,7 @@ import type { TimeEstimate } from "@/lib/format";
 import { GrowthChart } from "@/components/map/growth-chart";
 import { useWatchMode } from "@/hooks/useWatchMode";
 import { useTimelapse } from "@/hooks/useTimelapse";
-import { loadCache, saveCache, clearCache } from "@/lib/repo-cache";
+import { loadCache, saveCache } from "@/lib/repo-cache";
 import type { LocalCache } from "@/lib/repo-cache";
 
 type AnyStargazer = {
@@ -78,42 +78,6 @@ const estimateScan = (stars: number): TimeEstimate => {
 }
 
 
-class RateLimitedError extends Error {
-  resetAt: number; // ms epoch
-  reason: "github" | "server";
-  constructor(resetAt: number, reason: "github" | "server" = "server") {
-    super("rate_limited");
-    this.resetAt = resetAt;
-    this.reason = reason;
-  }
-}
-
-type UnmappedEntry = { login: string; name: string | null; followers: number; starredAt: string | null };
-
-type ScanState = {
-  points: StargazerPoint[];
-  unmapped: UnmappedEntry[];
-  processed: number;
-};
-
-type ScanAction =
-  | { type: "reset" }
-  | { type: "set"; points: StargazerPoint[]; unmapped: UnmappedEntry[] }
-  | { type: "chunk"; points: StargazerPoint[]; unmapped: UnmappedEntry[] };
-
-const scanReducer = (state: ScanState, action: ScanAction): ScanState => {
-  switch (action.type) {
-    case "reset":
-      return { points: [], unmapped: [], processed: 0 };
-    case "set":
-      return { points: action.points, unmapped: action.unmapped, processed: action.points.length + action.unmapped.length };
-    case "chunk":
-      return { points: action.points, unmapped: action.unmapped, processed: action.points.length + action.unmapped.length };
-    default:
-      return state;
-  }
-};
-
 
 export default function MapPage({
   params,
@@ -130,13 +94,8 @@ export default function MapPage({
   const scanRef = useRef(scan);
   scanRef.current = scan;
   const [repoInfo, setRepoInfo] = useState<RepoInfo | null>(null);
-  const [status, setStatus] = useState<"idle" | "loading" | "waiting" | "done" | "cached" | "refreshing" | "error">("idle");
 
   const [total, setTotal] = useState(0);
-  const [error, setError] = useState("");
-  const [retryIn, setRetryIn] = useState(0);
-  const [retryTotal, setRetryTotal] = useState(0);
-  const [waitReason, setWaitReason] = useState<"github" | "server">("server");
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [findInput, setFindInput] = useState("");
   const [findStatus, setFindStatus] = useState<"idle" | "searching" | "found" | "no-location" | "not-found">("idle");
@@ -146,11 +105,6 @@ export default function MapPage({
   const [serverStats, setServerStats] = useState<RepoStats | null>(null);
   const [organicData, setOrganicData] = useState<RepoOrganic | null>(null);
   const [statsOpen, setStatsOpen] = useState(false);
-  const [statsTab, setStatsTab] = useState<"countries" | "cities" | "top" | "companies" | "power" | "rising">("top");
-  const [geoVelocity, setGeoVelocity] = useState<GeoVelocityItem[] | null>(null);
-  const [geoVelocityLoading, setGeoVelocityLoading] = useState(false);
-  const [statsFilter, setStatsFilter] = useState("");
-  const [statsTopSort, setStatsTopSort] = useState<"followers" | "repos">("followers");
   const [shareOpen, setShareOpen] = useState(false);
   const [badgeOpen, setBadgeOpen] = useState(false);
   const [badgeTab, setBadgeTab] = useState<"map" | "shield">("map");
@@ -199,10 +153,6 @@ export default function MapPage({
   } | null>(null);
   const [mapProjection, setMapProjection] = useState<MapProjection>("globe");
   const [viewMode, setViewMode] = useState<"clusters" | "heatmap">("clusters");
-  const runningRef = useRef(false);
-  const pendingScanRef = useRef(false);
-  const pendingRefreshRef = useRef(false);
-
   // Timelapse + filtered map points — weekBuckets and filteredMapPoints are derived inside
   const {
     timelapseActive, setTimelapseActive,
@@ -261,6 +211,18 @@ export default function MapPage({
     if (t) h["x-gh-token"] = t;
     return h;
   }, []);
+
+  const {
+    status, setStatus,
+    retryIn, retryTotal, waitReason, error,
+    startScraping,
+    handleStartScan, handleStartRefresh, handleTokenClose,
+  } = useScanController({
+    owner, repo, dispatch, scanRef,
+    setTotal, setCachedAt, setLatestStarredAt,
+    setTokenOpen, setHasToken, setServerStats,
+    ghHeaders, repoInfo, total, latestStarredAt,
+  });
 
   // Sync localStorage state client-side (not available during SSR)
   useEffect(() => {
@@ -420,272 +382,6 @@ export default function MapPage({
       .catch(() => {});
     return () => ac.abort();
   }, [owner, repo]);
-
-  // Countdown ticker when waiting
-  useEffect(() => {
-    if (status !== "waiting" || retryIn <= 0) return;
-    const t = setTimeout(() => setRetryIn((n) => n - 1), 1000);
-    return () => clearTimeout(t);
-  }, [status, retryIn]);
-
-  const fetchNextChunk = useCallback(async (cursor: string | null, since?: string) => {
-    const res = await fetch("/api/chunk", {
-      method: "POST",
-      headers: ghHeaders(),
-      body: JSON.stringify({ owner, repo, cursor, since }),
-    });
-    if (res.status === 429) {
-      const body = await res.json().catch(() => ({})) as { resetAt?: number };
-      // resetAt present = GitHub rate limit; absent = server concurrent limit
-      throw new RateLimitedError(body.resetAt ?? Date.now() + 60_000, body.resetAt ? "github" : "server");
-    }
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return (await res.json()) as ChunkResponse;
-  }, [owner, repo, ghHeaders]);
-
-  // Full scan from scratch
-  const startScraping = useCallback(async () => {
-    if (runningRef.current) return;
-    runningRef.current = true;
-    clearCache(owner, repo);
-    dispatch({ type: "reset" });
-    setStatus("loading");
-    let cursor: string | null = null;
-    let allPoints: StargazerPoint[] = [];
-    let allUnmapped: { login: string; name: string | null; followers: number; starredAt: string | null }[] = [];
-    let newestStarredAt: string | null = null;
-
-    try {
-      while (true) {
-        let chunk: ChunkResponse;
-        while (true) {
-          try {
-            chunk = await fetchNextChunk(cursor);
-            break;
-          } catch (e) {
-            if (e instanceof RateLimitedError) {
-              const secsLeft = Math.max(1, Math.ceil((e.resetAt - Date.now()) / 1000));
-              setWaitReason(e.reason);
-              setStatus("waiting");
-              setRetryIn(secsLeft);
-              setRetryTotal(secsLeft);
-              await new Promise((r) => setTimeout(r, secsLeft * 1000));
-              setStatus("loading");
-            } else {
-              throw e;
-            }
-          }
-        }
-
-        if (!newestStarredAt && chunk!.latestStarredAt) newestStarredAt = chunk!.latestStarredAt;
-        setTotal(chunk!.totalCount); // urgent — drives progress bar
-        // Spread into new arrays — new references trigger memo() re-render and the throttled
-        // setData effect in StargazerMap. Mutation in place would keep same reference →
-        // memo() bails out → useEffect([points]) never fires → map frozen after chunk 1.
-        allPoints = [...allPoints, ...chunk!.points];
-        allUnmapped = [...allUnmapped, ...chunk!.unmapped];
-        startTransition(() => {
-          dispatch({ type: "chunk", points: allPoints, unmapped: allUnmapped });
-        });
-        if (!chunk!.nextCursor) break;
-        cursor = chunk!.nextCursor;
-      }
-
-      const now = Date.now();
-      setCachedAt(now);
-      setLatestStarredAt(newestStarredAt);
-      saveCache(owner, repo, {
-        points: allPoints,
-        unmapped: allUnmapped,
-        totalCount: allPoints.length + allUnmapped.length,
-        scannedAt: now,
-        latestStarredAt: newestStarredAt,
-      });
-      saveBookmark(owner, repo, allPoints.length + allUnmapped.length);
-
-      // Save to DB cache first (shared across users), then update badge cache.
-      // Order matters: badge-update fires only after stargazer-cache succeeds so we never
-      // create a badge_cache entry without its corresponding stargazer_cache (ghost repo).
-      // Compress client-side to stay under Vercel's 4.5MB request body limit.
-      const finalTotal = allPoints.length + allUnmapped.length;
-      const countrySet = new Set(
-        allPoints
-          .map((p) => { const s = p.location?.split(",").pop()?.trim(); return s && isCountry(s) ? normalizeCountry(s) : null; })
-          .filter(Boolean),
-      );
-      if (finalTotal > 0) {
-        (async () => {
-          try {
-            type SlimPoint = Omit<StargazerPoint, "bio" | "avatarUrl">;
-            const slim: SlimPoint[] = allPoints.map(({ bio: _b, avatarUrl: _av, ...rest }) => rest);
-            const [pointsGz, unmappedGz] = await Promise.all([
-              compressToBase64(slim),
-              compressToBase64(allUnmapped),
-            ]);
-            const cacheRes = await fetch("/api/stargazer-cache", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ owner, repo, pointsGz, unmappedGz, totalCount: finalTotal, latestStarredAt: newestStarredAt, ts: Date.now() }),
-            });
-            if (!cacheRes.ok) return;
-            // badge-update only if scan cache was persisted — prevents ghost repos
-            fetch("/api/badge-update", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                owner,
-                repo,
-                mappedCount: allPoints.length,
-                countryCount: countrySet.size,
-                totalCount: finalTotal,
-                language: repoInfo?.language ?? null,
-                ...(repoInfo?.forksCount !== undefined && { forksCount: repoInfo.forksCount }),
-                ...(repoInfo?.watchersCount !== undefined && { watchersCount: repoInfo.watchersCount }),
-              }),
-            })
-              .then(() => fetch(`/api/stats/${owner}/${repo}`))
-              .then((r) => r.ok ? r.json() : null)
-              .then((data) => { if (data) setServerStats(data); })
-              .catch(() => {});
-          } catch { /* fire-and-forget, non-critical */ }
-        })();
-      }
-
-      setStatus("done");
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Unknown error");
-      setStatus("error");
-    } finally {
-      runningRef.current = false;
-    }
-  // repoInfo fields used in fire-and-forget badge-update at scan end — stale closure
-  // is harmless (defensive ?. guards, repoInfo loads before any scan completes).
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fetchNextChunk, owner, repo, total]);
-
-  // Delta scan — only fetch stars newer than latestStarredAt
-  const startRefresh = useCallback(async () => {
-    if (runningRef.current || !latestStarredAt) return;
-    runningRef.current = true;
-    setStatus("refreshing");
-    let cursor: string | null = null;
-    const newPoints: StargazerPoint[] = [];
-    const newUnmapped: { login: string; name: string | null; followers: number; starredAt: string | null }[] = [];
-    let newestStarredAt: string | null = null;
-    let latestTotalCount = total;
-
-    try {
-      while (true) {
-        let chunk: ChunkResponse;
-        while (true) {
-          try {
-            chunk = await fetchNextChunk(cursor, latestStarredAt);
-            break;
-          } catch (e) {
-            if (e instanceof RateLimitedError) {
-              const secsLeft = Math.max(1, Math.ceil((e.resetAt - Date.now()) / 1000));
-              setWaitReason(e.reason);
-              setStatus("waiting");
-              setRetryIn(secsLeft);
-              setRetryTotal(secsLeft);
-              await new Promise((r) => setTimeout(r, secsLeft * 1000));
-              setStatus("refreshing");
-            } else {
-              throw e;
-            }
-          }
-        }
-
-        if (!newestStarredAt && chunk!.latestStarredAt) newestStarredAt = chunk!.latestStarredAt;
-        latestTotalCount = chunk!.totalCount;
-        setTotal(chunk!.totalCount);
-        newPoints.push(...chunk!.points);
-        newUnmapped.push(...chunk!.unmapped);
-        if (!chunk!.nextCursor) break;
-        cursor = chunk!.nextCursor;
-      }
-
-      const now = Date.now();
-      // Merge new data using ref to get latest state (avoids stale closure)
-      const current = scanRef.current;
-      const existing = new Set(current.points.map((p) => p.login));
-      const mergedPoints = [...newPoints.filter((p) => !existing.has(p.login)), ...current.points];
-      const mergedUnmapped = [...newUnmapped, ...current.unmapped];
-      startTransition(() => {
-        dispatch({ type: "set", points: mergedPoints, unmapped: mergedUnmapped });
-      });
-      setCachedAt(now);
-
-      const updatedLatest = newestStarredAt ?? latestStarredAt;
-      setLatestStarredAt(updatedLatest);
-
-      saveCache(owner, repo, {
-        points: mergedPoints,
-        unmapped: mergedUnmapped,
-        totalCount: latestTotalCount,
-        scannedAt: now,
-        latestStarredAt: updatedLatest,
-      });
-
-      // Persist refreshed data to DB cache (fire-and-forget)
-      if (mergedPoints.length > 0) {
-        (async () => {
-          try {
-            type SlimPoint = Omit<StargazerPoint, "bio" | "avatarUrl">;
-            const slim: SlimPoint[] = mergedPoints.map(({ bio: _b, avatarUrl: _av, ...rest }) => rest);
-            const [pointsGz, unmappedGz] = await Promise.all([
-              compressToBase64(slim),
-              compressToBase64(mergedUnmapped),
-            ]);
-            await fetch("/api/stargazer-cache", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ owner, repo, pointsGz, unmappedGz, totalCount: latestTotalCount, latestStarredAt: updatedLatest, ts: now }),
-            });
-          } catch { /* fire-and-forget, non-critical */ }
-        })();
-      }
-
-      setStatus("cached");
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Unknown error");
-      setStatus("error");
-    } finally {
-      runningRef.current = false;
-    }
-  }, [fetchNextChunk, latestStarredAt, owner, repo, total]);
-
-  // Require a GitHub token before starting a full scan
-  const handleStartScan = useCallback(() => {
-    if (!getStoredToken()) {
-      pendingScanRef.current = true;
-      setTokenOpen(true);
-      return;
-    }
-    startScraping();
-  }, [startScraping]);
-
-  const handleStartRefresh = useCallback(() => {
-    if (!getStoredToken()) {
-      pendingRefreshRef.current = true;
-      setTokenOpen(true);
-      return;
-    }
-    startRefresh();
-  }, [startRefresh]);
-
-  const handleTokenClose = useCallback(() => {
-    setTokenOpen(false);
-    setHasToken(!!getStoredToken());
-    if (pendingScanRef.current) {
-      pendingScanRef.current = false;
-      if (getStoredToken()) startScraping();
-    }
-    if (pendingRefreshRef.current) {
-      pendingRefreshRef.current = false;
-      if (getStoredToken()) startRefresh();
-    }
-  }, [startScraping, startRefresh]);
 
   const startCompareScan = useCallback(async () => {
     if (!compareOwner || !compareRepo || compareRunningRef.current) return;
@@ -999,7 +695,7 @@ export default function MapPage({
       : 0;
     const totalStars = deferredPointsForStats.length + unmapped.length;
     // botCount, enrichedUserCount, powerStargazers come from server stats only (requires dataVersion + cross-repo query)
-    return { topCountries, topCities, topUsers, topCompanies, mappingRate, countryCount: countryCount.size, avgFollowers, totalStars, botCount: 0, enrichedUserCount: 0, powerStargazers: [] as RepoStats["powerStargazers"] };
+    return { topCountries, topCities, topUsers, topCompanies, mappingRate, countryCount: countryCount.size, avgFollowers, totalStars, mappedCount: deferredPointsForStats.length, botCount: 0, enrichedUserCount: 0, powerStargazers: [] as RepoStats["powerStargazers"], isCapped: false, organic: null };
   }, [deferredPointsForStats, unmapped]);
 
   const pct = total > 0 ? Math.round((processed / total) * 100) : 0;
@@ -1013,22 +709,6 @@ export default function MapPage({
     const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
     return points.filter((p) => p.starredAt && new Date(p.starredAt).getTime() >= cutoff).length;
   }, [points]);
-
-  // Lazy-fetch geo velocity when user opens the Rising tab
-  useEffect(() => {
-    if (!statsOpen || statsTab !== "rising" || geoVelocity !== null || geoVelocityLoading) return;
-    const ac = new AbortController();
-    setGeoVelocityLoading(true);
-    fetch(`/api/stats/${owner}/${repo}/geo-velocity`, { signal: ac.signal })
-      .then((r) => r.ok ? r.json() : null)
-      .then((data: { items: GeoVelocityItem[] } | null) => {
-        if (data) setGeoVelocity(data.items);
-      })
-      .catch(() => {})
-      .finally(() => setGeoVelocityLoading(false));
-    return () => ac.abort();
-  }, [statsOpen, statsTab, geoVelocity, geoVelocityLoading, owner, repo]);
-
 
   // Build a filtered-view URL encoding current filter state
   const buildFilteredUrl = useCallback((): string => {
@@ -1258,7 +938,7 @@ export default function MapPage({
                   </p>
                   <button
                     type="button"
-                    onClick={() => { pendingScanRef.current = true; setTokenOpen(true); }}
+                    onClick={handleStartScan}
                     className="text-xs text-accent-blue hover:underline font-medium"
                   >
                     Add your GitHub token →
@@ -2308,360 +1988,14 @@ export default function MapPage({
 
       {/* Stats modal */}
       {displayStats && (
-      <Modal open={statsOpen} onClose={() => setStatsOpen(false)} maxWidth="max-w-lg" innerClassName="flex flex-col max-h-[80vh]">
-            {/* Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-border-subtle flex-shrink-0">
-              <h2 className="text-foreground font-semibold text-sm">Stargazer Stats</h2>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => {
-                    const md = [
-                      `# StarMapper — ${owner}/${repo}`,
-                      ``,
-                      `- **Total stargazers**: ${displayStats.totalStars.toLocaleString()} (${displayStats.mappingRate}% mapped)`,
-                      `- **Countries**: ${displayStats.countryCount}`,
-                      `- **Cities**: ${displayStats.topCities.length}`,
-                      `- **Avg followers**: ${displayStats.avgFollowers.toLocaleString()}`,
-                      ``,
-                      `## Top Countries`,
-                      ...displayStats.topCountries.slice(0, 10).map(([c, n], i) => `${i + 1}. ${c} — ${n}`),
-                      ``,
-                      `## Top Cities`,
-                      ...displayStats.topCities.slice(0, 10).map(([c, n], i) => `${i + 1}. ${c} — ${n}`),
-                      `## Top Companies`,
-                      ...(displayStats.topCompanies.length ? displayStats.topCompanies.slice(0, 10).map(([c, n], i) => `${i + 1}. ${c} — ${n}`) : ["No company data"]),
-                      ``,
-                      `## Top Stargazers`,
-                      ...displayStats.topUsers.slice(0, 10).map((u, i) => `${i + 1}. [@${u.login}](https://github.com/${u.login}) — ${u.followers.toLocaleString()} followers`),
-                      ``,
-                      `*Generated by [StarMapper](${process.env.NEXT_PUBLIC_APP_URL ?? "https://starmapper.bruniaux.com"})*`,
-                    ].join("\n");
-                    navigator.clipboard.writeText(md).catch(() => {});
-                  }}
-                  className="flex items-center gap-1.5 text-xs text-muted hover:text-foreground bg-surface-alt hover:bg-border border border-border rounded-lg px-2.5 py-1 transition-colors"
-                  title="Copy stats as Markdown"
-                >
-                  <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-                    <path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z"/><path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z"/>
-                  </svg>
-                  Copy MD
-                </button>
-                <button onClick={() => setStatsOpen(false)} aria-label="Close stats" className="text-muted hover:text-foreground text-lg leading-none"><span aria-hidden="true">✕</span></button>
-              </div>
-            </div>
-
-            {/* Summary cards */}
-            <div className="grid grid-cols-6 gap-2 px-5 py-4 border-b border-border-subtle flex-shrink-0">
-              <div className="bg-background rounded-lg px-2 py-2 text-center">
-                <div className="text-xl font-bold text-foreground">
-                  {displayStats.totalStars >= 1000 ? `${(displayStats.totalStars / 1000).toFixed(1)}k` : displayStats.totalStars}
-                </div>
-                <div className="text-2xs text-muted uppercase tracking-wide mt-0.5">stars</div>
-                {starsThisMonth > 0 && (
-                  <div className="text-2xs text-accent-green mt-0.5">+{starsThisMonth >= 1000 ? `${(starsThisMonth / 1000).toFixed(1)}k` : starsThisMonth}/mo</div>
-                )}
-              </div>
-              <div className="bg-background rounded-lg px-2 py-2 text-center">
-                <div className="text-xl font-bold text-accent-green">{displayStats.mappingRate}%</div>
-                <div className="text-2xs text-muted uppercase tracking-wide mt-0.5">mapped</div>
-              </div>
-              <div className="bg-background rounded-lg px-2 py-2 text-center">
-                <div className="text-xl font-bold text-foreground">{displayStats.countryCount}</div>
-                <div className="text-2xs text-muted uppercase tracking-wide mt-0.5">countries</div>
-              </div>
-              <div className="bg-background rounded-lg px-2 py-2 text-center">
-                <div className="text-xl font-bold text-foreground">{displayStats.topCities.length}</div>
-                <div className="text-2xs text-muted uppercase tracking-wide mt-0.5">cities</div>
-              </div>
-              <div className="bg-background rounded-lg px-2 py-2 text-center">
-                <div className="text-xl font-bold text-accent-orange">
-                  {displayStats.avgFollowers >= 1000 ? `${(displayStats.avgFollowers / 1000).toFixed(1)}k` : displayStats.avgFollowers}
-                </div>
-                <div className="text-2xs text-muted uppercase tracking-wide mt-0.5">avg flw</div>
-              </div>
-              <div className="bg-background rounded-lg px-2 py-2 text-center">
-                {(() => {
-                  const { botCount, enrichedUserCount } = displayStats;
-                  const pct = enrichedUserCount > 0 ? Math.round((botCount / enrichedUserCount) * 100) : null;
-                  return (
-                    <>
-                      <div className={`text-xl font-bold ${pct !== null && pct > 20 ? "text-accent-red" : "text-muted"}`}>
-                        {pct !== null ? `${pct}%` : "—"}
-                      </div>
-                      <div className="text-2xs text-muted uppercase tracking-wide mt-0.5">suspect</div>
-                    </>
-                  );
-                })()}
-              </div>
-            </div>
-
-            {/* Notable stargazers — top 5 by followers, visible without clicking Top Stars tab */}
-            {displayStats.topUsers.length > 0 && (
-              <div className="flex items-center gap-2.5 px-5 py-2.5 border-b border-border-subtle flex-shrink-0">
-                <span className="text-2xs text-muted uppercase tracking-wide flex-shrink-0">Notables</span>
-                <div className="flex items-center gap-2 flex-1 overflow-hidden">
-                  {displayStats.topUsers.slice(0, 5).map((u) => (
-                    <a
-                      key={u.login}
-                      href={`/profile/${u.login}`}
-                      title={`@${u.login} — ${u.followers.toLocaleString()} followers`}
-                      className="flex items-center gap-1 hover:opacity-75 transition-opacity flex-shrink-0"
-                    >
-                      {u.avatarUrl
-                        ? <NextImage src={u.avatarUrl} alt="" width={20} height={20} sizes="20px" className="w-5 h-5 rounded-full ring-1 ring-border" />
-                        : <div className="w-5 h-5 rounded-full bg-surface-alt ring-1 ring-border flex-shrink-0" />
-                      }
-                      <span className="text-2xs text-muted-subtle tabular-nums">
-                        {u.followers >= 1000 ? `${(u.followers / 1000).toFixed(1)}k` : u.followers}
-                      </span>
-                    </a>
-                  ))}
-                </div>
-                <button
-                  onClick={() => { setStatsTab("top"); setStatsFilter(""); }}
-                  className="text-2xs text-accent-blue hover:underline flex-shrink-0"
-                >
-                  Top {displayStats.topUsers.length} →
-                </button>
-              </div>
-            )}
-
-            {/* Tabs */}
-            <div role="tablist" aria-label="Stats view" className="flex border-b border-border-subtle flex-shrink-0">
-              {(["top", "countries", "cities", "companies", "power", "rising"] as const).map((tab, idx, arr) => (
-                <button
-                  key={tab}
-                  role="tab"
-                  id={`stats-tab-${tab}`}
-                  aria-selected={statsTab === tab}
-                  aria-controls={`stats-panel-${tab}`}
-                  tabIndex={statsTab === tab ? 0 : -1}
-                  onClick={() => { setStatsTab(tab); setStatsFilter(""); }}
-                  onKeyDown={(e) => {
-                    if (e.key === "ArrowRight") { const next = arr[(idx + 1) % arr.length]; setStatsTab(next); setStatsFilter(""); }
-                    if (e.key === "ArrowLeft") { const prev = arr[(idx - 1 + arr.length) % arr.length]; setStatsTab(prev); setStatsFilter(""); }
-                  }}
-                  className={`flex-1 py-2.5 text-xs font-medium transition-colors ${
-                    statsTab === tab
-                      ? "text-accent-blue border-b-2 border-accent-blue -mb-px"
-                      : "text-muted hover:text-foreground"
-                  }`}
-                >
-                  {tab === "top" ? "Top Stars" : tab === "countries" ? "Countries" : tab === "cities" ? "Cities" : tab === "companies" ? "Companies" : tab === "power" ? <><span aria-hidden="true">⚡</span> Power</> : <><span aria-hidden="true">📈</span> Rising</>}
-                </button>
-              ))}
-            </div>
-
-            {/* Filter input for countries/cities/companies */}
-            {(statsTab === "countries" || statsTab === "cities" || statsTab === "companies") && (
-              <div className="px-5 pt-3 flex-shrink-0">
-                <input
-                  value={statsFilter}
-                  onChange={(e) => setStatsFilter(e.target.value)}
-                  placeholder={`Filter ${statsTab}…`}
-                  aria-label={`Filter ${statsTab}`}
-                  className="w-full bg-background border border-border rounded-lg px-3 py-1.5 text-xs text-foreground placeholder-muted-subtle focus:outline-none focus:border-accent-blue"
-                />
-              </div>
-            )}
-
-            {/* List — tabpanel */}
-            <div
-              role="tabpanel"
-              id={`stats-panel-${statsTab}`}
-              aria-labelledby={`stats-tab-${statsTab}`}
-              className="overflow-y-auto flex-1 px-5 py-3"
-            >
-              {statsTab === "top" && (
-                <div>
-                  {/* Sort toggle */}
-                  <div className="flex items-center gap-1 mb-3">
-                    <span id="stats-sort-label" className="text-muted-subtle text-2xs uppercase tracking-wide mr-1">Sort:</span>
-                    <div role="radiogroup" aria-labelledby="stats-sort-label" className="flex gap-1">
-                      {(["followers", "repos"] as const).map((s) => (
-                        <button
-                          key={s}
-                          role="radio"
-                          aria-checked={statsTopSort === s}
-                          onClick={() => setStatsTopSort(s)}
-                          className={`px-2 py-0.5 rounded text-2xs font-medium transition-colors ${
-                            statsTopSort === s
-                              ? "bg-accent-blue/20 text-accent-blue"
-                              : "text-muted hover:text-foreground"
-                          }`}
-                        >
-                          {s === "followers" ? "Followers" : "Public repos"}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="space-y-2.5">
-                    {[...displayStats.topUsers]
-                      .sort((a, b) => statsTopSort === "followers" ? b.followers - a.followers : b.publicRepos - a.publicRepos)
-                      .map((u, i) => (
-                      <div key={u.login} className="flex items-center gap-3 py-0.5">
-                        <span className="text-muted-subtle text-xs w-5 text-right flex-shrink-0">{i + 1}</span>
-                        {u.avatarUrl
-                          ? <NextImage src={u.avatarUrl} alt="" width={32} height={32} sizes="32px" className="w-8 h-8 rounded-full flex-shrink-0 ring-1 ring-border" />
-                          : <div className="w-8 h-8 rounded-full bg-surface-alt flex-shrink-0 ring-1 ring-border" />
-                        }
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <a
-                              href={`/profile/${u.login}`}
-                              className="text-accent-blue text-xs font-medium hover:underline"
-                            >
-                              @{u.login}
-                            </a>
-                            {u.company && (
-                              <span className="text-2xs text-muted bg-surface-alt border border-border-subtle rounded px-1.5 py-px truncate max-w-24">
-                                {u.company.replace(/^@/, "")}
-                              </span>
-                            )}
-                          </div>
-                          {u.name && u.name !== u.login && (
-                            <div className="text-muted-subtle text-2xs truncate">{u.name}</div>
-                          )}
-                          {!u.name && u.location && (
-                            <div className="text-muted-subtle text-2xs truncate">{u.location}</div>
-                          )}
-                        </div>
-                        {statsTopSort === "repos" && u.publicRepos > 0 ? (
-                          <a
-                            href={`https://github.com/${u.login}?tab=repositories`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-accent-blue text-xs flex-shrink-0 tabular-nums hover:underline"
-                            title="View public repos"
-                          >
-                            <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor" className="inline mr-1 mb-0.5"><path d="M2 2.5A2.5 2.5 0 0 1 4.5 0h8.75a.75.75 0 0 1 .75.75v12.5a.75.75 0 0 1-.75.75h-2.5a.75.75 0 0 1 0-1.5h1.75v-2h-8a1 1 0 0 0-.714 1.7.75.75 0 1 1-1.072 1.05A2.495 2.495 0 0 1 2 11.5Zm10.5-1h-8a1 1 0 0 0-1 1v6.708A2.486 2.486 0 0 1 4.5 9h8Z"/></svg>
-                            {u.publicRepos.toLocaleString()}
-                          </a>
-                        ) : (
-                          <span className="text-muted text-xs flex-shrink-0 tabular-nums">
-                            <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor" className="inline mr-1 mb-0.5 text-muted"><path d="M3 8a1 1 0 1 1 0-2 1 1 0 0 1 0 2Zm3 0a1 1 0 1 1 0-2 1 1 0 0 1 0 2Zm3 0a1 1 0 1 1 0-2 1 1 0 0 1 0 2ZM1.5 3A1.5 1.5 0 0 0 0 4.5v7A1.5 1.5 0 0 0 1.5 13h13a1.5 1.5 0 0 0 1.5-1.5v-7A1.5 1.5 0 0 0 14.5 3Z"/></svg>
-                            {u.followers.toLocaleString()}
-                          </span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {statsTab === "countries" && (
-                <StatsList
-                  items={displayStats.topCountries.filter(([name]) => !statsFilter || name.toLowerCase().includes(statsFilter.toLowerCase()))}
-                  max={displayStats.topCountries[0]?.[1] ?? 1}
-                />
-              )}
-              {statsTab === "cities" && (
-                <StatsList
-                  items={displayStats.topCities.filter(([name]) => !statsFilter || name.toLowerCase().includes(statsFilter.toLowerCase()))}
-                  max={displayStats.topCities[0]?.[1] ?? 1}
-                />
-              )}
-              {statsTab === "companies" && (
-                <div className="space-y-2">
-                  {displayStats.topCompanies
-                    .filter(([company]) => !statsFilter || company.toLowerCase().includes(statsFilter.toLowerCase()))
-                    .map(([company, count], idx) => (
-                    <div key={company} className="flex items-center gap-3">
-                      <div className="text-muted-subtle text-xs w-4 text-right flex-shrink-0">{idx + 1}</div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-foreground text-xs truncate">{company}</span>
-                          <span className="text-muted text-xs ml-2 flex-shrink-0">{count}</span>
-                        </div>
-                        <div className="h-1 bg-surface-alt rounded-full">
-                          <div className="h-1 bg-accent-blue rounded-full" style={{ width: `${(count / (displayStats.topCompanies[0]?.[1] ?? 1)) * 100}%` }} />
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                  {displayStats.topCompanies.length === 0 && (
-                    <div className="text-center text-muted-subtle text-xs py-8">No company data available</div>
-                  )}
-                </div>
-              )}
-              {statsTab === "rising" && (
-                <div>
-                  {geoVelocityLoading && (
-                    <div className="text-center text-muted-subtle text-xs py-8">Loading…</div>
-                  )}
-                  {!geoVelocityLoading && geoVelocity !== null && geoVelocity.length === 0 && (
-                    <div className="text-center text-muted-subtle text-xs py-8">
-                      <div className="text-2xl mb-2" aria-hidden="true">📈</div>
-                      <div>Not enough timestamp data yet.</div>
-                      <div className="mt-1 text-2xs">Needs repos with starredAt data from the last 90 days.</div>
-                    </div>
-                  )}
-                  {!geoVelocityLoading && geoVelocity !== null && geoVelocity.length > 0 && (
-                    <div className="space-y-2.5">
-                      <p className="text-2xs text-muted-subtle mb-3">
-                        New stars in the last 30 days vs. the prior 60-day rate — which countries are discovering this repo.
-                      </p>
-                      {geoVelocity.map((item) => {
-                        const trendColor =
-                          item.trend === "rising" ? "text-accent-green" :
-                          item.trend === "new"     ? "text-accent-blue" :
-                          item.trend === "declining" ? "text-accent-red" : "text-muted";
-                        const trendLabel =
-                          item.trend === "rising"   ? `↑ ${item.ratio}×` :
-                          item.trend === "new"      ? "✦ new" :
-                          item.trend === "declining" ? "↓ slowing" : "→ stable";
-                        return (
-                          <div key={item.country} className="flex items-center gap-3">
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-1.5 mb-0.5">
-                                <span className="text-xs text-foreground font-medium truncate">{item.country}</span>
-                                <span className={`text-2xs font-semibold flex-shrink-0 ${trendColor}`}>{trendLabel}</span>
-                              </div>
-                              <div className="flex items-center gap-1 text-2xs text-muted-subtle">
-                                <span>{item.stars30d} this month</span>
-                                <span>·</span>
-                                <span>{item.total.toLocaleString()} total</span>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              )}
-              {statsTab === "power" && (
-                <div className="space-y-2.5">
-                  {displayStats.powerStargazers.length === 0 && (
-                    <div className="text-center text-muted-subtle text-xs py-8">
-                      <div className="text-2xl mb-2" aria-hidden="true">⚡</div>
-                      <div>No power stargazers yet.</div>
-                      <div className="mt-1 text-2xs">Appears after multiple repos are scanned.</div>
-                    </div>
-                  )}
-                  {displayStats.powerStargazers.map((u, i) => (
-                    <div key={u.login} className="flex items-center gap-3 py-0.5">
-                      <span className="text-muted-subtle text-xs w-5 text-right flex-shrink-0">{i + 1}</span>
-                      <NextImage src={u.avatarUrl} alt="" width={32} height={32} sizes="32px" className="w-8 h-8 rounded-full flex-shrink-0 ring-1 ring-border" />
-                      <div className="flex-1 min-w-0">
-                        <a
-                          href={`/profile/${u.login}`}
-                          className="text-accent-blue text-xs font-medium hover:underline"
-                        >
-                          @{u.login}
-                        </a>
-                        {u.name && u.name !== u.login && (
-                          <div className="text-muted-subtle text-2xs truncate">{u.name}</div>
-                        )}
-                      </div>
-                      <span className="text-accent-orange text-xs flex-shrink-0 tabular-nums font-medium">
-                        {u.trackedRepos} repos
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-      </Modal>
+        <StatsModal
+          open={statsOpen}
+          onClose={() => setStatsOpen(false)}
+          owner={owner}
+          repo={repo}
+          displayStats={displayStats}
+          starsThisMonth={starsThisMonth}
+        />
       )}
     </main>
   );
