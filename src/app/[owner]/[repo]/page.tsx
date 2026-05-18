@@ -311,9 +311,11 @@ export default function MapPage({
 
   // Load repo info
   useEffect(() => {
+    const ac = new AbortController();
     const t = getStoredToken();
     fetch(`/api/repo-info?owner=${owner}&repo=${repo}`, {
       headers: t ? { "x-gh-token": t } : {},
+      signal: ac.signal,
     })
       .then(async (r) => {
         const data = await r.json();
@@ -322,7 +324,8 @@ export default function MapPage({
         setRepoInfo(data);
         setTotal((t2) => t2 || data.stars);
       })
-      .catch(() => { setRepoNotFound(true); });
+      .catch((e: unknown) => { if ((e as { name?: string })?.name !== "AbortError") setRepoNotFound(true); });
+    return () => ac.abort();
   }, [owner, repo]);
 
   // Load from localStorage cache on mount
@@ -400,7 +403,8 @@ export default function MapPage({
       })();
     };
 
-    fetch(`/api/stargazer-cache/${owner}/${repo}`)
+    const ac = new AbortController();
+    fetch(`/api/stargazer-cache/${owner}/${repo}`, { signal: ac.signal })
       .then(async (r) => {
         if (r.status === 206) {
           const d = await r.json();
@@ -435,22 +439,27 @@ export default function MapPage({
       })
       .catch(() => {})
       .finally(() => setCacheCheckDone(true));
+    return () => ac.abort();
   }, [owner, repo]);
 
   // Fetch server-side stats from DB (fallback for repos not in StargazerCache, or >15k stars)
   useEffect(() => {
-    fetch(`/api/stats/${owner}/${repo}`)
+    const ac = new AbortController();
+    fetch(`/api/stats/${owner}/${repo}`, { signal: ac.signal })
       .then((r) => r.ok ? r.json() : null)
       .then((data: RepoStats | null) => { if (data) setServerStats(data); })
       .catch(() => {});
+    return () => ac.abort();
   }, [owner, repo]);
 
   // Fetch organic score independently — reads badge_cache directly, no star_event dependency
   useEffect(() => {
-    fetch(`/api/organic-score/${owner}/${repo}`)
+    const ac = new AbortController();
+    fetch(`/api/organic-score/${owner}/${repo}`, { signal: ac.signal })
       .then((r) => r.ok ? r.json() : null)
       .then((data: { organic: RepoOrganic } | null) => { if (data?.organic) setOrganicData(data.organic); })
       .catch(() => {});
+    return () => ac.abort();
   }, [owner, repo]);
 
   // Countdown ticker when waiting
@@ -755,14 +764,17 @@ export default function MapPage({
 
   useEffect(() => {
     if (!compareOwner || !compareRepo) return;
+    const ac = new AbortController();
     const t = getStoredToken();
     fetch(`/api/repo-info?owner=${compareOwner}&repo=${compareRepo}`, {
       headers: t ? { "x-gh-token": t } : {},
+      signal: ac.signal,
     })
       .then((r) => r.json())
       .then((d: RepoInfo & { error?: string }) => { if (!d.error) setCompareInfo(d); })
       .catch(() => {});
     startCompareScan();
+    return () => ac.abort();
   }, [compareOwner, compareRepo, startCompareScan]);
 
   // Sync viewMode to map imperatively (no re-render)
@@ -796,8 +808,9 @@ export default function MapPage({
 
   useEffect(() => {
     if (!growthOpen || apiGrowthData !== null) return;
+    const ac = new AbortController();
     setGrowthFetching(true);
-    fetch(`/api/stats/${owner}/${repo}/growth`)
+    fetch(`/api/stats/${owner}/${repo}/growth`, { signal: ac.signal })
       .then((r) => (r.ok ? (r.json() as Promise<GrowthResponse>) : null))
       .then((data) => {
         if (data && data.weeks.length > 0) {
@@ -806,8 +819,9 @@ export default function MapPage({
           setApiGrowthData([]);
         }
       })
-      .catch(() => setApiGrowthData([]))
+      .catch((e: unknown) => { if ((e as { name?: string })?.name !== "AbortError") setApiGrowthData([]); })
       .finally(() => setGrowthFetching(false));
+    return () => ac.abort();
   }, [growthOpen, apiGrowthData, owner, repo]);
 
   // Expensive computation — only runs when drawer is open (INP: F2)
@@ -1041,14 +1055,16 @@ export default function MapPage({
   // Lazy-fetch geo velocity when user opens the Rising tab
   useEffect(() => {
     if (!statsOpen || statsTab !== "rising" || geoVelocity !== null || geoVelocityLoading) return;
+    const ac = new AbortController();
     setGeoVelocityLoading(true);
-    fetch(`/api/stats/${owner}/${repo}/geo-velocity`)
+    fetch(`/api/stats/${owner}/${repo}/geo-velocity`, { signal: ac.signal })
       .then((r) => r.ok ? r.json() : null)
       .then((data: { items: GeoVelocityItem[] } | null) => {
         if (data) setGeoVelocity(data.items);
       })
       .catch(() => {})
       .finally(() => setGeoVelocityLoading(false));
+    return () => ac.abort();
   }, [statsOpen, statsTab, geoVelocity, geoVelocityLoading, owner, repo]);
 
 
