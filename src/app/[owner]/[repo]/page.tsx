@@ -362,6 +362,9 @@ export default function MapPage({
       .then((r) => r.ok ? r.json() : null)
       .then((data) => { if (data) setServerStats(data); })
       .catch(() => {});
+  // repoInfo?.forksCount/watchersCount are bonus fields — intentionally excluded:
+  // adding them would re-run this one-shot badge-sync on every repoInfo update.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [owner, repo]);
 
   // Check DB cache on mount — falls back to badge_cache metadata (last scan date).
@@ -599,6 +602,9 @@ export default function MapPage({
     } finally {
       runningRef.current = false;
     }
+  // repoInfo fields used in fire-and-forget badge-update at scan end — stale closure
+  // is harmless (defensive ?. guards, repoInfo loads before any scan completes).
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchNextChunk, owner, repo, total]);
 
   // Delta scan — only fetch stars newer than latestStarredAt

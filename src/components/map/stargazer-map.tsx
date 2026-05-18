@@ -747,6 +747,9 @@ const StargazerMapInner = ({ points, comparePoints, flyTarget, onFlyDone, onRead
       if (setDataTimerRef.current) { clearTimeout(setDataTimerRef.current); setDataTimerRef.current = null; }
       if (mapRef.current) { mapRef.current.remove(); mapRef.current = null; }
     };
+  // Map init must run once — initialCenter/styleUrl/onReady are stable on mount; re-init
+  // on prop change would destroy and rebuild the entire map (unacceptable UX regression).
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

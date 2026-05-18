@@ -37,7 +37,7 @@ export default tseslint.config(
       // Keep exhaustive-deps enabled separately so real stale-closure risks stay visible.
       "react-hooks/set-state-in-effect": "off",
       "react-hooks/refs": "off",
-      "react-hooks/exhaustive-deps": "off",
+      "react-hooks/exhaustive-deps": "warn",
       ...Object.fromEntries(
         Object.entries(jsxA11y.configs.recommended.rules).map(([key, value]) => {
           // Handle both string and array-form rule configs
