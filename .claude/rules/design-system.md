@@ -1,5 +1,7 @@
 # Design System Rules — StarMapper (Auto-loaded)
 
+> **Note**: The `design-system/` directory was removed (2026-05-18). It contained a stale auto-generated spec (MASTER.md) that contradicted the actual token system in `src/app/globals.css`. The source of truth for tokens is `globals.css` + this file.
+
 ## Directive
 
 **Never guess a color or a spacing value.**
