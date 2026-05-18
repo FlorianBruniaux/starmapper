@@ -19,6 +19,8 @@ const nextConfig: NextConfig = {
         source: "/api/:path*",
         headers: [
           { key: "X-Robots-Tag", value: "noindex, nofollow" },
+          // AGPL-3.0 §13: network services must provide source code access
+          { key: "X-Source-Code", value: `https://github.com/FlorianBruniaux/starmapper/commit/${process.env.VERCEL_GIT_COMMIT_SHA ?? "main"}` },
         ],
       },
       {

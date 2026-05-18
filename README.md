@@ -157,7 +157,7 @@ Location text is geocoded into coordinates and stored in a shared cache to avoid
 
 ### Data retention
 
-Geocoding cache entries and scan results are automatically purged after 12 months.
+User profile records and star event data are automatically deleted after **12 months** from last fetch. The geocoding cache (location text strings only — no personal identifiers, no logins) is retained indefinitely to avoid redundant API calls; it contains no data linkable to individual users. Full details: [starmapper.bruniaux.com/privacy](https://starmapper.bruniaux.com/privacy).
 
 ### Your rights
 

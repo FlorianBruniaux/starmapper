@@ -34,7 +34,7 @@ export default function PrivacyPage() {
         </Link>
 
         <h1 className="text-2xl font-bold text-foreground mb-2">Privacy Policy</h1>
-        <p className="text-xs text-muted-subtle mb-10">Last revised: 6 April 2026</p>
+        <p className="text-xs text-muted-subtle mb-10">Last revised: 18 May 2026</p>
 
         {/* 1. Controller */}
         <Section id="controller" title="1. Data Controller">
@@ -65,6 +65,10 @@ export default function PrivacyPage() {
             <li><strong className="text-foreground">Self-declared location</strong> — free-text field on the GitHub profile (e.g. &quot;Paris, France&quot;)</li>
             <li><strong className="text-foreground">Follower count</strong> — publicly visible metric</li>
             <li><strong className="text-foreground">Star date</strong> — when the user starred the repository</li>
+            <li>
+              <strong className="text-foreground">Account creation date</strong> — publicly visible on GitHub profiles; used as one signal
+              in our organic integrity heuristic to assess the authenticity of a repository&apos;s stargazer base
+            </li>
             <li>
               <strong className="text-foreground">Geocoded coordinates (lat/lng)</strong> — derived from the location field above, via
               third-party geocoding services, to place the user on the map

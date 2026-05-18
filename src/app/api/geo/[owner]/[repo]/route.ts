@@ -195,6 +195,8 @@ export const GET = async (
     .slice(0, 50)
     .map(([name, count]) => ({ name, count }));
 
+  // Privacy: only aggregated counts are returned — never individual coordinates or logins.
+  // Changing this to include per-user data would require a DPIA update and Privacy Policy revision.
   return NextResponse.json(
     {
       metadata: {
