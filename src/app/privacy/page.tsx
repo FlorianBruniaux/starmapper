@@ -95,10 +95,20 @@ export default function PrivacyPage() {
         {/* 4. Purpose */}
         <Section id="purpose" title="4. Why We Process This Data">
           <p>
-            The sole purpose of processing is to provide StarMapper&apos;s core functionality: visualising the geographic distribution of
-            stargazers for any public GitHub repository on an interactive map, with country and city statistics.
+            StarMapper processes this data for two purposes, both within the scope of repository analytics:
           </p>
-          <p>Data is not used for advertising, profiling, resale, or any purpose beyond repository analytics.</p>
+          <ul className="list-disc list-inside space-y-1.5 pl-2">
+            <li>
+              <strong className="text-foreground">Geographic visualisation</strong> — placing stargazers on an interactive world map
+              with country and city statistics, to help developers understand the reach of their open-source projects
+            </li>
+            <li>
+              <strong className="text-foreground">Organic integrity assessment</strong> — computing a heuristic score based on publicly
+              available signals (fork ratio, watcher ratio, zero-follower percentage, account creation date, release activity) to give
+              maintainers a rough indicator of whether a repository&apos;s stargazer base appears authentic
+            </li>
+          </ul>
+          <p>Data is not used for advertising, profiling, resale, or any purpose outside these two functions.</p>
         </Section>
 
         {/* 5. Legal basis */}
