@@ -27,10 +27,10 @@ importers:
         version: 0.13.11(typescript@5.9.3)(valibot@1.2.0(typescript@5.9.3))(zod@4.4.3)
       '@upstash/ratelimit':
         specifier: ^2.0.8
-        version: 2.0.8(@upstash/redis@1.37.0)
+        version: 2.0.8(@upstash/redis@1.38.0)
       '@upstash/redis':
-        specifier: ^1.37.0
-        version: 1.37.0
+        specifier: ^1.38.0
+        version: 1.38.0
       lucide-react:
         specifier: ^1.16.0
         version: 1.16.0(react@19.2.5)
@@ -81,8 +81,8 @@ importers:
         specifier: ^14.6.1
         version: 14.6.1(@testing-library/dom@10.4.1)
       '@types/node':
-        specifier: ^25
-        version: 25.6.0
+        specifier: ^25.8.0
+        version: 25.8.0
       '@types/pg':
         specifier: ^8.20.0
         version: 8.20.0
@@ -100,7 +100,7 @@ importers:
         version: 1.0.5
       '@vitejs/plugin-react':
         specifier: ^6.0.2
-        version: 6.0.2(vite@8.0.5(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2)(@types/node@25.6.0)(esbuild@0.28.0)(jiti@2.7.0)(tsx@4.22.0))
+        version: 6.0.2(vite@8.0.5(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2)(@types/node@25.8.0)(esbuild@0.28.0)(jiti@2.7.0)(tsx@4.22.1))
       '@vitest/coverage-v8':
         specifier: ^4.1.6
         version: 4.1.6(vitest@4.1.6)
@@ -111,8 +111,8 @@ importers:
         specifier: ^6.10.2
         version: 6.10.2(eslint@10.4.0(jiti@2.7.0))
       eslint-plugin-react-hooks:
-        specifier: ^7.0.1
-        version: 7.0.1(eslint@10.4.0(jiti@2.7.0))
+        specifier: ^7.1.1
+        version: 7.1.1(eslint@10.4.0(jiti@2.7.0))
       jsdom:
         specifier: ^29.1.1
         version: 29.1.1
@@ -123,11 +123,11 @@ importers:
         specifier: ^7.8.0
         version: 7.8.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(magicast@0.5.3)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(typescript@5.9.3)
       tailwindcss:
-        specifier: ^4
-        version: 4.2.2
+        specifier: ^4.3.0
+        version: 4.3.0
       tsx:
-        specifier: ^4.22.0
-        version: 4.22.0
+        specifier: ^4.22.1
+        version: 4.22.1
       typescript:
         specifier: ^5
         version: 5.9.3
@@ -136,7 +136,7 @@ importers:
         version: 8.59.3(eslint@10.4.0(jiti@2.7.0))(typescript@5.9.3)
       vitest:
         specifier: ^4.1.6
-        version: 4.1.6(@types/node@25.6.0)(@vitest/coverage-v8@4.1.6)(jsdom@29.1.1)(vite@8.0.5(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2)(@types/node@25.6.0)(esbuild@0.28.0)(jiti@2.7.0)(tsx@4.22.0))
+        version: 4.1.6(@types/node@25.8.0)(@vitest/coverage-v8@4.1.6)(jsdom@29.1.1)(vite@8.0.5(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2)(@types/node@25.8.0)(esbuild@0.28.0)(jiti@2.7.0)(tsx@4.22.1))
 
 packages:
 
@@ -1243,8 +1243,8 @@ packages:
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
 
-  '@types/node@25.6.0':
-    resolution: {integrity: sha512-+qIYRKdNYJwY3vRCZMdJbPLJAtGjQBudzZzdzwQYkEPQd+PJGixUL5QfvCLDaULoLv+RhT3LDkwEfKaAkgSmNQ==}
+  '@types/node@25.8.0':
+    resolution: {integrity: sha512-TCFSk8IZh+iLX1xtksoBVtdmgL+1IX0fC9BeU4QqFSuNdN/K+HUlhqOzEmSYYpZUVsLYcPqc9KX+60iDuninSQ==}
 
   '@types/pg@8.20.0':
     resolution: {integrity: sha512-bEPFOaMAHTEP1EzpvHTbmwR8UsFyHSKsRisLIHVMXnpNefSbGA1bD6CVy+qKjGSqmZqNqBDV2azOBo8TgkcVow==}
@@ -1334,8 +1334,8 @@ packages:
     peerDependencies:
       '@upstash/redis': ^1.34.3
 
-  '@upstash/redis@1.37.0':
-    resolution: {integrity: sha512-LqOJ3+XWPLSZ2rGSed5DYG3ixybxb8EhZu3yQqF7MdZX1wLBG/FRcI6xcUZXHy/SS7mmXWyadrud0HJHkOc+uw==}
+  '@upstash/redis@1.38.0':
+    resolution: {integrity: sha512-wu+dZBptlLy0+MCUEoHmzrY/TnmgDey3+c7EbIGwrLqAvkP8yi5MWZHYGIFtAygmL4Bkz2TdFu+eU0vFPncIcg==}
 
   '@vitejs/plugin-react@6.0.2':
     resolution: {integrity: sha512-DlSMqo4WhThw4vB8Mpn0Woe9J+Jfq1geJ61AKW0QEgLzGMNwtIMdxbDUzLxcun8W7NbJO0e2Jg/Nxm3cCSVzzg==}
@@ -1724,11 +1724,11 @@ packages:
     peerDependencies:
       eslint: ^3 || ^4 || ^5 || ^6 || ^7 || ^8 || ^9
 
-  eslint-plugin-react-hooks@7.0.1:
-    resolution: {integrity: sha512-O0d0m04evaNzEPoSW+59Mezf8Qt0InfgGIBJnpC0h3NH/WjUAR7BIKUfysC6todmtiZ/A0oUVS8Gce0WhBrHsA==}
+  eslint-plugin-react-hooks@7.1.1:
+    resolution: {integrity: sha512-f2I7Gw6JbvCexzIInuSbZpfdQ44D7iqdWX01FKLvrPgqxoE7oMj8clOfto8U6vYiz4yd5oKu39rRSVOe1zRu0g==}
     engines: {node: '>=18'}
     peerDependencies:
-      eslint: ^3.0.0 || ^4.0.0 || ^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0-0 || ^9.0.0
+      eslint: ^3.0.0 || ^4.0.0 || ^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0-0 || ^9.0.0 || ^10.0.0
 
   eslint-scope@9.1.2:
     resolution: {integrity: sha512-xS90H51cKw0jltxmvmHy2Iai1LIqrfbw57b79w/J7MfvDfkIkFZ+kj6zC3BjtUwh150HsSSdxXZcsuv72miDFQ==}
@@ -2765,9 +2765,6 @@ packages:
   symbol-tree@3.2.4:
     resolution: {integrity: sha512-9QNk5KwDF+Bvz+PyObkmSYjI5ksVUYtjW7AU22r2NKcfLJcXp96hkDWU3+XndOsUb+AQ9QhfzfCT2O+CNWT5Tw==}
 
-  tailwindcss@4.2.2:
-    resolution: {integrity: sha512-KWBIxs1Xb6NoLdMVqhbhgwZf2PGBpPEiwOqgI4pFIYbNTfBXiKYyWoTsXgBQ9WFg/OlhnvHaY+AEpW7wSmFo2Q==}
-
   tailwindcss@4.3.0:
     resolution: {integrity: sha512-y6nxMGB1nMW9R6k96e5gdIFzcfL/gTJRNaqGes1YvkLnPVXzWgbqFF2yLC0T8G774n24cx3Pe8XrKoniCOAH+Q==}
 
@@ -2825,8 +2822,8 @@ packages:
   tslib@2.8.1:
     resolution: {integrity: sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==}
 
-  tsx@4.22.0:
-    resolution: {integrity: sha512-8ccZMPD69s1AbKXx0C5ddTNZfNjwV04iIKgjZmKfKxMynEtSYcK0Lh7iQFh53fI5Yu4pb9usgAiqyPmEONaALg==}
+  tsx@4.22.1:
+    resolution: {integrity: sha512-TvncJykhxAzFCk0VQZKBTClall4Pm7qXDSodb6uxi8QFa8X8mT6ABjxxsQ2opDRYxG7AzcRWXaFtruz5HJKuWg==}
     engines: {node: '>=18.0.0'}
     hasBin: true
 
@@ -2869,8 +2866,8 @@ packages:
   uncrypto@0.1.3:
     resolution: {integrity: sha512-Ql87qFHB3s/De2ClA9e0gsnS6zXG27SkTiSJwjCc9MebbfapQfuPzumMIUMi38ezPZVNFcHI9sUIepeQfw8J8Q==}
 
-  undici-types@7.19.2:
-    resolution: {integrity: sha512-qYVnV5OEm2AW8cJMCpdV20CDyaN3g0AjDlOGf1OW4iaDEx8MwdtChUp4zu4H0VP3nDRF/8RKWH+IPp9uW0YGZg==}
+  undici-types@7.24.6:
+    resolution: {integrity: sha512-WRNW+sJgj5OBN4/0JpHFqtqzhpbnV0GuB+OozA9gCL7a993SmU+1JBZCzLNxYsbMfIeDL+lTsphD5jN5N+n0zg==}
 
   undici@7.25.0:
     resolution: {integrity: sha512-xXnp4kTyor2Zq+J1FfPI6Eq3ew5h6Vl0F/8d9XU5zZQf1tX9s2Su1/3PiMmUANFULpmksxkClamIZcaUqryHsQ==}
@@ -3958,13 +3955,13 @@ snapshots:
 
   '@types/json-schema@7.0.15': {}
 
-  '@types/node@25.6.0':
+  '@types/node@25.8.0':
     dependencies:
-      undici-types: 7.19.2
+      undici-types: 7.24.6
 
   '@types/pg@8.20.0':
     dependencies:
-      '@types/node': 25.6.0
+      '@types/node': 25.8.0
       pg-protocol: 1.13.0
       pg-types: 2.2.0
 
@@ -4082,21 +4079,21 @@ snapshots:
 
   '@upstash/core-analytics@0.0.10':
     dependencies:
-      '@upstash/redis': 1.37.0
+      '@upstash/redis': 1.38.0
 
-  '@upstash/ratelimit@2.0.8(@upstash/redis@1.37.0)':
+  '@upstash/ratelimit@2.0.8(@upstash/redis@1.38.0)':
     dependencies:
       '@upstash/core-analytics': 0.0.10
-      '@upstash/redis': 1.37.0
+      '@upstash/redis': 1.38.0
 
-  '@upstash/redis@1.37.0':
+  '@upstash/redis@1.38.0':
     dependencies:
       uncrypto: 0.1.3
 
-  '@vitejs/plugin-react@6.0.2(vite@8.0.5(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2)(@types/node@25.6.0)(esbuild@0.28.0)(jiti@2.7.0)(tsx@4.22.0))':
+  '@vitejs/plugin-react@6.0.2(vite@8.0.5(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2)(@types/node@25.8.0)(esbuild@0.28.0)(jiti@2.7.0)(tsx@4.22.1))':
     dependencies:
       '@rolldown/pluginutils': 1.0.1
-      vite: 8.0.5(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2)(@types/node@25.6.0)(esbuild@0.28.0)(jiti@2.7.0)(tsx@4.22.0)
+      vite: 8.0.5(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2)(@types/node@25.8.0)(esbuild@0.28.0)(jiti@2.7.0)(tsx@4.22.1)
 
   '@vitest/coverage-v8@4.1.6(vitest@4.1.6)':
     dependencies:
@@ -4110,7 +4107,7 @@ snapshots:
       obug: 2.1.1
       std-env: 4.1.0
       tinyrainbow: 3.1.0
-      vitest: 4.1.6(@types/node@25.6.0)(@vitest/coverage-v8@4.1.6)(jsdom@29.1.1)(vite@8.0.5(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2)(@types/node@25.6.0)(esbuild@0.28.0)(jiti@2.7.0)(tsx@4.22.0))
+      vitest: 4.1.6(@types/node@25.8.0)(@vitest/coverage-v8@4.1.6)(jsdom@29.1.1)(vite@8.0.5(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2)(@types/node@25.8.0)(esbuild@0.28.0)(jiti@2.7.0)(tsx@4.22.1))
 
   '@vitest/expect@4.1.6':
     dependencies:
@@ -4121,13 +4118,13 @@ snapshots:
       chai: 6.2.2
       tinyrainbow: 3.1.0
 
-  '@vitest/mocker@4.1.6(vite@8.0.5(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2)(@types/node@25.6.0)(esbuild@0.28.0)(jiti@2.7.0)(tsx@4.22.0))':
+  '@vitest/mocker@4.1.6(vite@8.0.5(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2)(@types/node@25.8.0)(esbuild@0.28.0)(jiti@2.7.0)(tsx@4.22.1))':
     dependencies:
       '@vitest/spy': 4.1.6
       estree-walker: 3.0.3
       magic-string: 0.30.21
     optionalDependencies:
-      vite: 8.0.5(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2)(@types/node@25.6.0)(esbuild@0.28.0)(jiti@2.7.0)(tsx@4.22.0)
+      vite: 8.0.5(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2)(@types/node@25.8.0)(esbuild@0.28.0)(jiti@2.7.0)(tsx@4.22.1)
 
   '@vitest/pretty-format@4.1.6':
     dependencies:
@@ -4578,7 +4575,7 @@ snapshots:
       safe-regex-test: 1.1.0
       string.prototype.includes: 2.0.1
 
-  eslint-plugin-react-hooks@7.0.1(eslint@10.4.0(jiti@2.7.0)):
+  eslint-plugin-react-hooks@7.1.1(eslint@10.4.0(jiti@2.7.0)):
     dependencies:
       '@babel/core': 7.29.0
       '@babel/parser': 7.29.2
@@ -5692,8 +5689,6 @@ snapshots:
 
   symbol-tree@3.2.4: {}
 
-  tailwindcss@4.2.2: {}
-
   tailwindcss@4.3.0: {}
 
   tapable@2.3.3: {}
@@ -5739,7 +5734,7 @@ snapshots:
 
   tslib@2.8.1: {}
 
-  tsx@4.22.0:
+  tsx@4.22.1:
     dependencies:
       esbuild: 0.28.0
     optionalDependencies:
@@ -5804,7 +5799,7 @@ snapshots:
 
   uncrypto@0.1.3: {}
 
-  undici-types@7.19.2: {}
+  undici-types@7.24.6: {}
 
   undici@7.25.0: {}
 
@@ -5826,7 +5821,7 @@ snapshots:
     optionalDependencies:
       typescript: 5.9.3
 
-  vite@8.0.5(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2)(@types/node@25.6.0)(esbuild@0.28.0)(jiti@2.7.0)(tsx@4.22.0):
+  vite@8.0.5(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2)(@types/node@25.8.0)(esbuild@0.28.0)(jiti@2.7.0)(tsx@4.22.1):
     dependencies:
       lightningcss: 1.32.0
       picomatch: 4.0.4
@@ -5834,19 +5829,19 @@ snapshots:
       rolldown: 1.0.0-rc.12(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2)
       tinyglobby: 0.2.16
     optionalDependencies:
-      '@types/node': 25.6.0
+      '@types/node': 25.8.0
       esbuild: 0.28.0
       fsevents: 2.3.3
       jiti: 2.7.0
-      tsx: 4.22.0
+      tsx: 4.22.1
     transitivePeerDependencies:
       - '@emnapi/core'
       - '@emnapi/runtime'
 
-  vitest@4.1.6(@types/node@25.6.0)(@vitest/coverage-v8@4.1.6)(jsdom@29.1.1)(vite@8.0.5(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2)(@types/node@25.6.0)(esbuild@0.28.0)(jiti@2.7.0)(tsx@4.22.0)):
+  vitest@4.1.6(@types/node@25.8.0)(@vitest/coverage-v8@4.1.6)(jsdom@29.1.1)(vite@8.0.5(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2)(@types/node@25.8.0)(esbuild@0.28.0)(jiti@2.7.0)(tsx@4.22.1)):
     dependencies:
       '@vitest/expect': 4.1.6
-      '@vitest/mocker': 4.1.6(vite@8.0.5(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2)(@types/node@25.6.0)(esbuild@0.28.0)(jiti@2.7.0)(tsx@4.22.0))
+      '@vitest/mocker': 4.1.6(vite@8.0.5(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2)(@types/node@25.8.0)(esbuild@0.28.0)(jiti@2.7.0)(tsx@4.22.1))
       '@vitest/pretty-format': 4.1.6
       '@vitest/runner': 4.1.6
       '@vitest/snapshot': 4.1.6
@@ -5863,10 +5858,10 @@ snapshots:
       tinyexec: 1.1.2
       tinyglobby: 0.2.16
       tinyrainbow: 3.1.0
-      vite: 8.0.5(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2)(@types/node@25.6.0)(esbuild@0.28.0)(jiti@2.7.0)(tsx@4.22.0)
+      vite: 8.0.5(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2)(@types/node@25.8.0)(esbuild@0.28.0)(jiti@2.7.0)(tsx@4.22.1)
       why-is-node-running: 2.3.0
     optionalDependencies:
-      '@types/node': 25.6.0
+      '@types/node': 25.8.0
       '@vitest/coverage-v8': 4.1.6(vitest@4.1.6)
       jsdom: 29.1.1
     transitivePeerDependencies:
