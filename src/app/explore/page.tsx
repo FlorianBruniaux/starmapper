@@ -820,12 +820,12 @@ export default function ExplorePage() {
 
               {/* Tab bar */}
               <div className="relative">
-                <div className="flex border-b border-border-subtle overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                <div className="flex border-b border-border-subtle overflow-x-auto snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                   {(["top", "power", "companies", "countries", "cities", "nearby"] as Tab[]).map((t) => (
                     <button
                       key={t}
                       onClick={() => handleTabChange(t)}
-                      className={`flex-shrink-0 flex-1 py-3 text-xs font-medium transition-colors whitespace-nowrap px-2 ${
+                      className={`snap-start flex-shrink-0 flex-1 py-3 text-xs font-medium transition-colors whitespace-nowrap px-2 ${
                         tab === t
                           ? "text-accent-blue border-b-2 border-accent-blue -mb-px bg-accent-blue/5"
                           : "text-muted hover:text-foreground"

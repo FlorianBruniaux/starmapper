@@ -147,12 +147,33 @@ export default function VsStarHistoryPage() {
           </p>
         </section>
 
-        {/* Comparison table */}
+        {/* Comparison — cards on mobile, table on desktop */}
         <section className="space-y-4">
           <h2 className="text-sm font-semibold text-foreground uppercase tracking-wider">
             Side-by-side comparison
           </h2>
-          <div className="overflow-x-auto rounded-xl border border-border">
+
+          {/* Mobile: stacked cards */}
+          <div className="flex flex-col gap-3 sm:hidden">
+            {COMPARISON.map((row) => (
+              <div key={row.criterion} className="rounded-xl border border-border bg-surface p-4 space-y-3">
+                <p className="text-xs font-semibold text-muted uppercase tracking-wider">{row.criterion}</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <p className="text-2xs font-medium text-muted mb-1">Star History</p>
+                    <p className="text-xs text-muted leading-snug">{row.starHistory}</p>
+                  </div>
+                  <div>
+                    <p className="text-2xs font-medium text-accent-blue mb-1">StarMapper</p>
+                    <p className="text-xs text-foreground leading-snug">{row.starMapper}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop: table */}
+          <div className="hidden sm:block overflow-x-auto rounded-xl border border-border">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border bg-surface">

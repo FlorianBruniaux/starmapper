@@ -269,7 +269,7 @@ export default function HomePage() {
 
               {/* Right: rotating globe */}
               <div className="hidden lg:flex lg:items-center lg:justify-center" aria-hidden="true">
-                <div className="relative w-full aspect-square max-w-[480px]">
+                <div className="relative w-full aspect-square max-w-md">
                   <HeroGlobeDynamic />
                 </div>
               </div>
