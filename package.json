@@ -11,6 +11,7 @@
   },
   "scripts": {
     "prepare": "git config core.hooksPath .githooks",
+    "postinstall": "prisma generate",
     "dev": "next dev",
     "dev:local": "sh -c 'set -a && . .env.local && set +a && DATABASE_DRIVER=standard DATABASE_URL=$DATABASE_URL_LOCAL next dev'",
     "build": "prisma generate && next build",
