@@ -14,7 +14,6 @@ import NextImage from "next/image";
 import { StargazerMapDynamic } from "@/components/map/stargazer-map-dynamic";
 import { MapFloatingNav } from "@/components/map/map-floating-nav";
 import { CLUSTER_RADIUS } from "@/components/map/constants";
-import type { StargazerPoint, ChunkResponse } from "@/app/api/chunk/route";
 import type { MapProjection } from "@/lib/theme";
 import type { RepoStats, RepoOrganic } from "@/app/api/stats/[owner]/[repo]/route";
 import { TokenModal, getStoredToken, getStoredUsername, setStoredUsername } from "@/components/token-modal";
@@ -30,6 +29,7 @@ import type { TimeEstimate } from "@/lib/format";
 import { useWatchMode } from "@/hooks/useWatchMode";
 import { useTimelapse } from "@/hooks/useTimelapse";
 import { useRepoCacheLoader } from "@/hooks/use-repo-cache-loader";
+import { useCompareScan } from "@/hooks/use-compare-scan";
 
 type RepoInfo = {
   name: string;
@@ -126,14 +126,6 @@ export default function MapPage({
     timelapseSpeed, setTimelapseSpeed,
     weekBuckets, filteredMapPoints,
   } = useTimelapse(points, followerMapFilter);
-
-  // Compare repo state
-  const [compareOwner, setCompareOwner] = useState<string | null>(null);
-  const [compareRepo, setCompareRepo] = useState<string | null>(null);
-  const [comparePoints, setComparePoints] = useState<StargazerPoint[]>([]);
-  const [compareStatus, setCompareStatus] = useState<"idle" | "loading" | "done">("idle");
-  const [compareInfo, setCompareInfo] = useState<RepoInfo | null>(null);
-  const compareRunningRef = useRef(false);
 
   // Debounce clusterRadius changes — map rebuild fires 150ms after slider stops
   useEffect(() => {
@@ -238,57 +230,12 @@ export default function MapPage({
     return () => ac.abort();
   }, [owner, repo]);
 
-  const startCompareScan = useCallback(async () => {
-    if (!compareOwner || !compareRepo || compareRunningRef.current) return;
-    compareRunningRef.current = true;
-    setCompareStatus("loading");
-    let cursor: string | null = null;
-    const allPts: StargazerPoint[] = [];
-    let lastCompareUpdate = 0;
-    try {
-      while (true) {
-        const res = await fetch("/api/chunk", {
-          method: "POST",
-          headers: ghHeaders(),
-          body: JSON.stringify({ owner: compareOwner, repo: compareRepo, cursor }),
-        });
-        if (!res.ok) break;
-        const chunk = await res.json() as ChunkResponse;
-        allPts.push(...chunk.points);
-        // Throttle: update compare state at most once every 2s during scan.
-        const now = Date.now();
-        if (now - lastCompareUpdate >= 2000) {
-          setComparePoints([...allPts]);
-          lastCompareUpdate = now;
-        }
-        if (!chunk.nextCursor) break;
-        cursor = chunk.nextCursor;
-      }
-    } catch {
-      setCompareStatus("done");
-      compareRunningRef.current = false;
-      return;
-    }
-    // Always apply final state at end of scan
-    setComparePoints([...allPts]);
-    setCompareStatus("done");
-    compareRunningRef.current = false;
-  }, [compareOwner, compareRepo, ghHeaders]);
-
-  useEffect(() => {
-    if (!compareOwner || !compareRepo) return;
-    const ac = new AbortController();
-    const t = getStoredToken();
-    fetch(`/api/repo-info?owner=${compareOwner}&repo=${compareRepo}`, {
-      headers: t ? { "x-gh-token": t } : {},
-      signal: ac.signal,
-    })
-      .then((r) => r.json())
-      .then((d: RepoInfo & { error?: string }) => { if (!d.error) setCompareInfo(d); })
-      .catch(() => {});
-    startCompareScan();
-    return () => ac.abort();
-  }, [compareOwner, compareRepo, startCompareScan]);
+  // Compare repo scan — chunk loop + repo-info fetch managed by hook
+  const {
+    compareOwner, setCompareOwner,
+    compareRepo, setCompareRepo,
+    comparePoints, compareStatus, compareInfo,
+  } = useCompareScan(ghHeaders);
 
   // Sync viewMode to map imperatively (no re-render)
   useEffect(() => {
