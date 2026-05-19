@@ -19,11 +19,9 @@ import type { MapProjection } from "@/lib/theme";
 import type { RepoStats, RepoOrganic } from "@/app/api/stats/[owner]/[repo]/route";
 import { TokenModal, getStoredToken, getStoredUsername, setStoredUsername } from "@/components/token-modal";
 import { Modal } from "@/components/modal";
-import { saveBookmark } from "@/lib/bookmarks";
 import { isCountry, normalizeCountry } from "@/lib/countries";
 import { useTheme } from "@/hooks/useTheme";
 import { MAP_STYLE_DARK, MAP_STYLE_LIGHT } from "@/lib/theme";
-import { compressToBase64 } from "@/lib/compress-client";
 import { TopPanel } from "@/components/map/top-panel";
 import { Dock } from "@/components/map/dock";
 import { TimelapseBar } from "@/components/map/timelapse-bar";
@@ -31,8 +29,7 @@ import { formatEstimate, timeAgo } from "@/lib/format";
 import type { TimeEstimate } from "@/lib/format";
 import { useWatchMode } from "@/hooks/useWatchMode";
 import { useTimelapse } from "@/hooks/useTimelapse";
-import { loadCache, saveCache } from "@/lib/repo-cache";
-import type { LocalCache } from "@/lib/repo-cache";
+import { useRepoCacheLoader } from "@/hooks/use-repo-cache-loader";
 
 type RepoInfo = {
   name: string;
@@ -83,7 +80,6 @@ export default function MapPage({
   const [findInput, setFindInput] = useState("");
   const [findStatus, setFindStatus] = useState<"idle" | "searching" | "found" | "no-location" | "not-found">("idle");
   const [cachedAt, setCachedAt] = useState<number | null>(null);
-  const [lastDbScan, setLastDbScan] = useState<string | null>(null);
   const [latestStarredAt, setLatestStarredAt] = useState<string | null>(null);
   const [serverStats, setServerStats] = useState<RepoStats | null>(null);
   const [organicData, setOrganicData] = useState<RepoOrganic | null>(null);
@@ -114,7 +110,6 @@ export default function MapPage({
   const [storedUsername, setStoredUsernameState] = useState("");
   const [repoNotFound, setRepoNotFound] = useState(false);
   const [repoRateLimited, setRepoRateLimited] = useState(false);
-  const [cacheCheckDone, setCacheCheckDone] = useState(false);
   const mapControlsRef = useRef<{
     captureCanvas: () => Promise<string | null>;
     setViewMode: (mode: "clusters" | "heatmap") => void;
@@ -228,120 +223,10 @@ export default function MapPage({
     return () => ac.abort();
   }, [owner, repo]);
 
-  // Load localStorage cache + revalidate against DB cache — single effect, one loadCache call.
-  // localStorage is shown immediately for instant UX; DB is checked to pick up server-side rescans.
-  useEffect(() => {
-    const local = loadCache(owner, repo);
-    if (local) {
-      dispatch({ type: "set", points: local.points, unmapped: local.unmapped });
-      setTotal(local.totalCount);
-      setCachedAt(local.scannedAt);
-      setLatestStarredAt(local.latestStarredAt ?? null);
-      setStatus("cached");
-      saveBookmark(owner, repo, local.totalCount);
-      setCacheCheckDone(true);
-
-      // Sync badge_cache from localStorage (repos scanned before badge-update existed)
-      const countrySet = new Set(
-        local.points
-          .map((p) => { const s = p.location?.split(",").pop()?.trim(); return s && isCountry(s) ? normalizeCountry(s) : null; })
-          .filter(Boolean),
-      );
-      fetch("/api/badge-update", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          owner,
-          repo,
-          mappedCount: local.points.length,
-          countryCount: countrySet.size,
-          totalCount: local.totalCount,
-          ...(repoInfo?.forksCount !== undefined && { forksCount: repoInfo.forksCount }),
-          ...(repoInfo?.watchersCount !== undefined && { watchersCount: repoInfo.watchersCount }),
-        }),
-      })
-        .then(() => fetch(`/api/stats/${owner}/${repo}`))
-        .then((r) => r.ok ? r.json() : null)
-        .then((data) => { if (data) setServerStats(data); })
-        .catch(() => {});
-    }
-
-    // Upload localStorage data to DB so other users can load the map without rescanning.
-    // Called when the DB has no scan data (206 = badge only, 404 = nothing) but we have a local cache.
-    const donateLocalCacheToDb = (cache: LocalCache) => {
-      (async () => {
-        try {
-          type SlimPoint = Omit<StargazerPoint, "bio" | "avatarUrl">;
-          const slim: SlimPoint[] = cache.points.map(({ bio: _b, avatarUrl: _av, ...rest }) => rest);
-          const [pointsGz, unmappedGz] = await Promise.all([
-            compressToBase64(slim),
-            compressToBase64(cache.unmapped),
-          ]);
-          await fetch("/api/stargazer-cache", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              owner, repo, pointsGz, unmappedGz,
-              totalCount: cache.totalCount,
-              latestStarredAt: cache.latestStarredAt,
-              ts: Date.now(),
-            }),
-          });
-        } catch { /* fire-and-forget */ }
-      })();
-    };
-
-    const ac = new AbortController();
-    fetch(`/api/stargazer-cache/${owner}/${repo}`, { signal: ac.signal })
-      .then(async (r) => {
-        if (r.status === 206) {
-          const d = await r.json();
-          if (!local) {
-            setLastDbScan(d.lastScan);
-          } else {
-            donateLocalCacheToDb(local);
-          }
-          return;
-        }
-        if (!r.ok) {
-          if (local) donateLocalCacheToDb(local);
-          return;
-        }
-        const data = await r.json();
-        if (!data.points) return;
-        const scannedMs = new Date(data.scannedAt).getTime();
-        if (local && scannedMs <= local.scannedAt) return;
-        dispatch({ type: "set", points: data.points, unmapped: data.unmapped });
-        setTotal(data.totalCount);
-        setCachedAt(scannedMs);
-        setLatestStarredAt(data.latestStarredAt ?? null);
-        setStatus("cached");
-        saveBookmark(owner, repo, data.totalCount);
-        saveCache(owner, repo, {
-          points: data.points,
-          unmapped: data.unmapped,
-          totalCount: data.totalCount,
-          scannedAt: scannedMs,
-          latestStarredAt: data.latestStarredAt ?? null,
-        });
-      })
-      .catch(() => {})
-      .finally(() => setCacheCheckDone(true));
-    return () => ac.abort();
-  // repoInfo?.forksCount/watchersCount are bonus fields — intentionally excluded:
-  // adding them would re-run this one-shot badge-sync on every repoInfo update.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [owner, repo]);
-
-  // Fetch server-side stats from DB (fallback for repos not in StargazerCache, or >15k stars)
-  useEffect(() => {
-    const ac = new AbortController();
-    fetch(`/api/stats/${owner}/${repo}`, { signal: ac.signal })
-      .then((r) => r.ok ? r.json() : null)
-      .then((data: RepoStats | null) => { if (data) setServerStats(data); })
-      .catch(() => {});
-    return () => ac.abort();
-  }, [owner, repo]);
+  const { cacheCheckDone, lastDbScan } = useRepoCacheLoader({
+    owner, repo, repoInfo,
+    dispatch, setTotal, setCachedAt, setLatestStarredAt, setStatus, setServerStats,
+  });
 
   // Fetch organic score independently — reads badge_cache directly, no star_event dependency
   useEffect(() => {
