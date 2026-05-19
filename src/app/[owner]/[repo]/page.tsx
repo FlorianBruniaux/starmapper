@@ -12,6 +12,8 @@ import { AllStargazersModal } from "@/components/map/all-stargazers-modal";
 import type { AnyStargazer } from "@/components/map/all-stargazers-modal";
 import { RateLimitedModal } from "@/components/map/rate-limited-modal";
 import { RepoNotFoundModal } from "@/components/map/not-found-modal";
+import { RateLimitOverlay } from "@/components/map/rate-limit-overlay";
+import { PreScanOverlay } from "@/components/map/pre-scan-overlay";
 import NextImage from "next/image";
 import { StargazerMapDynamic } from "@/components/map/stargazer-map-dynamic";
 import { MapFloatingNav } from "@/components/map/map-floating-nav";
@@ -26,7 +28,6 @@ import { MAP_STYLE_DARK, MAP_STYLE_LIGHT } from "@/lib/theme";
 import { TopPanel } from "@/components/map/top-panel";
 import { Dock } from "@/components/map/dock";
 import { TimelapseBar } from "@/components/map/timelapse-bar";
-import { formatEstimate, timeAgo } from "@/lib/format";
 import type { TimeEstimate } from "@/lib/format";
 import { useWatchMode } from "@/hooks/useWatchMode";
 import { useTimelapse } from "@/hooks/useTimelapse";
@@ -442,144 +443,26 @@ export default function MapPage({
       </div>
 
       {/* Pre-scan overlay (no cache) */}
-      {status === "idle" && cacheCheckDone && repoInfo && estimate && (
-        <div className="absolute inset-0 z-30 flex items-center justify-center bg-background/85 backdrop-blur-sm">
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="prescan-title"
-            className="bg-surface border border-border rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl"
-          >
-            <div className="flex items-center gap-3 mb-6">
-              {repoInfo.avatar && (
-                <NextImage src={repoInfo.avatar} alt="" width={40} height={40} sizes="40px" className="w-10 h-10 rounded-full" />
-              )}
-              <div>
-                <h2 id="prescan-title" className="text-foreground font-semibold">{repoInfo.name}</h2>
-                {repoInfo.description && (
-                  <div className="text-muted text-xs mt-0.5 line-clamp-1">{repoInfo.description}</div>
-                )}
-              </div>
-            </div>
-
-            <div className="flex gap-4 mb-6">
-              <div className="flex-1 bg-background rounded-lg px-4 py-3 text-center">
-                <div className="text-2xl font-bold text-foreground">{total.toLocaleString()}</div>
-                <div className="text-2xs text-muted uppercase tracking-wide mt-0.5">stars</div>
-              </div>
-              <div className="flex-1 bg-background rounded-lg px-4 py-3 text-center">
-                <div className="text-2xl font-bold text-accent-blue">{formatEstimate(estimate)}</div>
-                <div className="text-2xs text-muted uppercase tracking-wide mt-0.5">estimated</div>
-              </div>
-            </div>
-
-            {estimate.keepOpen && (
-              <div className="flex items-start gap-2.5 bg-warning-subtle border border-accent-orange/30 rounded-lg px-4 py-3 mb-6">
-                <span className="text-accent-orange mt-0.5 flex-shrink-0">⚠</span>
-                <p className="text-accent-orange text-xs leading-relaxed">
-                  Keep this tab open during indexing. Closing it will restart from scratch.
-                  {estimate.unit === "h" && " Consider running this overnight."}
-                </p>
-              </div>
-            )}
-
-            {lastDbScan ? (
-              <div className="flex items-center gap-2 bg-background border border-accent-green-emphasis/40 rounded-lg px-4 py-2.5 mb-6">
-                <span className="text-accent-green text-xs">✓ Last scanned {timeAgo(new Date(lastDbScan).getTime())}</span>
-                <span className="text-border text-xs">·</span>
-                <span className="text-muted-subtle text-xs">Results shared with other users</span>
-              </div>
-            ) : (
-              <p className="text-muted text-xs mb-6 leading-relaxed">
-                Stargazers are geocoded via their GitHub location field.
-                Results are cached and shared — subsequent visitors load instantly.
-              </p>
-            )}
-
-            {total >= TOKEN_REQUIRED_STARS && !hasToken && (
-              <div className="flex items-start gap-2.5 bg-accent-orange/10 border border-accent-orange/30 rounded-lg px-4 py-3 mb-6">
-                <span className="text-accent-orange mt-0.5 flex-shrink-0 text-sm">⚠</span>
-                <div>
-                  <p className="text-accent-orange text-xs font-medium mb-1">
-                    A GitHub token is required for repos over 50,000 stars
-                  </p>
-                  <p className="text-muted text-xs leading-relaxed mb-2.5">
-                    Without a token, GitHub limits requests to 60/hr — not enough to index this repo.
-                    A free token unlocks 5,000/hr. No special permissions needed.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={handleStartScan}
-                    className="text-xs text-accent-blue hover:underline font-medium"
-                  >
-                    Add your GitHub token →
-                  </button>
-                </div>
-              </div>
-            )}
-
-            <button
-              onClick={lastDbScan ? handleStartScan : (total >= TOKEN_REQUIRED_STARS ? handleStartScan : startScraping)}
-              disabled={total >= TOKEN_REQUIRED_STARS && !hasToken}
-              className={`w-full bg-accent-green-emphasis text-white font-medium py-3 rounded-lg transition-colors text-sm ${
-                total >= TOKEN_REQUIRED_STARS && !hasToken
-                  ? "opacity-40 cursor-not-allowed"
-                  : "hover:opacity-90"
-              }`}
-            >
-              {lastDbScan ? `Rescan ${total.toLocaleString()} stars →` : `Start indexing ${total.toLocaleString()} stars →`}
-            </button>
-          </div>
-        </div>
+      {repoInfo && estimate && (
+        <PreScanOverlay
+          status={status}
+          cacheCheckDone={cacheCheckDone}
+          repoInfo={repoInfo}
+          estimate={estimate}
+          total={total}
+          lastDbScan={lastDbScan}
+          hasToken={hasToken}
+          onStart={lastDbScan ? handleStartScan : (total >= TOKEN_REQUIRED_STARS ? handleStartScan : startScraping)}
+        />
       )}
 
       {/* Rate limit overlay */}
-      {status === "waiting" && (
-        <div className="absolute inset-0 z-30 flex items-center justify-center bg-background/75 backdrop-blur-sm">
-          <div
-            role="alertdialog"
-            aria-modal="true"
-            aria-labelledby="rate-wait-title"
-            className="bg-surface border border-border rounded-2xl p-8 max-w-sm w-full mx-4 shadow-2xl text-center"
-          >
-            <div className="flex justify-center mb-5" aria-hidden="true">
-              <svg className="animate-spin motion-reduce:animate-none w-10 h-10 text-accent-blue" viewBox="0 0 24 24" fill="none">
-                <circle className="opacity-20" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
-                <path className="opacity-80" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-              </svg>
-            </div>
-            <h2 id="rate-wait-title" className="text-foreground font-semibold text-base mb-1">
-              {waitReason === "github" ? "GitHub quota reached" : "Server busy"}
-            </h2>
-            <p className="text-muted text-sm mb-5">
-              {waitReason === "github"
-                ? "GitHub API rate limit hit. Resuming automatically when quota resets in"
-                : "Too many scans running at once. Resuming automatically in"}
-            </p>
-            <div
-              className="text-5xl font-bold text-accent-blue tabular-nums mb-5"
-              aria-live="polite"
-              aria-atomic="true"
-            >
-              {retryIn}
-            </div>
-            <div
-              role="progressbar"
-              aria-valuenow={retryTotal > 0 ? retryTotal - retryIn : 0}
-              aria-valuemin={0}
-              aria-valuemax={retryTotal}
-              aria-label="Time until retry"
-              className="w-full bg-surface-alt rounded-full h-1 overflow-hidden"
-            >
-              <div
-                className="bg-accent-blue h-full rounded-full transition-all duration-1000 motion-reduce:transition-none"
-                style={{ width: retryTotal > 0 ? `${((retryTotal - retryIn) / retryTotal) * 100}%` : "0%" }}
-              />
-            </div>
-            <p className="text-muted-subtle text-xs mt-4">Your progress is saved — no need to do anything.</p>
-          </div>
-        </div>
-      )}
+      <RateLimitOverlay
+        status={status}
+        waitReason={waitReason}
+        retryIn={retryIn}
+        retryTotal={retryTotal}
+      />
 
       {/* Top panel */}
       <TopPanel
