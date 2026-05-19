@@ -47,6 +47,11 @@
             "type": "command",
             "command": ".claude/hooks/security-gate.sh",
             "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": ".claude/hooks/config-protection.sh",
+            "timeout": 5
           }
         ]
       },
@@ -56,6 +61,11 @@
           {
             "type": "command",
             "command": ".claude/hooks/rtk-suggest.sh",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": ".claude/hooks/test-gate-on-commit.sh",
             "timeout": 5
           }
         ]
@@ -84,6 +94,31 @@
             "type": "command",
             "command": ".claude/hooks/banner-reminder.sh",
             "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": ".claude/hooks/tdd-test-on-write.sh",
+            "timeout": 30
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/post-release-doc-update.sh",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/activity-logger.sh",
+            "timeout": 3
           }
         ]
       }
@@ -112,6 +147,42 @@
           {
             "type": "command",
             "command": ".claude/hooks/smart-suggest.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/session-loader.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/session-reflector.sh",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/pre-compact-snapshot.sh",
             "timeout": 5
           }
         ]
