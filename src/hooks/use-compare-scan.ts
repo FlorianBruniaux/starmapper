@@ -35,7 +35,7 @@ export const useCompareScan = (
   const [compareInfo, setCompareInfo] = useState<RepoInfo | null>(null);
   const compareRunningRef = useRef(false);
 
-  const startCompareScan = useCallback(async () => {
+  const startCompareScan = useCallback(async (signal: AbortSignal) => {
     if (!compareOwner || !compareRepo || compareRunningRef.current) return;
     compareRunningRef.current = true;
     setCompareStatus("loading");
@@ -43,11 +43,12 @@ export const useCompareScan = (
     const allPts: StargazerPoint[] = [];
     let lastUpdate = 0;
     try {
-      while (true) {
+      while (!signal.aborted) {
         const res = await fetch("/api/chunk", {
           method: "POST",
           headers: ghHeaders(),
           body: JSON.stringify({ owner: compareOwner, repo: compareRepo, cursor }),
+          signal,
         });
         if (!res.ok) break;
         const chunk = await res.json() as ChunkResponse;
@@ -61,13 +62,15 @@ export const useCompareScan = (
         cursor = chunk.nextCursor;
       }
     } catch {
-      setCompareStatus("done");
       compareRunningRef.current = false;
+      if (!signal.aborted) setCompareStatus("done");
       return;
     }
-    setComparePoints([...allPts]);
-    setCompareStatus("done");
     compareRunningRef.current = false;
+    if (!signal.aborted) {
+      setComparePoints([...allPts]);
+      setCompareStatus("done");
+    }
   }, [compareOwner, compareRepo, ghHeaders]);
 
   useEffect(() => {
@@ -81,7 +84,7 @@ export const useCompareScan = (
       .then((r) => r.json())
       .then((d: RepoInfo & { error?: string }) => { if (!d.error) setCompareInfo(d); })
       .catch(() => {});
-    startCompareScan();
+    startCompareScan(ac.signal);
     return () => ac.abort();
   }, [compareOwner, compareRepo, startCompareScan]);
 
