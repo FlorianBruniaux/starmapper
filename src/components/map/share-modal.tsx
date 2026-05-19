@@ -9,8 +9,6 @@ import NextImage from "next/image";
 import { Modal } from "@/components/modal";
 import type { StargazerPoint } from "@/app/api/chunk/route";
 import type { RepoStats } from "@/app/api/stats/[owner]/[repo]/route";
-import type { MapProjection } from "@/lib/theme";
-
 type RepoInfo = {
   name: string;
   description: string | null;
@@ -35,7 +33,6 @@ type Props = {
   filterDate: "all" | "30d" | "90d" | "1y";
   followerMapFilter: "all" | "high" | "mid" | "low";
   viewMode: "clusters" | "heatmap";
-  mapProjection: MapProjection;
   liDraft: string;
   onLiDraftChange: (s: string) => void;
 };
@@ -44,7 +41,7 @@ export const ShareModal = ({
   open, onClose, owner, repo, repoInfo, points, displayStats,
   captureCanvas, buildFilteredUrl,
   filterCountry, filterCity, filterCompany, filterFollowers,
-  filterDate, followerMapFilter, viewMode, mapProjection,
+  filterDate, followerMapFilter, viewMode,
   liDraft, onLiDraftChange,
 }: Props) => {
   const [liPanelOpen, setLiPanelOpen] = useState(false);

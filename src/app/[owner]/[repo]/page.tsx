@@ -129,7 +129,6 @@ export default function MapPage({
     return () => clearTimeout(t);
   }, [clusterRadius]);
 
-  // Read compare + filter params from URL on mount
   useEffect(() => {
     const p = new URLSearchParams(window.location.search);
     const compare = p.get("compare");
@@ -177,7 +176,6 @@ export default function MapPage({
     ghHeaders, repoInfo, total, latestStarredAt,
   });
 
-  // Sync localStorage state client-side (not available during SSR)
   useEffect(() => {
     setHasToken(!!getStoredToken());
     setStoredUsernameState(getStoredUsername());
@@ -192,7 +190,6 @@ export default function MapPage({
     }).catch(() => {});
   }, [owner, repo]);
 
-  // Load repo info
   useEffect(() => {
     const ac = new AbortController();
     const t = getStoredToken();
@@ -226,7 +223,6 @@ export default function MapPage({
     return () => ac.abort();
   }, [owner, repo]);
 
-  // Compare repo scan — chunk loop + repo-info fetch managed by hook
   const {
     compareOwner, setCompareOwner,
     compareRepo, setCompareRepo,
@@ -238,7 +234,6 @@ export default function MapPage({
     mapControlsRef.current?.setViewMode(viewMode);
   }, [viewMode]);
 
-  // Reset to clusters when compare mode activates
   useEffect(() => {
     if (compareOwner && compareRepo) setViewMode("clusters");
   }, [compareOwner, compareRepo]);
@@ -256,7 +251,6 @@ export default function MapPage({
     })),
   ], [points, unmapped]);
 
-  // Show growth button whenever the repo has any scan data (API will provide timestamps)
   const hasGrowthData = points.length > 0 || unmapped.length > 0;
 
   const findUser = useCallback((loginOverride?: string) => {
@@ -332,16 +326,13 @@ export default function MapPage({
   const pct = total > 0 ? Math.round((processed / total) * 100) : 0;
   const estimate = total > 0 ? estimateScan(total) : null;
   const newStarsCount = repoInfo && total > 0 ? Math.max(0, repoInfo.stars - total) : 0;
-  // Client-side stats take priority; fall back to server stats when no points loaded yet
   const displayStats = stats ?? serverStats;
 
-  // Stars gained in the last 30 days (based on starredAt already in memory)
   const starsThisMonth = useMemo(() => {
     const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
     return points.filter((p) => p.starredAt && new Date(p.starredAt).getTime() >= cutoff).length;
   }, [points]);
 
-  // Build a filtered-view URL encoding current filter state
   const buildFilteredUrl = useCallback((): string => {
     const params = new URLSearchParams();
     if (filterCountry) params.set("country", filterCountry);
@@ -379,16 +370,13 @@ export default function MapPage({
 
       {tokenOpen && <TokenModal onClose={handleTokenClose} />}
 
-      {/* GitHub rate limit modal */}
       <RateLimitedModal
         open={repoRateLimited}
         onAddToken={() => { setRepoRateLimited(false); setTokenOpen(true); }}
       />
 
-      {/* Repo not found modal */}
       <RepoNotFoundModal open={repoNotFound} owner={owner} repo={repo} />
 
-      {/* Map */}
       <StargazerMapDynamic
         points={filteredMapPoints}
         comparePoints={comparePoints}
@@ -399,7 +387,6 @@ export default function MapPage({
         clusterRadius={debouncedClusterRadius}
       />
 
-      {/* Attribution */}
       <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-10 pointer-events-none flex flex-col items-center gap-1.5">
         <div className="flex items-center gap-2">
           <a
@@ -432,7 +419,6 @@ export default function MapPage({
         </a>
       </div>
 
-      {/* Pre-scan overlay (no cache) */}
       {repoInfo && estimate && (
         <PreScanOverlay
           status={status}
@@ -446,7 +432,6 @@ export default function MapPage({
         />
       )}
 
-      {/* Rate limit overlay */}
       <RateLimitOverlay
         status={status}
         waitReason={waitReason}
@@ -454,7 +439,6 @@ export default function MapPage({
         retryTotal={retryTotal}
       />
 
-      {/* Top panel */}
       <TopPanel
         owner={owner}
         repo={repo}
@@ -513,7 +497,6 @@ export default function MapPage({
         </div>
       )}
 
-      {/* Legend — compare mode indicator only */}
       {compareOwner && compareRepo && (
         <div className="absolute bottom-6 right-4 z-10
           bg-background/90 border border-border rounded-lg px-3 py-2
@@ -523,7 +506,6 @@ export default function MapPage({
         </div>
       )}
 
-      {/* Unmapped drawer */}
       {drawerOpen && (
         <div className="absolute bottom-0 left-0 right-0 z-20
           bg-background/95 border-t border-border backdrop-blur-md
@@ -585,7 +567,6 @@ export default function MapPage({
         }}
       />
 
-      {/* Bottom-left — vertical dock */}
       {(displayStats || allStargazers.length > 0) && (
         <Dock
           owner={owner}
@@ -620,7 +601,6 @@ export default function MapPage({
         />
       )}
 
-      {/* Timelapse control bar */}
       {timelapseActive && weekBuckets.length > 1 && (
         <TimelapseBar
           weekBuckets={weekBuckets}
@@ -645,7 +625,6 @@ export default function MapPage({
         />
       )}
 
-      {/* Stargazers table modal */}
       <AllStargazersModal
         open={allOpen}
         onClose={() => setAllOpen(false)}
@@ -667,7 +646,6 @@ export default function MapPage({
         repo={repo}
       />
 
-      {/* Growth chart modal */}
       <GrowthModal
         open={growthOpen}
         onClose={() => setGrowthOpen(false)}
@@ -677,7 +655,6 @@ export default function MapPage({
         unmapped={unmapped}
       />
 
-      {/* Share modal */}
       {repoInfo && (
         <ShareModal
           open={shareOpen}
@@ -696,13 +673,11 @@ export default function MapPage({
           filterDate={filterDate}
           followerMapFilter={followerMapFilter}
           viewMode={viewMode}
-          mapProjection={mapProjection}
           liDraft={liDraft}
           onLiDraftChange={setLiDraft}
         />
       )}
 
-      {/* Badge modal */}
       <BadgeModal
         open={badgeOpen}
         onClose={() => setBadgeOpen(false)}
@@ -710,7 +685,6 @@ export default function MapPage({
         repo={repo}
       />
 
-      {/* Stats modal */}
       {displayStats && (
         <StatsModal
           open={statsOpen}
