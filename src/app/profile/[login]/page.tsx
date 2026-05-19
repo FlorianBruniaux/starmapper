@@ -13,6 +13,7 @@ import { MAP_STYLE_DARK, MAP_STYLE_LIGHT } from "@/lib/theme";
 import { useTheme } from "@/hooks/useTheme";
 import type { ProfileResponse, ProfileRepo } from "@/app/api/profile/[login]/route";
 import type { NearbyResponse } from "@/app/api/explore/nearby/route";
+import { Tabs } from "@/components/ui/tabs";
 import type { StargazerPoint } from "@/app/api/chunk/route";
 import type { UserRepo, UserReposResponse } from "@/app/api/explore/user-repos/route";
 import type { UserRepo as GhRepo } from "@/app/api/user-repos/route";
@@ -107,11 +108,15 @@ const RepoCard = ({ repo }: { repo: ProfileRepo }) => {
 };
 
 const SectionHeader = ({
-  title, count, id, noBorder = false,
+  title, count, id, noBorder = false, sticky = false,
 }: {
-  title: string; count?: number; id?: string; noBorder?: boolean;
+  title: string; count?: number; id?: string; noBorder?: boolean; sticky?: boolean;
 }) => (
-  <div className={`flex items-center gap-2 mb-3 ${noBorder ? "" : "pt-6 border-t border-border-subtle"}`}>
+  <div className={[
+    "flex items-center gap-2 mb-3",
+    noBorder ? "" : "pt-6 border-t border-border-subtle",
+    sticky ? "sticky top-14 z-10 bg-background/90 backdrop-blur -mx-4 sm:-mx-5 px-4 sm:px-5 pb-2" : "",
+  ].join(" ")}>
     <h2 id={id} className="text-foreground text-sm font-semibold">{title}</h2>
     {count !== undefined && (
       <span className="text-muted-subtle text-xs bg-surface border border-border px-1.5 py-0.5 rounded-full tabular-nums">
@@ -158,6 +163,7 @@ export default function ProfilePage({ params }: Props) {
   const [emailCopied, setEmailCopied] = useState(false);
   const [starredLang, setStarredLang] = useState<string | null>(null);
   const [starredSort, setStarredSort] = useState<"date" | "stars" | "mapped">("date");
+  const [profileTab, setProfileTab] = useState<"github" | "owned" | "starred">("github");
 
   const { theme } = useTheme();
   const JAWG_TOKEN = process.env.NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN ?? "";
@@ -512,7 +518,7 @@ export default function ProfilePage({ params }: Props) {
 
       {/* ── Map — full width at top (or placeholder while loading) ──────── */}
       {(hasMap || loadState === "loading") && (
-        <div className="h-80 shrink-0 border-b border-border-subtle relative">
+        <div className="h-64 sm:h-80 shrink-0 border-b border-border-subtle relative">
           {hasMap ? (
             <StargazerMapDynamic
               points={allMapPoints}
@@ -532,15 +538,15 @@ export default function ProfilePage({ params }: Props) {
         </div>
       )}
 
-      {/* ── Content: two independently scrollable columns ──────────────── */}
-      <div className={(hasMap || loadState === "loading") ? "flex flex-1 overflow-hidden" : "flex flex-1"}>
+      {/* ── Content: stacked on mobile, two columns on lg ───────────────── */}
+      <div className={(hasMap || loadState === "loading") ? "flex flex-col lg:flex-row flex-1 lg:overflow-hidden" : "flex flex-1"}>
 
-        {/* Left: profile card + repos */}
+        {/* Main: profile card + repos */}
         <div
           id="main"
           className={
             (hasMap || loadState === "loading")
-              ? "flex-[2] overflow-y-auto border-r border-border-subtle px-5 py-6 pb-12"
+              ? "w-full lg:flex-[2] lg:overflow-y-auto lg:border-r border-border-subtle px-4 sm:px-5 py-6 pb-12"
               : "w-full max-w-3xl mx-auto px-4 py-8 pb-16"
           }
         >
@@ -598,7 +604,7 @@ export default function ProfilePage({ params }: Props) {
                     <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
                       <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/>
                     </svg>
-                    GitHub
+                    <span className="hidden sm:inline">GitHub</span>
                   </a>
                   <button
                     onClick={handleRefresh}
@@ -623,7 +629,7 @@ export default function ProfilePage({ params }: Props) {
                       <path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
                       <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
                     </svg>
-                    {refreshState === "loading" ? "Refreshing…" : refreshState === "cooldown" ? `${refreshCooldownMin}min` : "Refresh"}
+                    <span className="hidden sm:inline">{refreshState === "loading" ? "Refreshing…" : refreshState === "cooldown" ? `${refreshCooldownMin}min` : "Refresh"}</span>
                   </button>
                   {/* LinkedIn chip — only shown when URL is valid */}
                   {profile.linkedinUrl?.startsWith("https://") && (
@@ -639,7 +645,7 @@ export default function ProfilePage({ params }: Props) {
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                         <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
                       </svg>
-                      LinkedIn
+                      <span className="hidden sm:inline">LinkedIn</span>
                     </a>
                   )}
                   {/* Contact dropdown */}
@@ -654,12 +660,16 @@ export default function ProfilePage({ params }: Props) {
                       <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
                         <path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4zm2-1a1 1 0 0 0-1 1v.217l7 4.2 7-4.2V4a1 1 0 0 0-1-1H2zm13 2.383-4.708 2.825L15 11.105V5.383zm-.034 6.876-5.64-3.471L8 9.583l-1.326-.795-5.64 3.47A1 1 0 0 0 2 13h12a1 1 0 0 0 .966-.741zM1 11.105l4.708-2.897L1 5.383v5.722z"/>
                       </svg>
-                      Contact
+                      <span className="hidden sm:inline">Contact</span>
                     </button>
                     {contactOpen && (
                       <>
                         <div className="fixed inset-0 z-10" onClick={() => setContactOpen(false)} />
-                        <div className="absolute right-0 top-full mt-1 z-20 w-56 rounded-lg border border-border bg-surface shadow-lg py-1 overflow-hidden">
+                        {/* Mobile: bottom-sheet full-width / Desktop: positioned dropdown */}
+                        <div className="
+                          fixed inset-x-0 bottom-0 z-20 rounded-t-2xl border-t border-border bg-surface shadow-lg py-2
+                          sm:absolute sm:inset-auto sm:right-0 sm:bottom-auto sm:top-full sm:mt-1 sm:w-56 sm:rounded-lg sm:border sm:border-border sm:py-1
+                        ">
                           <a
                             href={`https://github.com/${profile.login}`}
                             target="_blank"
@@ -858,10 +868,26 @@ export default function ProfilePage({ params }: Props) {
 
         <hr className="border-border-subtle my-8" />
 
+        {/* ── Tabs — mobile segmented control ─────────────────────────── */}
+        <div className="block sm:hidden mb-4">
+          <Tabs
+            tabs={[
+              { id: "github" as const, label: "GitHub", count: githubRepos?.length ?? profile?.publicRepos },
+              { id: "owned" as const, label: "StarMapper", count: profile?.ownedRepos.length },
+              { id: "starred" as const, label: "Starred", count: profile?.starredCount },
+            ]}
+            activeTab={profileTab}
+            onChange={(t) => setProfileTab(t as "github" | "owned" | "starred")}
+          />
+        </div>
+
         {/* ── GitHub repos (scannable) ─────────────────────────────────── */}
         {githubRepos && githubRepos.length > 0 && (
-          <section className="mb-2" aria-labelledby="gh-repos-heading">
-            <div className="flex items-center gap-2 mb-3">
+          <section
+            className={`mb-2 ${profileTab !== "github" ? "hidden sm:block" : ""}`}
+            aria-labelledby="gh-repos-heading"
+          >
+            <div className="flex items-center gap-2 mb-3 sticky top-14 z-10 bg-background/90 backdrop-blur -mx-4 sm:-mx-5 px-4 sm:px-5 pb-2">
               <h2 id="gh-repos-heading" className="text-foreground text-sm font-semibold">GitHub Repos</h2>
               <span className="text-muted-subtle text-xs bg-surface border border-border px-1.5 py-0.5 rounded-full tabular-nums">
                 {profile?.publicRepos ?? githubRepos.length}
@@ -935,16 +961,20 @@ export default function ProfilePage({ params }: Props) {
           </section>
         )}
 
-        <hr className="border-border-subtle my-8" />
+        <hr className={`border-border-subtle my-8 ${profileTab !== "owned" ? "hidden sm:block" : ""}`} />
 
         {/* ── Owned repos ─────────────────────────────────────────────── */}
         {profile && profile.ownedRepos.length > 0 && (
-          <section className="mb-2" aria-labelledby="owned-heading">
+          <section
+            className={`mb-2 ${profileTab !== "owned" ? "hidden sm:block" : ""}`}
+            aria-labelledby="owned-heading"
+          >
             <SectionHeader
               title="Repos on StarMapper"
               count={profile.ownedRepos.length}
               id="owned-heading"
               noBorder
+              sticky
             />
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {ownedVisible?.map((r) => (
@@ -964,16 +994,20 @@ export default function ProfilePage({ params }: Props) {
           </section>
         )}
 
-        <hr className="border-border-subtle my-8" />
+        <hr className={`border-border-subtle my-8 ${profileTab !== "starred" ? "hidden sm:block" : ""}`} />
 
         {/* ── Starred repos ────────────────────────────────────────────── */}
         {profile && (
-          <section className="mb-2" aria-labelledby="starred-heading">
+          <section
+            className={`mb-2 ${profileTab !== "starred" ? "hidden sm:block" : ""}`}
+            aria-labelledby="starred-heading"
+          >
             <SectionHeader
               title="Starred repos on StarMapper"
               count={profile.starredCount}
               id="starred-heading"
               noBorder
+              sticky
             />
             {profile.starredRepos.length === 0 ? (
               <p className="text-muted text-sm">
@@ -1053,9 +1087,12 @@ export default function ProfilePage({ params }: Props) {
 
         </div>{/* end left panel */}
 
-        {/* ── Right: developers nearby (independently scrollable) ──────── */}
+        {/* ── Developers nearby — bottom section on mobile, right column on lg ── */}
         {(hasMap || loadState === "loading") && (
-          <div className="flex-1 overflow-y-auto px-5 py-6 pb-12">
+          <aside
+            aria-label="Developers nearby"
+            className="w-full lg:flex-1 lg:overflow-y-auto border-t border-border-subtle lg:border-t-0 px-4 sm:px-5 py-6 pb-12 bg-surface/30 lg:bg-transparent"
+          >
             {nearby === null ? (
               /* loading skeleton */
               <div className="animate-pulse motion-reduce:animate-none space-y-2">
@@ -1135,9 +1172,9 @@ export default function ProfilePage({ params }: Props) {
                 </ul>
               </section>
             )}
-          </div>
+          </aside>
         )}
-      </div>{/* end two-column flex container */}
+      </div>{/* end flex container */}
 
       {tokenOpen && <TokenModal onClose={handleTokenClose} />}
 
