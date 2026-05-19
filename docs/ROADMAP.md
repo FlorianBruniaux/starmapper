@@ -1,6 +1,6 @@
 # StarMapper Roadmap
 
-*Last updated: 2026-05-11 — v0.4.6*
+*Last updated: 2026-05-19 — v0.5.0*
 
 ---
 
@@ -39,18 +39,19 @@
 - **Watch mode** — Polls GitHub every 60s during a launch. Shows `+N ★ · India, Germany` with a pulsing green dot. Auto-stops after 10 min with no new star. `GET /api/watch/[owner]/[repo]?since=<ISO>`, no-store, no DB writes.
 - **Notable stargazers** — Top 5 by followers as avatar chips in the Stats modal, visible immediately without switching tabs. Data from in-memory scanned points, no API call.
 - **Geographic velocity** — "Rising" tab in the Stats modal: compares 30-day daily rate vs 31–90-day rate per country. Statuses: rising (×1.5+), new, stable, declining. `GET /api/stats/[owner]/[repo]/geo-velocity`, 5-min CDN cache.
+- **Star growth timeline** — "Growth" button in the Dock, bar chart of weekly star accumulation. `GET /api/stats/[owner]/[repo]/growth` (SQL `DATE_TRUNC('week')`, 5-min CDN cache). Falls back to in-memory `starredAt` data for recent scans. (v0.4.8)
+- **Landing redesign** — Hero split layout: form on the left, animated 3D globe on the right. Dedicated `/faq` page extracted from the landing. (v0.4.9)
+- **Jawg dual-token failover** — `NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN_2` auto-switches if the primary token returns 401/402/403/429. (v0.4.9)
+- **Trending page nav** — `/trending` added to sitemap and navigation. (v0.4.9)
+- **Comparison page** — `/vs/star-history` with structured data and UTM tracking. (v0.4.9)
+- **Environment validation** — `src/env.ts` via `@t3-oss/env-nextjs`. Build fails fast if `DATABASE_URL`, `GITHUB_TOKEN`, or `NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN` are missing. (v0.5.0)
+- **Trending split endpoints** — `GET /api/trending/repos` and `GET /api/trending/map` replace the monolithic endpoint. Repos list renders before the map. `loading.tsx` skeleton. (v0.5.0)
 
 ---
 
 ## Next — prioritized
 
-### 1. Star growth timeline
-
-A chart on the `/[owner]/[repo]` page showing star accumulation over time — one data point per week/month. Complements the `+N/mo` velocity indicator already in the stats modal: the number tells you the rate, the chart shows the shape (steady growth? viral spike? plateau?).
-
-Data source: `star_event.starredAt` already in DB for indexed repos. No new data collection needed. Rendering: lightweight SVG or canvas chart (no heavy charting lib). Natural pairing with the timelapse feature already built.
-
-**Effort:** 1–2 days. **Lever:** completeness vs Star History, which does this better than anyone — but only StarMapper combines it with the geo view.
+No new items currently queued. See Medium term for backlog.
 
 ---
 

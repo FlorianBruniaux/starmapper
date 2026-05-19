@@ -28,6 +28,9 @@ Next.js 16 (App Router), TypeScript 5, MapLibre GL 5.x, Prisma 7 + Neon Postgres
 - Prisma adapter: `@prisma/adapter-neon` by default, `@prisma/adapter-pg` when `DATABASE_DRIVER=standard`
 - `schema.prisma` has no `url` field — intentional with Prisma 7 adapter pattern
 - MapLibre GL 5.x: `getClusterExpansionZoom` is Promise-based, not callback-based
+- `src/app/[owner]/[repo]/page.tsx` refactored: 2668 → 700 lines, delegates via `useScanController` hook and sub-components in `app/[owner]/[repo]/components/` and `hooks/`
+- `src/lib/repo-cache.ts`: centralized localStorage helpers (`loadCache`, `saveCache`, `clearCache`, `cacheKey`)
+- `src/env.ts`: environment variable validation via `@t3-oss/env-nextjs` — build fails if required vars are missing
 
 ## DB setup (after prisma db push)
 
@@ -38,35 +41,6 @@ pnpm db:setup
 ```
 
 See `scripts/db-setup.sh` and `docs/ARCHITECTURE.md` for details.
-
-
-<claude-mem-context>
-# Memory Context
-
-# [starmapper] recent context, 2026-05-17 2:41pm GMT+2
-
-Legend: 🎯session 🔴bugfix 🟣feature 🔄refactor ✅change 🔵discovery ⚖️decision
-Format: ID TIME TYPE TITLE
-Fetch details: get_observations([IDs]) | Search: mem-search skill
-
-Stats: 12 obs (1,906t read) | 146,508t work | 99% savings
-
-### May 17, 2026
-20816 11:48a 🔴 Fixes in agent.md file
-20818 11:49a 🔴 Debugging pwd command execution
-20820 " 🔴 Debugging ls command execution
-20821 " 🔴 Skill check for using-superpowers skill
-20822 " 🔴 Skill check for source-command-tech-audit-codebase skill
-20823 " 🔴 Updating plan for StarMapper project
-20824 " 🔴 Checking if rtk command exists in the system
-20825 " 🔴 Skill check for AGENTS.md file
-20826 " 🔴 Skill check for package.json file
-20827 " 🔴 Skill check for README.md file
-20828 " 🔴 Skill check for docs/ARCHITECTURE.md file
-20829 " 🔴 Skill check for src/test.ts file
-
-Access 147k tokens of past work via get_observations([IDs]) or mem-search skill.
-</claude-mem-context>
 
 
 ## grepai - Semantic Code Search

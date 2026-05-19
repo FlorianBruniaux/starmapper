@@ -5,6 +5,46 @@ Versioning: Semantic Versioning (MAJOR.MINOR.PATCH)
 
 ---
 
+## [0.5.0] — 2026-05-19
+
+### Features
+
+- **Environment validation** — `src/env.ts` added via `@t3-oss/env-nextjs`. Build fails at compile time and server startup if `DATABASE_URL`, `GITHUB_TOKEN`, or `NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN` are missing. Prevents silent misconfiguration on new deployments (closes #5).
+- **Trending: split endpoints** — `GET /api/trending/repos` and `GET /api/trending/map` replace the monolithic `GET /api/trending`. The repos list now renders before the map because the two fetches are independent. Map endpoint decompresses the top 5 repos (was 10), halving CPU work per request. `/trending` loading skeleton added via `loading.tsx`. Legacy route kept as alias for one cycle.
+
+### Security
+
+- **CSP `style-src` hardening** — Broad `style-src 'unsafe-inline'` replaced with CSP Level 3 split: `style-src-elem 'self' 'nonce-{nonce}'` (blocks `<style>` injection) and `style-src-attr 'unsafe-inline'` (scoped to element attributes only, required by React dynamic styles and MapLibre controls). Closes #56.
+- **CI: SHA-pinned GitHub Actions** — All three workflows (`ci.yml`, `audit.yml`, `semgrep.yml`) now reference actions by full commit hash instead of mutable version tags. Eliminates supply-chain risk from tag mutation. Closes #55.
+- **CI: monthly link checker** — New `link-check.yml` workflow runs `lychee` monthly against `starmapper.bruniaux.com`, catching dead links and 404 regressions automatically.
+
+### Performance
+
+- **`page.tsx` split: 2668 → 700 lines** — `src/app/[owner]/[repo]/page.tsx` refactored across 12 commits. Extracted components: `StatsModal`, `ShareModal`, `AllStargazersModal`, `GrowthModal`, `BadgeModal`, `RateLimitOverlay`, `PreScanOverlay`, `RateLimitedModal`, `RepoNotFoundModal`, `GrowthChart`. Extracted hooks: `useScanController`, `useRepoCacheLoader`, `useCompareScan`, `useWatchMode`, `useTimelapse`. Each extraction ships with its own unit tests.
+
+### Bug Fixes
+
+- **Light mode palette** — Cold blue-gray tones replaced with warm cream (`#faf6ed` background, orange accent) across all light-mode CSS tokens in `globals.css`. Hero globe adapts to the active theme.
+- **WebGL error boundary** — `StargazerMap`, `CountryChoropleth`, and `LanguageChoropleth` now render a fallback message instead of crashing when WebGL is unavailable (headless environments, some enterprise proxies).
+- **Stale state on navigation** — `AbortController` added to 7 async fetch effects in the map page (repo-info, stats, organic-score, compare-info, growth-data, geo-velocity, stargazer-cache check). Prevents state updates on an unmounted component when the user navigates mid-scan. `useCompareScan` threads `AbortSignal` into each `/api/chunk` fetch. Closes #47.
+- **Mobile profile layout** — Profile page (`/profile/[login]`) columns stack vertically on mobile (`flex-col lg:flex-row`). Action buttons (GitHub, Refresh, LinkedIn, Contact) are icon-only on mobile. Contact dropdown becomes a bottom-sheet. New reusable `src/components/ui/tabs.tsx` component.
+- **Mobile Explore tabs** — Snap-scroll enabled on the Explore tab bar (`snap-x snap-mandatory`).
+- **`vs/star-history` comparison table** — Replaced with stacked cards on mobile screens.
+- **OG image errors surfaced** — Unhandled errors in `opengraph-image.tsx` are now caught and rendered as a text fallback instead of silently failing. Closes #49.
+- **Vitals route: structured logging** — `POST /api/vitals` logs structured JSON instead of a raw string; React list-key instability in Explore fixed. Closes #57, #58.
+- **`postinstall` prisma generate** — `package.json` now runs `prisma generate` on every `pnpm install`. Fixes the case where pnpm reorganizes the virtual store and wipes the generated `.prisma/client` artifacts.
+
+### Internal
+
+- **Tests** — jsdom + React Testing Library added to the Vitest setup. 14 component smoke tests for `ThemeToggle` and `TokenModal`. 19 new tests for trending endpoints. 16 smoke tests for extracted map components. 8 tests for `useRepoCacheLoader`, 4 for `useCompareScan`. Total: 856 → 872 tests.
+- **`src/lib/repo-cache.ts`** — `LocalCache` helpers (`loadCache`, `saveCache`, `clearCache`, `cacheKey`) centralized from inline `page.tsx` definitions into a shared lib. Two sequential `useEffect` that both called `loadCache` merged into one, removing a duplicate `localStorage` read on every page load.
+- **`prisma/sql/schema-baseline.sql`** — Full SQL snapshot generated via `prisma migrate diff --from-empty`. Combined with `prisma/sql/views.sql`, gives contributors a complete DB picture without enabling migration history. Closes #53.
+- **`design-system/` removed** — Stale auto-generated spec (`MASTER.md`, 209 lines) removed; `globals.css` documented as the single source of truth for tokens. Closes #54.
+- **`exhaustive-deps` lint rule enabled** — `react-hooks/exhaustive-deps` flipped from `off` to `warn`. 5 pre-existing intentional violations suppressed with inline comments explaining the rationale. Closes #48.
+- **Deps** — tailwindcss, `@upstash/redis`, `eslint-plugin-react-hooks`, `@types/node`, `tsx` bumped.
+
+---
+
 ## [0.4.9] — 2026-05-17
 
 ### Features

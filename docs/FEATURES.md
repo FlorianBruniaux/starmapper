@@ -44,6 +44,7 @@ The core. Given a GitHub repo, StarMapper fetches all stargazers via the GitHub 
 - **Animated timelapse** — weekly buckets replay on the map at 0.5×→4× speed. Based on `starredAt` timestamps already in DB.
 - **Filters** — country, city, company, follower count, date range, tier. All combinable.
 - **Deep link sharing** — the Share modal encodes all active filters into a URL. Opening it restores the exact view with a dismissible "Shared view" pill.
+- **Star growth timeline** — "Growth" button in the Dock opens a bar chart of weekly star accumulation. Shows the shape of growth (steady climb, viral spike, plateau) as a complement to the `+N/mo` velocity indicator. Data from `starredAt` already in DB; falls back to in-memory scan data for recent, uncached repos.
 - **Watch mode** — during a product launch, polls GitHub every 60s and shows `+N ★ · India, Germany` with a pulsing badge. Auto-stops after 10 min of inactivity. No DB writes, cache-free.
 - **Shared cache** — first scan is cached globally. Any subsequent visitor loads the same repo instantly, no re-scan.
 

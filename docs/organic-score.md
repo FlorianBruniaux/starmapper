@@ -63,7 +63,7 @@ A fork/star ratio above ~7% is a reasonable proxy for authentic technical adopti
 
 GitHub watchers ("Watch → All Activity") are users who explicitly ask to receive notifications for every activity on a repo. Since 2020, starring a repository no longer auto-subscribes you, so watchers are a separate deliberate action.
 
-This signal has the lowest weight because it's structurally biased against CLI tools and productivity libraries — users install them via Homebrew or npm and never return to the GitHub page, so they accumulate few watchers even when genuinely popular.
+This signal has a low weight because it's structurally biased against CLI tools and productivity libraries — users install them via Homebrew or npm and never return to the GitHub page, so they accumulate few watchers even when genuinely popular.
 
 **Normalization**:
 - ≥ 0.5% → 100
@@ -162,7 +162,7 @@ If you know a repo that is clearly organic but scores Suspicious (or clearly fak
 Repos with unusual profiles — curated lists, documentation repos, single-maintainer CLIs, crypto projects, repos boosted by a single viral article — help identify where the current signals break. The more concrete cases, the better the signal thresholds.
 
 **3. New signals**
-The three current signals are limited to what the public GitHub REST/GraphQL API exposes without auth. If you know of a signal that is both measurable and meaningfully correlated with organic growth, open an issue describing it. Candidates considered so far (and why they were set aside): commit frequency (gameable), contributor count (gameable), issue activity (gameable), stars-over-time spike detection (requires full history, expensive).
+The three current signals are limited to what the public GitHub REST/GraphQL API exposes without auth. If you know of a signal that is both measurable and meaningfully correlated with organic growth, open an issue describing it. Candidates considered and set aside: commit frequency (gameable), contributor count (gameable), issue activity (gameable), stars-over-time spike detection (requires full history, expensive), release cadence (structurally biases against one-shot tools and documentation repos).
 
 [Open an issue on GitHub](https://github.com/FlorianBruniaux/starmapper/issues/new?labels=organic-score&title=Organic+Score+feedback) to contribute a case or propose a signal.
 

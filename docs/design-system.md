@@ -1,6 +1,6 @@
 # Design System StarMapper
 
-> **Last verified:** 2026-05-09 — cross-checked with `src/app/globals.css`.
+> **Last verified:** 2026-05-19 — cross-checked with `src/app/globals.css`.
 
 > Visual and technical reference guide. GitHub-inspired dark theme.
 
@@ -53,16 +53,23 @@
 
 ### 2.4 Light mode overrides (key values)
 
+The light palette uses warm cream tones instead of cold blue-gray. Both `html.light` and the `@media (prefers-color-scheme: light)` block share these values (verified in `src/app/globals.css`).
+
 | CSS Token | Hex (light) |
 |-----------|-------------|
-| `--color-background` | `#ffffff` |
-| `--color-surface` | `#f0f3f6` |
-| `--color-surface-alt` | `#e4e8ec` |
-| `--color-foreground` | `#24292f` |
-| `--color-accent-orange` | `#bc4c00` |
-| `--color-accent-blue` | `#0969da` |
-| `--color-accent-green` | `#1a7f37` |
-| `--color-muted-subtle` | `#6e7681` |
+| `--color-background` | `#faf6ed` |
+| `--color-surface` | `#ffffff` |
+| `--color-surface-alt` | `#f3ede0` |
+| `--color-foreground` | `#1a1a1a` |
+| `--color-muted` | `#4a4a4a` |
+| `--color-muted-subtle` | `#6b7280` |
+| `--color-border` | `#d8cfbd` |
+| `--color-border-subtle` | `#e5ddd0` |
+| `--color-accent-blue` | `#b8541a` |
+| `--color-accent-green` | `#1f9d4a` |
+| `--color-accent-orange` | `#c2410c` |
+| `--color-accent-red` | `#dc2626` |
+| `--color-accent-purple` | `#8250df` |
 
 ### 2.5 Map Layers (non-Tailwind, MapLibre only)
 
@@ -321,4 +328,4 @@ localStorage override ("light" | "dark")
 
 ---
 
-*Last updated: 2026-05-12 (v0.4.6)*
+*Last updated: 2026-05-19 (v0.5.0)*

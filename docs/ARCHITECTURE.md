@@ -1,7 +1,7 @@
 # StarMapper Architecture
 
-**Version**: 0.4.6
-**Last updated**: 2026-05-12
+**Version**: 0.5.0
+**Last updated**: 2026-05-19
 
 ---
 
@@ -36,10 +36,10 @@ The tool is stateless and read-only. No authentication, no user accounts. Anyone
 
 | Layer | Technology |
 |---|---|
-| Framework | Next.js 16.2.0 (App Router, Turbopack) |
+| Framework | Next.js 16.2.6 (App Router, Turbopack) |
 | Language | TypeScript 5 |
-| Map rendering | MapLibre GL 5.x |
-| Database ORM | Prisma 7.5 + `@prisma/adapter-neon` |
+| Map rendering | MapLibre GL 5.24.x |
+| Database ORM | Prisma 7.8 + `@prisma/adapter-neon` |
 | Database | Neon Postgres (serverless) |
 | Geocoding (primary) | Jawg Places API |
 | Geocoding (fallback 1) | Geoapify Geocoding API |
@@ -543,13 +543,23 @@ Returns a pure SVG scatter map (800×400, equirectangular projection) for README
 
 ---
 
-### `GET /api/trending`
+### `GET /api/trending/repos`
 
-Returns trending GitHub repos and their aggregate stargazer geography.
+Returns trending GitHub repos ordered by star velocity.
 
-**Response**: `{ repos: TrendingRepo[], mapPoints: StargazerPoint[], meta: { total } }`
+**Response**: `{ repos: TrendingRepo[], meta: { total } }`
 
 **Cache**: `public, s-maxage=3600` (1h CDN). Reads `trending_repos_mv`. Returns 503 with `error:"trending_mv_empty"` if MV is missing.
+
+---
+
+### `GET /api/trending/map`
+
+Returns aggregate stargazer GeoJSON points for the top 5 trending repos.
+
+**Response**: `{ mapPoints: StargazerPoint[], meta: { total } }`
+
+**Cache**: `public, s-maxage=3600` (1h CDN). Deduped by login across the top 5 repos. Returns 503 if MV is missing.
 
 ---
 
@@ -617,7 +627,8 @@ Atomic daily page view upsert (`page_view` table, `count += 1`). Fire-and-forget
 │   │   ├── globals.css                        # @theme tokens (dark + light), popup styles
 │   │   ├── page.tsx                           # Landing page: repo URL input + community maps
 │   │   ├── [owner]/[repo]/
-│   │   │   ├── page.tsx                       # Map page: chunk loop + progressive rendering + all modals
+│   │   │   ├── page.tsx                       # Map page: chunk loop via useScanController + delegates to sub-components
+│   │   │   ├── loading.tsx                    # Next.js route-level loading skeleton
 │   │   │   └── opengraph-image.tsx            # OG image generation
 │   │   ├── devs/
 │   │   │   ├── page.tsx                       # Dev Maps: language selector + map
@@ -635,7 +646,9 @@ Atomic daily page view upsert (`page_view` table, `count += 1`). Fire-and-forget
 │   │       │   └── geo-velocity/route.ts      # GET:  country velocity 30d vs 31–90d
 │   │       ├── watch/[owner]/[repo]/route.ts  # GET:  live star polling (no-store, GitHub REST)
 │   │       ├── map-image/[owner]/[repo]/route.ts # GET: SVG scatter map for README embeds
-│   │       ├── trending/route.ts              # GET:  trending repos + aggregate stargazer map
+│   │       ├── trending/
+│   │       │   ├── repos/route.ts             # GET:  trending repos by star velocity (1h CDN)
+│   │       │   └── map/route.ts               # GET:  aggregate map points for top 5 repos (1h CDN)
 │   │       ├── geo/[owner]/[repo]/route.ts    # GET:  API-key auth, country+city aggregates
 │   │       ├── devs/
 │   │       │   ├── route.ts                   # GET:  developer map points by language
@@ -659,6 +672,8 @@ Atomic daily page view upsert (`page_view` table, `count += 1`). Fire-and-forget
 │   │           ├── import-geocache/route.ts   # POST: bulk import geocache (admin)
 │   │           └── refresh-grid-mv/route.ts   # GET:  refresh all MVs (Vercel Cron 03:00 UTC)
 │   ├── components/
+│   │   ├── ui/
+│   │   │   └── tabs.tsx                       # Reusable Tabs component
 │   │   ├── announcement-banner.tsx            # Dismissible top banner (localStorage keyed by BANNER_ID)
 │   │   ├── token-modal.tsx                    # GitHub token input modal (PAT override)
 │   │   ├── theme-toggle.tsx                   # Dark/light mode toggle button
@@ -681,6 +696,7 @@ Atomic daily page view upsert (`page_view` table, `count += 1`). Fire-and-forget
 │   │   ├── news.ts                            # Zod: POST /api/news
 │   │   ├── track.ts                           # Zod: POST /api/track
 │   │   └── recalculate-location.ts            # Zod: POST /api/recalculate-location
+│   ├── env.ts                                 # @t3-oss/env-nextjs — build-time validation of DATABASE_URL, GITHUB_TOKEN, NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN
 │   └── lib/
 │       ├── define-route.ts                    # defineRoute(schema, handler) — Zod parse wrapper for POST routes
 │       ├── api-helpers.ts                     # jsonError(), logError(), getIP()
@@ -695,6 +711,7 @@ Atomic daily page view upsert (`page_view` table, `count += 1`). Fire-and-forget
 │       ├── map-style.ts                       # fetchAndPatchStyle(): Jawg tile style
 │       ├── bookmarks.ts                       # Client-side repo bookmarks (localStorage)
 │       ├── user-cache.ts                      # bulkUpsertUsers() + bulkUpsertStarEvents()
+│       ├── repo-cache.ts                      # loadCache(), saveCache(), clearCache(), cacheKey() — localStorage helpers
 │       ├── countries.ts                       # ISO 3166 country set + normalizeCountry()
 │       ├── language-colors.ts                 # LANGUAGE_COLORS map (24 languages → hex)
 │       └── theme.ts                           # getStoredTheme() / applyTheme() / MAP_STYLE_DARK/_LIGHT
@@ -708,7 +725,10 @@ Atomic daily page view upsert (`page_view` table, `count += 1`). Fire-and-forget
 │   │       └── main.ts                        # Popup logic (chrome.storage for recent repos)
 │   └── public/icons/                          # Pre-generated PNGs (16, 48, 128px)
 ├── prisma/
-│   └── schema.prisma                          # GeoCache + BadgeCache + StargazerCache + GitHubUser + StarEvent + PageView
+│   ├── schema.prisma                          # GeoCache + BadgeCache + StargazerCache + GitHubUser + StarEvent + PageView
+│   └── sql/
+│       ├── schema-baseline.sql                # Full SQL snapshot (prisma migrate diff --from-empty)
+│       └── views.sql                          # DDL for all materialized views
 ├── scripts/
 │   ├── batch-scan.ts                          # Batch-scan repos from a JSON list → writes to badge_cache
 │   ├── backfill-languages.ts                  # Backfill languages[] on github_user (--from-cache or GitHub API)
@@ -742,7 +762,9 @@ Atomic daily page view upsert (`page_view` table, `count += 1`). Fire-and-forget
 
 **`src/lib/theme.ts`**: Theme management: `getStoredTheme()` / `setStoredTheme()` (localStorage), `getSystemTheme()` (prefers-color-scheme), `applyTheme()` (applies class to `<html>`). Also exports `MAP_STYLE_DARK` and `MAP_STYLE_LIGHT` tile URL factories for Jawg, and the `MapProjection` type.
 
-**`src/app/[owner]/[repo]/page.tsx`**: The map page owns the chunk loop. It checks the DB cache first; if found, loads directly. Otherwise calls `/api/chunk` sequentially, accumulates `StargazerPoint[]` in state, passes the growing array to `StargazerMapDynamic`, and shows live progress. All modals (stats, share, badge, unmapped drawer, token, stargazers table) are rendered here.
+**`src/lib/repo-cache.ts`**: Centralizes all localStorage access for scan data. Exports `cacheKey(owner, repo)`, `loadCache()`, `saveCache()`, and `clearCache()`. Replaces scattered `localStorage.getItem/setItem` calls that were previously spread across `page.tsx`.
+
+**`src/app/[owner]/[repo]/page.tsx`**: Orchestrates the map page at ~700 lines. Delegates the chunk loop to the `useScanController` hook and renders each modal/overlay as a dedicated sub-component. No longer contains inline modal JSX; it composes `StatsModal`, `ShareModal`, `BadgeModal`, `GrowthModal`, `AllStargazersModal`, `RateLimitOverlay`, and `PreScanOverlay`.
 
 **`src/components/map/stargazer-map.tsx`**: Initializes a MapLibre GL map, maintains a GeoJSON source named `"stargazers"`, and updates it via `source.setData()` as new points arrive. Wrapped in `React.memo` to avoid expensive re-initialization on each points update.
 
@@ -757,7 +779,8 @@ Atomic daily page view upsert (`page_view` table, `count += 1`). Fire-and-forget
 | `JAWG_TOKEN_HEADER` | Recommended | Server | Main stargazer geocoding, dedicated Jawg Places instance (`starmapper.jawg.io`). Sent as `x-api-key` header + `access-token` query param. |
 | `JAWGMAP_ACCESS_TOKEN` | Recommended | Server | Explore page autocomplete + reverse geocoding (`api.jawg.io`). Also used by `batch-scan.ts`. |
 | `GEOAPIFY_APIKEY` | Recommended | Server | Geocoding fallback provider (Geoapify) |
-| `NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN` | Yes (client) | Browser | Used to construct the MapLibre tile style URL |
+| `NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN` | Yes (client) | Browser | Used to construct the MapLibre tile style URL (primary Jawg token) |
+| `NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN_2` | No | Browser | Jawg fallback token — auto-used when the primary returns 401/402/403/429 (Map Views limit) |
 | `NEXT_PUBLIC_APP_URL` | No | Server | App base URL for metadata and OG image generation |
 
 Without `JAWG_TOKEN_HEADER` and `GEOAPIFY_APIKEY`, all stargazer geocoding falls through to Nominatim, which is strictly sequential at 1100ms per call, noticeably slower for large repos.

@@ -8,8 +8,8 @@
 
 | Signal | Gate | Paliers |
 |---|---|---|
-| Fork/Star ratio | stars ≥ 5000 | ≥ 0.15 → 100 · 0.05 → 50 · ≤ 0.02 → 0 |
-| Watcher/Star ratio | always | ≥ 0.020 → 100 · 0.005 → 50 · ≤ 0.001 → 0 |
+| Fork/Star ratio | stars ≥ 5000 | ≥ 0.10 → 100 · 0.07 → 50 · ≤ 0.02 → 0 |
+| Watcher/Star ratio | always | ≥ 0.005 → 100 · 0.001 → 50 · ≤ 0.0001 → 0 |
 | % zero-followers (dataVersion ≥ 1) | sampleSize ≥ 30 | ≤ 10% → 100 · 30% → 50 · ≥ 60% → 0 |
 
 ## Raw Signals
