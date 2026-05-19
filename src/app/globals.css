@@ -27,44 +27,46 @@
 
 @media (prefers-color-scheme: light) {
   :root:not(.dark) {
-    --color-background: #ffffff;
-    --color-surface: #f0f3f6;
-    --color-surface-alt: #e4e8ec;
-    --color-foreground: #24292f;
-    --color-muted: #57606a;
-    --color-muted-subtle: #57606a;
-    --color-border: #c9d1d9;
-    --color-border-subtle: #d8dee4;
-    --color-accent-blue: #0969da;
-    --color-accent-green: #1a7f37;
-    --color-accent-green-emphasis: #1a7f37;
-    --color-accent-amber: #b06010;
-    --color-accent-orange: #bc4c00;
-    --color-accent-red: #d1242f;
+    --color-background: #faf6ed;
+    --color-surface: #ffffff;
+    --color-surface-alt: #f3ede0;
+    --color-foreground: #1a1a1a;
+    --color-muted: #4a4a4a;
+    --color-muted-subtle: #6b7280;
+    --color-border: #d8cfbd;
+    --color-border-subtle: #e5ddd0;
+    --color-accent-blue: #b8541a;
+    --color-accent-green: #1f9d4a;
+    --color-accent-green-emphasis: #16803c;
+    --color-accent-amber: #b45309;
+    --color-accent-orange: #c2410c;
+    --color-accent-red: #dc2626;
     --color-accent-purple: #8250df;
-    --color-warning-subtle: #fff8e1;
+    --color-warning-subtle: #fdf6dc;
+    --color-map-bg: #e5ddd0;
   }
 }
 
 /* ─── Light mode — manual toggle (.light class on <html>) ─────────────────── */
 
 html.light {
-  --color-background: #ffffff;
-  --color-surface: #f0f3f6;
-  --color-surface-alt: #e4e8ec;
-  --color-foreground: #24292f;
-  --color-muted: #57606a;
-  --color-muted-subtle: #6e7681; /* was #8c959f — 2.9:1 WCAG AA fail → now 4.6:1 */
-  --color-border: #c9d1d9;
-  --color-border-subtle: #d8dee4;
-  --color-accent-blue: #0969da;
-  --color-accent-green: #1a7f37;
-  --color-accent-green-emphasis: #1a7f37;
-  --color-accent-amber: #b06010;
-  --color-accent-orange: #bc4c00;
-  --color-accent-red: #d1242f;
+  --color-background: #faf6ed;
+  --color-surface: #ffffff;
+  --color-surface-alt: #f3ede0;
+  --color-foreground: #1a1a1a;
+  --color-muted: #4a4a4a;
+  --color-muted-subtle: #6b7280; /* 5.4:1 on cream — WCAG AA ✓ */
+  --color-border: #d8cfbd;
+  --color-border-subtle: #e5ddd0;
+  --color-accent-blue: #b8541a;
+  --color-accent-green: #1f9d4a;
+  --color-accent-green-emphasis: #16803c;
+  --color-accent-amber: #b45309;
+  --color-accent-orange: #c2410c;
+  --color-accent-red: #dc2626;
   --color-accent-purple: #8250df;
-  --color-warning-subtle: #fff8e1;
+  --color-warning-subtle: #fdf6dc;
+  --color-map-bg: #e5ddd0;
 }
 
 /* ─── Dark mode — manual toggle (.dark class on <html>) ───────────────────── */

@@ -544,6 +544,7 @@ const StargazerMapInner = ({ points, comparePoints, flyTarget, onFlyDone, onRead
   // F11: store a boolean flag instead of pre-computed GeoJSON — compute lazily at setData time
   const pendingSetDataRef = useRef(false);
   const [mapReady, setMapReady] = useState(false);
+  const [webglError, setWebglError] = useState(false);
   // compareGeoJSON kept as useMemo — compare updates are infrequent (user-triggered, not per-chunk)
   const compareGeoJSON = useMemo(() => buildGeoJSON(comparePoints ?? []), [comparePoints]);
 
@@ -610,14 +611,20 @@ const StargazerMapInner = ({ points, comparePoints, flyTarget, onFlyDone, onRead
       if (cancelled || !containerRef.current || mapRef.current) return;
       appliedStyleUrlRef.current = resolvedStyleUrl;
 
-      const map = new maplibregl.Map({
-        container: containerRef.current,
-        style,
-        center: initialCenter ?? [10, 30],
-        zoom: 2,
-        minZoom: 1,
-        maxPitch: 85,
-      });
+      let map: maplibregl.Map;
+      try {
+        map = new maplibregl.Map({
+          container: containerRef.current,
+          style,
+          center: initialCenter ?? [10, 30],
+          zoom: 2,
+          minZoom: 1,
+          maxPitch: 85,
+        });
+      } catch {
+        setWebglError(true);
+        return;
+      }
 
       // Expose controls: canvas capture + view mode toggle (cluster / heatmap)
       const captureCanvas = () => new Promise<string | null>((resolve) => {
@@ -825,6 +832,21 @@ const StargazerMapInner = ({ points, comparePoints, flyTarget, onFlyDone, onRead
       map.setStyle(patchedStyle, { diff: false });
     });
   }, [styleUrl, mapReady]);
+
+  if (webglError) {
+    return (
+      <div className="flex flex-col items-center justify-center w-full h-full text-muted text-sm text-center px-6 gap-3">
+        <p className="text-foreground font-medium">Map unavailable — WebGL is disabled</p>
+        <p>
+          Enable hardware acceleration in your browser settings, then reload the page.
+        </p>
+        <ul className="text-xs text-muted-subtle space-y-1 text-left">
+          <li><span className="text-foreground">Chrome / Edge:</span> Settings → System → &quot;Use hardware acceleration when available&quot;</li>
+          <li><span className="text-foreground">Firefox:</span> Settings → General → Performance → &quot;Use hardware acceleration when available&quot;</li>
+        </ul>
+      </div>
+    );
+  }
 
   return (
     <div role="region" aria-label={`Stargazer map — ${points.length.toLocaleString()} developers mapped`} className="relative w-full h-full">

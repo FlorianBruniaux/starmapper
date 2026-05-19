@@ -6,6 +6,7 @@
 import { useEffect, useRef, memo } from "react";
 import { feature } from "topojson-client";
 import type { Topology, GeometryCollection } from "topojson-specification";
+import { useTheme } from "@/hooks/useTheme";
 
 // Popular repos stargazer lat/lng sample (from DB)
 const STAR_POINTS: [number, number][] = [
@@ -77,6 +78,9 @@ export const HeroGlobe = memo(() => {
   const rafRef = useRef<number>(0);
   const rotRef = useRef(0);
   const topoRef = useRef<[number, number][][][]>([]);
+  const { theme } = useTheme();
+  const themeRef = useRef(theme);
+  useEffect(() => { themeRef.current = theme; }, [theme]);
 
   useEffect(() => {
     let cancelled = false;
@@ -129,10 +133,12 @@ export const HeroGlobe = memo(() => {
       const cy = H / 2;
       const r = Math.min(W, H) * 0.44;
 
+      const isLight = themeRef.current === "light";
+
       // Outer glow
       const grd = ctx.createRadialGradient(cx, cy, r * 0.7, cx, cy, r * 1.1);
-      grd.addColorStop(0, "rgba(126,184,255,0.06)");
-      grd.addColorStop(1, "rgba(126,184,255,0)");
+      grd.addColorStop(0, isLight ? "rgba(249,115,22,0.08)" : "rgba(126,184,255,0.06)");
+      grd.addColorStop(1, isLight ? "rgba(249,115,22,0)" : "rgba(126,184,255,0)");
       ctx.fillStyle = grd;
       ctx.beginPath();
       ctx.arc(cx, cy, r * 1.1, 0, Math.PI * 2);
@@ -142,8 +148,8 @@ export const HeroGlobe = memo(() => {
       ctx.beginPath();
       ctx.arc(cx, cy, r, 0, Math.PI * 2);
       const ocean = ctx.createRadialGradient(cx - r * 0.2, cy - r * 0.2, 0, cx, cy, r);
-      ocean.addColorStop(0, "rgba(22,27,34,1)");
-      ocean.addColorStop(1, "rgba(13,17,23,1)");
+      ocean.addColorStop(0, isLight ? "rgba(255,253,247,1)" : "rgba(22,27,34,1)");
+      ocean.addColorStop(1, isLight ? "rgba(243,237,224,1)" : "rgba(13,17,23,1)");
       ctx.fillStyle = ocean;
       ctx.fill();
 
@@ -152,7 +158,7 @@ export const HeroGlobe = memo(() => {
       ctx.beginPath();
       ctx.arc(cx, cy, r, 0, Math.PI * 2);
       ctx.clip();
-      ctx.fillStyle = "rgba(48,54,61,0.9)";
+      ctx.fillStyle = isLight ? "rgba(216,207,189,0.9)" : "rgba(48,54,61,0.9)";
       if (topoRef.current.length > 0) {
         drawLand(ctx, topoRef.current, rotRef.current, cx, cy, r);
       }
@@ -161,7 +167,7 @@ export const HeroGlobe = memo(() => {
       // Globe border
       ctx.beginPath();
       ctx.arc(cx, cy, r, 0, Math.PI * 2);
-      ctx.strokeStyle = "rgba(48,54,61,0.8)";
+      ctx.strokeStyle = isLight ? "rgba(74,74,74,0.4)" : "rgba(48,54,61,0.8)";
       ctx.lineWidth = 1;
       ctx.stroke();
 
@@ -174,14 +180,16 @@ export const HeroGlobe = memo(() => {
         const alpha = 0.4 + 0.6 * Math.max(0, z);
         ctx.beginPath();
         ctx.arc(x, y, 2.5, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(126,184,255,${alpha.toFixed(2)})`;
+        ctx.fillStyle = isLight
+          ? `rgba(184,84,26,${alpha.toFixed(2)})`
+          : `rgba(126,184,255,${alpha.toFixed(2)})`;
         ctx.fill();
       }
 
       // Subtle atmosphere rim
       const rim = ctx.createRadialGradient(cx, cy, r * 0.9, cx, cy, r);
-      rim.addColorStop(0, "rgba(126,184,255,0)");
-      rim.addColorStop(1, "rgba(126,184,255,0.08)");
+      rim.addColorStop(0, isLight ? "rgba(249,115,22,0)" : "rgba(126,184,255,0)");
+      rim.addColorStop(1, isLight ? "rgba(249,115,22,0.10)" : "rgba(126,184,255,0.08)");
       ctx.beginPath();
       ctx.arc(cx, cy, r, 0, Math.PI * 2);
       ctx.fillStyle = rim;

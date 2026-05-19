@@ -58,6 +58,7 @@ export const CountryChoropleth = memo(({ countryData, selectedCountry, onCountry
   const tooltipRef = useRef<maplibregl.Popup | null>(null);
 
   const [topoData, setTopoData] = useState<Topology | null>(null);
+  const [webglError, setWebglError] = useState(false);
 
   useEffect(() => {
     fetch("/world-110m.json")
@@ -167,13 +168,19 @@ export const CountryChoropleth = memo(({ countryData, selectedCountry, onCountry
       const patchedStyle = await fetchAndPatchStyle(styleUrl);
       if (cancelled || !containerRef.current) return;
 
-      const map = new maplibregl.Map({
-        container: containerRef.current,
-        style: patchedStyle,
-        center: [15, 20],
-        zoom: 1.4,
-        attributionControl: {},
-      });
+      let map: maplibregl.Map;
+      try {
+        map = new maplibregl.Map({
+          container: containerRef.current,
+          style: patchedStyle,
+          center: [15, 20],
+          zoom: 1.4,
+          attributionControl: {},
+        });
+      } catch {
+        setWebglError(true);
+        return;
+      }
       mapRef.current = map;
 
       tooltipRef.current = new maplibregl.Popup({
@@ -314,6 +321,21 @@ export const CountryChoropleth = memo(({ countryData, selectedCountry, onCountry
     if (map.getLayer("countries-selected-fill")) map.setFilter("countries-selected-fill", ["==", ["get", "name"], geoName]);
     if (map.getLayer("countries-selected")) map.setFilter("countries-selected", ["==", ["get", "name"], geoName]);
   }, [selectedCountry]);
+
+  if (webglError) {
+    return (
+      <div className="flex flex-col items-center justify-center w-full h-full text-muted text-sm text-center px-6 gap-3">
+        <p className="text-foreground font-medium">Map unavailable — WebGL is disabled</p>
+        <p>
+          Enable hardware acceleration in your browser settings, then reload the page.
+        </p>
+        <ul className="text-xs text-muted-subtle space-y-1 text-left">
+          <li><span className="text-foreground">Chrome / Edge:</span> Settings → System → &quot;Use hardware acceleration when available&quot;</li>
+          <li><span className="text-foreground">Firefox:</span> Settings → General → Performance → &quot;Use hardware acceleration when available&quot;</li>
+        </ul>
+      </div>
+    );
+  }
 
   return (
     <div className="relative w-full h-full">
