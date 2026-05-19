@@ -104,3 +104,4 @@ graphify-out/
 # AI tool caches and local configs
 .codex/
 .code-review-graph/
+.grepai/

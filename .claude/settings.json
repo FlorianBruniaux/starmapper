@@ -1,5 +1,12 @@
 {
   "permissions": {
+    "allow": [
+      "mcp__grepai__search",
+      "mcp__grepai__trace_callers",
+      "mcp__grepai__trace_callees",
+      "mcp__grepai__trace_graph",
+      "mcp__grepai__index_status"
+    ],
     "deny": [
       "Read(//**/.env*)",
       "Edit(//**/.env*)",
