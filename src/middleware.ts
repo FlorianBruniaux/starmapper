@@ -68,13 +68,22 @@ const SM_SECRET = process.env.SM_TOKEN_SECRET ?? "";
 
 const isDev = process.env.NODE_ENV === "development";
 
-// Build a per-request CSP with a unique nonce — eliminates 'unsafe-inline' for scripts.
+// Build a per-request CSP with a unique nonce.
+// script-src: nonce-based — eliminates 'unsafe-inline' entirely for scripts.
+// style-src split into CSP Level 3 directives:
+//   style-src-elem: nonce-required for <style> blocks (blocks arbitrary CSS injection)
+//   style-src-attr: 'unsafe-inline' scoped to element style="" attributes only
+// style-src itself is absent — the broad 'unsafe-inline' for all style sources is gone.
 const buildCsp = (nonce: string): string =>
   [
     "default-src 'self'",
     `script-src 'self' 'nonce-${nonce}'${isDev ? " 'unsafe-eval'" : ""}`,
     "worker-src blob:",
-    "style-src 'self' 'unsafe-inline'",
+    // <style> elements: only nonce-tagged blocks and self-hosted sheets (no unsafe-inline injection)
+    `style-src-elem 'self' 'nonce-${nonce}'`,
+    // style="" attributes: unsafe-inline is unavoidable — React dynamic styles (progress bars,
+    // computed colors) and MapLibre controls rely on inline style attributes at runtime.
+    "style-src-attr 'unsafe-inline'",
     "img-src 'self' https://avatars.githubusercontent.com https://github.com data: blob:",
     "connect-src 'self' https://api.jawg.io https://tile.jawg.io https://*.tile.jawg.io https://api.geoapify.com https://nominatim.openstreetmap.org https://api.github.com https://*.tiles.jawg.io wss:",
     "font-src 'self' data:",
