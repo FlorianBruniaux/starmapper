@@ -42,6 +42,7 @@ Versioning: Semantic Versioning (MAJOR.MINOR.PATCH)
 - **`design-system/` removed** — Stale auto-generated spec (`MASTER.md`, 209 lines) removed; `globals.css` documented as the single source of truth for tokens. Closes #54.
 - **`exhaustive-deps` lint rule enabled** — `react-hooks/exhaustive-deps` flipped from `off` to `warn`. 5 pre-existing intentional violations suppressed with inline comments explaining the rationale. Closes #48.
 - **Deps** — tailwindcss, `@upstash/redis`, `eslint-plugin-react-hooks`, `@types/node`, `tsx` bumped.
+- **Claude rules** — 10 new `.claude/rules/` files ported/adapted from methode-aristote: `response-discipline`, `git-merge-discipline`, `react-performance-optimization`, `react-timers-cleanup`, `typescript-zero-errors`, `session-management`, `scripts-best-practices`, `file-organization`, `universal-rules`, `known-gotchas`. CLAUDE.md slimmed from ~800 to 146 lines.
 
 ---
 
