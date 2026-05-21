@@ -6,7 +6,7 @@ import { NextRequest } from "next/server";
 
 // ─── Mocks (must come before importing the route) ─────────────────────────────
 
-const mockRateLimit = vi.hoisted(() => vi.fn(async () => ({ success: true })));
+const mockRateLimit = vi.hoisted(() => vi.fn(async (_identifier?: string) => ({ success: true })));
 const afterTasks = vi.hoisted((): Promise<unknown>[] => []);
 const mockAfter = vi.hoisted(() =>
   vi.fn((cb: () => void | Promise<void>) => {
@@ -18,7 +18,7 @@ const mockAfter = vi.hoisted(() =>
 vi.mock("@upstash/ratelimit", () => ({
   Ratelimit: class {
     static slidingWindow() { return {}; }
-    async limit(...args: unknown[]) { return mockRateLimit(...args); }
+    async limit(identifier: string) { return mockRateLimit(identifier); }
   },
 }));
 vi.mock("@upstash/redis", () => ({
