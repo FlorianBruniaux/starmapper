@@ -16,6 +16,7 @@ import {
   Rss,
   X,
   Menu,
+  Star,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LogoMark } from "@/components/logo";
@@ -163,14 +164,32 @@ export const Header = ({
           {rightAccessory}
           {projectionButton}
 
-          {/* Desktop-only token + theme */}
+          {/* Desktop-only star + token + theme */}
           <div className="hidden md:flex items-center gap-2">
+            <a
+              href="https://github.com/FlorianBruniaux/starmapper"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-border text-muted hover:text-foreground hover:border-accent-blue transition-colors"
+            >
+              <Star size={11} aria-hidden="true" />
+              Star
+            </a>
             {tokenButton}
             <ThemeToggle />
           </div>
 
           {/* Mobile: theme always visible + burger for nav/token */}
           <div className="flex md:hidden items-center gap-1">
+            <a
+              href="https://github.com/FlorianBruniaux/starmapper"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Star on GitHub"
+              className="p-2 text-muted hover:text-foreground transition-colors rounded-lg"
+            >
+              <Star size={15} aria-hidden="true" />
+            </a>
             <ThemeToggle />
             {(nav || showNav || showToken) && (
               <div ref={menuRef} className="relative">
