@@ -5,15 +5,14 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // ─── Mocks ───────────────────────────────────────────────────────────────────
 
-const mockFindMany = vi.fn();
-const mockCount = vi.fn();
+// Route uses prisma.$queryRaw twice in Promise.all:
+//   call 1 → BadgeCacheRow[]  (the rows)
+//   call 2 → [{ count: bigint }]  (the total)
+const mockQueryRaw = vi.fn();
 
 vi.mock("@/lib/db", () => ({
   prisma: {
-    badgeCache: {
-      findMany: (...args: unknown[]) => mockFindMany(...args),
-      count: (...args: unknown[]) => mockCount(...args),
-    },
+    $queryRaw: (...args: unknown[]) => mockQueryRaw(...args),
   },
 }));
 
@@ -43,10 +42,14 @@ const makeRow = (owner: string, repo: string, overrides: Record<string, unknown>
 // ─── Tests ───────────────────────────────────────────────────────────────────
 
 describe("GET /api/repos", () => {
+  const defaultQueryRaw = () =>
+    mockQueryRaw
+      .mockResolvedValueOnce([makeRow("octocat", "hello-world")])
+      .mockResolvedValueOnce([{ count: BigInt(1) }]);
+
   beforeEach(() => {
     vi.resetAllMocks();
-    mockFindMany.mockResolvedValue([makeRow("octocat", "hello-world")]);
-    mockCount.mockResolvedValue(1);
+    defaultQueryRaw();
   });
 
   // ── Response shape ────────────────────────────────────────────────────────
@@ -61,13 +64,19 @@ describe("GET /api/repos", () => {
     });
 
     it("includes mappedPercent computed from mappedCount/totalCount", async () => {
-      mockFindMany.mockResolvedValue([makeRow("octocat", "hello-world", { mappedCount: 500, totalCount: 1000 })]);
+      vi.resetAllMocks();
+      mockQueryRaw
+        .mockResolvedValueOnce([makeRow("octocat", "hello-world", { mappedCount: 500, totalCount: 1000 })])
+        .mockResolvedValueOnce([{ count: BigInt(1) }]);
       const json = await (await GET(makeReq())).json();
       expect(json.repos[0].mappedPercent).toBe(50);
     });
 
     it("returns mappedPercent 0 when totalCount is 0 (avoids divide-by-zero)", async () => {
-      mockFindMany.mockResolvedValue([makeRow("octocat", "hello-world", { mappedCount: 0, totalCount: 0 })]);
+      vi.resetAllMocks();
+      mockQueryRaw
+        .mockResolvedValueOnce([makeRow("octocat", "hello-world", { mappedCount: 0, totalCount: 0 })])
+        .mockResolvedValueOnce([{ count: BigInt(1) }]);
       const json = await (await GET(makeReq())).json();
       expect(json.repos[0].mappedPercent).toBe(0);
     });
@@ -84,8 +93,10 @@ describe("GET /api/repos", () => {
     });
 
     it("returns empty repos array when DB has no entries", async () => {
-      mockFindMany.mockResolvedValue([]);
-      mockCount.mockResolvedValue(0);
+      vi.resetAllMocks();
+      mockQueryRaw
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([{ count: BigInt(0) }]);
       const json = await (await GET(makeReq())).json();
       expect(json.repos).toHaveLength(0);
       expect(json.total).toBe(0);
@@ -101,7 +112,8 @@ describe("GET /api/repos", () => {
 
   describe("error handling", () => {
     it("returns 500 when DB throws", async () => {
-      mockFindMany.mockRejectedValue(new Error("connection refused"));
+      vi.resetAllMocks();
+      mockQueryRaw.mockRejectedValue(new Error("connection refused"));
       const res = await GET(makeReq());
       expect(res.status).toBe(500);
     });
