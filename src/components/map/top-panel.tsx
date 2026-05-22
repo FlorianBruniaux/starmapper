@@ -4,7 +4,7 @@
 "use client";
 
 import { useState } from "react";
-import { Search, ChevronRight, Check, Lock, User } from "lucide-react";
+import { Search, ChevronRight, ChevronUp, ChevronDown, Check, Lock, User } from "lucide-react";
 import Image from "next/image";
 import type { StargazerPoint } from "@/app/api/chunk/route";
 import type { TimeEstimate } from "@/lib/format";
@@ -81,6 +81,7 @@ export const TopPanel = ({
   findInput, setFindInput, setFindStatus, findUser, findStatus,
   organic,
 }: Props) => {
+  const [collapsed, setCollapsed] = useState(false);
   const [askingUsername, setAskingUsername] = useState(false);
   const [usernameInput, setUsernameInput] = useState("");
   const [organicModalOpen, setOrganicModalOpen] = useState(false);
@@ -129,9 +130,21 @@ export const TopPanel = ({
           </a>
         </div>
 
-        {/* Spacer symétrique pour garder le repo centré */}
-        <div className="w-14 flex-shrink-0" />
+        {/* Collapse toggle — symétrique avec Search pill à gauche */}
+        <button
+          onClick={() => setCollapsed((v) => !v)}
+          aria-label={collapsed ? "Expand panel" : "Collapse panel"}
+          className="flex items-center gap-1 text-2xs text-muted hover:text-foreground
+            border border-border-subtle rounded-full px-2 py-0.5
+            hover:border-border transition-colors flex-shrink-0"
+        >
+          {collapsed ? <ChevronDown size={10} aria-hidden="true" /> : <ChevronUp size={10} aria-hidden="true" />}
+          {collapsed ? "Expand" : "Collapse"}
+        </button>
       </div>
+
+      {/* ── Collapsible body ──────────────────────────────────────────────── */}
+      {!collapsed && (<>
 
       {/* ── Compare row ───────────────────────────────────────────────────── */}
       {compareOwner && compareRepo && (
@@ -413,6 +426,8 @@ export const TopPanel = ({
           )}
         </div>
       </div>
+
+      </>)}
     </div>
 
     {/* Organic score detail modal */}
