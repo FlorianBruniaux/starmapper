@@ -4,14 +4,16 @@
 "use client";
 
 import { use, useEffect, useRef, useState, useCallback, useMemo, useDeferredValue, useReducer } from "react";
+import dynamic from "next/dynamic";
 import { useScanController, scanReducer } from "@/hooks/useScanController";
-import { StatsModal } from "@/components/map/stats-modal";
-import { BadgeModal } from "@/components/map/badge-modal";
-import { GrowthModal } from "@/components/map/growth-modal";
-import { AllStargazersModal } from "@/components/map/all-stargazers-modal";
 import type { AnyStargazer } from "@/components/map/all-stargazers-modal";
-import { RateLimitedModal } from "@/components/map/rate-limited-modal";
-import { RepoNotFoundModal } from "@/components/map/not-found-modal";
+
+const StatsModal = dynamic(() => import("@/components/map/stats-modal").then((m) => ({ default: m.StatsModal })), { ssr: false });
+const BadgeModal = dynamic(() => import("@/components/map/badge-modal").then((m) => ({ default: m.BadgeModal })), { ssr: false });
+const GrowthModal = dynamic(() => import("@/components/map/growth-modal").then((m) => ({ default: m.GrowthModal })), { ssr: false });
+const AllStargazersModal = dynamic(() => import("@/components/map/all-stargazers-modal").then((m) => ({ default: m.AllStargazersModal })), { ssr: false });
+const RateLimitedModal = dynamic(() => import("@/components/map/rate-limited-modal").then((m) => ({ default: m.RateLimitedModal })), { ssr: false });
+const RepoNotFoundModal = dynamic(() => import("@/components/map/not-found-modal").then((m) => ({ default: m.RepoNotFoundModal })), { ssr: false });
 import { RateLimitOverlay } from "@/components/map/rate-limit-overlay";
 import { PreScanOverlay } from "@/components/map/pre-scan-overlay";
 import { StargazerMapDynamic } from "@/components/map/stargazer-map-dynamic";
@@ -31,7 +33,7 @@ import { useWatchMode } from "@/hooks/useWatchMode";
 import { useTimelapse } from "@/hooks/useTimelapse";
 import { useRepoCacheLoader } from "@/hooks/use-repo-cache-loader";
 import { useCompareScan } from "@/hooks/use-compare-scan";
-import { ShareModal } from "@/components/map/share-modal";
+const ShareModal = dynamic(() => import("@/components/map/share-modal").then((m) => ({ default: m.ShareModal })), { ssr: false });
 
 type RepoInfo = {
   name: string;
