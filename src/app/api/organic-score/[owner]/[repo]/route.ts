@@ -56,7 +56,7 @@ export const GET = async (
         };
         const prRes = await fetch(
           `https://api.github.com/search/issues?q=repo:${key.owner}/${key.repo}+type:pr+state:open&per_page=1`,
-          { headers },
+          { headers, next: { revalidate: 3600 } },
         );
         if (prRes.ok) {
           const prData = await prRes.json() as { total_count: number };

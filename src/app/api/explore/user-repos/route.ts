@@ -92,10 +92,10 @@ export const GET = async (req: NextRequest) => {
 
   try {
     const [userRes, reposRes] = await Promise.all([
-      fetch(`https://api.github.com/users/${encodeURIComponent(login)}`, { headers: ghHeaders }),
+      fetch(`https://api.github.com/users/${encodeURIComponent(login)}`, { headers: ghHeaders, next: { revalidate: 300 } }),
       fetch(
         `https://api.github.com/users/${encodeURIComponent(login)}/repos?sort=stars&per_page=10&type=owner`,
-        { headers: ghHeaders },
+        { headers: ghHeaders, next: { revalidate: 300 } },
       ),
     ]);
 

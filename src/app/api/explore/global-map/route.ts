@@ -88,8 +88,11 @@ export const GET = async () => {
 
       const totalMapped = cells.reduce((acc, c) => acc + c.count, 0);
 
-      // No CDN cache on fallback — MV may be created shortly after
-      return NextResponse.json({ cells, totalMapped } satisfies GlobalMapData);
+      // Short cache on fallback — limits hammering Neon while MV is being created
+      return NextResponse.json(
+        { cells, totalMapped } satisfies GlobalMapData,
+        { headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120" } },
+      );
     } catch (fallbackErr) {
       logError("explore/global-map/fallback", fallbackErr);
       return jsonError("internal", 500);

@@ -6,6 +6,8 @@ import { prisma } from "@/lib/db";
 import { slugToLanguage, displayLanguage } from "@/lib/languages";
 import DevsLanguageClient from "@/app/devs/[language]/page.client";
 
+export const revalidate = 3600;
+
 type Props = {
   params: Promise<{ language: string }>;
 };

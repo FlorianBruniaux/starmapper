@@ -20,7 +20,7 @@ const fetchJawg = async (q: string): Promise<AutocompleteResult[]> => {
   const url = `${JAWG_AUTOCOMPLETE}?text=${encodeURIComponent(q)}&size=5`;
   const res = await fetch(url, {
     headers: { "Accept": "application/json", "x-api-key": token },
-    next: { revalidate: 0 },
+    next: { revalidate: 60 },
   });
   if (!res.ok) return [];
   const data = await res.json();
@@ -56,13 +56,13 @@ export const GET = async (req: NextRequest) => {
     const results = await fetchJawg(q);
     if (results.length > 0) {
       return NextResponse.json(results, {
-        headers: { "Cache-Control": "public, s-maxage=300" },
+        headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600" },
       });
     }
     // Jawg unavailable or no token — fall back to Nominatim
     const fallback = await fetchNominatim(q);
     return NextResponse.json(fallback, {
-      headers: { "Cache-Control": "public, s-maxage=300" },
+      headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600" },
     });
   } catch (err) {
     logError("explore/autocomplete", err);

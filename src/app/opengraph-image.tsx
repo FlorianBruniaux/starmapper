@@ -72,9 +72,9 @@ export default function Image() {
           }}
         >
           <div style={{ display: "flex", gap: 32 }}>
-            <span style={{ color: "#3fb950", fontSize: 20 }}>✓ Free</span>
-            <span style={{ color: "#3fb950", fontSize: 20 }}>✓ No login</span>
-            <span style={{ color: "#3fb950", fontSize: 20 }}>✓ Any public repo</span>
+            <span style={{ color: "#3fb950", fontSize: 20 }}>Free</span>
+            <span style={{ color: "#3fb950", fontSize: 20 }}>No login</span>
+            <span style={{ color: "#3fb950", fontSize: 20 }}>Any public repo</span>
           </div>
           <span style={{ color: "#58a6ff", fontSize: 22, fontWeight: 600 }}>starmapper.bruniaux.com</span>
         </div>

@@ -104,7 +104,7 @@ export const GET = async (req: NextRequest) => {
         pageNums.map((p) =>
           fetch(
             `https://api.github.com/users/${username}/repos?type=public&sort=stars&direction=desc&per_page=100&page=${p}`,
-            { headers: ghHeaders },
+            { headers: ghHeaders, next: { revalidate: 120 } },
           ).then((r) => r.json() as Promise<GhRepo[]>),
         ),
       );

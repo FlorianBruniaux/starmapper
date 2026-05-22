@@ -26,6 +26,7 @@ const fetchUser = async (login: string, token: string): Promise<UserDetail | nul
   try {
     const res = await fetch(`https://api.github.com/users/${encodeURIComponent(login)}`, {
       headers: { Authorization: `Bearer ${token}`, "X-GitHub-Api-Version": "2022-11-28" },
+      next: { revalidate: 300 },
     });
     if (!res.ok) return null;
     const u = await res.json();

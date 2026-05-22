@@ -66,7 +66,7 @@ export const GET = async (
         scannedAt: cached.scannedAt.toISOString(),
         latestStarredAt: cached.latestStarredAt?.toISOString() ?? null,
       },
-      { headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300", ETag: etag } },
+      { headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=3600", ETag: etag } },
     );
   } catch (err) {
     logError("stargazer-cache GET", err);
