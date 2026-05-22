@@ -31,7 +31,6 @@ export const env = createEnv({
     ADMIN_SECRET: z.string().optional(),
     ADMIN_ALLOWED_IPS: z.string().optional(),
     CRON_SECRET: z.string().optional(),
-    DB_STORAGE_LIMIT_MB: z.coerce.number().optional(),
     ORGANIC_SCORE_ENABLED: z.string().optional(),
 
     NODE_ENV: z.enum(["development", "production", "test"]).default("development"),

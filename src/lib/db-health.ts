@@ -6,9 +6,7 @@ import { prisma } from "@/lib/db";
 type DbHealth = { ok: true; usagePct: number } | { ok: false };
 
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
-// Configurable via DB_STORAGE_LIMIT_MB env var. Default 102400 (100 GB) for sponsored/Launch plan.
-// Set to 512 to restore free-tier guard.
-const DB_MAX_BYTES = (parseInt(process.env.DB_STORAGE_LIMIT_MB ?? "102400") || 102400) * 1024 * 1024;
+const DB_MAX_BYTES = 100 * 1024 * 1024 * 1024; // 100 GB — Neon sponsored plan
 
 let cached: { health: DbHealth; ts: number } | null = null;
 

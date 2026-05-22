@@ -59,7 +59,7 @@ const buildUserWritePayload = (
   };
 };
 
-// Distributed rate limiter — 10 req/min per IP via Upstash. Fail-open if Redis unavailable.
+// Distributed rate limiter — 30 req/min per IP via Upstash. Fail-open if Redis unavailable.
 let _chunkLimiter: Ratelimit | null = null;
 let _chunkLimiterReady = false;
 const getChunkLimiter = (): Ratelimit | null => {
@@ -68,7 +68,7 @@ const getChunkLimiter = (): Ratelimit | null => {
   try {
     _chunkLimiter = new Ratelimit({
       redis: Redis.fromEnv(),
-      limiter: Ratelimit.slidingWindow(10, "60 s"),
+      limiter: Ratelimit.slidingWindow(30, "60 s"),
       prefix: "rl:chunk",
     });
   } catch {
