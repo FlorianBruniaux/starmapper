@@ -2,14 +2,11 @@
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 
 import type { MappedRepo } from "@/app/api/repos/route";
+import { resolveBaseUrl } from "@/lib/base-url";
 import { LandingClient } from "./_components/landing-client";
 
 // Revalidate every 5 minutes — repos list changes slowly
 export const revalidate = 300;
-
-const resolveBaseUrl = () =>
-  process.env.NEXT_PUBLIC_APP_URL ??
-  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
 
 export default async function HomePage() {
   let repos: MappedRepo[] = [];
