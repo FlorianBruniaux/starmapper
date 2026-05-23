@@ -57,11 +57,16 @@ const drawLand = (
     ctx.beginPath();
     let drew = false;
     for (const ring of polygon) {
-      // Pre-project all vertices; skip the ring entirely if any point is on
-      // the back hemisphere — partial rings auto-close in ways that create
-      // diagonal fill artifacts across the globe face.
+      // Use the ring centroid to decide visibility — checking every vertex is
+      // too aggressive and silently drops large polygons (Europe, USA) that
+      // have any edge point past the terminator. The clip circle contains any
+      // partial overflow from polygons near the edge.
+      const n = ring.length;
+      let sumLon = 0, sumLat = 0;
+      for (const [lon, lat] of ring) { sumLon += lon; sumLat += lat; }
+      if (!project(sumLat / n, sumLon / n, rotY, cx, cy, r).visible) continue;
+
       const pts = ring.map(([lon, lat]) => project(lat, lon, rotY, cx, cy, r));
-      if (pts.some((p) => !p.visible)) continue;
       let first = true;
       for (const { x, y } of pts) {
         if (first) { ctx.moveTo(x, y); first = false; }
