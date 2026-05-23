@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 
+export const dynamic = "force-static";
+
 import { readFileSync } from "fs";
 import { join } from "path";
 import type { Metadata } from "next";
