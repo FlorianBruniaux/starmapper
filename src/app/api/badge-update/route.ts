@@ -3,6 +3,7 @@
 
 import type { NextRequest} from "next/server";
 import { NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { prisma } from "@/lib/db";
 import { jsonError } from "@/lib/api-helpers";
 import { verifyToken, COOKIE_NAME } from "@/lib/api-token";
@@ -92,6 +93,10 @@ export const POST = defineRoute(badgeUpdateSchema, async (req: NextRequest, body
         ...(organicComputedAt && { organicScore, organicTier, organicComputedAt }),
       },
     });
+
+    // Invalidate cached data for this repo immediately after scan completion
+    revalidateTag(`badge-${key.owner}-${key.repo}`, "hours");
+    revalidateTag(`repo-info-${key.owner}-${key.repo}`, { expire: 300 });
 
     return NextResponse.json({ ok: true });
   } catch {

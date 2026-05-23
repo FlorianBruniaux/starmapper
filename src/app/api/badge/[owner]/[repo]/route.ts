@@ -3,13 +3,21 @@
 
 import type { NextRequest} from "next/server";
 import { NextResponse } from "next/server";
+import { cacheLife, cacheTag } from "next/cache";
 import { prisma } from "@/lib/db";
 import { validateOwnerRepo } from "@/lib/api-validation";
 import { jsonError } from "@/lib/api-helpers";
 import { fmt } from "@/lib/format";
 
-// Cache badge SVG for 6 hours at the CDN level
-export const revalidate = 21600;
+const getBadgeCacheData = async (owner: string, repo: string) => {
+  "use cache";
+  cacheTag(`badge-${owner}-${repo}`);
+  cacheLife({ stale: 21600, revalidate: 21600, expire: 604800 });
+  return prisma.badgeCache.findUnique({
+    where: { owner_repo: { owner, repo } },
+    select: { mappedCount: true, countryCount: true },
+  });
+};
 
 // Approximate character width for Verdana 11px (average ~6.5px/char)
 const textWidth = (s: string) => s.length * 6.5;
@@ -57,16 +65,13 @@ export const GET = async (
   let countryCount = 0;
 
   try {
-    const cached = await prisma.badgeCache.findUnique({
-      where: { owner_repo: key },
-      select: { mappedCount: true, countryCount: true },
-    });
+    const cached = await getBadgeCacheData(owner, repo);
     if (cached) {
       mappedCount = cached.mappedCount;
       countryCount = cached.countryCount;
     }
   } catch {
-    // DB down — return fallback badge
+    // DB down — return fallback badge; error not cached so recovery is automatic
   }
 
   const label = "StarMapper";

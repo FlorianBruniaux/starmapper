@@ -5,6 +5,7 @@ import "./src/env"; // crash build if required env vars (DATABASE_URL, GITHUB_TO
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  cacheComponents: true,
   compress: false,       // Vercel CDN handles compression — redundant in serverless
   poweredByHeader: false,
   images: {

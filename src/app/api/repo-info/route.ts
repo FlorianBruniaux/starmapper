@@ -19,7 +19,7 @@ export const GET = async (req: NextRequest) => {
         Accept: "application/vnd.github.v3+json",
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
-      next: { revalidate: 300 },
+      next: { revalidate: 300, tags: [`repo-info-${owner}-${repo}`] },
     });
     if (res.status === 404) return jsonError("Repo not found", 404);
     if (res.status === 403 || res.status === 429) return jsonError("GitHub rate limit exceeded", 429);
