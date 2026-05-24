@@ -57,6 +57,7 @@
     "@t3-oss/env-nextjs": "^0.13.11",
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.38.0",
+    "@vercel/functions": "^3.6.0",
     "lucide-react": "^1.16.0",
     "maplibre-gl": "^5.24.0",
     "next": "16.2.6",

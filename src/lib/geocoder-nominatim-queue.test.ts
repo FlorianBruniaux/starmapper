@@ -3,6 +3,17 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+// Mock @vercel/functions so the in-memory fallback cache does not persist between
+// tests and pollute geocodeBatch results (test isolation requires a fresh cache per test).
+vi.mock("@vercel/functions", () => ({
+  getCache: () => ({
+    get: vi.fn().mockResolvedValue(undefined),
+    set: vi.fn().mockResolvedValue(undefined),
+    expireTag: vi.fn().mockResolvedValue(undefined),
+    delete: vi.fn().mockResolvedValue(undefined),
+  }),
+}));
+
 const mockFindUnique = vi.fn();
 const mockFindMany = vi.fn();
 const mockUpsert = vi.fn();

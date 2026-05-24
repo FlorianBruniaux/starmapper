@@ -1,8 +1,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 
+import { getCache } from "@vercel/functions";
 import { prisma } from "@/lib/db";
 import { CircuitBreaker } from "@/lib/circuit-breaker";
+
+type GeoCacheRow = { key: string; lat: number | null; lng: number | null };
+
+// L0: Vercel Runtime Cache — per-region, ephemeral. Avoids Neon roundtrips for hot locations.
+// Falls through silently in local dev / non-Vercel environments.
+const geoRc = () => getCache({ namespace: "geo" });
 
 const JAWG_GEOCODING = "https://starmapper.jawg.io/places/v1/search";
 const GEOAPIFY_GEOCODING = "https://api.geoapify.com/v1/geocode/search";
@@ -14,9 +21,20 @@ const jawgBreaker = new CircuitBreaker(3, CIRCUIT_RESET_MS, "Jawg");
 const geoapifyBreaker = new CircuitBreaker(3, CIRCUIT_RESET_MS, "Geoapify");
 
 // --- Cache helpers ---
-const cacheRead = async (key: string) => {
+const cacheRead = async (key: string): Promise<GeoCacheRow | null | undefined> => {
+  // L0: Runtime Cache
   try {
-    return await prisma.geoCache.findUnique({ where: { key } });
+    const hit = await geoRc().get(key);
+    if (hit !== undefined && hit !== null) return hit as GeoCacheRow;
+  } catch { /* RC unavailable — fall through to Neon */ }
+
+  // L1: Neon GeoCache
+  try {
+    const row = await prisma.geoCache.findUnique({ where: { key } });
+    if (row !== null) {
+      geoRc().set(key, row, { ttl: 86400, tags: ["geocache"] }).catch(() => {});
+    }
+    return row;
   } catch {
     return undefined;
   }
@@ -29,16 +47,53 @@ const cacheWrite = async (key: string, lat: number | null, lng: number | null) =
       update: { lat, lng },
       create: { key, lat, lng },
     });
+    geoRc().set(key, { key, lat, lng }, { ttl: 86400, tags: ["geocache"] }).catch(() => {});
   } catch {
     // non-fatal
   }
 };
 
-const cacheBulkRead = async (keys: string[]) => {
+const cacheBulkRead = async (keys: string[]): Promise<GeoCacheRow[]> => {
+  if (keys.length === 0) return [];
+
+  // L0: check Runtime Cache in parallel for all keys
+  let rc: ReturnType<typeof geoRc> | null = null;
+  try { rc = geoRc(); } catch { /* RC unavailable */ }
+
+  const rcHits: GeoCacheRow[] = [];
+  const neonKeys: string[] = [];
+
+  if (rc) {
+    await Promise.all(
+      keys.map(async (key) => {
+        try {
+          const hit = await rc!.get(key);
+          if (hit !== undefined && hit !== null) rcHits.push(hit as GeoCacheRow);
+          else neonKeys.push(key);
+        } catch {
+          neonKeys.push(key);
+        }
+      }),
+    );
+  } else {
+    neonKeys.push(...keys);
+  }
+
+  if (neonKeys.length === 0) return rcHits;
+
+  // L1: query Neon only for L0 misses
   try {
-    return await prisma.geoCache.findMany({ where: { key: { in: keys } } });
+    const neonRows = await prisma.geoCache.findMany({ where: { key: { in: neonKeys } } });
+    if (rc) {
+      await Promise.all(
+        neonRows.map((row) =>
+          rc!.set(row.key, row, { ttl: 86400, tags: ["geocache"] }).catch(() => {}),
+        ),
+      );
+    }
+    return [...rcHits, ...neonRows];
   } catch {
-    return [];
+    return rcHits;
   }
 };
 

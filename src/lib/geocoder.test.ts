@@ -4,6 +4,17 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { geocode, geocodeBatch } from "@/lib/geocoder";
 
+// --- Mock @vercel/functions Runtime Cache ---
+// Always returns undefined (miss) so tests fall through to the Neon mock below.
+vi.mock("@vercel/functions", () => ({
+  getCache: () => ({
+    get: vi.fn().mockResolvedValue(undefined),
+    set: vi.fn().mockResolvedValue(undefined),
+    expireTag: vi.fn().mockResolvedValue(undefined),
+    delete: vi.fn().mockResolvedValue(undefined),
+  }),
+}));
+
 // --- Mock Prisma ---
 // GeoCache state is tracked in-memory so individual tests can control hits/misses.
 const geoCacheStore = new Map<string, { key: string; lat: number | null; lng: number | null }>();

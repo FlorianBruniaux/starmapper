@@ -3,6 +3,16 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
+// ─── Mock @vercel/functions Runtime Cache ────────────────────────────────────
+// Default: always miss (returns undefined) so tests fall through to Neon mocks.
+// Individual tests can reconfigure mockRcGet to simulate L0 hits.
+const mockRcGet = vi.fn().mockResolvedValue(undefined);
+const mockRcSet = vi.fn().mockResolvedValue(undefined);
+
+vi.mock("@vercel/functions", () => ({
+  getCache: () => ({ get: mockRcGet, set: mockRcSet, expireTag: vi.fn(), delete: vi.fn() }),
+}));
+
 // ─── Mock Prisma before importing geocoder ────────────────────────────────────
 // geocoder.ts accesses prisma at call time (not import time), so mocking the
 // module is sufficient. We expose the mock fns via module-level variables so
@@ -142,6 +152,27 @@ describe("geocode()", () => {
 
       expect(result).toBeNull();
       expect(fetchSpy).not.toHaveBeenCalled();
+    });
+
+    it("Runtime Cache L0 hit — returns coords without calling Neon or any provider", async () => {
+      mockRcGet.mockResolvedValueOnce({ key: "london", lat: 51.5074, lng: -0.1278 });
+      mockFindUnique.mockClear(); // reset call count accumulated from previous tests in this describe block
+      const fetchSpy = vi.spyOn(global, "fetch");
+
+      const result = await geocode("London");
+
+      expect(result).toEqual([51.5074, -0.1278]);
+      expect(mockFindUnique).not.toHaveBeenCalled();
+      expect(fetchSpy).not.toHaveBeenCalled();
+    });
+
+    it("Runtime Cache L0 error — falls through to Neon without crashing", async () => {
+      mockRcGet.mockRejectedValueOnce(new Error("RC unavailable"));
+      mockFindUnique.mockResolvedValueOnce({ key: "berlin", lat: 52.52, lng: 13.405 });
+
+      const result = await geocode("Berlin");
+
+      expect(result).toEqual([52.52, 13.405]);
     });
 
     it("normalizes location to lowercase+trim before cache lookup", async () => {
