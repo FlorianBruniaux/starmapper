@@ -5,6 +5,30 @@ Versioning: Semantic Versioning (MAJOR.MINOR.PATCH)
 
 ---
 
+## [0.5.1] — 2026-05-24
+
+### Performance
+
+- **`use cache` migration (Next.js 16 PPR)** — `cacheComponents: true` enabled in `next.config.ts`. All data-fetching pages migrated from `export const revalidate = N` (time-based) to `'use cache'` + `cacheTag` + `cacheLife` (tag-based, on-demand). Cache invalidation is now surgical: `POST /api/badge-update` invalidates only the affected repo, the cron MV refresh invalidates `trending` and `explore-mvs`, `POST /api/news` invalidates the author's feed. Three shared query libs extracted (`repos-query.ts`, `trending-query.ts`, `devs-query.ts`) so pages and API routes share the same cached functions.
+- **Self-call anti-pattern removed** — Five pages (`/`, `/repos`, `/trending`, `/devs/atlas`, `/devs`) were making HTTP `fetch` requests to their own API routes (e.g., `fetch("http://localhost:3000/api/trending/repos")`). All five now call the DB lib directly, eliminating the unnecessary loopback latency.
+- **Server-side fetch on 4 pages** — `/repos`, `/trending`, `/devs`, `/devs/atlas` migrated from `useEffect` waterfall fetch to async server components with `initialData` prop. Data is available on first paint with no client-side loading state.
+- **`force-static` on 9 content pages** — Static informational pages (`/about`, `/privacy`, `/terms`, `/oss`, etc.) marked `force-static` so they are prerendered at build time and served from the CDN edge with no runtime cost.
+- **Hero globe: 7 map modals lazy-loaded** — `StatsModal`, `ShareModal`, `AllStargazersModal`, `GrowthModal`, `BadgeModal`, `RateLimitedModal`, `RepoNotFoundModal` are now `dynamic()` imports. Reduces initial JS bundle parsed on page load.
+
+### Bug Fixes
+
+- **Globe: per-segment hemisphere clipping** — Arc segments crossing the visible hemisphere boundary were clipped at the arc level, causing entire multi-segment arcs to disappear. Clipping is now applied per segment, so partial arcs render correctly.
+- **Globe: ring centroid for visibility** — Country visibility was computed from the bounding box center. Countries spanning the antimeridian (e.g., Russia, Europe aggregates) had their centroid placed off-screen. Replaced with polygon ring centroid, matching what MapLibre uses internally.
+
+### Internal
+
+- **`resolveBaseUrl` helper** — Extracted from inline page logic into `src/lib/resolve-base-url.ts`. Removed in subsequent refactor once the self-call pattern was eliminated.
+- **GitHub star button** — Star count badge added to the header.
+- **DB storage limit** — `DB_STORAGE_LIMIT_MB` env var removed; hardcoded to 100 GB to match Neon sponsored plan. Removes an unnecessary configuration surface.
+- **Test fixes** — `repos` route mock aligned to `$queryRaw` (was `badgeCache.findMany`). `Ratelimit` stub fixed for TS2556 spread `unknown[]`.
+
+---
+
 ## [0.5.0] — 2026-05-19
 
 ### Features
