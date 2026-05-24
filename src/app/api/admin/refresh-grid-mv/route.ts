@@ -9,6 +9,7 @@
 
 import type { NextRequest} from "next/server";
 import { NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { requireAdminAuth, jsonError, logError } from "@/lib/api-helpers";
@@ -65,6 +66,10 @@ const runRefresh = async () => {
       results.push({ mv: name, durationMs: Date.now() - t, error: String(err) });
     }
   }
+
+  // Invalidate cached data for pages that read from these MVs
+  revalidateTag("trending", "hours");
+  revalidateTag("explore-mvs", "hours");
 
   return NextResponse.json({ ok: true, durationMs: Date.now() - start, results });
 };
