@@ -97,6 +97,7 @@ export const POST = defineRoute(badgeUpdateSchema, async (req: NextRequest, body
     // Invalidate cached data for this repo immediately after scan completion
     revalidateTag(`badge-${key.owner}-${key.repo}`, "hours");
     revalidateTag(`repo-info-${key.owner}-${key.repo}`, { expire: 300 });
+    revalidateTag("repos", { expire: 300 }); // landing page + /repos list
 
     return NextResponse.json({ ok: true });
   } catch {

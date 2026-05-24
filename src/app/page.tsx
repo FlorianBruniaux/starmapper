@@ -2,25 +2,17 @@
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 
 import type { MappedRepo } from "@/app/api/repos/route";
-import { resolveBaseUrl } from "@/lib/base-url";
+import { fetchReposData } from "@/lib/repos-query";
 import { LandingClient } from "./_components/landing-client";
-
-// Revalidate every 5 minutes — repos list changes slowly
-export const revalidate = 300;
 
 export default async function HomePage() {
   let repos: MappedRepo[] = [];
   let reposTotal = 0;
 
   try {
-    const res = await fetch(`${resolveBaseUrl()}/api/repos?limit=12&diverse=true`, {
-      next: { revalidate: 300 },
-    });
-    if (res.ok) {
-      const data = (await res.json()) as { repos: MappedRepo[]; total: number };
-      repos = data.repos;
-      reposTotal = data.total;
-    }
+    const data = await fetchReposData(12, true);
+    repos = data.repos;
+    reposTotal = data.total;
   } catch {
     // graceful degradation — community maps section is hidden on fetch failure
   }
