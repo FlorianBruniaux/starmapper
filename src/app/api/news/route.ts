@@ -3,6 +3,7 @@
 
 import type { NextRequest} from "next/server";
 import { NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { prisma } from "@/lib/db";
 import { verifyPat, normalizeLogin, getRedis } from "@/lib/github-auth";
 import { getOrCreateGitHubUserMinimal } from "@/lib/user-cache";
@@ -70,6 +71,8 @@ export const POST = async (req: NextRequest) => {
           url: typeof url === "string" ? url : null,
         },
       });
+
+      revalidateTag(`feed-${authorLogin}`, "hours");
 
       return NextResponse.json({
         ok: true,

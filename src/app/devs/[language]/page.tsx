@@ -2,14 +2,26 @@
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 
 import Link from "next/link";
+import { cacheLife, cacheTag } from "next/cache";
 import { prisma } from "@/lib/db";
 import { slugToLanguage, displayLanguage } from "@/lib/languages";
 import DevsLanguageClient from "@/app/devs/[language]/page.client";
 
-export const revalidate = 3600;
-
 type Props = {
   params: Promise<{ language: string }>;
+};
+
+const getLanguageDevCount = async (canonicalName: string): Promise<number> => {
+  "use cache";
+  cacheTag("explore-mvs");
+  cacheLife("hours");
+  try {
+    return await prisma.gitHubUser.count({
+      where: { languages: { has: canonicalName } },
+    });
+  } catch {
+    return 0;
+  }
 };
 
 export default async function DevsLanguagePage({ params }: Props) {
@@ -18,15 +30,7 @@ export default async function DevsLanguagePage({ params }: Props) {
   const canonicalName = slugToLanguage(decodedSlug) ?? decodedSlug;
   const displayName = displayLanguage(canonicalName);
 
-  // SSR developer count for SEO content, graceful fallback if DB is unavailable
-  let devCount = 0;
-  try {
-    devCount = await prisma.gitHubUser.count({
-      where: { languages: { has: canonicalName } },
-    });
-  } catch {
-    // DB unavailable, count stays 0 and SSR content still renders without the number
-  }
+  const devCount = await getLanguageDevCount(canonicalName);
 
   const countLabel = devCount > 0
     ? `${devCount.toLocaleString()} ${displayName} developers mapped`

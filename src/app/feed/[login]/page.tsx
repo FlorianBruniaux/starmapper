@@ -5,6 +5,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { cacheLife, cacheTag } from "next/cache";
 import { prisma } from "@/lib/db";
 import { isValidLogin, normalizeLogin } from "@/lib/github-auth";
 import { Header } from "@/components/header";
@@ -12,14 +13,36 @@ import { FeedPageClient } from "@/app/feed/[login]/page.client";
 
 type Props = { params: Promise<{ login: string }> };
 
-export const revalidate = 3600;
+type FeedData = {
+  user: { login: string; name: string | null } | null;
+  news: Array<{ id: number; body: string; url: string | null; publishedAt: Date }>;
+};
+
+const getFeedData = async (login: string): Promise<FeedData> => {
+  "use cache";
+  cacheTag(`feed-${login}`);
+  cacheLife("hours");
+  const [user, news] = await Promise.all([
+    prisma.gitHubUser.findUnique({
+      where: { login },
+      select: { login: true, name: true },
+    }),
+    prisma.news.findMany({
+      where: { authorLogin: login, deletedAt: null },
+      orderBy: { publishedAt: "desc" },
+      take: 20,
+      select: { id: true, body: true, url: true, publishedAt: true },
+    }),
+  ]);
+  return { user, news };
+};
 
 export const generateMetadata = async ({ params }: Props): Promise<Metadata> => {
   const { login: rawLogin } = await params;
   if (!isValidLogin(rawLogin)) return {};
   const login = normalizeLogin(rawLogin);
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://starmapper.bruniaux.com";
-  const user = await prisma.gitHubUser.findUnique({ where: { login }, select: { name: true } });
+  const { user } = await getFeedData(login);
   const displayName = user?.name ?? login;
   const title = `${displayName} announcements | StarMapper`;
   const description = `Subscribe to ${displayName}'s project announcements via RSS or JSON Feed on StarMapper.`;
@@ -50,18 +73,7 @@ const FeedPage = async ({ params }: Props) => {
   if (!isValidLogin(rawLogin)) notFound();
   const login = normalizeLogin(rawLogin);
 
-  const [user, news] = await Promise.all([
-    prisma.gitHubUser.findUnique({
-      where: { login },
-      select: { login: true, name: true },
-    }),
-    prisma.news.findMany({
-      where: { authorLogin: login, deletedAt: null },
-      orderBy: { publishedAt: "desc" },
-      take: 20,
-      select: { id: true, body: true, url: true, publishedAt: true },
-    }),
-  ]);
+  const { user, news } = await getFeedData(login);
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://starmapper.bruniaux.com";
   const rssUrl = `${appUrl}/api/feed/${login}/rss`;
