@@ -56,24 +56,85 @@ const drawLand = (
   for (const polygon of coords) {
     ctx.beginPath();
     let drew = false;
-    for (const ring of polygon) {
-      // Use the ring centroid to decide visibility — checking every vertex is
-      // too aggressive and silently drops large polygons (Europe, USA) that
-      // have any edge point past the terminator. The clip circle contains any
-      // partial overflow from polygons near the edge.
-      const n = ring.length;
-      let sumLon = 0, sumLat = 0;
-      for (const [lon, lat] of ring) { sumLon += lon; sumLat += lat; }
-      if (!project(sumLat / n, sumLon / n, rotY, cx, cy, r).visible) continue;
 
-      const pts = ring.map(([lon, lat]) => project(lat, lon, rotY, cx, cy, r));
-      let first = true;
-      for (const { x, y } of pts) {
-        if (first) { ctx.moveTo(x, y); first = false; }
-        else ctx.lineTo(x, y);
+    for (const ring of polygon) {
+      const n = ring.length;
+      if (n < 3) continue;
+
+      // Pre-compute depth z = cos(φ)*cos(λ-rotY) for each vertex.
+      // z > 0 → front hemisphere (visible), z ≤ 0 → back.
+      const zs = new Array<number>(n);
+      let allBack = true, allFront = true;
+      for (let i = 0; i < n; i++) {
+        const phi = toRad(ring[i][1]);
+        const lam = toRad(ring[i][0]) - rotY;
+        zs[i] = Math.cos(phi) * Math.cos(lam);
+        if (zs[i] > 0) allBack = false; else allFront = false;
       }
-      drew = true;
+      if (allBack) continue;
+
+      if (allFront) {
+        // Fast path: no clipping needed
+        const p0 = project(ring[0][1], ring[0][0], rotY, cx, cy, r);
+        ctx.moveTo(p0.x, p0.y);
+        for (let i = 1; i < n; i++) {
+          const p = project(ring[i][1], ring[i][0], rotY, cx, cy, r);
+          ctx.lineTo(p.x, p.y);
+        }
+        drew = true;
+        continue;
+      }
+
+      // Per-segment clipping at the terminator.
+      // When a segment crosses z=0, interpolate the crossing point in
+      // geographic coordinates and use it as the clip edge. The canvas
+      // clip circle (coinciding with the orthographic terminator) masks
+      // any tiny overshoot from the linear approximation.
+      let needsMove = true;
+
+      for (let i = 0; i < n - 1; i++) {
+        const zA = zs[i], zB = zs[i + 1];
+        const visA = zA > 0, visB = zB > 0;
+
+        if (!visA && !visB) { needsMove = true; continue; }
+
+        if (visA && visB) {
+          if (needsMove) {
+            const pA = project(ring[i][1], ring[i][0], rotY, cx, cy, r);
+            ctx.moveTo(pA.x, pA.y);
+            needsMove = false;
+          }
+          const pB = project(ring[i + 1][1], ring[i + 1][0], rotY, cx, cy, r);
+          ctx.lineTo(pB.x, pB.y);
+          drew = true;
+          continue;
+        }
+
+        // One side visible, one not: interpolate the crossing point
+        const t = zA / (zA - zB);
+        const eLat = ring[i][1] + t * (ring[i + 1][1] - ring[i][1]);
+        const eLon = ring[i][0] + t * (ring[i + 1][0] - ring[i][0]);
+        const pE = project(eLat, eLon, rotY, cx, cy, r);
+
+        if (visA) {
+          if (needsMove) {
+            const pA = project(ring[i][1], ring[i][0], rotY, cx, cy, r);
+            ctx.moveTo(pA.x, pA.y);
+            needsMove = false;
+          }
+          ctx.lineTo(pE.x, pE.y);
+          drew = true;
+          needsMove = true;
+        } else {
+          ctx.moveTo(pE.x, pE.y);
+          const pB = project(ring[i + 1][1], ring[i + 1][0], rotY, cx, cy, r);
+          ctx.lineTo(pB.x, pB.y);
+          needsMove = false;
+          drew = true;
+        }
+      }
     }
+
     if (drew) ctx.fill();
   }
 };
