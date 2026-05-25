@@ -235,7 +235,7 @@ const withCors = (res: NextResponse, isPublic: boolean): NextResponse => {
   return res;
 };
 
-export const middleware = async (req: NextRequest): Promise<NextResponse> => {
+export const proxy = async (req: NextRequest): Promise<NextResponse> => {
   const { pathname } = req.nextUrl;
   const method = req.method;
 
