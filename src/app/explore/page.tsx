@@ -421,6 +421,9 @@ export default function ExplorePage() {
   const [selectedCountry, setCountry] = useState(() =>
     typeof window !== "undefined" ? (new URLSearchParams(window.location.search).get("country") ?? "") : ""
   );
+  const [minFollowers, setMinFollowers] = useState<number>(() =>
+    typeof window !== "undefined" ? Math.max(0, parseInt(new URLSearchParams(window.location.search).get("flw") ?? "0", 10)) : 0
+  );
   const [searchInput, setSearchInput] = useState(() =>
     typeof window !== "undefined" ? (new URLSearchParams(window.location.search).get("q") ?? "") : ""
   );
@@ -508,20 +511,21 @@ export default function ExplorePage() {
     if (tab !== "top") sp.set("tab", tab);
     if (selectedCountry) sp.set("country", selectedCountry);
     if (search) sp.set("q", search);
+    if (minFollowers > 0) sp.set("flw", String(minFollowers));
     if (mapMode !== "choropleth") sp.set("map", mapMode);
     const qs = sp.toString();
     window.history.replaceState(null, "", qs ? `/explore?${qs}` : "/explore");
-  }, [tab, selectedCountry, search, mapMode]);
+  }, [tab, selectedCountry, search, minFollowers, mapMode]);
 
   // Reset pages to 1 when filters change (except nearby — it manages its own page)
-  const prevFilters = useRef({ selectedCountry, search });
+  const prevFilters = useRef({ selectedCountry, search, minFollowers });
   useEffect(() => {
     const prev = prevFilters.current;
-    if (prev.selectedCountry !== selectedCountry || prev.search !== search) {
-      prevFilters.current = { selectedCountry, search };
+    if (prev.selectedCountry !== selectedCountry || prev.search !== search || prev.minFollowers !== minFollowers) {
+      prevFilters.current = { selectedCountry, search, minFollowers };
       setPages((p) => ({ ...p, top: 1, power: 1, companies: 1, countries: 1, cities: 1 }));
     }
-  }, [selectedCountry, search]);
+  }, [selectedCountry, search, minFollowers]);
 
   // Reset nearby page when coords or radius change; re-fly map with radius-appropriate zoom
   useEffect(() => {
@@ -538,6 +542,7 @@ export default function ExplorePage() {
   // Per-tab URLs
   const topUrl = tab === "top" ? buildUrl("/api/explore/top", {
     page: pages.top, size: PAGE_SIZE, country: selectedCountry, search,
+    ...(minFollowers > 0 ? { minFollowers } : {}),
   }) : null;
 
   const powerUrl = tab === "power" ? buildUrl("/api/explore/power", {
@@ -859,34 +864,58 @@ export default function ExplorePage() {
 
               {/* Filter bar — hidden on "nearby" tab (has its own search) */}
               {(showCountryFilter || showSearch) && (
-                <div className="flex items-center gap-2 px-5 pt-4 pb-0">
-                  {showCountryFilter && summary && (
-                    <FilterCombobox
-                      value={selectedCountry}
-                      onChange={setCountry}
-                      options={summary.countryList}
-                      placeholder="All countries"
-                    />
-                  )}
-                  {showSearch && (
-                    <input
-                      type="text"
-                      value={searchInput}
-                      onChange={(e) => setSearchInput(e.target.value)}
-                      placeholder="Search login or name…"
-                      className={`flex-1 bg-background border border-border rounded text-xs text-foreground
-                        placeholder:text-muted-subtle px-3 py-2 h-9 focus:outline-none
-                        focus:ring-1 focus:ring-accent-blue/40 focus:border-accent-blue transition-colors
-                        ${showCountryFilter ? "max-w-xs" : ""}`}
-                    />
-                  )}
-                  {selectedCountry && (
-                    <button
-                      onClick={() => { setCountry(""); }}
-                      className="text-2xs text-muted hover:text-foreground transition-colors"
-                    >
-                      Clear
-                    </button>
+                <div className="flex flex-col gap-2 px-5 pt-4 pb-0">
+                  <div className="flex items-center gap-2">
+                    {showCountryFilter && summary && (
+                      <FilterCombobox
+                        value={selectedCountry}
+                        onChange={setCountry}
+                        options={summary.countryList}
+                        placeholder="All countries"
+                      />
+                    )}
+                    {showSearch && (
+                      <input
+                        type="text"
+                        value={searchInput}
+                        onChange={(e) => setSearchInput(e.target.value)}
+                        placeholder="Search login or name…"
+                        className={`flex-1 bg-background border border-border rounded text-xs text-foreground
+                          placeholder:text-muted-subtle px-3 py-2 h-9 focus:outline-none
+                          focus:ring-1 focus:ring-accent-blue/40 focus:border-accent-blue transition-colors
+                          ${showCountryFilter ? "max-w-xs" : ""}`}
+                      />
+                    )}
+                    {selectedCountry && (
+                      <button
+                        onClick={() => { setCountry(""); }}
+                        className="text-2xs text-muted hover:text-foreground transition-colors"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                  {tab === "top" && (
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-2xs text-muted-subtle whitespace-nowrap">Min followers</span>
+                      <div role="radiogroup" aria-label="Minimum followers filter" className="flex gap-1">
+                        {([0, 1000, 5000] as const).map((v) => (
+                          <button
+                            key={v}
+                            role="radio"
+                            aria-checked={minFollowers === v}
+                            onClick={() => setMinFollowers(v)}
+                            className={`px-2 py-0.5 rounded text-2xs transition-colors ${
+                              minFollowers === v
+                                ? "bg-accent-blue text-white"
+                                : "bg-surface-alt text-muted hover:text-foreground"
+                            }`}
+                          >
+                            {v === 0 ? "All" : v >= 1000 ? `${v / 1000}k+` : `${v}+`}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   )}
                 </div>
               )}

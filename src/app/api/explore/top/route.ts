@@ -27,16 +27,17 @@ export type TopUsersResponse = {
 
 export const GET = async (req: NextRequest) => {
   const { searchParams } = new URL(req.url);
-  const page    = Math.min(20, Math.max(1, parseInt(searchParams.get("page")  ?? "1",  10)));
-  const size    = Math.min(50, Math.max(1, parseInt(searchParams.get("size") ?? "30", 10)));
-  const country = (searchParams.get("country") ?? "").substring(0, 100).replace(/[^\p{L}\p{N}\s'.,()-]/gu, "");
-  const search  = (searchParams.get("search")  ?? "").substring(0, 100).replace(/[^\p{L}\p{N}\s'.,()-]/gu, "");
+  const page         = Math.min(20, Math.max(1, parseInt(searchParams.get("page")  ?? "1",  10)));
+  const size         = Math.min(50, Math.max(1, parseInt(searchParams.get("size") ?? "30", 10)));
+  const country      = (searchParams.get("country") ?? "").substring(0, 100).replace(/[^\p{L}\p{N}\s'.,()-]/gu, "");
+  const search       = (searchParams.get("search")  ?? "").substring(0, 100).replace(/[^\p{L}\p{N}\s'.,()-]/gu, "");
+  const minFollowers = Math.max(0, parseInt(searchParams.get("minFollowers") ?? "0", 10));
 
   // Minimum filter length — single-char filters enumerate the whole table cross-product
   if (country && country.trim().length < 2) return jsonError("invalid_params", 400);
   if (search  && search.trim().length  < 2) return jsonError("invalid_params", 400);
 
-  const isFiltered = Boolean(country || search);
+  const isFiltered = Boolean(country || search || minFollowers > 0);
   const skip = (page - 1) * size;
 
   // Hard skip cap — prevents full table enumeration even with page cycling
@@ -44,7 +45,8 @@ export const GET = async (req: NextRequest) => {
   if (skip > MAX_SKIP) return jsonError("invalid_params", 400);
 
   const where = {
-    ...(country ? { countryNormalized: { equals: country, mode: "insensitive" as const } } : {}),
+    ...(country      ? { countryNormalized: { equals: country, mode: "insensitive" as const } } : {}),
+    ...(minFollowers > 0 ? { followers: { gte: minFollowers } } : {}),
     ...(search  ? {
       OR: [
         { login: { contains: search, mode: "insensitive" as const } },
@@ -63,18 +65,18 @@ export const GET = async (req: NextRequest) => {
       search && !country
         ? prisma.$queryRaw<RawUser[]>`
             SELECT * FROM (
-              SELECT login, name, followers, company, "publicRepos", lat, lng, "countryNormalized" FROM github_user WHERE login ILIKE ${`%${search}%`}
+              SELECT login, name, followers, company, "publicRepos", lat, lng, "countryNormalized" FROM github_user WHERE login ILIKE ${`%${search}%`} AND followers >= ${minFollowers}
               UNION
-              SELECT login, name, followers, company, "publicRepos", lat, lng, "countryNormalized" FROM github_user WHERE name  ILIKE ${`%${search}%`}
+              SELECT login, name, followers, company, "publicRepos", lat, lng, "countryNormalized" FROM github_user WHERE name  ILIKE ${`%${search}%`} AND followers >= ${minFollowers}
             ) sub
             ORDER BY followers DESC LIMIT ${size} OFFSET ${skip}
           `
         : search && country
         ? prisma.$queryRaw<RawUser[]>`
             SELECT * FROM (
-              SELECT login, name, followers, company, "publicRepos", lat, lng, "countryNormalized" FROM github_user WHERE login ILIKE ${`%${search}%`} AND "countryNormalized" ILIKE ${country}
+              SELECT login, name, followers, company, "publicRepos", lat, lng, "countryNormalized" FROM github_user WHERE login ILIKE ${`%${search}%`} AND "countryNormalized" ILIKE ${country} AND followers >= ${minFollowers}
               UNION
-              SELECT login, name, followers, company, "publicRepos", lat, lng, "countryNormalized" FROM github_user WHERE name  ILIKE ${`%${search}%`} AND "countryNormalized" ILIKE ${country}
+              SELECT login, name, followers, company, "publicRepos", lat, lng, "countryNormalized" FROM github_user WHERE name  ILIKE ${`%${search}%`} AND "countryNormalized" ILIKE ${country} AND followers >= ${minFollowers}
             ) sub
             ORDER BY followers DESC LIMIT ${size} OFFSET ${skip}
           `
@@ -87,7 +89,8 @@ export const GET = async (req: NextRequest) => {
           }),
       // Avoid full table COUNT on unfiltered requests — use pg_class estimate (microseconds vs 2s).
       // country-only filter: country_stats_mv has the pre-aggregated count (<5ms vs 7s full scan).
-      isFiltered && country && !search
+      // Skip the MV shortcut when minFollowers is active — the MV doesn't have that sub-filter.
+      isFiltered && country && !search && !minFollowers
         ? prisma.$queryRaw<{ cnt: bigint }[]>`
             SELECT cnt FROM country_stats_mv WHERE LOWER(country) = LOWER(${country})
           `.then((rows) => Number(rows[0]?.cnt ?? 0))
