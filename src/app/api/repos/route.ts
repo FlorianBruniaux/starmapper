@@ -27,6 +27,9 @@ export const GET = async (req: Request) => {
       headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600" },
     });
   } catch (err) {
+    // Re-throw Next.js prerender interrupts (NEXT_PRERENDER_INTERRUPTED) so the
+    // framework can bail out to dynamic rendering when req.url is accessed.
+    if (err instanceof Error && "digest" in err) throw err;
     console.error("[repos] error", err);
     return jsonError("internal", 500);
   }

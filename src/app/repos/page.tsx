@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 
+import { Suspense } from "react";
 import type { MappedRepo } from "@/app/api/repos/route";
 import { fetchReposData } from "@/lib/repos-query";
 import { ReposClient } from "./_components/repos-client";
@@ -17,5 +18,9 @@ export default async function ReposPage() {
     // graceful degradation — table renders empty on fetch failure
   }
 
-  return <ReposClient initialRepos={repos} initialTotal={total} />;
+  return (
+    <Suspense fallback={null}>
+      <ReposClient initialRepos={repos} initialTotal={total} />
+    </Suspense>
+  );
 }

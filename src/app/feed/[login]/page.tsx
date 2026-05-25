@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
@@ -68,7 +69,7 @@ export const generateMetadata = async ({ params }: Props): Promise<Metadata> => 
   };
 };
 
-const FeedPage = async ({ params }: Props) => {
+const FeedPageContent = async ({ params }: Props) => {
   const { login: rawLogin } = await params;
   if (!isValidLogin(rawLogin)) notFound();
   const login = normalizeLogin(rawLogin);
@@ -199,4 +200,10 @@ const FeedPage = async ({ params }: Props) => {
   );
 };
 
-export default FeedPage;
+export default function FeedPage({ params }: Props) {
+  return (
+    <Suspense fallback={null}>
+      <FeedPageContent params={params} />
+    </Suspense>
+  );
+}

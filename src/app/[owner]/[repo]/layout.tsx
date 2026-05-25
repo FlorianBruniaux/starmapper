@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { OWNER_REPO_RE } from "@/lib/api-validation";
@@ -39,13 +40,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function RepoLayout({
-  params,
-  children,
-}: {
-  params: Promise<{ owner: string; repo: string }>;
-  children: React.ReactNode;
-}) {
+const RepoLayoutMeta = async ({ params }: { params: Promise<{ owner: string; repo: string }> }) => {
   const { owner, repo } = await params;
   if (!OWNER_REPO_RE.test(owner) || !OWNER_REPO_RE.test(repo)) notFound();
   const jsonLd = {
@@ -65,6 +60,22 @@ export default async function RepoLayout({
         // nosemgrep: typescript.react.security.audit.react-dangerouslysetinnerhtml.react-dangerouslysetinnerhtml
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
       />
+    </>
+  );
+};
+
+export default function RepoLayout({
+  params,
+  children,
+}: {
+  params: Promise<{ owner: string; repo: string }>;
+  children: React.ReactNode;
+}) {
+  return (
+    <>
+      <Suspense fallback={null}>
+        <RepoLayoutMeta params={params} />
+      </Suspense>
       {children}
     </>
   );

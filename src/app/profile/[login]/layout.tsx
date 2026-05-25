@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { LOGIN_RE } from "@/lib/api-validation";
@@ -40,13 +41,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function ProfileLayout({
-  params,
-  children,
-}: {
-  params: Promise<{ login: string }>;
-  children: React.ReactNode;
-}) {
+const ProfileJsonLd = async ({ params }: { params: Promise<{ login: string }> }) => {
   const { login } = await params;
   if (!LOGIN_RE.test(login)) notFound();
   const jsonLd = {
@@ -63,12 +58,26 @@ export default async function ProfileLayout({
     },
   };
   return (
+    <script
+      type="application/ld+json"
+      // nosemgrep: typescript.react.security.audit.react-dangerouslysetinnerhtml.react-dangerouslysetinnerhtml
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
+    />
+  );
+};
+
+export default function ProfileLayout({
+  params,
+  children,
+}: {
+  params: Promise<{ login: string }>;
+  children: React.ReactNode;
+}) {
+  return (
     <>
-      <script
-        type="application/ld+json"
-        // nosemgrep: typescript.react.security.audit.react-dangerouslysetinnerhtml.react-dangerouslysetinnerhtml
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
-      />
+      <Suspense fallback={null}>
+        <ProfileJsonLd params={params} />
+      </Suspense>
       {children}
     </>
   );

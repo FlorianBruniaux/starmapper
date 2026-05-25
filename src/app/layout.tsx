@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import { headers } from "next/headers";
@@ -8,7 +9,6 @@ import "./globals.css";
 import { VitalsReporter } from "@/components/vitals-reporter";
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-geist-sans", display: "swap" });
-
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://starmapper.bruniaux.com";
 
@@ -116,7 +116,8 @@ const jsonLd = {
   ],
 };
 
-// Inline script: runs before first paint to apply saved theme and prevent FOUC
+// Inline script: runs before first paint to apply saved theme and prevent FOUC.
+// Placed at start of <body> via Suspense so it runs before any visible content.
 const themeInitScript = `
 (function() {
   try {
@@ -130,8 +131,24 @@ const themeInitScript = `
 })();
 `.trim();
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
+// Reads x-nonce from request headers (set by middleware for CSP).
+// Wrapped in <Suspense> so cacheComponents can prerender the outer layout shell
+// while this async component stays per-request.
+const DynamicScripts = async () => {
   const nonce = (await headers()).get("x-nonce") ?? "";
+  return (
+    <>
+      <script nonce={nonce} dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      <script
+        nonce={nonce}
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+    </>
+  );
+};
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning className={`${geist.variable}`}>
       <head>
@@ -142,15 +159,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <link rel="preconnect" href="https://starmapper.jawg.io" crossOrigin="anonymous" />
         <link rel="preconnect" href="https://avatars.githubusercontent.com" />
         <link rel="preconnect" href="https://api.github.com" />
-        {/* Theme init — must run synchronously before first paint */}
-        <script nonce={nonce} dangerouslySetInnerHTML={{ __html: themeInitScript }} />
-        <script
-          nonce={nonce}
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-        />
       </head>
       <body className={`${geist.className} bg-background`}>
+        {/* Scripts need the per-request nonce from middleware — Suspense allows
+            the outer layout shell to be statically prerenderable while these
+            script tags remain dynamic (resolved before any visible content). */}
+        <Suspense fallback={null}>
+          <DynamicScripts />
+        </Suspense>
         <a
           href="#main"
           className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100]

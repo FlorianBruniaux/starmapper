@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 
+import { Suspense } from "react";
 import Link from "next/link";
 import { cacheLife, cacheTag } from "next/cache";
 import { prisma } from "@/lib/db";
@@ -24,7 +25,7 @@ const getLanguageDevCount = async (canonicalName: string): Promise<number> => {
   }
 };
 
-export default async function DevsLanguagePage({ params }: Props) {
+const DevsLanguagePageContent = async ({ params }: Props) => {
   const { language: slug } = await params;
   const decodedSlug = decodeURIComponent(slug);
   const canonicalName = slugToLanguage(decodedSlug) ?? decodedSlug;
@@ -56,5 +57,13 @@ export default async function DevsLanguagePage({ params }: Props) {
 
       <DevsLanguageClient initialSlug={decodedSlug} />
     </>
+  );
+};
+
+export default function DevsLanguagePage({ params }: Props) {
+  return (
+    <Suspense fallback={null}>
+      <DevsLanguagePageContent params={params} />
+    </Suspense>
   );
 }
