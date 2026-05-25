@@ -45,6 +45,7 @@ model StargazerCache {
   points          String
   unmapped        String
   totalCount      Int
+  indexedBy       String?
   scannedAt       DateTime  @default(now())
   latestStarredAt DateTime?
   expiresAt       DateTime  @default(dbgenerated("NOW() + INTERVAL '90 days'"))

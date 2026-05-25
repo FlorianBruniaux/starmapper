@@ -81,8 +81,9 @@ const pad = (s: string, w: number) => s.length >= w ? s.slice(0, w) : s + " ".re
 
 const divider = "─".repeat(72);
 
-type TopRow = { slug: string; type: string; total: bigint };
-type DayRow = { date: Date; total: bigint };
+type TopRow  = { slug: string; type: string; total: bigint };
+type DayRow  = { date: Date; total: bigint };
+type ScanRow = { owner: string; repo: string; total_count: number; scanned_at: Date; indexed_by: string | null };
 
 const printTopRows = (rows: TopRow[]) => {
   const max = rows.length > 0 ? Number(rows[0].total) : 1;
@@ -92,6 +93,19 @@ const printTopRows = (rows: TopRow[]) => {
       ? `[${row.type === "repo" ? "repo   " : "profile"}] ${row.slug}`
       : row.slug;
     console.log(`  ${pad(label, 48)} ${bar(n, max)} ${String(n).padStart(6)} views`);
+  }
+};
+
+const printScans = (rows: ScanRow[], label: string) => {
+  if (rows.length === 0) return;
+  console.log(`\n${divider}`);
+  console.log(`  ${label}`);
+  console.log(divider);
+  for (const row of rows) {
+    const date = row.scanned_at.toISOString().slice(0, 10);
+    const repo = `${row.owner}/${row.repo}`;
+    const by   = row.indexed_by ? `@${row.indexed_by}` : "—";
+    console.log(`  ${date}  ${pad(repo, 40)} ${String(row.total_count).padStart(7)} stars  ${by}`);
   }
 };
 
@@ -192,18 +206,29 @@ const runSlugMode = async () => {
 
   const typeFilter = TYPE || (SLUG.includes("/") ? "repo" : "profile");
 
-  const [trend, allTime] = await Promise.all([
+  const slugLower = SLUG.toLowerCase();
+
+  const [trend, allTime, scanRows] = await Promise.all([
     prisma.$queryRaw<DayRow[]>`
       SELECT date, SUM(count)::bigint AS total
       FROM page_view
-      WHERE type = ${typeFilter} AND LOWER(slug) = ${SLUG.toLowerCase()} AND date >= ${since}
+      WHERE type = ${typeFilter} AND LOWER(slug) = ${slugLower} AND date >= ${since}
       GROUP BY date ORDER BY date ASC
     `,
     prisma.$queryRaw<Array<{ total: bigint }>>`
       SELECT SUM(count)::bigint AS total
       FROM page_view
-      WHERE type = ${typeFilter} AND LOWER(slug) = ${SLUG.toLowerCase()}
+      WHERE type = ${typeFilter} AND LOWER(slug) = ${slugLower}
     `,
+    typeFilter === "repo"
+      ? prisma.$queryRaw<ScanRow[]>`
+          SELECT owner, repo, total_count, scanned_at, indexed_by
+          FROM stargazer_cache
+          WHERE LOWER(owner) = ${slugLower.split("/")[0]}
+            AND LOWER(repo)  = ${slugLower.split("/")[1] ?? ""}
+          ORDER BY scanned_at DESC LIMIT 5
+        `
+      : Promise.resolve([] as ScanRow[]),
   ]);
 
   await prisma.$disconnect();
@@ -218,6 +243,7 @@ const runSlugMode = async () => {
   console.log(`\n  All-time total  ${total.toLocaleString()} views\n`);
 
   printTrend(trend, `Daily trend — last ${DAYS} days`);
+  printScans(scanRows, "Scan history");
   console.log(`\n${divider}\n`);
 };
 
@@ -243,7 +269,7 @@ const runGlobalMode = async () => {
         GROUP BY date ORDER BY date ASC
       `;
 
-  const [repoRows, profileRows, todayRows, grandTotal] = await Promise.all([
+  const [repoRows, profileRows, todayRows, grandTotal, recentScans] = await Promise.all([
     TYPE === "profile" ? Promise.resolve([]) : prisma.$queryRaw<TopRow[]>`
       SELECT slug, type, SUM(count)::bigint AS total
       FROM page_view WHERE type = 'repo'
@@ -261,6 +287,11 @@ const runGlobalMode = async () => {
     `,
     prisma.$queryRaw<Array<{ total: bigint }>>`
       SELECT SUM(count)::bigint AS total FROM page_view
+    `,
+    prisma.$queryRaw<ScanRow[]>`
+      SELECT owner, repo, total_count, scanned_at, indexed_by
+      FROM stargazer_cache
+      ORDER BY scanned_at DESC LIMIT ${TOP}
     `,
   ]);
 
@@ -292,6 +323,8 @@ const runGlobalMode = async () => {
     console.log(divider);
     printTopRows(profileRows);
   }
+
+  printScans(recentScans, `Recent scans (last ${TOP})`);
 
   console.log(`\n${divider}\n`);
 };

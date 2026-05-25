@@ -182,9 +182,12 @@ export const useScanController = ({
               compressToBase64(slim),
               compressToBase64(allUnmapped),
             ]);
+            const cacheHeaders: Record<string, string> = { "Content-Type": "application/json" };
+            const storedToken = getStoredToken();
+            if (storedToken) cacheHeaders["x-gh-token"] = storedToken;
             const cacheRes = await fetch("/api/stargazer-cache", {
               method: "POST",
-              headers: { "Content-Type": "application/json" },
+              headers: cacheHeaders,
               body: JSON.stringify({ owner, repo, pointsGz, unmappedGz, totalCount: finalTotal, latestStarredAt: newestStarredAt, ts: Date.now() }),
             });
             if (!cacheRes.ok) return;
@@ -288,6 +291,11 @@ export const useScanController = ({
 
       // Persist refreshed data to DB cache (fire-and-forget)
       if (mergedPoints.length > 0) {
+        const countrySet = new Set(
+          mergedPoints
+            .map((p) => { const s = p.location?.split(",").pop()?.trim(); return s && isCountry(s) ? normalizeCountry(s) : null; })
+            .filter(Boolean),
+        );
         (async () => {
           try {
             type SlimPoint = Omit<StargazerPoint, "bio" | "avatarUrl">;
@@ -296,11 +304,30 @@ export const useScanController = ({
               compressToBase64(slim),
               compressToBase64(mergedUnmapped),
             ]);
-            await fetch("/api/stargazer-cache", {
+            const cacheRes = await fetch("/api/stargazer-cache", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ owner, repo, pointsGz, unmappedGz, totalCount: latestTotalCount, latestStarredAt: updatedLatest, ts: now }),
             });
+            if (!cacheRes.ok) return;
+            fetch("/api/badge-update", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                owner,
+                repo,
+                mappedCount: mergedPoints.length,
+                countryCount: countrySet.size,
+                totalCount: latestTotalCount,
+                language: repoInfo?.language ?? null,
+                ...(repoInfo?.forksCount !== undefined && { forksCount: repoInfo.forksCount }),
+                ...(repoInfo?.watchersCount !== undefined && { watchersCount: repoInfo.watchersCount }),
+              }),
+            })
+              .then(() => fetch(`/api/stats/${owner}/${repo}`))
+              .then((r) => r.ok ? r.json() : null)
+              .then((data) => { if (data) setServerStats(data as RepoStats); })
+              .catch(() => {});
           } catch { /* fire-and-forget, non-critical */ }
         })();
       }

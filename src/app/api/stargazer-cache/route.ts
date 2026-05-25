@@ -10,6 +10,23 @@ import { verifyToken, COOKIE_NAME } from "@/lib/api-token";
 import { defineRoute } from "@/lib/define-route";
 import { stargazerCacheEnvelopeSchema, MAX_CACHEABLE_STARS } from "@/schemas/stargazer-cache";
 
+const resolvePatLogin = async (pat: string): Promise<string | null> => {
+  try {
+    const ac = new AbortController();
+    const t = setTimeout(() => ac.abort(), 3000);
+    const res = await fetch("https://api.github.com/user", {
+      headers: { Authorization: `Bearer ${pat}`, "User-Agent": "StarMapper" },
+      signal: ac.signal,
+    });
+    clearTimeout(t);
+    if (!res.ok) return null;
+    const data = (await res.json()) as { login?: string };
+    return typeof data.login === "string" ? data.login : null;
+  } catch {
+    return null;
+  }
+};
+
 export const POST = defineRoute(stargazerCacheEnvelopeSchema, async (req, body) => {
   try {
     // Freshness check — ts type is validated by schema; window check requires Date.now()
@@ -78,6 +95,9 @@ export const POST = defineRoute(stargazerCacheEnvelopeSchema, async (req, body) 
     const latestStarredAtDate =
       typeof body.latestStarredAt === "string" ? new Date(body.latestStarredAt) : null;
 
+    const clientPat = req.headers.get("x-gh-token");
+    const indexedBy = clientPat ? await resolvePatLogin(clientPat) : null;
+
     await prisma.stargazerCache.upsert({
       where: { owner_repo: key },
       create: {
@@ -87,6 +107,7 @@ export const POST = defineRoute(stargazerCacheEnvelopeSchema, async (req, body) 
         totalCount: body.totalCount,
         scannedAt: new Date(),
         latestStarredAt: latestStarredAtDate,
+        indexedBy,
       },
       update: {
         points: finalPointsGz,
@@ -94,6 +115,7 @@ export const POST = defineRoute(stargazerCacheEnvelopeSchema, async (req, body) 
         totalCount: body.totalCount,
         scannedAt: new Date(),
         latestStarredAt: latestStarredAtDate,
+        ...(indexedBy && { indexedBy }),
       },
     });
 
