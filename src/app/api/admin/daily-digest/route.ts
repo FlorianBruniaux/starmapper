@@ -2,79 +2,76 @@
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 
 // Daily stats digest — fetches key metrics from DB and sends via Resend.
-// Called by the Claude Code routine at 8am Paris time (6am UTC).
-// Auth: x-admin-secret header (same ADMIN_SECRET env var as other admin routes).
+// GET  — called by Vercel Cron at 8am Paris time (6am UTC). Auth: CRON_SECRET.
+// POST — manual trigger for testing. Auth: x-admin-secret header.
 
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import { prisma } from "@/lib/db";
 import { requireAdminAuth, logError } from "@/lib/api-helpers";
+import { safeEqual } from "@/lib/api-token";
 
-export const GET = async (req: NextRequest) => {
-  const authError = requireAdminAuth(req);
-  if (authError) return authError;
+const runDigest = async () => {
+  const resendKey = process.env.RESEND_API_KEY;
+  if (!resendKey) return NextResponse.json({ error: "RESEND_API_KEY not set" }, { status: 500 });
 
-  try {
-    const resendKey = process.env.RESEND_API_KEY;
-    if (!resendKey) return NextResponse.json({ error: "RESEND_API_KEY not set" }, { status: 500 });
+  const digestTo = process.env.DIGEST_EMAIL ?? "florian@bruniaux.com";
+  const resend = new Resend(resendKey);
 
-    const digestTo = process.env.DIGEST_EMAIL ?? "f.bruniaux@methode-aristote.fr";
-    const resend = new Resend(resendKey);
+  const since7d = new Date();
+  since7d.setDate(since7d.getDate() - 7);
+  since7d.setUTCHours(0, 0, 0, 0);
 
-    const since7d = new Date();
-    since7d.setDate(since7d.getDate() - 7);
-    since7d.setUTCHours(0, 0, 0, 0);
+  const today = new Date();
+  today.setUTCHours(0, 0, 0, 0);
 
-    const today = new Date();
-    today.setUTCHours(0, 0, 0, 0);
+  const [
+    grandTotal,
+    todayViews,
+    topRepos,
+    recentScans,
+    geocacheCount,
+  ] = await Promise.all([
+    prisma.$queryRaw<Array<{ total: bigint }>>`
+      SELECT SUM(count)::bigint AS total FROM page_view
+    `,
+    prisma.$queryRaw<Array<{ type: string; total: bigint }>>`
+      SELECT type, SUM(count)::bigint AS total
+      FROM page_view WHERE date = ${today}
+      GROUP BY type
+    `,
+    prisma.$queryRaw<Array<{ slug: string; total: bigint }>>`
+      SELECT slug, SUM(count)::bigint AS total
+      FROM page_view WHERE type = 'repo' AND date >= ${since7d}
+      GROUP BY slug ORDER BY total DESC LIMIT 10
+    `,
+    prisma.stargazerCache.findMany({
+      select: { owner: true, repo: true, totalCount: true, scannedAt: true, indexedBy: true },
+      orderBy: { scannedAt: "desc" },
+      take: 10,
+    }),
+    prisma.geoCache.count(),
+  ]);
 
-    const [
-      grandTotal,
-      todayViews,
-      topRepos,
-      recentScans,
-      geocacheCount,
-    ] = await Promise.all([
-      prisma.$queryRaw<Array<{ total: bigint }>>`
-        SELECT SUM(count)::bigint AS total FROM page_view
-      `,
-      prisma.$queryRaw<Array<{ type: string; total: bigint }>>`
-        SELECT type, SUM(count)::bigint AS total
-        FROM page_view WHERE date = ${today}
-        GROUP BY type
-      `,
-      prisma.$queryRaw<Array<{ slug: string; total: bigint }>>`
-        SELECT slug, SUM(count)::bigint AS total
-        FROM page_view WHERE type = 'repo' AND date >= ${since7d}
-        GROUP BY slug ORDER BY total DESC LIMIT 10
-      `,
-      prisma.stargazerCache.findMany({
-        select: { owner: true, repo: true, totalCount: true, scannedAt: true, indexedBy: true },
-        orderBy: { scannedAt: "desc" },
-        take: 10,
-      }),
-      prisma.geoCache.count(),
-    ]);
+  const totalViews  = Number(grandTotal[0]?.total ?? BigInt(0));
+  const todayRepo   = Number(todayViews.find((r) => r.type === "repo")?.total    ?? BigInt(0));
+  const todayProf   = Number(todayViews.find((r) => r.type === "profile")?.total ?? BigInt(0));
 
-    const totalViews  = Number(grandTotal[0]?.total ?? BigInt(0));
-    const todayRepo   = Number(todayViews.find((r) => r.type === "repo")?.total    ?? BigInt(0));
-    const todayProf   = Number(todayViews.find((r) => r.type === "profile")?.total ?? BigInt(0));
+  const fmt = (n: number) => n.toLocaleString("fr-FR");
+  const dateStr = new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
 
-    const fmt = (n: number) => n.toLocaleString("fr-FR");
-    const dateStr = new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  const topReposHtml = topRepos.map((r) =>
+    `<tr><td style="padding:4px 12px 4px 0;font-family:monospace;color:#58a6ff">${r.slug}</td><td style="padding:4px 0;text-align:right">${fmt(Number(r.total))}</td></tr>`
+  ).join("");
 
-    const topReposHtml = topRepos.map((r) =>
-      `<tr><td style="padding:4px 12px 4px 0;font-family:monospace;color:#58a6ff">${r.slug}</td><td style="padding:4px 0;text-align:right">${fmt(Number(r.total))}</td></tr>`
-    ).join("");
+  const recentScansHtml = recentScans.map((s) => {
+    const d = s.scannedAt.toISOString().slice(0, 10);
+    const by = s.indexedBy ? `<span style="color:#58a6ff">@${s.indexedBy}</span>` : `<span style="color:#8b949e">—</span>`;
+    return `<tr><td style="padding:4px 12px 4px 0;color:#8b949e;font-size:12px">${d}</td><td style="padding:4px 12px 4px 0;font-family:monospace;color:#f0f6fc">${s.owner}/${s.repo}</td><td style="padding:4px 12px 4px 0;text-align:right">${fmt(s.totalCount)}</td><td style="padding:4px 0">${by}</td></tr>`;
+  }).join("");
 
-    const recentScansHtml = recentScans.map((s) => {
-      const d = s.scannedAt.toISOString().slice(0, 10);
-      const by = s.indexedBy ? `<span style="color:#58a6ff">@${s.indexedBy}</span>` : `<span style="color:#8b949e">—</span>`;
-      return `<tr><td style="padding:4px 12px 4px 0;color:#8b949e;font-size:12px">${d}</td><td style="padding:4px 12px 4px 0;font-family:monospace;color:#f0f6fc">${s.owner}/${s.repo}</td><td style="padding:4px 12px 4px 0;text-align:right">${fmt(s.totalCount)}</td><td style="padding:4px 0">${by}</td></tr>`;
-    }).join("");
-
-    const html = `
+  const html = `
 <!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"></head>
@@ -114,22 +111,52 @@ export const GET = async (req: NextRequest) => {
 </body>
 </html>`;
 
-    const { error } = await resend.emails.send({
-      from: process.env.DIGEST_FROM ?? "StarMapper <onboarding@resend.dev>",
-      to: digestTo,
-      subject: `StarMapper digest — ${new Date().toLocaleDateString("fr-FR")}`,
-      html,
-    });
+  const { error } = await resend.emails.send({
+    from: process.env.DIGEST_FROM ?? "StarMapper <onboarding@resend.dev>",
+    to: digestTo,
+    subject: `StarMapper digest — ${new Date().toLocaleDateString("fr-FR")}`,
+    html,
+  });
 
-    if (error) {
-      logError("daily-digest Resend", error);
-      return NextResponse.json({ error: "send_failed", detail: error.message }, { status: 500 });
+  if (error) {
+    logError("daily-digest Resend", error);
+    return NextResponse.json({ error: "send_failed" }, { status: 500 });
+  }
+
+  return NextResponse.json({ ok: true, to: digestTo });
+};
+
+// Vercel Cron — GET with Authorization: Bearer <CRON_SECRET>
+export const GET = async (req: NextRequest) => {
+  const cronSecret = process.env.CRON_SECRET;
+  if (!cronSecret) {
+    if (process.env.NODE_ENV === "production") {
+      console.warn("[cron/daily-digest] CRON_SECRET not set — cron auth will always fail");
     }
+    return NextResponse.json({ error: "not_found" }, { status: 404 });
+  }
+  const authHeader = req.headers.get("authorization");
+  if (!safeEqual(authHeader ?? "", `Bearer ${cronSecret}`)) {
+    return NextResponse.json({ error: "not_found" }, { status: 404 });
+  }
 
-    return NextResponse.json({ ok: true, to: digestTo });
+  try {
+    return await runDigest();
   } catch (err) {
-    logError("daily-digest", err);
-    const detail = err instanceof Error ? err.message : String(err);
-    return NextResponse.json({ error: "internal", detail }, { status: 500 });
+    logError("daily-digest GET", err);
+    return NextResponse.json({ error: "internal" }, { status: 500 });
+  }
+};
+
+// Manual trigger — POST with x-admin-secret header
+export const POST = async (req: NextRequest) => {
+  const authError = requireAdminAuth(req);
+  if (authError) return authError;
+
+  try {
+    return await runDigest();
+  } catch (err) {
+    logError("daily-digest POST", err);
+    return NextResponse.json({ error: "internal" }, { status: 500 });
   }
 };
