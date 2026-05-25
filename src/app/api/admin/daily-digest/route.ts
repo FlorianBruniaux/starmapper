@@ -49,11 +49,11 @@ export const GET = async (req: NextRequest) => {
         FROM page_view WHERE type = 'repo' AND date >= ${since7d}
         GROUP BY slug ORDER BY total DESC LIMIT 10
       `,
-      prisma.$queryRaw<Array<{ owner: string; repo: string; total_count: number; scanned_at: Date; indexed_by: string | null }>>`
-        SELECT owner, repo, total_count, scanned_at, indexed_by
-        FROM stargazer_cache
-        ORDER BY scanned_at DESC LIMIT 10
-      `,
+      prisma.stargazerCache.findMany({
+        select: { owner: true, repo: true, totalCount: true, scannedAt: true, indexedBy: true },
+        orderBy: { scannedAt: "desc" },
+        take: 10,
+      }),
       prisma.geoCache.count(),
     ]);
 
@@ -69,9 +69,9 @@ export const GET = async (req: NextRequest) => {
     ).join("");
 
     const recentScansHtml = recentScans.map((s) => {
-      const d = s.scanned_at.toISOString().slice(0, 10);
-      const by = s.indexed_by ? `<span style="color:#58a6ff">@${s.indexed_by}</span>` : `<span style="color:#8b949e">—</span>`;
-      return `<tr><td style="padding:4px 12px 4px 0;color:#8b949e;font-size:12px">${d}</td><td style="padding:4px 12px 4px 0;font-family:monospace;color:#f0f6fc">${s.owner}/${s.repo}</td><td style="padding:4px 12px 4px 0;text-align:right">${fmt(s.total_count)}</td><td style="padding:4px 0">${by}</td></tr>`;
+      const d = s.scannedAt.toISOString().slice(0, 10);
+      const by = s.indexedBy ? `<span style="color:#58a6ff">@${s.indexedBy}</span>` : `<span style="color:#8b949e">—</span>`;
+      return `<tr><td style="padding:4px 12px 4px 0;color:#8b949e;font-size:12px">${d}</td><td style="padding:4px 12px 4px 0;font-family:monospace;color:#f0f6fc">${s.owner}/${s.repo}</td><td style="padding:4px 12px 4px 0;text-align:right">${fmt(s.totalCount)}</td><td style="padding:4px 0">${by}</td></tr>`;
     }).join("");
 
     const html = `
