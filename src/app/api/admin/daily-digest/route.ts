@@ -115,7 +115,7 @@ export const GET = async (req: NextRequest) => {
 </html>`;
 
     const { error } = await resend.emails.send({
-      from: "StarMapper <digest@starmapper.bruniaux.com>",
+      from: process.env.DIGEST_FROM ?? "StarMapper <onboarding@resend.dev>",
       to: digestTo,
       subject: `StarMapper digest — ${new Date().toLocaleDateString("fr-FR")}`,
       html,
