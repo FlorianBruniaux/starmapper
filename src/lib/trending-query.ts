@@ -75,10 +75,6 @@ export const fetchTrendingRepos = async (): Promise<{
 };
 
 export const fetchTrendingMap = async (): Promise<StargazerPoint[]> => {
-  "use cache";
-  cacheTag("trending");
-  cacheLife({ revalidate: 300, stale: 3600 });
-
   const topRows = await prisma.$queryRaw<{ owner: string; repo: string }[]>`
     SELECT owner, repo
     FROM trending_repos_mv

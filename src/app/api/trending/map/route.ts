@@ -5,8 +5,6 @@ import { NextResponse } from "next/server";
 import { fetchTrendingMap } from "@/lib/trending-query";
 import type { StargazerPoint } from "@/app/api/chunk/route";
 
-export const dynamic = "force-dynamic";
-
 export type TrendingMapResponse = {
   mapPoints: StargazerPoint[];
 };
