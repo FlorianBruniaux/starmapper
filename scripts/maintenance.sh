@@ -123,7 +123,8 @@ if ! $SKIP_SYNC && ! $DRY_RUN; then
     REFRESH MATERIALIZED VIEW CONCURRENTLY country_stats_mv;
     REFRESH MATERIALIZED VIEW CONCURRENTLY power_users_mv;
     REFRESH MATERIALIZED VIEW CONCURRENTLY company_stats_mv;
-    REFRESH MATERIALIZED VIEW CONCURRENTLY user_repo_count_mv;"
+    REFRESH MATERIALIZED VIEW CONCURRENTLY user_repo_count_mv;
+    REFRESH MATERIALIZED VIEW CONCURRENTLY trending_repos_mv;"
   ok "materialized views refreshed"
 
 elif $DRY_RUN; then
