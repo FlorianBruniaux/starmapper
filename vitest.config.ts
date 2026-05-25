@@ -60,6 +60,7 @@ export default defineConfig({
           pool: "forks",
           include: ["src/lib/**/*.test.ts", "src/app/api/**/*.test.ts"],
           exclude: WORKTREE_EXCLUDE,
+          setupFiles: ["./vitest.setup.node.ts"],
         },
         resolve: { alias },
       },

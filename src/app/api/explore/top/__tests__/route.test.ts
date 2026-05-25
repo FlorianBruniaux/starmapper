@@ -112,11 +112,11 @@ describe("GET /api/explore/top", () => {
       expect(res.headers.get("cache-control")).toContain("s-maxage=300");
     });
 
-    it("uses no-store for filtered requests", async () => {
+    it("uses short cache for filtered requests", async () => {
       mockQueryRaw.mockResolvedValue([{ cnt: 500n }]);
       mockFindMany.mockResolvedValue([userRow]);
       const res = await GET(makeReq({ country: "France" }));
-      expect(res.headers.get("cache-control")).toBe("no-store");
+      expect(res.headers.get("cache-control")).toContain("s-maxage=60");
     });
   });
 

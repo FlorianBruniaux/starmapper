@@ -80,9 +80,9 @@ describe("GET /api/explore/companies", () => {
       expect(res.headers.get("cache-control")).toContain("s-maxage=600");
     });
 
-    it("uses no-store for country-filtered request", async () => {
+    it("uses short cache for country-filtered request", async () => {
       const res = await GET(makeReq({ country: "France" }));
-      expect(res.headers.get("cache-control")).toBe("no-store");
+      expect(res.headers.get("cache-control")).toContain("s-maxage=60");
     });
   });
 

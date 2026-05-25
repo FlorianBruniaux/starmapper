@@ -75,13 +75,13 @@ describe("GET /api/explore/global-map", () => {
       expect(json.totalMapped).toBe(500);
     });
 
-    it("returns no CDN s-maxage on fallback path", async () => {
+    it("returns short CDN cache on fallback path", async () => {
       mockQueryRaw
         .mockRejectedValueOnce(new Error("42P01: relation does not exist"))
         .mockResolvedValueOnce([mvRow]);
       const res = await GET();
       const cc = res.headers.get("cache-control");
-      expect(cc ?? "").not.toContain("s-maxage");
+      expect(cc).toContain("s-maxage=60");
     });
   });
 

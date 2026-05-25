@@ -66,9 +66,9 @@ describe("GET /api/explore/locations", () => {
       expect(res.headers.get("cache-control")).toContain("s-maxage=600");
     });
 
-    it("uses no-store for city type with country filter", async () => {
+    it("uses short cache for city type with country filter", async () => {
       const res = await GET(makeReq({ type: "city", country: "France" }));
-      expect(res.headers.get("cache-control")).toBe("no-store");
+      expect(res.headers.get("cache-control")).toContain("s-maxage=60");
     });
   });
 
