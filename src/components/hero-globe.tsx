@@ -54,15 +54,18 @@ const drawLand = (
   rotY: number, cx: number, cy: number, r: number
 ) => {
   for (const polygon of coords) {
-    ctx.beginPath();
-    let drew = false;
+    // Fast path: rings fully on the front hemisphere are batched into one path.
+    // Mixed rings (crossing the terminator) are split into visible segments,
+    // each closed with an arc along the globe edge between the two terminator
+    // crossing points. This avoids ctx.fill() auto-close straight lines that
+    // cut diagonally across the globe face.
+    let hasAllFront = false;
 
     for (const ring of polygon) {
       const n = ring.length;
       if (n < 3) continue;
 
-      // Pre-compute depth z = cos(φ)*cos(λ-rotY) for each vertex.
-      // z > 0 → front hemisphere (visible), z ≤ 0 → back.
+      // Pre-compute depth (z) for every vertex.
       const zs = new Array<number>(n);
       let allBack = true, allFront = true;
       for (let i = 0; i < n; i++) {
@@ -74,68 +77,128 @@ const drawLand = (
       if (allBack) continue;
 
       if (allFront) {
-        // Fast path: no clipping needed
+        if (!hasAllFront) { ctx.beginPath(); hasAllFront = true; }
         const p0 = project(ring[0][1], ring[0][0], rotY, cx, cy, r);
         ctx.moveTo(p0.x, p0.y);
         for (let i = 1; i < n; i++) {
           const p = project(ring[i][1], ring[i][0], rotY, cx, cy, r);
           ctx.lineTo(p.x, p.y);
         }
-        drew = true;
         continue;
       }
 
-      // Per-segment clipping at the terminator.
-      // When a segment crosses z=0, interpolate the crossing point in
-      // geographic coordinates and use it as the clip edge. The canvas
-      // clip circle (coinciding with the orthographic terminator) masks
-      // any tiny overshoot from the linear approximation.
-      let needsMove = true;
+      if (hasAllFront) { ctx.fill(); hasAllFront = false; }
 
-      for (let i = 0; i < n - 1; i++) {
-        const zA = zs[i], zB = zs[i + 1];
+      // --- Mixed ring: collect visible segments, close each with a globe-edge arc ---
+
+      // Collect all visible segments as arrays of projected points.
+      // Each segment starts and ends at a terminator crossing (except for
+      // fully-visible rings, handled above). We track the entry/exit screen
+      // coordinates so we can close with an arc instead of a straight line.
+
+      type Pt = { x: number; y: number };
+      type Segment = { pts: Pt[]; entry: Pt; exit: Pt };
+      const segments: Segment[] = [];
+
+      // Start traversal at a back vertex so every segment begins with a
+      // back-to-front crossing (entry terminator point).
+      // GeoJSON closed rings: ring[n-1] === ring[0], unique vertices are 0..n-2.
+      const m = n - 1; // number of unique vertices / edges
+      let startOffset = 0;
+      if (zs[0] > 0) {
+        // ring[0] is visible, find the first back->front crossing to start there.
+        for (let k = 0; k < m; k++) {
+          const kNext = (k + 1) % m;
+          if (zs[k] <= 0 && zs[kNext] > 0) {
+            startOffset = k;
+            break;
+          }
+        }
+      }
+
+      let curSeg: Pt[] | null = null;
+      let entryPt: Pt = { x: 0, y: 0 };
+
+      const closeSeg = (exit: Pt) => {
+        if (curSeg && curSeg.length > 0) {
+          segments.push({ pts: curSeg, entry: entryPt, exit });
+        }
+        curSeg = null;
+      };
+
+      for (let iter = 0; iter < m; iter++) {
+        const ia = (startOffset + iter) % m;
+        const ib = (ia + 1) % m;
+        const zA = zs[ia], zB = zs[ib];
         const visA = zA > 0, visB = zB > 0;
 
-        if (!visA && !visB) { needsMove = true; continue; }
-
-        if (visA && visB) {
-          if (needsMove) {
-            const pA = project(ring[i][1], ring[i][0], rotY, cx, cy, r);
-            ctx.moveTo(pA.x, pA.y);
-            needsMove = false;
-          }
-          const pB = project(ring[i + 1][1], ring[i + 1][0], rotY, cx, cy, r);
-          ctx.lineTo(pB.x, pB.y);
-          drew = true;
+        if (!visA && !visB) {
+          // Both behind: if a segment was open it ended on the previous edge
+          // (front-to-back already closed it). Safety guard:
+          if (curSeg) closeSeg(curSeg[curSeg.length - 1]);
           continue;
         }
 
-        // One side visible, one not: interpolate the crossing point
+        if (visA && visB) {
+          if (!curSeg) {
+            // Starting mid-ring on a visible-visible edge (shouldn't happen if
+            // startOffset is correct, but guard against it).
+            const pA = project(ring[ia][1], ring[ia][0], rotY, cx, cy, r);
+            curSeg = [pA];
+            entryPt = pA;
+          }
+          const pB = project(ring[ib][1], ring[ib][0], rotY, cx, cy, r);
+          curSeg.push(pB);
+          continue;
+        }
+
+        // Crossing edge: interpolate the terminator intersection.
         const t = zA / (zA - zB);
-        const eLat = ring[i][1] + t * (ring[i + 1][1] - ring[i][1]);
-        const eLon = ring[i][0] + t * (ring[i + 1][0] - ring[i][0]);
+        const eLat = ring[ia][1] + t * (ring[ib][1] - ring[ia][1]);
+        const eLon = ring[ia][0] + t * (ring[ib][0] - ring[ia][0]);
         const pE = project(eLat, eLon, rotY, cx, cy, r);
 
         if (visA) {
-          if (needsMove) {
-            const pA = project(ring[i][1], ring[i][0], rotY, cx, cy, r);
-            ctx.moveTo(pA.x, pA.y);
-            needsMove = false;
+          // front-to-back: close the current segment at the terminator.
+          if (!curSeg) {
+            const pA = project(ring[ia][1], ring[ia][0], rotY, cx, cy, r);
+            curSeg = [pA];
+            entryPt = pA;
           }
-          ctx.lineTo(pE.x, pE.y);
-          drew = true;
-          needsMove = true;
+          curSeg.push(pE);
+          closeSeg(pE);
         } else {
-          ctx.moveTo(pE.x, pE.y);
-          const pB = project(ring[i + 1][1], ring[i + 1][0], rotY, cx, cy, r);
-          ctx.lineTo(pB.x, pB.y);
-          needsMove = false;
-          drew = true;
+          // back-to-front: start a new segment at the terminator.
+          const pB = project(ring[ib][1], ring[ib][0], rotY, cx, cy, r);
+          curSeg = [pB];
+          entryPt = pE; // entry is the terminator crossing, NOT pB
         }
+      }
+
+      // If a segment is still open at the end of the loop, close it.
+      if (curSeg) closeSeg(curSeg[curSeg.length - 1]);
+
+      // Close each segment with the SHORT arc along the globe rim.
+      // Both entry and exit are on the circle edge (terminator crossings).
+      // The short arc (< π) goes along the near side of the rim; the long arc
+      // would cut across the globe interior and produce the diagonal artifact.
+      for (const seg of segments) {
+        const exitA = Math.atan2(seg.exit.y - cy, seg.exit.x - cx);
+        const entryA = Math.atan2(seg.entry.y - cy, seg.entry.x - cx);
+        // CW distance from exit to entry (in canvas y-down coords, CW = increasing angle)
+        const cwDist = ((entryA - exitA) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
+        ctx.beginPath();
+        ctx.moveTo(seg.entry.x, seg.entry.y);
+        for (const pt of seg.pts) {
+          ctx.lineTo(pt.x, pt.y);
+        }
+        // anticlockwise=true when CW arc > π (i.e., CCW arc is shorter)
+        ctx.arc(cx, cy, r, exitA, entryA, cwDist > Math.PI);
+        ctx.fill();
       }
     }
 
-    if (drew) ctx.fill();
+    if (hasAllFront) ctx.fill();
   }
 };
 
@@ -224,7 +287,7 @@ export const HeroGlobe = memo(() => {
       ctx.beginPath();
       ctx.arc(cx, cy, r, 0, Math.PI * 2);
       ctx.clip();
-      ctx.fillStyle = isLight ? "rgba(216,207,189,0.9)" : "rgba(48,54,61,0.9)";
+      ctx.fillStyle = isLight ? "rgba(216,207,189,1)" : "rgba(48,54,61,1)";
       if (topoRef.current.length > 0) {
         drawLand(ctx, topoRef.current, rotRef.current, cx, cy, r);
       }
