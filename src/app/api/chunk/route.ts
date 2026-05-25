@@ -5,7 +5,7 @@ import type { NextRequest} from "next/server";
 import { NextResponse, after } from "next/server";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
-import { fetchStargazersPage, GitHubRateLimitError } from "@/lib/github";
+import { fetchStargazersPage, GitHubRateLimitError, GitHubTokenInvalidError } from "@/lib/github";
 import { geocodeBatch } from "@/lib/geocoder";
 import { checkDbHealth, DB_WARN_PCT } from "@/lib/db-health";
 import { bulkUpsertUsers, bulkUpsertStarEvents, bulkReadUsers, type UserWritePayload } from "@/lib/user-cache";
@@ -231,6 +231,9 @@ export const POST = async (req: NextRequest) => {
       } satisfies ChunkResponse);
     })(req);
   } catch (err: unknown) {
+    if (err instanceof GitHubTokenInvalidError) {
+      return NextResponse.json({ error: "github_token_invalid" }, { status: 401 });
+    }
     if (err instanceof GitHubRateLimitError) {
       return NextResponse.json({ error: "rate_limited", resetAt: err.resetAt }, { status: 429 });
     }

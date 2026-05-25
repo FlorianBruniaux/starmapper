@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState, startTransition } from "react
 import type { StargazerPoint, ChunkResponse } from "@/app/api/chunk/route";
 import type { RepoStats } from "@/app/api/stats/[owner]/[repo]/route";
 import { getStoredToken } from "@/components/token-modal";
+import { setStoredToken } from "@/lib/token";
 import { saveBookmark } from "@/lib/bookmarks";
 import { clearCache, saveCache } from "@/lib/repo-cache";
 import { compressToBase64 } from "@/lib/compress-client";
@@ -47,6 +48,12 @@ class RateLimitedError extends Error {
   }
 }
 
+class TokenInvalidError extends Error {
+  constructor() {
+    super("token_invalid");
+  }
+}
+
 export type ScanStatus = "idle" | "loading" | "waiting" | "done" | "cached" | "refreshing" | "error";
 
 type RepoInfoSlim = { language: string | null; forksCount?: number; watchersCount?: number } | null;
@@ -79,6 +86,7 @@ export const useScanController = ({
   const [retryTotal, setRetryTotal] = useState(0);
   const [waitReason, setWaitReason] = useState<"github" | "server">("server");
   const [error, setError] = useState("");
+  const [tokenFallback, setTokenFallback] = useState(false);
   const runningRef = useRef(false);
   const pendingScanRef = useRef(false);
   const pendingRefreshRef = useRef(false);
@@ -99,6 +107,10 @@ export const useScanController = ({
     if (res.status === 429) {
       const body = await res.json().catch(() => ({})) as { resetAt?: number };
       throw new RateLimitedError(body.resetAt ?? Date.now() + 60_000, body.resetAt ? "github" : "server");
+    }
+    if (res.status === 401) {
+      const body = await res.json().catch(() => ({})) as { error?: string };
+      if (body.error === "github_token_invalid") throw new TokenInvalidError();
     }
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return (await res.json()) as ChunkResponse;
@@ -131,6 +143,11 @@ export const useScanController = ({
               setRetryTotal(secsLeft);
               await new Promise((r) => setTimeout(r, secsLeft * 1000));
               setStatus("loading");
+            } else if (e instanceof TokenInvalidError) {
+              // PAT expired or revoked — clear it and retry with server token
+              setStoredToken("");
+              setHasToken(false);
+              setTokenFallback(true);
             } else {
               throw e;
             }
@@ -252,6 +269,10 @@ export const useScanController = ({
               setRetryTotal(secsLeft);
               await new Promise((r) => setTimeout(r, secsLeft * 1000));
               setStatus("refreshing");
+            } else if (e instanceof TokenInvalidError) {
+              setStoredToken("");
+              setHasToken(false);
+              setTokenFallback(true);
             } else {
               throw e;
             }
@@ -375,6 +396,7 @@ export const useScanController = ({
   return {
     status, setStatus,
     retryIn, retryTotal, waitReason, error,
+    tokenFallback,
     startScraping, startRefresh,
     handleStartScan, handleStartRefresh, handleTokenClose,
     runningRef,

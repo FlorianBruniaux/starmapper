@@ -41,6 +41,12 @@ vi.mock("@/lib/github", () => ({
       this.resetAt = resetAt;
     }
   },
+  GitHubTokenInvalidError: class GitHubTokenInvalidError extends Error {
+    constructor() {
+      super("token_invalid");
+      this.name = "GitHubTokenInvalidError";
+    }
+  },
 }));
 
 vi.mock("@/lib/geocoder", () => ({
@@ -513,6 +519,18 @@ describe("POST /api/chunk", () => {
       const body = await res.json();
       expect(body.error).toBe("rate_limited");
       expect(body.resetAt).toBe(resetAt);
+    });
+
+    it("returns 401 with github_token_invalid when the PAT is expired or revoked", async () => {
+      const { GitHubTokenInvalidError } = await import("@/lib/github");
+      mockFetchStargazers.mockRejectedValueOnce(new GitHubTokenInvalidError());
+
+      const req = makeRequest({ owner: "octocat", repo: "starmapper" }, { "x-gh-token": "ghp_expired" });
+      const res = await POST(req);
+
+      expect(res.status).toBe(401);
+      const body = await res.json();
+      expect(body.error).toBe("github_token_invalid");
     });
 
     it("returns 500 on unexpected errors", async () => {

@@ -11,6 +11,12 @@ export class GitHubRateLimitError extends Error {
   }
 }
 
+export class GitHubTokenInvalidError extends Error {
+  constructor() {
+    super("token_invalid");
+  }
+}
+
 export type StargazerRaw = {
   login: string;
   name: string | null;
@@ -93,6 +99,7 @@ export const fetchStargazersPage = async (
     }
     throw new GitHubRateLimitError(resetAt);
   }
+  if (res.status === 401) throw new GitHubTokenInvalidError();
   if (!res.ok) throw new Error(`GitHub API error: ${res.status}`);
   const json = await res.json();
   if (json.errors) throw new Error(json.errors[0].message);
