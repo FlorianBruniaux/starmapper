@@ -5,6 +5,30 @@ Versioning: Semantic Versioning (MAJOR.MINOR.PATCH)
 
 ---
 
+## [0.5.2] (2026-05-25)
+
+### Features
+
+- **Follower filter: 1k+ and 5k+ tiers.** Two new levels above the existing 500+ threshold: `vhigh` (1k+, red dot) and `elite` (5k+, purple dot). The 500+ tier becomes orange. Applied consistently across the filter dock, timelapse, and share modal URL state.
+- **Scan attribution.** When a user saves a scan with their own GitHub PAT, the scan is now attributed to their GitHub login. A new `indexedBy` column on `StargazerCache` stores the resolved login server-side. `useScanController` forwards the stored token as `x-gh-token`; the cache route resolves it via `GET /user` with a 3-second timeout and stores the result silently. `pnpm stats:views` gained a scan history panel showing the last 5 scans per repo with date, star count, and attribution.
+- **GitHub star nudge.** A small card in the bottom-right corner appears after 2 minutes of navigation, linking to the GitHub repo. Shows once per browser (dismissed to `localStorage`), does not interrupt any flow.
+
+### Performance
+
+- **Vercel Runtime Cache L0 on geocoder.** An in-memory cache layer added before the Neon GeoCache lookup. Repeated location strings within the same function invocation resolve instantly without hitting the DB.
+
+### Bug Fixes
+
+- **Trending map: ISR payload overflow.** `fetchTrendingMap` removed from `use cache` scope after producing a 24 MB ISR fallback that exceeded Vercel's 19 MB limit. Endpoint switched to `force-dynamic`, result set capped at 30k points.
+- **`cacheComponents` compatibility.** Dynamic Server Components (nonce injection, theme init script) wrapped in `<Suspense>` so the outer layout shell can prerender statically. Route segment `export const dynamic` configs removed from pages already covered by the global `cacheComponents: true` setting.
+
+### Internal
+
+- `src/middleware.ts` renamed to `src/proxy.ts` (Next.js 16 reserves `middleware.ts` for Vercel Routing Middleware; the StarMapper request proxy now lives under its correct name).
+- ESLint and TypeScript errors introduced during the `use cache` migration resolved.
+
+---
+
 ## [0.5.1] — 2026-05-24
 
 ### Performance
