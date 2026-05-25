@@ -15,8 +15,6 @@ const worldTopo = require("world-atlas/land-110m.json") as Topology<{
   land: GeometryCollection;
 }>;
 
-export const revalidate = 21600; // 6h CDN cache
-
 type Point = { lat: number; lng: number };
 
 // Map layout constants (shared between land path pre-computation and makeSvg)

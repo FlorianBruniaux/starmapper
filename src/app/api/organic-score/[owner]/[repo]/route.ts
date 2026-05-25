@@ -13,8 +13,6 @@ import { jsonError, logError } from "@/lib/api-helpers";
 import type { RepoOrganic } from "@/app/api/stats/[owner]/[repo]/route";
 import type { OrganicTier } from "@/lib/organic-score";
 
-export const revalidate = 300;
-
 export const GET = async (
   _req: NextRequest,
   { params }: { params: Promise<{ owner: string; repo: string }> },

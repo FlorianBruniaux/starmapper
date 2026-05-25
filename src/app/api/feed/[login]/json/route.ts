@@ -8,8 +8,6 @@ import { isValidLogin, normalizeLogin } from "@/lib/github-auth";
 import { buildJsonFeed } from "@/lib/feed-builders";
 import { jsonError, logError } from "@/lib/api-helpers";
 
-export const revalidate = 3600;
-
 export const GET = async (
   req: NextRequest,
   { params }: { params: Promise<{ login: string }> },
