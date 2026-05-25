@@ -129,6 +129,7 @@ export const GET = async (req: NextRequest) => {
     return NextResponse.json({ ok: true, to: digestTo });
   } catch (err) {
     logError("daily-digest", err);
-    return NextResponse.json({ error: "internal" }, { status: 500 });
+    const detail = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: "internal", detail }, { status: 500 });
   }
 };
