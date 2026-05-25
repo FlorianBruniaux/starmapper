@@ -1,4 +1,3 @@
-// src/components/map/share-modal.tsx
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 
@@ -31,7 +30,7 @@ type Props = {
   filterCompany: string;
   filterFollowers: number;
   filterDate: "all" | "30d" | "90d" | "1y";
-  followerMapFilter: "all" | "high" | "mid" | "low";
+  followerMapFilter: "all" | "elite" | "vhigh" | "high" | "mid" | "low";
   viewMode: "clusters" | "heatmap";
   liDraft: string;
   onLiDraftChange: (s: string) => void;

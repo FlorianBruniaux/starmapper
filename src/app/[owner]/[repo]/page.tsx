@@ -92,7 +92,7 @@ export default function MapPage({
   const [sharedView, setSharedView] = useState(false);
   const [allOpen, setAllOpen] = useState(false);
   const [filterFollowers, setFilterFollowers] = useState(0);
-  const [followerMapFilter, setFollowerMapFilter] = useState<"all" | "high" | "mid" | "low">("all");
+  const [followerMapFilter, setFollowerMapFilter] = useState<"all" | "elite" | "vhigh" | "high" | "mid" | "low">("all");
   const [clusterRadius, setClusterRadius] = useState<number>(CLUSTER_RADIUS.default);
   const [debouncedClusterRadius, setDebouncedClusterRadius] = useState<number>(CLUSTER_RADIUS.default);
   const [filterDate, setFilterDate] = useState<"all" | "30d" | "90d" | "1y">("all");

@@ -28,7 +28,7 @@ export type TimelapseState = {
 
 export const useTimelapse = (
   points: StargazerPoint[],
-  followerMapFilter: "all" | "high" | "mid" | "low",
+  followerMapFilter: "all" | "elite" | "vhigh" | "high" | "mid" | "low",
 ): TimelapseState => {
   const [timelapseActive, setTimelapseActive] = useState(false);
   const [timelapseIndex, setTimelapseIndex] = useState(0);
@@ -63,7 +63,9 @@ export const useTimelapse = (
   // Map points filtered by follower tier and, when active, timelapse cutoff date
   const filteredMapPoints = useMemo(() => {
     let result = points;
-    if (followerMapFilter === "high") result = result.filter((p) => p.followers >= 500);
+    if (followerMapFilter === "elite") result = result.filter((p) => p.followers >= 5000);
+    else if (followerMapFilter === "vhigh") result = result.filter((p) => p.followers >= 1000);
+    else if (followerMapFilter === "high") result = result.filter((p) => p.followers >= 500);
     else if (followerMapFilter === "mid") result = result.filter((p) => p.followers >= 100 && p.followers < 500);
     else if (followerMapFilter === "low") result = result.filter((p) => p.followers < 100);
 

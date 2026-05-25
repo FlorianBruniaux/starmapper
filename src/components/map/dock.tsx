@@ -7,7 +7,7 @@ import { Menu, X, TrendingUp, Users, Activity, Radio, Star, Clock, Layers, Share
 import { CLUSTER_RADIUS } from "@/components/map/stargazer-map";
 
 type ViewMode = "clusters" | "heatmap";
-type FollowerFilter = "all" | "high" | "mid" | "low";
+type FollowerFilter = "all" | "elite" | "vhigh" | "high" | "mid" | "low";
 
 type Props = {
   owner: string;
@@ -152,9 +152,11 @@ export const Dock = ({
 
             {([
               { key: "all", label: "All", dot: null },
-              { key: "high", label: "500+ followers", dot: "bg-accent-red" },
-              { key: "mid", label: "100–500", dot: "bg-accent-orange" },
-              { key: "low", label: "<100", dot: "bg-accent-blue" },
+              { key: "elite", label: "5k+ followers", dot: "bg-accent-purple" },
+              { key: "vhigh", label: "1k+ followers", dot: "bg-accent-red" },
+              { key: "high", label: "500+ followers", dot: "bg-accent-orange" },
+              { key: "mid", label: "100–500", dot: "bg-accent-blue" },
+              { key: "low", label: "<100", dot: "bg-muted" },
             ] as const).map(({ key, label, dot }) => {
               const active = followerMapFilter === key;
               return (
