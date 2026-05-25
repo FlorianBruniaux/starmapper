@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
+
 export default defineContentScript({
   // Single-segment paths for profile pages + two-segment for repo pages
   matches: ["https://github.com/*", "https://github.com/*/*"],
@@ -34,9 +37,13 @@ export default defineContentScript({
       return { kind: "other" };
     };
 
+    const pendingTimeouts: ReturnType<typeof setTimeout>[] = [];
+
     const removeAllButtons = (): void => {
       document.getElementById(REPO_BTN_ID)?.remove();
       document.getElementById(PROFILE_BTN_ID)?.remove();
+      pendingTimeouts.forEach(clearTimeout);
+      pendingTimeouts.length = 0;
     };
 
     const STAR_SVG = `<svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" style="flex-shrink:0">
@@ -84,11 +91,13 @@ export default defineContentScript({
       applyButtonBaseStyle(btn);
 
       btn.addEventListener("click", () => {
-        chrome.storage.local.get(STORAGE_KEY).then((result) => {
-          const repos: string[] = (result[STORAGE_KEY] as string[]) ?? [];
-          const updated = [slug, ...repos.filter((r) => r !== slug)].slice(0, MAX_RECENT);
-          chrome.storage.local.set({ [STORAGE_KEY]: updated });
-        });
+        chrome.storage.local.get(STORAGE_KEY)
+          .then((result) => {
+            const repos: string[] = (result[STORAGE_KEY] as string[]) ?? [];
+            const updated = [slug, ...repos.filter((r) => r !== slug)].slice(0, MAX_RECENT);
+            return chrome.storage.local.set({ [STORAGE_KEY]: updated });
+          })
+          .catch(() => { /* storage unavailable — non-critical */ });
       });
 
       return btn;
@@ -137,13 +146,14 @@ export default defineContentScript({
       });
       observer.observe(document.documentElement, { childList: true, subtree: true });
 
-      setTimeout(() => {
+      const tid = setTimeout(() => {
         observer.disconnect();
         if (!document.getElementById(REPO_BTN_ID)) {
           applyFloatingStyle(btn);
           document.body.appendChild(btn);
         }
       }, 2000);
+      pendingTimeouts.push(tid);
     };
 
     // ── Profile button ───────────────────────────────────────────────────────
@@ -197,13 +207,14 @@ export default defineContentScript({
       });
       observer.observe(document.documentElement, { childList: true, subtree: true });
 
-      setTimeout(() => {
+      const tid = setTimeout(() => {
         observer.disconnect();
         if (!document.getElementById(PROFILE_BTN_ID)) {
           applyFloatingStyle(btn);
           document.body.appendChild(btn);
         }
       }, 2000);
+      pendingTimeouts.push(tid);
     };
 
     // ── Main loop ────────────────────────────────────────────────────────────

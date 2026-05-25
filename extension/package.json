@@ -1,6 +1,6 @@
 {
   "name": "starmapper-extension",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "description": "Map the stargazers of any GitHub repo without leaving GitHub",
   "scripts": {
@@ -11,6 +11,7 @@
     "icons": "node scripts/generate-icons.mjs"
   },
   "devDependencies": {
+    "@types/chrome": "^0.1.42",
     "typescript": "^5.8.3",
     "wxt": "^0.20.0"
   }
