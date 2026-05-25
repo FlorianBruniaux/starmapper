@@ -17,8 +17,7 @@ Versioning: Semantic Versioning (MAJOR.MINOR.PATCH)
 
 ### Bug Fixes
 
-- **Globe: per-segment hemisphere clipping** — Arc segments crossing the visible hemisphere boundary were clipped at the arc level, causing entire multi-segment arcs to disappear. Clipping is now applied per segment, so partial arcs render correctly.
-- **Globe: ring centroid for visibility** — Country visibility was computed from the bounding box center. Countries spanning the antimeridian (e.g., Russia, Europe aggregates) had their centroid placed off-screen. Replaced with polygon ring centroid, matching what MapLibre uses internally.
+- **Globe: per-segment hemisphere clipping** — Large landmasses (US, Europe, Africa) were disappearing abruptly when their ring centroid rotated past the orthographic terminator. Root cause: the renderer decided visibility at the ring level, so a polygon with any point on the back hemisphere was dropped entirely. Replaced with per-segment clipping: for each edge crossing the terminator, the exact boundary point is interpolated in geographic coordinates (`t = zA/(zA-zB)`) and used as the clip point. Continents now fade out gradually at the globe edge. Fast paths retained for rings fully in front or fully behind.
 
 ### Internal
 
