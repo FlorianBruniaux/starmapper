@@ -65,6 +65,7 @@ export const AllStargazersModal = ({
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [fetching, setFetching] = useState(false);
   const [filterMapped, setFilterMapped] = useState<"all" | "mapped" | "unmapped">("all");
+  const [now] = useState(Date.now);
 
   const deferredAllStargazers = useDeferredValue(allStargazers);
 
@@ -83,7 +84,7 @@ export const AllStargazersModal = ({
     if (filterMapped === "unmapped") list = list.filter((u) => !u.mapped);
     if (filterDate !== "all") {
       const days = filterDate === "30d" ? 30 : filterDate === "90d" ? 90 : 365;
-      const cutoff = Date.now() - days * 86400000;
+      const cutoff = now - days * 86400000;
       list = list.filter((u) => u.starredAt && new Date(u.starredAt).getTime() >= cutoff);
     }
     if (filterCompany) list = list.filter((u) => u.company?.toLowerCase().includes(filterCompany.toLowerCase()));
@@ -102,7 +103,7 @@ export const AllStargazersModal = ({
       const lb = b.location ?? "";
       return la.localeCompare(lb) * allSort.dir;
     });
-  }, [deferredAllStargazers, deferredSearch, allSort, filterFollowers, filterMapped, filterDate, filterCompany, filterCountry, filterCity]);
+  }, [deferredAllStargazers, deferredSearch, allSort, filterFollowers, filterMapped, filterDate, filterCompany, filterCountry, filterCity, now]);
 
   const countryOptions = useMemo(() => {
     const counts = new Map<string, number>();

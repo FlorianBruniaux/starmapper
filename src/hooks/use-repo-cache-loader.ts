@@ -155,7 +155,7 @@ export const useRepoCacheLoader = ({
         if (data) setServerStats(data);
       } catch { /* fire-and-forget */ }
     })();
-  }, [owner, repo]);
+  }, [owner, repo, setServerStats]);
 
   return { cacheCheckDone, lastDbScan };
 };

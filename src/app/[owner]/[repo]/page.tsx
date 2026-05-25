@@ -131,6 +131,19 @@ export default function MapPage({
     return () => clearTimeout(t);
   }, [clusterRadius]);
 
+  const ghHeaders = useCallback((): Record<string, string> => {
+    const t = getStoredToken();
+    const h: Record<string, string> = { "Content-Type": "application/json" };
+    if (t) h["x-gh-token"] = t;
+    return h;
+  }, []);
+
+  const {
+    compareOwner, setCompareOwner,
+    compareRepo, setCompareRepo,
+    comparePoints, compareStatus, compareInfo,
+  } = useCompareScan(ghHeaders);
+
   useEffect(() => {
     const p = new URLSearchParams(window.location.search);
     const compare = p.get("compare");
@@ -157,14 +170,7 @@ export default function MapPage({
     if (mode === "heatmap") { setViewMode("heatmap"); hasSharedState = true; }
     if (proj === "mercator") { setMapProjection("mercator"); hasSharedState = true; }
     if (hasSharedState) setSharedView(true);
-  }, []);
-
-  const ghHeaders = useCallback((): Record<string, string> => {
-    const t = getStoredToken();
-    const h: Record<string, string> = { "Content-Type": "application/json" };
-    if (t) h["x-gh-token"] = t;
-    return h;
-  }, []);
+  }, [setCompareOwner, setCompareRepo]);
 
   const {
     status, setStatus,
@@ -224,12 +230,6 @@ export default function MapPage({
       .catch(() => {});
     return () => ac.abort();
   }, [owner, repo]);
-
-  const {
-    compareOwner, setCompareOwner,
-    compareRepo, setCompareRepo,
-    comparePoints, compareStatus, compareInfo,
-  } = useCompareScan(ghHeaders);
 
   // Sync viewMode to map imperatively (no re-render)
   useEffect(() => {
@@ -330,9 +330,10 @@ export default function MapPage({
   const newStarsCount = repoInfo && total > 0 ? Math.max(0, repoInfo.stars - total) : 0;
   const displayStats = stats ?? serverStats;
 
-  const starsThisMonth = useMemo(() => {
+  const [starsThisMonth, setStarsThisMonth] = useState(0);
+  useEffect(() => {
     const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
-    return points.filter((p) => p.starredAt && new Date(p.starredAt).getTime() >= cutoff).length;
+    setStarsThisMonth(points.filter((p) => p.starredAt && new Date(p.starredAt).getTime() >= cutoff).length);
   }, [points]);
 
   const buildFilteredUrl = useCallback((): string => {
