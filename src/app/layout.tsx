@@ -5,8 +5,14 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import { headers } from "next/headers";
+import dynamic from "next/dynamic";
 import "./globals.css";
 import { VitalsReporter } from "@/components/vitals-reporter";
+
+const StarNudge = dynamic(
+  () => import("@/components/star-nudge").then((m) => ({ default: m.StarNudge })),
+  { ssr: false },
+);
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-geist-sans", display: "swap" });
 
@@ -177,6 +183,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </a>
         {children}
         <VitalsReporter />
+        <StarNudge />
       </body>
     </html>
   );
