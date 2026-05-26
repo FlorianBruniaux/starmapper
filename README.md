@@ -15,25 +15,45 @@
 
 > **See who stars your repo, on a map.**
 
-Enter any GitHub repository URL and StarMapper fetches all stargazers, geocodes their locations, and renders an interactive world map with native clustering. Results load progressively as chunks arrive, so large repos (2000+ stars) work without timeout issues.
+Stars are a proxy for developer community. Where those developers live tells you where your project has traction, which markets are accelerating, and who your most influential users are.
+
+Enter a GitHub repo URL and StarMapper maps every stargazer, identifies the influential ones, and tells you whether those numbers are organic.
 
 ---
 
 ## What it does
 
-- **Interactive world map** — MapLibre GL clustering, heatmap mode, animated timelapse, multi-repo compare, deep-link sharing with active filters
-- **Stats panel** — countries, cities, companies, geo velocity (which countries are accelerating), power users (cross-repo stargazers), watch mode for launch days
-- **Sharing & embeds** — SVG shield badge, scatter map image for READMEs (`<picture>` dark/light), PNG share card, public GeoJSON API
-- **Developer profiles** — `/profile/[login]` with mini-map, nearby developers, top repos, news announcements with RSS/JSON feeds
-- **Explore & discover** — developer leaderboard, trending repos map, Language Atlas (dominant language per country), Chrome Extension
+- **Know your influential stargazers**: filter by follower count (500+, 1k+, 5k+), see who has reach in your audience, spot the developer with 20k followers who starred you last week
+- **See which countries are discovering you**: geographic velocity compares the last 30 days against the prior window, four statuses per country: rising, new, stable, declining
+- **Compare two audiences side by side**: overlay two repos on the same map, blue vs purple points, see instantly whether you share an audience or target different communities
+- **Watch stars arrive during a launch**: live mode polls GitHub every 60 seconds and shows "+N stars, India, Germany" with a pulsing indicator, built for Product Hunt and HN days
+- **Verify whether the count is real**: the Organic Score (0-100) flags suspicious patterns using fork/star ratios and zero-follower accounts, 85.7% accuracy on a calibrated corpus
 
 Full feature list: [docs/FEATURES.md](docs/FEATURES.md) · Architecture: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
 
 ---
 
+## Who is this for?
+
+**OSS maintainers** who want to understand their audience beyond a star count. Which countries are discovering your repo? Who are the most-followed developers in your stargazers list? Is the traffic from Japan a spike or a sustained trend?
+
+**Influential developers** whose activity is a signal others follow. StarMapper builds a visible profile for your curation: your own map, nearby developers, and a way for maintainers to find and contact you.
+
+**DevRel teams and content creators** who need geographic data for blog posts, slides, or reports. Language Atlas, Timelapse, and the GeoJSON API (`/api/geo/[owner]/[repo]`) provide the data directly.
+
+**Investors doing due diligence** who use star counts as a signal. The Organic Score adds a quality layer to a number that is otherwise trivially gameable.
+
+| Tool | What it answers |
+|---|---|
+| star-history | When did stars arrive? (growth curve over time) |
+| ossinsight | Who contributed code? (commit and PR analytics) |
+| **StarMapper** | **Where is the audience? Who are the influential ones? Which countries are accelerating? Are the stars real?** |
+
+---
+
 ## Organic Score
 
-StarMapper computes an **Organic Score** (0–100) estimating whether a star count reflects real usage or star farming. Three public signals:
+Stars are used as a proxy for quality by developers evaluating libraries, investors doing due diligence, and the press writing "trending in open source" articles. Services sell stars in bulk to inflate that number. StarMapper computes an **Organic Score** (0–100) using three public signals:
 
 | Signal | Weight | What it measures |
 |---|---|---|
@@ -42,6 +62,20 @@ StarMapper computes an **Organic Score** (0–100) estimating whether a star cou
 | Zero-follower stargazers | 55% | Star-farming services use newly-created accounts |
 
 Scores map to: **Healthy** (75–100), **Moderate** (50–74), **Suspicious** (0–49). Full methodology: [docs/organic-score.md](docs/organic-score.md)
+
+---
+
+## Add to your README
+
+**Badge** (shields-style, star count + countries, CDN-cached every 6 hours):
+
+```markdown
+[![StarMapper](https://starmapper.bruniaux.com/api/badge/owner/repo)](https://starmapper.bruniaux.com/owner/repo)
+```
+
+**Map image** (scatter map, dark/light themes via `<picture>`): the "Embed" button on the map page generates the full HTML snippet ready to paste.
+
+Replace `owner/repo` with your repository.
 
 ---
 

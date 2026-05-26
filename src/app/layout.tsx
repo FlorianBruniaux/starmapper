@@ -14,7 +14,7 @@ const geist = Geist({ subsets: ["latin"], variable: "--font-geist-sans", display
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://starmapper.bruniaux.com";
 
 const SITE_DESCRIPTION =
-  "See where your GitHub stargazers are located on an interactive world map. Country, city, and company breakdowns. The geographic layer on top of your GitHub star history. Free, no login.";
+  "Map your GitHub stargazers worldwide. See where they live, who the influential ones are, and whether the star count is organic. Free, no login.";
 
 export const metadata: Metadata = {
   title: "GitHub Stargazers Map | StarMapper",
@@ -75,7 +75,7 @@ const jsonLd = {
       operatingSystem: "Web",
       browserRequirements: "Requires JavaScript",
       datePublished: "2024-01-01",
-      softwareVersion: "0.4.1",
+      softwareVersion: "0.5.2",
       releaseNotes: `${APP_URL}/changelog`,
       offers: {
         "@type": "Offer",
@@ -84,11 +84,19 @@ const jsonLd = {
         description: "Free, no account required",
       },
       featureList: [
-        "Interactive world map of GitHub stargazers",
-        "Automatic geocoding of user locations",
-        "Country and city breakdown statistics",
-        "Top contributors by follower count",
-        "Embeddable badge with live star count",
+        "Interactive world map of GitHub stargazers with clustering",
+        "Organic Score: detect whether star counts are real or farmed",
+        "Developer profiles with personal map and nearby developers",
+        "Language Atlas: dominant programming language per country",
+        "Animated timelapse of star acquisition over time",
+        "Multi-repo comparison: overlay two audiences on the same map",
+        "Watch mode: live star tracking during launches",
+        "Geographic velocity: which countries are accelerating",
+        "Chrome Extension for GitHub repo and profile pages",
+        "RSS and JSON Feed for developer news announcements",
+        "Public GeoJSON API for geographic star data",
+        "Embeddable badge and map image for READMEs",
+        "Follower filter to find your most influential stargazers",
         "No login or GitHub account required",
         "Works with any public GitHub repository",
       ],

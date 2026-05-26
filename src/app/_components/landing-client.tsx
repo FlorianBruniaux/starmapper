@@ -149,13 +149,56 @@ export const LandingClient = ({ initialRepos, initialTotal }: Props) => {
 
               {/* Left: headline + form */}
               <div className="flex flex-col gap-6">
-                <h1 className="text-4xl lg:text-5xl font-bold text-foreground leading-tight">
-                  Where in the world does your repo shine?
-                </h1>
+                <div className="flex flex-col gap-4">
+                  <h1 className="text-4xl lg:text-5xl font-bold text-foreground leading-tight">
+                    Where in the world does your repo shine?
+                  </h1>
 
-                <p className="text-muted text-base leading-relaxed max-w-md">
-                  Paste a GitHub repo URL. Get an interactive world map of every stargazer in seconds.
-                </p>
+                  <p className="text-muted text-lg leading-relaxed max-w-lg">
+                    Know where your stargazers live, who the influential
+                    ones are, and whether the count is real.
+                  </p>
+                </div>
+
+                {/* Value props: 3 lines, each with concrete benefit */}
+                <ul className="flex flex-col gap-2.5" aria-label="Key features">
+                  <li className="flex items-start gap-2.5 text-sm">
+                    <span className="mt-0.5 size-4 shrink-0 rounded-full
+                      bg-accent-orange/15 flex items-center justify-center">
+                      <span className="size-1.5 rounded-full bg-accent-orange" />
+                    </span>
+                    <span className="text-muted">
+                      <span className="text-foreground font-medium">
+                        Organic Score
+                      </span>
+                      {" "}detects inflated star counts at a glance
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2.5 text-sm">
+                    <span className="mt-0.5 size-4 shrink-0 rounded-full
+                      bg-accent-blue/15 flex items-center justify-center">
+                      <span className="size-1.5 rounded-full bg-accent-blue" />
+                    </span>
+                    <span className="text-muted">
+                      <span className="text-foreground font-medium">
+                        Influential stargazers
+                      </span>
+                      {" "}surface the developers who actually matter
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2.5 text-sm">
+                    <span className="mt-0.5 size-4 shrink-0 rounded-full
+                      bg-accent-green/15 flex items-center justify-center">
+                      <span className="size-1.5 rounded-full bg-accent-green" />
+                    </span>
+                    <span className="text-muted">
+                      <span className="text-foreground font-medium">
+                        Geographic velocity
+                      </span>
+                      {" "}shows where adoption is spreading fastest
+                    </span>
+                  </li>
+                </ul>
 
                 <form onSubmit={handleSubmit} className="flex flex-col gap-3">
                   <div className="flex flex-col sm:flex-row gap-2.5">
@@ -237,28 +280,37 @@ export const LandingClient = ({ initialRepos, initialTotal }: Props) => {
                   )}
                 </form>
 
-                {/* Suggestion chips */}
-                {suggestions.length > 0 && (
-                  <div className="flex gap-2 flex-wrap">
-                    {suggestions.map((b) => {
-                      const key = `${b.owner}/${b.repo}`;
-                      const recent = isBookmark(b);
-                      return (
-                        <button
-                          key={key}
-                          onClick={() => handleSuggestion(b)}
-                          className={`text-xs rounded px-3 py-1.5 border transition-colors ${
-                            recent
-                              ? "bg-surface border-border text-muted hover:text-foreground hover:border-accent-blue"
-                              : "bg-transparent border-border-subtle text-muted-subtle hover:text-muted hover:border-border"
-                          }`}
-                        >
-                          {b.repo}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
+                {/* Suggestion chips + social proof */}
+                <div className="flex flex-col gap-3">
+                  {suggestions.length > 0 && (
+                    <div className="flex gap-2 flex-wrap">
+                      {suggestions.map((b) => {
+                        const key = `${b.owner}/${b.repo}`;
+                        const recent = isBookmark(b);
+                        return (
+                          <button
+                            key={key}
+                            onClick={() => handleSuggestion(b)}
+                            className={`text-xs rounded px-3 py-1.5 border
+                              transition-colors ${
+                              recent
+                                ? "bg-surface border-border text-muted hover:text-foreground hover:border-accent-blue"
+                                : "bg-transparent border-border-subtle text-muted-subtle hover:text-muted hover:border-border"
+                            }`}
+                          >
+                            {b.repo}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                  {initialTotal > 0 && (
+                    <p className="text-xs text-muted-subtle">
+                      {initialTotal.toLocaleString()}+ repos mapped by the
+                      community so far
+                    </p>
+                  )}
+                </div>
               </div>
 
               {/* Right: rotating globe */}
@@ -283,7 +335,7 @@ export const LandingClient = ({ initialRepos, initialTotal }: Props) => {
               {
                 href: "/explore",
                 label: "Explore",
-                desc: "Top stargazers by followers, company stats, cross-repo fans.",
+                desc: "Find your most influential stargazers. Filter by reach, see company distribution, spot cross-repo fans.",
                 colorClass: "text-accent-blue",
                 bgClass: "bg-accent-blue/8",
                 icon: <path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z" />,
@@ -291,7 +343,7 @@ export const LandingClient = ({ initialRepos, initialTotal }: Props) => {
               {
                 href: "/profile/FlorianBruniaux",
                 label: "Developer profiles",
-                desc: "Any GitHub username → map, nearby devs, top repos, contact.",
+                desc: "Any GitHub username becomes a profile: map, nearby developers, top repos, and a contact point for maintainers.",
                 colorClass: "text-accent-purple",
                 bgClass: "bg-accent-purple/8",
                 icon: <path d="M10.25 2.0a3.25 3.25 0 1 1-6.5 0 3.25 3.25 0 0 1 6.5 0ZM1 14a6 6 0 1 1 12 0H1Z" />,
@@ -299,7 +351,7 @@ export const LandingClient = ({ initialRepos, initialTotal }: Props) => {
               {
                 href: "/devs",
                 label: "Dev Maps",
-                desc: "Interactive maps of developers filtered by programming language.",
+                desc: "Where are the Rust developers, the Go community? Global developer density filtered by language.",
                 colorClass: "text-accent-green",
                 bgClass: "bg-accent-green/8",
                 icon: <path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0ZM1.5 8a6.5 6.5 0 0 1 .75-3.054l1.61 1.61A2.999 2.999 0 0 0 3 8c0 .126.007.251.02.374l-1.546.682A6.47 6.47 0 0 1 1.5 8Zm1.23 4.065.886-1.328A2.999 2.999 0 0 0 8 11c.63 0 1.215-.19 1.701-.516l.886 1.328A6.5 6.5 0 0 1 2.73 12.065ZM8 9.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Zm4.52 2.565.886 1.328A6.5 6.5 0 0 0 14.5 8c0-.318-.026-.63-.074-.935l-1.546.682c.013.123.02.248.02.374a3 3 0 0 1-.38 1.444Z" />,
@@ -307,7 +359,7 @@ export const LandingClient = ({ initialRepos, initialTotal }: Props) => {
               {
                 href: "/devs/atlas",
                 label: "Language Atlas",
-                desc: "Which language dominates each country? A choropleth of the dev world.",
+                desc: "Which language dominates each country, across 180+ countries in a single choropleth. Click any country for the full breakdown.",
                 colorClass: "text-accent-orange",
                 bgClass: "bg-accent-orange/8",
                 icon: <path d="M0 1.75A.75.75 0 0 1 .75 1h4.253c.712 0 1.373.333 1.75.88.377-.547 1.038-.88 1.75-.88h4.747a.75.75 0 0 1 .75.75v10.5a.75.75 0 0 1-.75.75h-4.747a1 1 0 0 0-1 1v.25a.75.75 0 0 1-1.5 0v-.25a1 1 0 0 0-1-1H.75a.75.75 0 0 1-.75-.75Zm7.5 10.931V3.455c-.32-.274-.717-.455-1.247-.455H1.5v9h3.247c.91 0 1.79.285 2.503.926Zm1.5-7.476v8.476a4.488 4.488 0 0 1 2.503-.926H14.5V3h-3.997c-.53 0-.927.18-1.247.455-.32.274-.506.62-.506 1.206Z" />,
@@ -315,7 +367,7 @@ export const LandingClient = ({ initialRepos, initialTotal }: Props) => {
               {
                 href: "/trending",
                 label: "Trending",
-                desc: "Repos gaining stars the fastest right now, with a map of their stargazers.",
+                desc: "Repos gaining stars the fastest right now, with the map of their audience.",
                 colorClass: "text-accent-red",
                 bgClass: "bg-accent-red/8",
                 icon: <path d="M1.5 2.5h2.5v11H1.5Zm4.5 4h2.5v7H6Zm4.5-2.5H13v9.5h-2.5Z" />,
