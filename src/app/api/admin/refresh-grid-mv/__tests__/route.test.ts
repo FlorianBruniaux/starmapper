@@ -19,32 +19,22 @@ vi.mock("@/lib/api-helpers", () => ({
   logError: vi.fn(),
 }));
 
-// Use clearAllMocks (not resetAllMocks) so Pool factory implementation survives between tests.
-// Pool is re-built per test via the factory; connect/query/release/end are forwarded to the
-// stable top-level mock functions so each test can control their behaviour independently.
-vi.mock("@neondatabase/serverless", () => ({
-  neonConfig: {},
-  Pool: vi.fn().mockImplementation(() => ({
-    connect: vi.fn().mockResolvedValue({
-      query: (...args: unknown[]) => mockQuery(...args),
-      release: mockRelease,
-    }),
-    end: mockPoolEnd,
-  })),
+// Pool now comes from pg (TCP mode). clearAllMocks resets the implementation, so
+// setupPoolMock() re-applies it in each beforeEach with a regular function (arrow
+// functions are not constructible with `new`).
+vi.mock("pg", () => ({
+  Pool: vi.fn(),
 }));
-
-vi.mock("ws", () => ({ default: class WebSocket {} }));
 
 vi.mock("@/lib/api-token", () => ({
   safeEqual: (...args: unknown[]) => mockSafeEqual(...args),
 }));
 
-import { Pool } from "@neondatabase/serverless";
+import { Pool as PgPool } from "pg";
 import { POST, GET } from "@/app/api/admin/refresh-grid-mv/route";
 
 const setupPoolMock = () => {
-  // Regular function required — arrow functions are not constructible (new arrowFn() throws).
-  vi.mocked(Pool).mockImplementation(function () {
+  vi.mocked(PgPool).mockImplementation(function () {
     return {
       connect: vi.fn().mockResolvedValue({
         query: (...args: unknown[]) => mockQuery(...args),
@@ -111,6 +101,7 @@ describe("GET /api/admin/refresh-grid-mv (cron)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.unstubAllEnvs();
+    setupPoolMock();
     mockQuery.mockResolvedValue({});
     mockRelease.mockReturnValue(undefined);
     mockPoolEnd.mockResolvedValue(undefined);

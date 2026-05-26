@@ -7,15 +7,15 @@
 // CONCURRENTLY = does not block reads during refresh.
 // Sequential loop — parallel refresh exhausts Neon's connection pool and causes cascading failures.
 //
-// Uses @neondatabase/serverless Pool (WebSocket) instead of Prisma HTTP adapter so that
-// SET statement_timeout = 0 persists for the full session. Neon HTTP adapter sends each
-// query as an independent request — SET has no effect on subsequent queries.
+// Uses pg Pool (TCP) instead of Prisma HTTP adapter so that SET statement_timeout = 0
+// persists for the full session. Neon HTTP adapter sends each query as an independent
+// request — SET has no effect on subsequent queries.
+// pg is already a project dependency (DATABASE_DRIVER=standard mode in db.ts).
 
 import type { NextRequest} from "next/server";
 import { NextResponse } from "next/server";
 import { revalidateTag } from "next/cache";
-import { Pool, neonConfig } from "@neondatabase/serverless";
-import ws from "ws";
+import { Pool } from "pg";
 import { requireAdminAuth, jsonError, logError } from "@/lib/api-helpers";
 import { safeEqual } from "@/lib/api-token";
 
@@ -59,9 +59,8 @@ const runRefresh = async () => {
   const start = Date.now();
   const results: { mv: string; durationMs: number; error?: string }[] = [];
 
-  // WebSocket mode: single persistent session so SET statement_timeout = 0 applies to all queries.
-  neonConfig.webSocketConstructor = ws;
-  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  // TCP mode (pg): persistent session so SET statement_timeout = 0 applies to all queries.
+  const pool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
   const client = await pool.connect();
 
   try {
