@@ -7,7 +7,9 @@ import { NextRequest } from "next/server";
 // ─── Mocks ───────────────────────────────────────────────────────────────────
 
 const mockRequireAdminAuth = vi.fn();
-const mockExecuteRaw = vi.fn();
+const mockQuery = vi.fn();
+const mockRelease = vi.fn();
+const mockPoolEnd = vi.fn();
 const mockSafeEqual = vi.fn();
 
 vi.mock("@/lib/api-helpers", () => ({
@@ -17,15 +19,41 @@ vi.mock("@/lib/api-helpers", () => ({
   logError: vi.fn(),
 }));
 
-vi.mock("@/lib/db", () => ({
-  prisma: { $executeRaw: (...args: unknown[]) => mockExecuteRaw(...args) },
+// Use clearAllMocks (not resetAllMocks) so Pool factory implementation survives between tests.
+// Pool is re-built per test via the factory; connect/query/release/end are forwarded to the
+// stable top-level mock functions so each test can control their behaviour independently.
+vi.mock("@neondatabase/serverless", () => ({
+  neonConfig: {},
+  Pool: vi.fn().mockImplementation(() => ({
+    connect: vi.fn().mockResolvedValue({
+      query: (...args: unknown[]) => mockQuery(...args),
+      release: mockRelease,
+    }),
+    end: mockPoolEnd,
+  })),
 }));
+
+vi.mock("ws", () => ({ default: class WebSocket {} }));
 
 vi.mock("@/lib/api-token", () => ({
   safeEqual: (...args: unknown[]) => mockSafeEqual(...args),
 }));
 
+import { Pool } from "@neondatabase/serverless";
 import { POST, GET } from "@/app/api/admin/refresh-grid-mv/route";
+
+const setupPoolMock = () => {
+  // Regular function required — arrow functions are not constructible (new arrowFn() throws).
+  vi.mocked(Pool).mockImplementation(function () {
+    return {
+      connect: vi.fn().mockResolvedValue({
+        query: (...args: unknown[]) => mockQuery(...args),
+        release: mockRelease,
+      }),
+      end: mockPoolEnd,
+    };
+  } as never);
+};
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -41,10 +69,13 @@ const makeGet = (authHeader?: string): NextRequest =>
 
 describe("POST /api/admin/refresh-grid-mv", () => {
   beforeEach(() => {
-    vi.resetAllMocks();
+    vi.clearAllMocks();
     vi.unstubAllEnvs();
+    setupPoolMock();
     mockRequireAdminAuth.mockReturnValue(null);
-    mockExecuteRaw.mockResolvedValue(1);
+    mockQuery.mockResolvedValue({});
+    mockRelease.mockReturnValue(undefined);
+    mockPoolEnd.mockResolvedValue(undefined);
     mockSafeEqual.mockReturnValue(true);
   });
 
@@ -64,8 +95,10 @@ describe("POST /api/admin/refresh-grid-mv", () => {
     expect(typeof json.durationMs).toBe("number");
   });
 
-  it("returns 200 with errors in results when DB throws during refresh", async () => {
-    mockExecuteRaw.mockRejectedValue(new Error("MV locked"));
+  it("returns 200 with partial errors when one MV query throws", async () => {
+    mockQuery
+      .mockResolvedValueOnce({}) // SET statement_timeout = 0
+      .mockRejectedValueOnce(new Error("MV locked")); // first REFRESH fails
     const res = await POST(makePost());
     expect(res.status).toBe(200);
     const json = await res.json();
@@ -76,9 +109,11 @@ describe("POST /api/admin/refresh-grid-mv", () => {
 
 describe("GET /api/admin/refresh-grid-mv (cron)", () => {
   beforeEach(() => {
-    vi.resetAllMocks();
+    vi.clearAllMocks();
     vi.unstubAllEnvs();
-    mockExecuteRaw.mockResolvedValue(1);
+    mockQuery.mockResolvedValue({});
+    mockRelease.mockReturnValue(undefined);
+    mockPoolEnd.mockResolvedValue(undefined);
     mockSafeEqual.mockReturnValue(false);
   });
 

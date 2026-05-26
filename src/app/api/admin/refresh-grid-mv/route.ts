@@ -6,14 +6,20 @@
 // Runs 1x/day via Vercel Cron (see vercel.json). Also callable manually via admin auth.
 // CONCURRENTLY = does not block reads during refresh.
 // Sequential loop — parallel refresh exhausts Neon's connection pool and causes cascading failures.
+//
+// Uses @neondatabase/serverless Pool (WebSocket) instead of Prisma HTTP adapter so that
+// SET statement_timeout = 0 persists for the full session. Neon HTTP adapter sends each
+// query as an independent request — SET has no effect on subsequent queries.
 
 import type { NextRequest} from "next/server";
 import { NextResponse } from "next/server";
 import { revalidateTag } from "next/cache";
-import { Prisma } from "@prisma/client";
-import { prisma } from "@/lib/db";
+import { Pool, neonConfig } from "@neondatabase/serverless";
+import ws from "ws";
 import { requireAdminAuth, jsonError, logError } from "@/lib/api-helpers";
 import { safeEqual } from "@/lib/api-token";
+
+export const maxDuration = 300;
 
 export const POST = async (req: NextRequest) => {
   const authError = requireAdminAuth(req);
@@ -39,32 +45,41 @@ export const GET = async (req: NextRequest) => {
   return runRefresh();
 };
 
-// Pre-built static SQL — no string interpolation, eliminates $executeRawUnsafe footgun.
-// MV names are identifiers (not values), so they cannot be parameterized; pre-building the
-// Prisma.sql tagged templates is the correct way to use $executeRaw safely here.
-const MV_REFRESH_SQL: ReadonlyArray<{ name: string; sql: Prisma.Sql }> = [
-  { name: "github_user_grid_mv", sql: Prisma.sql`REFRESH MATERIALIZED VIEW CONCURRENTLY github_user_grid_mv` },
-  { name: "country_stats_mv", sql: Prisma.sql`REFRESH MATERIALIZED VIEW CONCURRENTLY country_stats_mv` },
-  { name: "power_users_mv", sql: Prisma.sql`REFRESH MATERIALIZED VIEW CONCURRENTLY power_users_mv` },
-  { name: "company_stats_mv", sql: Prisma.sql`REFRESH MATERIALIZED VIEW CONCURRENTLY company_stats_mv` },
-  { name: "country_language_stats_mv", sql: Prisma.sql`REFRESH MATERIALIZED VIEW CONCURRENTLY country_language_stats_mv` },
-  { name: "user_repo_count_mv", sql: Prisma.sql`REFRESH MATERIALIZED VIEW CONCURRENTLY user_repo_count_mv` },
-  { name: "trending_repos_mv", sql: Prisma.sql`REFRESH MATERIALIZED VIEW CONCURRENTLY trending_repos_mv` },
-];
+const MV_NAMES = [
+  "github_user_grid_mv",
+  "country_stats_mv",
+  "power_users_mv",
+  "company_stats_mv",
+  "country_language_stats_mv",
+  "user_repo_count_mv",
+  "trending_repos_mv",
+] as const;
 
 const runRefresh = async () => {
   const start = Date.now();
   const results: { mv: string; durationMs: number; error?: string }[] = [];
 
-  for (const { name, sql } of MV_REFRESH_SQL) {
-    const t = Date.now();
-    try {
-      await prisma.$executeRaw(sql);
-      results.push({ mv: name, durationMs: Date.now() - t });
-    } catch (err) {
-      logError(`admin/refresh-grid-mv [${name}]`, err);
-      results.push({ mv: name, durationMs: Date.now() - t, error: String(err) });
+  // WebSocket mode: single persistent session so SET statement_timeout = 0 applies to all queries.
+  neonConfig.webSocketConstructor = ws;
+  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  const client = await pool.connect();
+
+  try {
+    await client.query("SET statement_timeout = 0");
+
+    for (const name of MV_NAMES) {
+      const t = Date.now();
+      try {
+        await client.query(`REFRESH MATERIALIZED VIEW CONCURRENTLY ${name}`);
+        results.push({ mv: name, durationMs: Date.now() - t });
+      } catch (err) {
+        logError(`admin/refresh-grid-mv [${name}]`, err);
+        results.push({ mv: name, durationMs: Date.now() - t, error: String(err) });
+      }
     }
+  } finally {
+    client.release();
+    await pool.end();
   }
 
   // Invalidate cached data for pages that read from these MVs

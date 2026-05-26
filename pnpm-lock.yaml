@@ -61,6 +61,9 @@ importers:
       world-atlas:
         specifier: ^2.0.2
         version: 2.0.2
+      ws:
+        specifier: ^8.21.0
+        version: 8.21.0
       zod:
         specifier: ^4.4.3
         version: 4.4.3
@@ -101,6 +104,9 @@ importers:
       '@types/topojson-specification':
         specifier: ^1.0.5
         version: 1.0.5
+      '@types/ws':
+        specifier: ^8.18.1
+        version: 8.18.1
       '@vitejs/plugin-react':
         specifier: ^6.0.2
         version: 6.0.2(vite@8.0.5(@emnapi/core@1.9.1)(@emnapi/runtime@1.9.2)(@types/node@25.8.0)(esbuild@0.28.0)(jiti@2.7.0)(tsx@4.22.1))
@@ -1271,6 +1277,9 @@ packages:
 
   '@types/topojson-specification@1.0.5':
     resolution: {integrity: sha512-C7KvcQh+C2nr6Y2Ub4YfgvWvWCgP2nOQMtfhlnwsRL4pYmmwzBS7HclGiS87eQfDOU/DLQpX6GEscviaz4yLIQ==}
+
+  '@types/ws@8.18.1':
+    resolution: {integrity: sha512-ThVF6DCVhA8kUGy+aazFQ4kXQ7E1Ty7A3ypFOe0IcJV8O/M511G99AW24irKrW56Wt44yG9+ij8FaqoBGkuBXg==}
 
   '@typescript-eslint/eslint-plugin@8.59.3':
     resolution: {integrity: sha512-PwFvSKsXGShKGW6n5bZOhGHEcCZXM8HofLK9fNsEwZXzFRjoY+XT1Vsf1zgyXdwTr0ZYz1/2tkZ0DBTT9jZjhw==}
@@ -3061,6 +3070,18 @@ packages:
   world-atlas@2.0.2:
     resolution: {integrity: sha512-IXfV0qwlKXpckz1FhwXVwKRjiIhOnWttOskm5CtxMsjgE/MXAYRHWJqgXOpM8IkcPBoXnyTU5lFHcYa5ChG0LQ==}
 
+  ws@8.21.0:
+    resolution: {integrity: sha512-Vsp28b7DRcimFQvrqu2Wek3z1iYxDCWqHYB8Qsnk/S4RfaCQzPGPyBNuVjJV3cd6UiKtUtp6sNM77gWvzcCH+g==}
+    engines: {node: '>=10.0.0'}
+    peerDependencies:
+      bufferutil: ^4.0.1
+      utf-8-validate: '>=5.0.2'
+    peerDependenciesMeta:
+      bufferutil:
+        optional: true
+      utf-8-validate:
+        optional: true
+
   xml-name-validator@5.0.0:
     resolution: {integrity: sha512-EvGK8EJ3DhaHfbRlETOWAS5pO9MZITeauHKJyb8wyajUfQUenkIg2MvLDTZ4T/TgIcm3HU0TFBgWWboAZ30UHg==}
     engines: {node: '>=18'}
@@ -4017,6 +4038,10 @@ snapshots:
   '@types/topojson-specification@1.0.5':
     dependencies:
       '@types/geojson': 7946.0.16
+
+  '@types/ws@8.18.1':
+    dependencies:
+      '@types/node': 25.8.0
 
   '@typescript-eslint/eslint-plugin@8.59.3(@typescript-eslint/parser@8.59.3(eslint@10.4.0(jiti@2.7.0))(typescript@5.9.3))(eslint@10.4.0(jiti@2.7.0))(typescript@5.9.3)':
     dependencies:
@@ -5984,6 +6009,8 @@ snapshots:
   word-wrap@1.2.5: {}
 
   world-atlas@2.0.2: {}
+
+  ws@8.21.0: {}
 
   xml-name-validator@5.0.0: {}
 
