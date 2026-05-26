@@ -111,7 +111,10 @@ const callGeoapify = async (
   try {
     const url = `${GEOAPIFY_GEOCODING}?text=${encodeURIComponent(location)}&limit=1&apiKey=${token}`;
     const res = await fetchWithTimeout(url, 3000);
-    if (!res.ok) return "error"; // 429, 401, 5xx — transient, don't cache
+    if (!res.ok) {
+      console.warn(`[geocoder] Geoapify HTTP ${res.status}`);
+      return "error"; // 429, 401, 5xx — transient, don't cache
+    }
     const data = await res.json();
     const feature = data.features?.[0];
     if (feature) {
@@ -133,7 +136,10 @@ const callJawg = async (
     const res = await fetchWithTimeout(url, 3000, {
       headers: { "x-api-key": apiKey },
     });
-    if (!res.ok) return "error"; // 429, 402, 5xx — transient, don't cache
+    if (!res.ok) {
+      console.warn(`[geocoder] Jawg HTTP ${res.status}`);
+      return "error"; // 429, 402, 5xx — transient, don't cache
+    }
     const data = await res.json();
     if (data.features?.length > 0) {
       const [lng, lat] = data.features[0].geometry.coordinates as [number, number];
@@ -297,6 +303,7 @@ const _resolveAndCache = async (
       provider.breaker?.recordError();
       continue; // fall through to next provider
     }
+    provider.breaker?.recordSuccess();
     await cacheWrite(key, result?.[0] ?? null, result?.[1] ?? null);
     return result;
   }

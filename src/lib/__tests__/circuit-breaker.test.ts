@@ -110,6 +110,46 @@ describe("CircuitBreaker", () => {
     });
   });
 
+  describe("recordSuccess()", () => {
+    it("resets error count after partial errors so circuit stays closed", () => {
+      const cb = new CircuitBreaker(3, 60_000, "Test");
+      cb.recordError();
+      cb.recordError();
+      cb.recordSuccess(); // reset — counter back to 0
+      cb.recordError();
+      cb.recordError();
+      expect(cb.isAvailable()).toBe(true); // still 2 < 3
+    });
+
+    it("is a no-op on a healthy circuit with no prior errors", () => {
+      const cb = new CircuitBreaker(3, 60_000, "Test");
+      cb.recordSuccess();
+      expect(cb.isAvailable()).toBe(true);
+    });
+
+    it("requires full threshold of new errors to re-open after reset", () => {
+      const cb = new CircuitBreaker(3, 60_000, "Test");
+      cb.recordError();
+      cb.recordError();
+      cb.recordSuccess(); // reset
+      cb.recordError();
+      cb.recordError();
+      cb.recordError(); // 3rd after reset — opens again
+      expect(cb.isAvailable()).toBe(false);
+    });
+
+    it("resets a half-open circuit (2 of 3 errors) to zero", () => {
+      const cb = new CircuitBreaker(3, 60_000, "Test");
+      cb.recordError();
+      cb.recordError(); // 2 errors, circuit still open-able
+      cb.recordSuccess();
+      // Now need 3 fresh errors to open
+      cb.recordError();
+      cb.recordError();
+      expect(cb.isAvailable()).toBe(true); // only 2 after reset
+    });
+  });
+
   describe("threshold and resetMs customisation", () => {
     it("respects a threshold of 1 (opens on first error)", () => {
       const cb = new CircuitBreaker(1, 60_000, "Strict");

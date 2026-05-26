@@ -25,6 +25,13 @@ export class CircuitBreaker {
     return false;
   }
 
+  recordSuccess(): void {
+    if (this.errorCount > 0) {
+      this.errorCount = 0;
+      this.openAt = 0;
+    }
+  }
+
   recordError(): void {
     this.errorCount++;
     if (this.errorCount >= this.threshold && this.openAt === 0) {

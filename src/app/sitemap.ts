@@ -5,6 +5,8 @@ import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/db";
 import { LANGUAGE_SLUG_MAP } from "@/lib/languages";
 
+export const revalidate = 3600;
+
 const BASE = process.env.NEXT_PUBLIC_APP_URL ?? "https://starmapper.bruniaux.com";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
