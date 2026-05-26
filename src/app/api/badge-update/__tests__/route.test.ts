@@ -196,6 +196,24 @@ describe("POST /api/badge-update", () => {
     });
   });
 
+  // ── Organic score ──────────────────────────────────────────────────────────
+
+  describe("organic score computation", () => {
+    it("calls $queryRaw when ORGANIC_SCORE_ENABLED=true and forks/watchers present", async () => {
+      vi.stubEnv("ORGANIC_SCORE_ENABLED", "true");
+      vi.resetModules();
+
+      const { POST: POST_organic } = await import("@/app/api/badge-update/route");
+
+      const res = await POST_organic(makeReq({ ...VALID_BODY, forksCount: 10, watchersCount: 5 }));
+      expect(res.status).toBe(200);
+      expect(mockQueryRaw).toHaveBeenCalledOnce();
+
+      vi.unstubAllEnvs();
+      vi.resetModules();
+    });
+  });
+
   // ── Error handling ─────────────────────────────────────────────────────────
 
   describe("error handling", () => {

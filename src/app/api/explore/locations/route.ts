@@ -50,14 +50,9 @@ export const GET = async (req: NextRequest) => {
         LIMIT 500
       `;
     } else {
-      rows = await prisma.$queryRaw<{ label: string; cnt: bigint }[]>`
-        SELECT "cityNormalized" AS label, COUNT(*) AS cnt
-        FROM github_user
-        WHERE "cityNormalized" IS NOT NULL
-        GROUP BY "cityNormalized"
-        ORDER BY cnt DESC
-        LIMIT 500
-      `;
+      // No country filter + city type would full-scan 4M+ rows (no city_stats_mv yet).
+      // Return empty rather than risk a statement_timeout.
+      rows = [];
     }
 
     const sorted: [string, number][] = rows.map((r) => [r.label, Number(r.cnt)]);

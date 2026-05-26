@@ -72,13 +72,29 @@ describe("GET /api/explore/locations", () => {
     });
   });
 
+  // ── city without country guard ────────────────────────────────────────────
+
+  describe("city without country guard", () => {
+    it("returns 200 with empty items when type=city and no country filter", async () => {
+      const res = await GET(makeReq({ type: "city" }));
+      expect(res.status).toBe(200);
+      const json = await res.json();
+      expect(json.items).toEqual([]);
+      expect(json.total).toBe(0);
+    });
+
+    it("does not call DB when type=city and no country filter", async () => {
+      await GET(makeReq({ type: "city" }));
+      expect(mockQueryRaw).not.toHaveBeenCalled();
+    });
+  });
+
   // ── Error handling ─────────────────────────────────────────────────────────
 
   describe("error handling", () => {
-    it("returns 500 when DB throws on fallback too", async () => {
-      // The country MV query catches and retries; if fallback also throws, propagates
+    it("returns 500 when DB throws on country type", async () => {
       mockQueryRaw.mockRejectedValue(new Error("both queries failed"));
-      const res = await GET(makeReq({ type: "city" }));
+      const res = await GET(makeReq({ type: "country" }));
       expect(res.status).toBe(500);
     });
   });

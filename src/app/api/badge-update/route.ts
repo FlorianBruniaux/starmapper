@@ -31,8 +31,26 @@ export const POST = defineRoute(badgeUpdateSchema, async (req: NextRequest, body
   try {
     const key = { owner: body.owner, repo: body.repo };
 
-    // Plausibility check: reject updates that deviate >50% from existing badge data.
-    const existing = await prisma.badgeCache.findUnique({ where: { owner_repo: key } });
+    // Plausibility check + organic query run in parallel — both are independent reads.
+    // On the rare plausibility failure path, the organic query is discarded harmlessly.
+    const shouldComputeOrganic = ORGANIC_ENABLED && forks !== null && watchers !== null && body.totalCount > 0;
+
+    const [existing, sample] = await Promise.all([
+      prisma.badgeCache.findUnique({ where: { owner_repo: key } }),
+      shouldComputeOrganic
+        ? prisma.$queryRaw<Array<{ zero_count: bigint; sample_size: bigint }>>`
+            SELECT
+              COUNT(*) FILTER (WHERE gu.followers = 0)::bigint AS zero_count,
+              COUNT(*)::bigint                                  AS sample_size
+            FROM github_user gu
+            INNER JOIN star_event se ON se.login = gu.login
+            WHERE se.owner = ${key.owner}
+              AND se.repo  = ${key.repo}
+              AND gu."dataVersion" >= 1
+          `.then((rows) => rows[0])
+        : Promise.resolve(undefined),
+    ]);
+
     if (existing && existing.totalCount > 0) {
       const ratio = body.totalCount / existing.totalCount;
       if (ratio > 1.5 || ratio < 0.5) {
@@ -45,17 +63,7 @@ export const POST = defineRoute(badgeUpdateSchema, async (req: NextRequest, body
     let organicTier: string | null = null;
     let organicComputedAt: Date | null = null;
 
-    if (ORGANIC_ENABLED && forks !== null && watchers !== null && body.totalCount > 0) {
-      const [sample] = await prisma.$queryRaw<Array<{ zero_count: bigint; sample_size: bigint }>>`
-        SELECT
-          COUNT(*) FILTER (WHERE gu.followers = 0)::bigint AS zero_count,
-          COUNT(*)::bigint                                  AS sample_size
-        FROM github_user gu
-        INNER JOIN star_event se ON se.login = gu.login
-        WHERE se.owner = ${key.owner}
-          AND se.repo  = ${key.repo}
-          AND gu."dataVersion" >= 1
-      `;
+    if (shouldComputeOrganic && forks !== null && watchers !== null) {
       const result = computeOrganicScore({
         starsCount: body.totalCount,
         forksCount: forks,
