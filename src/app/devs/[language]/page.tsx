@@ -17,9 +17,12 @@ const getLanguageDevCount = async (canonicalName: string): Promise<number> => {
   cacheTag("explore-mvs");
   cacheLife("hours");
   try {
-    return await prisma.gitHubUser.count({
-      where: { languages: { has: canonicalName } },
-    });
+    const [row] = await prisma.$queryRaw<[{ total: number }]>`
+      SELECT COALESCE(SUM(cnt), 0)::int AS total
+      FROM language_grid_mv
+      WHERE lang = ${canonicalName}
+    `;
+    return row?.total ?? 0;
   } catch {
     return 0;
   }

@@ -64,17 +64,25 @@ export const GET = async (
         `, language)
       ),
       prisma.$queryRawUnsafe<{ country: string; count: number }[]>(`
-        SELECT
-          "countryNormalized" AS country,
-          COUNT(*)::int       AS count
-        FROM github_user
-        WHERE languages @> ARRAY[$1]::text[]
-          AND "countryNormalized" IS NOT NULL
-          AND "countryNormalized" NOT LIKE 'http%'
-        GROUP BY 1
-        ORDER BY count DESC
+        SELECT country, cnt AS count
+        FROM country_language_stats_mv
+        WHERE lang = $1
+        ORDER BY cnt DESC
         LIMIT 10
-      `, language),
+      `, language).catch(() =>
+        prisma.$queryRawUnsafe<{ country: string; count: number }[]>(`
+          SELECT
+            "countryNormalized" AS country,
+            COUNT(*)::int       AS count
+          FROM github_user
+          WHERE languages @> ARRAY[$1]::text[]
+            AND "countryNormalized" IS NOT NULL
+            AND "countryNormalized" NOT LIKE 'http%'
+          GROUP BY 1
+          ORDER BY count DESC
+          LIMIT 10
+        `, language)
+      ),
     ]);
 
     const cells: LanguageMapCell[] = gridRows.map((r) => ({
