@@ -21,14 +21,15 @@ import { MapFloatingNav } from "@/components/map/map-floating-nav";
 import { CLUSTER_RADIUS } from "@/components/map/constants";
 import type { MapProjection } from "@/lib/theme";
 import type { RepoStats, RepoOrganic } from "@/app/api/stats/[owner]/[repo]/route";
-import { TokenModal, getStoredToken, getStoredUsername, setStoredUsername } from "@/components/token-modal";
+import { getStoredToken, getStoredUsername, setStoredUsername } from "@/lib/token";
 import { MapTourAutoStart } from "@/components/tour/tour-provider";
 import { isCountry, normalizeCountry } from "@/lib/countries";
 import { useTheme } from "@/hooks/useTheme";
 import { MAP_STYLE_DARK, MAP_STYLE_LIGHT } from "@/lib/theme";
 import { TopPanel } from "@/components/map/top-panel";
 import { Dock } from "@/components/map/dock";
-import { TimelapseBar } from "@/components/map/timelapse-bar";
+const TokenModal = dynamic(() => import("@/components/token-modal").then((m) => ({ default: m.TokenModal })), { ssr: false });
+const TimelapseBar = dynamic(() => import("@/components/map/timelapse-bar").then((m) => ({ default: m.TimelapseBar })), { ssr: false });
 import type { TimeEstimate } from "@/lib/format";
 import { useWatchMode } from "@/hooks/useWatchMode";
 import { useTimelapse } from "@/hooks/useTimelapse";
@@ -259,18 +260,23 @@ export default function MapPage({
     if (compareOwner && compareRepo) setViewMode("clusters");
   }, [compareOwner, compareRepo]);
 
+  // Deferred values: defer both points and unmapped so per-chunk re-renders
+  // don't block the main thread on full-array rebuilds (allStargazers + stats).
+  const deferredPointsForStats = useDeferredValue(points);
+  const deferredUnmapped = useDeferredValue(unmapped);
+
   const allStargazers = useMemo<AnyStargazer[]>(() => [
-    ...points.map((p) => ({
+    ...deferredPointsForStats.map((p) => ({
       login: p.login, name: p.name, bio: p.bio, company: p.company,
       followers: p.followers, location: p.location ?? null,
       avatarUrl: p.avatarUrl, mapped: true, starredAt: p.starredAt ?? null,
     })),
-    ...unmapped.map((u) => ({
+    ...deferredUnmapped.map((u) => ({
       login: u.login, name: u.name, bio: null, company: null,
       followers: u.followers, location: null,
       avatarUrl: null, mapped: false, starredAt: u.starredAt ?? null,
     })),
-  ], [points, unmapped]);
+  ], [deferredPointsForStats, deferredUnmapped]);
 
   const hasGrowthData = points.length > 0 || unmapped.length > 0;
 
@@ -320,9 +326,6 @@ export default function MapPage({
     findUser(username);
   }, [storedUsername, findUser]);
 
-  // Deferred points for stats — avoids blocking main thread on every chunk dispatch (INP: F3)
-  const deferredPointsForStats = useDeferredValue(points);
-
   const stats = useMemo(() => {
     if (!deferredPointsForStats.length) return null;
     const countryCount = new Map<string, number>();
@@ -359,14 +362,13 @@ export default function MapPage({
   }, [deferredPointsForStats, unmapped]);
 
   const pct = total > 0 ? Math.round((processed / total) * 100) : 0;
-  const estimate = total > 0 ? estimateScan(total) : null;
+  const estimate = useMemo(() => total > 0 ? estimateScan(total) : null, [total]);
   const newStarsCount = repoInfo && total > 0 ? Math.max(0, repoInfo.stars - total) : 0;
   const displayStats = stats ?? serverStats;
 
-  const [starsThisMonth, setStarsThisMonth] = useState(0);
-  useEffect(() => {
+  const starsThisMonth = useMemo(() => {
     const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
-    setStarsThisMonth(points.filter((p) => p.starredAt && new Date(p.starredAt).getTime() >= cutoff).length);
+    return points.filter((p) => p.starredAt && new Date(p.starredAt).getTime() >= cutoff).length;
   }, [points]);
 
   const buildFilteredUrl = useCallback((): string => {

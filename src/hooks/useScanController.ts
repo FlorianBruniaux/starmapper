@@ -159,8 +159,8 @@ export const useScanController = ({
         // Spread into new arrays — new references trigger memo() re-render and the throttled
         // setData effect in StargazerMap. Mutation in place would keep same reference →
         // memo() bails out → useEffect([points]) never fires → map frozen after chunk 1.
-        allPoints = [...allPoints, ...chunk!.points];
-        allUnmapped = [...allUnmapped, ...chunk!.unmapped];
+        allPoints = allPoints.concat(chunk!.points);
+        allUnmapped = allUnmapped.concat(chunk!.unmapped);
         startTransition(() => {
           dispatch({ type: "chunk", points: allPoints, unmapped: allUnmapped });
         });

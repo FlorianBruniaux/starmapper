@@ -833,6 +833,8 @@ const StargazerMapInner = ({ points, comparePoints, flyTarget, onFlyDone, onRead
     fetchAndPatchStyle(newUrl, projectionRef.current).then((patchedStyle) => {
       map.setStyle(patchedStyle, { diff: false });
     });
+
+    return () => { map.off("styledata", onStyleData); };
   }, [styleUrl, mapReady]);
 
   if (webglError) {

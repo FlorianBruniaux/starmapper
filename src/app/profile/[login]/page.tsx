@@ -5,9 +5,12 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
+import dynamic from "next/dynamic";
 import { Header } from "@/components/header";
 import { StargazerMapDynamic } from "@/components/map/stargazer-map-dynamic";
-import { TokenModal, getStoredToken } from "@/components/token-modal";
+import { getStoredToken } from "@/lib/token";
+const TokenModal = dynamic(() => import("@/components/token-modal").then((m) => ({ default: m.TokenModal })), { ssr: false });
 import { LANGUAGE_COLORS } from "@/lib/language-colors";
 import { MAP_STYLE_DARK, MAP_STYLE_LIGHT } from "@/lib/theme";
 import { useTheme } from "@/hooks/useTheme";
@@ -63,6 +66,7 @@ const RepoCard = ({ repo }: { repo: ProfileRepo }) => {
       href={`/${repo.owner}/${repo.repo}`}
       className="flex flex-col gap-1.5 p-3 rounded-lg border border-border bg-surface
                  hover:border-accent-blue/50 hover:bg-surface-alt transition-colors group"
+      style={{ contentVisibility: "auto", containIntrinsicSize: "auto 70px" }}
     >
       <div className="flex items-start justify-between gap-2">
         <span className="text-foreground text-sm font-medium group-hover:text-accent-blue
@@ -569,12 +573,13 @@ export default function ProfilePage({ params }: Props) {
           </div>
         ) : profile && (
           <div data-tour="profile-card" className="flex items-start gap-5 mb-8">
-            <img
+            <Image
               src={`https://github.com/${profile.login}.png`}
               alt={`${profile.login} avatar`}
               className="size-20 rounded-full border border-border shrink-0"
               width={80}
               height={80}
+              priority
             />
             <div className="flex flex-col gap-1.5 min-w-0 pt-0.5 flex-1">
               <div className="flex items-start justify-between gap-2">
@@ -1146,12 +1151,13 @@ export default function ProfilePage({ params }: Props) {
                                         bg-surface hover:border-accent-blue/50 hover:bg-surface-alt
                                         transition-colors group">
                           <Link href={`/profile/${u.login}`} className="relative shrink-0">
-                            <img
+                            <Image
                               src={`https://github.com/${u.login}.png`}
                               alt=""
                               className="size-9 rounded-full border border-border"
                               width={36}
                               height={36}
+                              loading="lazy"
                             />
                             {u.trackedRepos > 1 && (
                               <span className="absolute -bottom-0.5 -right-0.5 min-w-4 h-4 px-0.5
@@ -1262,6 +1268,7 @@ export default function ProfilePage({ params }: Props) {
                 href={`/${login}/${r.name}`}
                 onClick={() => setScanModalOpen(false)}
                 className="flex items-start gap-3 px-5 py-3.5 hover:bg-surface-alt transition-colors group"
+                style={{ contentVisibility: "auto", containIntrinsicSize: "auto 56px" }}
               >
                 <div className="flex flex-col gap-0.5 flex-1 min-w-0">
                   <div className="flex items-center gap-2">
