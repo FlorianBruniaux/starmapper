@@ -70,6 +70,26 @@ const FAQS = [
     q: "Not on the map?",
     a: "Add a location to your GitHub profile at github.com/settings/profile. The next scan of any repo you've starred will pick it up automatically.",
   },
+  {
+    q: "How does StarMapper detect fake or bought GitHub stars?",
+    a: "StarMapper computes an Organic Score (0 to 100) using three public signals: the fork/star ratio (40% weight, since real developers fork repos they use), the watcher/star ratio (5% weight, watchers are a deliberate opt-in since GitHub changed the default in 2020), and the percentage of zero-follower stargazers (55% weight, star-farming services use newly created accounts with no followers). The score was calibrated against 19 repositories, including cases documented in the Dagster investigation (2023) and the CMU/StarScout research paper (ICSE 2026), reaching 85.7% classification accuracy. Scores of 75 or above are Healthy, 50–74 are Moderate, and below 50 are Suspicious. The full methodology and calibration corpus are published on the site.",
+  },
+  {
+    q: "Can I compare two GitHub repos on the same map?",
+    a: "Yes. Use the Compare feature to overlay two repositories simultaneously. Each repo's stargazers appear as distinct colored points — blue vs. purple — so you can see at a glance whether the two audiences overlap geographically or target entirely different communities. Useful for understanding competitive positioning or measuring the reach of cross-promotion between projects.",
+  },
+  {
+    q: "How do I track new stars live during a product launch?",
+    a: "Enable Watch Mode after scanning a repo. StarMapper polls GitHub every 60 seconds and displays new stars as they arrive, with a count and breakdown by country — for example, '+3 stars from India, Germany'. The indicator pulses while active and auto-stops after 10 minutes without new activity. Watch Mode is designed for Product Hunt launches, Hacker News posts, and conference announcements where geographic traction matters in real time.",
+  },
+  {
+    q: "What is Geographic Velocity?",
+    a: "Geographic Velocity measures how fast each country is discovering your repository. StarMapper compares the star acquisition rate over the last 30 days against the preceding 31–90 day window for each country, then assigns one of four statuses: Rising (x1.5+ growth rate), New (first stars in this window), Stable (consistent rate), or Declining (growth slowing). This lets you spot markets accelerating before they show up in aggregate counts.",
+  },
+  {
+    q: "Who are the most influential developers among my stargazers?",
+    a: "The Notable Stargazers panel surfaces the highest-follower developers who have starred your repository, with filters at 500+, 1k+, and 5k+ followers. A developer with 20,000 followers who stars your repo can trigger hundreds of follow-on stars through their network. StarMapper shows their GitHub profile, follower count, company, and location so you can identify and engage them directly.",
+  },
 ];
 
 const jsonLd = {
@@ -98,7 +118,7 @@ export default function FaqPage() {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
       />
       <Header sticky showNav innerMaxWidth="max-w-5xl" />
 

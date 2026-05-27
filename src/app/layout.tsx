@@ -55,7 +55,7 @@ const jsonLd = {
       isPartOf: { "@id": `${APP_URL}/#website` },
       speakable: {
         "@type": "SpeakableSpecification",
-        cssSelector: ["h1", "h2"],
+        cssSelector: ["h1", "h2", "p.hero-description", ".speakable"],
       },
     },
     {
@@ -71,11 +71,12 @@ const jsonLd = {
       name: "StarMapper",
       url: APP_URL,
       description:
-        "StarMapper visualizes where your GitHub repository's stargazers are located on an interactive world map. It geocodes user locations, clusters them by geography, and shows country/city statistics. Free, no login required.",
+        "StarMapper transforms GitHub stars into geographic intelligence. Enter any public repository URL to see where your stargazers live, which countries are accelerating, who the most influential developers are, and whether the star count is organic. Free, no login, no account required.",
       applicationCategory: "DeveloperApplication",
       operatingSystem: "Web",
       browserRequirements: "Requires JavaScript",
       datePublished: "2024-01-01",
+      dateModified: "2026-05-27",
       softwareVersion: "0.5.2",
       releaseNotes: `${APP_URL}/changelog`,
       offers: {
@@ -116,6 +117,7 @@ const jsonLd = {
       sameAs: [
         "https://github.com/FlorianBruniaux/starmapper",
         "https://bruniaux.com",
+        "https://x.com/FlorianBruniaux",
       ],
       founder: {
         "@type": "Person",

@@ -16,11 +16,17 @@ export default function robots(): MetadataRoute.Robots {
       // AI crawlers — allow indexing for GEO visibility
       { userAgent: "GPTBot", allow: "/" },
       { userAgent: "ChatGPT-User", allow: "/" },
+      { userAgent: "OAI-SearchBot", allow: "/" },
       { userAgent: "PerplexityBot", allow: "/" },
       { userAgent: "ClaudeBot", allow: "/" },
-      { userAgent: "Anthropic-ai", allow: "/" },
-      { userAgent: "OAI-SearchBot", allow: "/" },
+      { userAgent: "anthropic-ai", allow: "/" },
       { userAgent: "cohere-ai", allow: "/" },
+      // Bing / Microsoft Copilot
+      { userAgent: "Bingbot", allow: "/" },
+      { userAgent: "msnbot", allow: "/" },
+      // Google AI
+      { userAgent: "Googlebot", allow: "/" },
+      { userAgent: "Google-Extended", allow: "/" },
     ],
     sitemap: `${BASE}/sitemap.xml`,
   };

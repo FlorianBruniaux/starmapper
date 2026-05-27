@@ -109,7 +109,7 @@ export default function VsStarHistoryPage() {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
       />
       <Header sticky showNav innerMaxWidth="max-w-7xl" />
 
