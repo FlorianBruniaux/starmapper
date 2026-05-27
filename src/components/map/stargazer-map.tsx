@@ -702,10 +702,12 @@ const StargazerMapInner = ({ points, comparePoints, flyTarget, onFlyDone, onRead
           const props = e.features?.[0]?.properties as Record<string, unknown> | undefined;
           if (!props) return;
           const coords = (e.features![0].geometry as GeoJSON.Point).coordinates as [number, number];
-          new maplibregl.Popup({ className: "starmapper-popup", maxWidth: "320px" })
+          const popup = new maplibregl.Popup({ className: "starmapper-popup", maxWidth: "320px" })
             .setLngLat(coords)
             .setDOMContent(makePopupElement(props))
             .addTo(map);
+          popup.getElement()?.querySelector<HTMLElement>(".maplibregl-popup-close-button")
+            ?.setAttribute("aria-label", "Close popup");
         });
 
         // Click on spider point → popup
@@ -713,10 +715,12 @@ const StargazerMapInner = ({ points, comparePoints, flyTarget, onFlyDone, onRead
           const props = e.features?.[0]?.properties as Record<string, unknown> | undefined;
           if (!props) return;
           const coords = (e.features![0].geometry as GeoJSON.Point).coordinates as [number, number];
-          new maplibregl.Popup({ className: "starmapper-popup", maxWidth: "320px" })
+          const popup = new maplibregl.Popup({ className: "starmapper-popup", maxWidth: "320px" })
             .setLngLat(coords)
             .setDOMContent(makePopupElement(props))
             .addTo(map);
+          popup.getElement()?.querySelector<HTMLElement>(".maplibregl-popup-close-button")
+            ?.setAttribute("aria-label", "Close popup");
           e.originalEvent.stopPropagation();
         });
 

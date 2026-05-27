@@ -558,7 +558,7 @@ export default function ProfilePage({ params }: Props) {
       <div className="flex flex-col lg:flex-row flex-1 lg:overflow-hidden">
 
         {/* Main: profile card + repos */}
-        <div
+        <main
           id="main"
           className={
             (hasMap || loadState === "loading")
@@ -709,6 +709,7 @@ export default function ProfilePage({ params }: Props) {
                               href={profile.linkedinUrl}
                               target="_blank"
                               rel="noopener noreferrer"
+                              role="menuitem"
                               onClick={() => setContactOpen(false)}
                               className="flex items-center gap-2.5 px-3 py-2 text-sm text-muted hover:text-foreground hover:bg-surface-alt transition-colors"
                             >
@@ -736,6 +737,7 @@ export default function ProfilePage({ params }: Props) {
                                     setEmailCopied(true);
                                     setTimeout(() => setEmailCopied(false), 1500);
                                   }}
+                                  role="menuitem"
                                   className="flex items-center gap-2.5 px-3 py-2 text-sm text-muted hover:text-foreground hover:bg-surface-alt transition-colors w-full text-left"
                                   title="Click to copy email"
                                 >
@@ -753,6 +755,7 @@ export default function ProfilePage({ params }: Props) {
                                   href={`https://twitter.com/${contactDetails.twitter}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
+                                  role="menuitem"
                                   onClick={() => setContactOpen(false)}
                                   className="flex items-center gap-2.5 px-3 py-2 text-sm text-muted hover:text-foreground hover:bg-surface-alt transition-colors"
                                 >
@@ -767,6 +770,7 @@ export default function ProfilePage({ params }: Props) {
                                   href={contactDetails.blog}
                                   target="_blank"
                                   rel="noopener noreferrer"
+                                  role="menuitem"
                                   onClick={() => setContactOpen(false)}
                                   className="flex items-center gap-2.5 px-3 py-2 text-sm text-muted hover:text-foreground hover:bg-surface-alt transition-colors"
                                 >
@@ -882,7 +886,7 @@ export default function ProfilePage({ params }: Props) {
 
         {/* ── Section skeletons — shown while profile is loading, in the correct position ── */}
         {loadState === "loading" && (
-          <div className="animate-pulse motion-reduce:animate-none space-y-8">
+          <div role="status" aria-live="polite" className="animate-pulse motion-reduce:animate-none space-y-8">
             <div>
               <div className="flex items-center gap-2 mb-3 pt-6 border-t border-border-subtle">
                 <div className="h-3.5 w-32 bg-surface-alt rounded" />
@@ -910,7 +914,7 @@ export default function ProfilePage({ params }: Props) {
 
         {/* ── GitHub repos skeleton — shown while fetch is in flight after profile loads ── */}
         {profile && !githubRepos && loadState === "loaded" && (
-          <div className={`mb-2 animate-pulse motion-reduce:animate-none ${profileTab !== "github" ? "hidden sm:block" : ""}`}>
+          <div role="status" aria-live="polite" className={`mb-2 animate-pulse motion-reduce:animate-none ${profileTab !== "github" ? "hidden sm:block" : ""}`}>
             <div className="flex items-center gap-2 mb-3">
               <div className="h-3.5 w-24 bg-surface-alt rounded" />
               <div className="h-3.5 w-6 bg-surface-alt rounded-full" />
@@ -984,7 +988,7 @@ export default function ProfilePage({ params }: Props) {
                       </svg>
                       {formatCount(r.stars)}
                     </span>
-                    <span className="ml-auto text-accent-blue text-xs opacity-0 group-hover:opacity-100 transition-opacity">
+                    <span className="ml-auto text-accent-blue text-xs opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
                       Map stargazers →
                     </span>
                   </div>
@@ -1130,7 +1134,7 @@ export default function ProfilePage({ params }: Props) {
           </section>
         )}
 
-        </div>{/* end left panel */}
+        </main>{/* end left panel */}
 
         {/* ── Developers nearby — bottom section on mobile, right column on lg ── */}
         <aside
@@ -1164,7 +1168,7 @@ export default function ProfilePage({ params }: Props) {
                         <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-border
                                         bg-surface hover:border-accent-blue/50 hover:bg-surface-alt
                                         transition-colors group">
-                          <Link href={`/profile/${u.login}`} className="relative shrink-0">
+                          <Link href={`/profile/${u.login}`} aria-label={`View ${u.login}'s profile`} className="relative shrink-0">
                             <Image
                               src={`https://github.com/${u.login}.png`}
                               alt=""
@@ -1206,7 +1210,7 @@ export default function ProfilePage({ params }: Props) {
                             className={`shrink-0 p-1.5 rounded-md transition-colors
                               ${isPinned
                                 ? "text-accent-blue bg-accent-blue/10 hover:bg-accent-blue/20"
-                                : "text-muted-subtle hover:text-foreground hover:bg-surface-alt opacity-0 group-hover:opacity-100"
+                                : "text-muted-subtle hover:text-foreground hover:bg-surface-alt opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
                               }`}
                           >
                             <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">

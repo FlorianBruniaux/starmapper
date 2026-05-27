@@ -90,7 +90,7 @@ export const NewsTimeline = ({ login, maxItems }: Props) => {
     <section className="space-y-3">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <h3 className="text-sm font-semibold text-foreground">News</h3>
+          <h2 className="text-sm font-semibold text-foreground">News</h2>
           <FollowButton login={login} />
           {stale && (
             <span className="text-xs text-muted bg-surface-alt px-2 py-0.5 rounded-full">
