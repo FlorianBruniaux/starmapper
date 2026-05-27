@@ -8,8 +8,8 @@
  * and print a ready-to-send email template.
  *
  * Usage:
- *   pnpm tsx scripts/generate-api-key.ts --email="user@example.com" --name="John Doe"
- *   pnpm tsx scripts/generate-api-key.ts --email="user@example.com" --name="Jane" --note="Research paper"
+ *   pnpm tsx scripts/ops/generate-api-key.ts --email="user@example.com" --name="John Doe"
+ *   pnpm tsx scripts/ops/generate-api-key.ts --email="user@example.com" --name="Jane" --note="Research paper"
  */
 
 import { readFileSync } from "fs";

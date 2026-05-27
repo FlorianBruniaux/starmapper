@@ -8,8 +8,8 @@
  * JS objects, template strings, IPv6, etc.
  *
  * Usage:
- *   pnpm exec tsx scripts/clean-geocache-garbage.ts --dry-run   # preview
- *   pnpm exec tsx scripts/clean-geocache-garbage.ts             # delete
+ *   pnpm exec tsx scripts/ops/clean-geocache-garbage.ts --dry-run   # preview
+ *   pnpm exec tsx scripts/ops/clean-geocache-garbage.ts             # delete
  */
 
 import { readFileSync } from "fs";

@@ -6,10 +6,10 @@
  *
  * Scans a list of GitHub repos and writes results to a local Postgres DB.
  * Designed to run against Docker Postgres locally (fast, free, no Neon costs).
- * After scanning, sync to Neon with: ./scripts/db-sync-to-neon.sh
+ * After scanning, sync to Neon with: ./scripts/db/db-sync-to-neon.sh
  *
  * Usage:
- *   pnpm batch:scan:local --input scripts/repos-all.json [--dry-run] [--force] [--skip-geocoding]
+ *   pnpm batch:scan:local --input scripts/data/repos-all.json [--dry-run] [--force] [--skip-geocoding]
  *
  * Flags:
  *   --input <path>       JSON array of "owner/repo" strings (required)
@@ -886,7 +886,7 @@ const main = async () => {
     console.log("  No data was written (dry-run).");
   } else {
     console.log("  Data written to local DB.");
-    console.log("  Next: sync to Neon with ./scripts/db-sync-to-neon.sh");
+    console.log("  Next: sync to Neon with ./scripts/db/db-sync-to-neon.sh");
   }
   console.log("");
 

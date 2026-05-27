@@ -6,10 +6,10 @@
 # NOT synced: geocache (already in prod with 51k entries — do not overwrite)
 #
 # Usage:
-#   NEON_URL="postgresql://..." ./scripts/db-sync-to-neon.sh
+#   NEON_URL="postgresql://..." ./scripts/db/db-sync-to-neon.sh
 #
 #   Or pass as argument:
-#   ./scripts/db-sync-to-neon.sh "postgresql://..."
+#   ./scripts/db/db-sync-to-neon.sh "postgresql://..."
 #
 # Requires: psql, pg_dump (brew install postgresql)
 

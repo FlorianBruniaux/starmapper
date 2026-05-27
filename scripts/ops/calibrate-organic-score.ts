@@ -5,9 +5,9 @@
 // optimal weights for the Organic Score algorithm.
 //
 // Usage:
-//   pnpm exec tsx scripts/calibrate-organic-score.ts
-//   pnpm exec tsx scripts/calibrate-organic-score.ts --no-db  # skip DB signal, API only
-//   pnpm exec tsx scripts/calibrate-organic-score.ts --md     # write docs/organic-score-calibration.md
+//   pnpm exec tsx scripts/ops/calibrate-organic-score.ts
+//   pnpm exec tsx scripts/ops/calibrate-organic-score.ts --no-db  # skip DB signal, API only
+//   pnpm exec tsx scripts/ops/calibrate-organic-score.ts --md     # write docs/organic-score-calibration.md
 
 import { readFileSync, writeFileSync } from "fs";
 import { join } from "path";

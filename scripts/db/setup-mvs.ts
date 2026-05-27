@@ -17,7 +17,7 @@ if (!url) {
   process.exit(1);
 }
 
-const sqlPath = join(import.meta.dirname, "..", "prisma", "sql", "views.sql");
+const sqlPath = join(import.meta.dirname, "..", "..", "prisma", "sql", "views.sql");
 const sql = readFileSync(sqlPath, "utf-8");
 
 const pool = new pg.Pool({ connectionString: url, max: 1 });

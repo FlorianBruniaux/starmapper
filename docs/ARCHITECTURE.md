@@ -173,7 +173,7 @@ isGeocodeableLocation() filter
 
 **Geocache**: A shared Neon table stores every resolved (or attempted) location. A null result for `lat`/`lng` is a valid cached entry, meaning "this location does not geocode" and preventing repeated API calls for the same garbage string. The cache key is `location.toLowerCase().trim()`.
 
-The geocache was pre-seeded with ~51,000 entries from GeoNames data (cities with population > 15,000 + country names), covering the most common GitHub profile location strings. As a result, >99% of locations resolve from cache with no external API call. The seeding script is at `scripts/seed-geocache-geonames.ts`.
+The geocache was pre-seeded with ~51,000 entries from GeoNames data (cities with population > 15,000 + country names), covering the most common GitHub profile location strings. As a result, >99% of locations resolve from cache with no external API call. The seeding script is at `scripts/backfill/seed-geocache-geonames.ts`.
 
 **Circuit breaker**: Implemented in-memory per Vercel instance. After 3 consecutive errors, a provider is skipped for 1 hour. This protects against API outages without hard-coding fallback logic per request.
 
@@ -284,7 +284,7 @@ model GitHubUser {
 }
 ```
 
-**Purpose**: Normalized per-user data. Written via `bulkUpsertUsers()` in `src/lib/user-cache.ts` during each chunk. Read by `/api/stats/[owner]/[repo]` and `/api/devs`. `languages[]` is populated by `scripts/backfill-languages.ts` (see Language Atlas).
+**Purpose**: Normalized per-user data. Written via `bulkUpsertUsers()` in `src/lib/user-cache.ts` during each chunk. Read by `/api/stats/[owner]/[repo]` and `/api/devs`. `languages[]` is populated by the backfill pipeline (see Language Atlas).
 
 ---
 
@@ -730,18 +730,28 @@ Atomic daily page view upsert (`page_view` table, `count += 1`). Fire-and-forget
 │       ├── schema-baseline.sql                # Full SQL snapshot (prisma migrate diff --from-empty)
 │       └── views.sql                          # DDL for all materialized views
 ├── scripts/
-│   ├── batch-scan.ts                          # Batch-scan repos from a JSON list → writes to badge_cache
-│   ├── backfill-languages.ts                  # Backfill languages[] on github_user (--from-cache or GitHub API)
-│   ├── backfill-linkedin.ts                   # Backfill linkedinUrl on github_user via GitHub social accounts
-│   ├── backfill-repo-languages.ts             # Backfill language field on badge_cache via GitHub REST
-│   ├── collect-user-repos.ts                  # Collect repos from top StarMapper devs → JSON list for batch-scan
-│   ├── collect-trending-repos.ts              # Collect trending repos via GitHub Search API → JSON list
-│   ├── seed-geocache-geonames.ts              # One-shot: pre-seed geocache from GeoNames data
-│   ├── clean-geocache-garbage.ts              # One-shot: delete garbage entries (#, $, code artifacts)
-│   ├── fix-bad-locations.ts                   # One-shot: null out bad lat/lng (IPs, timezone codes, paths)
-│   ├── fix-slash-locations.ts                 # One-shot: re-geocode slash-separated city strings
-│   ├── create-country-language-mv.sql         # SQL: create country_language_stats_mv (run once per DB instance)
-│   └── db-sync-to-neon.sh                     # Sync local Docker → Neon prod (github_user, star_event…)
+│   ├── db/                                    # Database management
+│   │   ├── db-setup.sh                        # One-shot DB bootstrap (schema push + health check)
+│   │   ├── db-local-init.sh                   # Start local Docker Postgres for batch scanning
+│   │   ├── db-sync-from-neon.sh               # Pull prod data → local Docker
+│   │   ├── db-sync-to-neon.sh                 # Push local batch results → Neon prod
+│   │   ├── setup-mvs.ts                       # Create the 7 materialized views + indexes (idempotent)
+│   │   └── sql/                               # Raw DDL for each MV and index (run once per DB instance)
+│   ├── backfill/                              # Data population scripts
+│   │   ├── backfill-api-key-hash.ts           # Backfill keyHash on existing api_key rows
+│   │   ├── backfill-organic-score.ts          # Recompute organic score + tier on badge_cache
+│   │   └── seed-geocache-geonames.ts          # Pre-seed geocache from GeoNames cities15000
+│   ├── ops/                                   # Ongoing operational tools
+│   │   ├── batch-scan.ts                      # Batch-scan repos from a JSON list → local DB
+│   │   ├── calibrate-organic-score.ts         # Grid-search organic score weights
+│   │   ├── clean-geocache-garbage.ts          # Remove garbage entries from geocache
+│   │   ├── collect-trending-repos.ts          # Collect trending repos via GitHub Search → JSON
+│   │   ├── collect-user-repos.ts              # Collect repos from top StarMapper devs → JSON
+│   │   ├── generate-api-key.ts                # Create a new GeoJSON API key in DB
+│   │   ├── maintenance.sh                     # Full pipeline: backfills → sync → MV refresh
+│   │   ├── probe-star-burst.ts                # Analyse star burst ratios (read-only, no writes)
+│   │   └── view-stats.ts                      # Print analytics overview (last 7 days)
+│   └── data/                                  # Gitignored runtime artifacts (JSON lists, seed files)
 ├── docs/                                      # Project documentation
 └── .env.local                                 # Local environment variables (not committed)
 ```

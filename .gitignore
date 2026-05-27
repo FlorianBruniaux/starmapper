@@ -60,13 +60,12 @@ claudedocs/
 # Local MCP config (user-specific paths)
 .mcp.json
 
-# Seed script output
-scripts/geocache-preview.json
-
 # Internal export scripts (sensitive, not for public repo)
 scripts/export-devs-500plus.ts
 
-# Batch scan input/output lists (runtime artifacts — all variants)
+# Batch scan data directory (runtime artifacts, gitignored entirely)
+scripts/data/
+scripts/geocache-preview.json
 scripts/repos-*.json
 
 # Internal notes and audit docs (not for public repo)

@@ -4,10 +4,10 @@
 # Full maintenance pipeline: local backfills → sync to Neon prod → refresh materialized views.
 #
 # Usage:
-#   bash scripts/maintenance.sh                    # full pipeline
-#   bash scripts/maintenance.sh --dry-run          # preview only, no writes, no sync
-#   bash scripts/maintenance.sh --skip-sync        # backfills only, skip sync + MV refresh
-#   bash scripts/maintenance.sh --skip-backfills   # sync + MV refresh only
+#   bash scripts/ops/maintenance.sh                    # full pipeline
+#   bash scripts/ops/maintenance.sh --dry-run          # preview only, no writes, no sync
+#   bash scripts/ops/maintenance.sh --skip-sync        # backfills only, skip sync + MV refresh
+#   bash scripts/ops/maintenance.sh --skip-backfills   # sync + MV refresh only
 #
 # Granular skip flags (combinable):
 #   --skip-repo-metrics    skip step 1/5 (stars, forks, watchers, release)
@@ -115,7 +115,7 @@ fi
 if ! $SKIP_SYNC && ! $DRY_RUN; then
 
   step "Sync local → Neon prod"
-  bash scripts/db-sync-to-neon.sh "$DATABASE_URL"
+  bash scripts/db/db-sync-to-neon.sh "$DATABASE_URL"
   ok "sync done"
 
   step "Refresh materialized views (prod)"

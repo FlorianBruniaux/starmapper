@@ -8,8 +8,8 @@
  * Reduces API calls to Jawg/Geoapify/Nominatim for common location strings.
  *
  * Usage:
- *   npx tsx scripts/seed-geocache-geonames.ts --dry-run   # preview only
- *   npx tsx scripts/seed-geocache-geonames.ts             # insert into DB
+ *   npx tsx scripts/backfill/seed-geocache-geonames.ts --dry-run   # preview only
+ *   npx tsx scripts/backfill/seed-geocache-geonames.ts             # insert into DB
  *
  * Sources:
  *   ~/Downloads/cities15000.txt   (GeoNames cities with pop > 15k)

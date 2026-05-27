@@ -5,8 +5,8 @@
 # Reads LOCAL_DATABASE_URL from .env.local (or falls back to default).
 #
 # Usage:
-#   ./scripts/db-local-init.sh                          # start DB + push schema
-#   NEON_URL="postgresql://..." ./scripts/db-local-init.sh --copy-geocache
+#   ./scripts/db/db-local-init.sh                          # start DB + push schema
+#   NEON_URL="postgresql://..." ./scripts/db/db-local-init.sh --copy-geocache
 #
 # Requires: docker or podman, psql (brew install postgresql), npx
 

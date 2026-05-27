@@ -15,7 +15,7 @@
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import pg from "pg";
-import { computeOrganicScore } from "../src/lib/organic-score";
+import { computeOrganicScore } from "../../src/lib/organic-score";
 
 const DRY_RUN = process.argv.includes("--dry-run");
 const FORCE   = process.argv.includes("--force");

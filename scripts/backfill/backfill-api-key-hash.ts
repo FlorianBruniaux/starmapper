@@ -4,7 +4,7 @@
 // One-shot: compute SHA-256(key) for every api_key row that has no keyHash yet.
 // Run once on each DB instance (local + Neon prod):
 //
-//   DATABASE_DRIVER=standard DATABASE_URL=<pg_url> npx tsx scripts/backfill-api-key-hash.ts
+//   DATABASE_DRIVER=standard DATABASE_URL=<pg_url> npx tsx scripts/backfill/backfill-api-key-hash.ts
 
 import { createHash } from "crypto";
 import { PrismaClient } from "@prisma/client";

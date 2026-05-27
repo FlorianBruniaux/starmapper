@@ -8,9 +8,9 @@
 // NO DB WRITES — pure analysis tool.
 //
 // Usage:
-//   tsx scripts/probe-star-burst.ts           — run with Neon (DATABASE_URL)
-//   tsx scripts/probe-star-burst.ts --local   — run with local Postgres (DATABASE_URL_LOCAL)
-//   tsx scripts/probe-star-burst.ts --no-db   — GitHub API only, no burst/ZF signals
+//   tsx scripts/ops/probe-star-burst.ts           -- run with Neon (DATABASE_URL)
+//   tsx scripts/ops/probe-star-burst.ts --local   -- run with local Postgres (DATABASE_URL_LOCAL)
+//   tsx scripts/ops/probe-star-burst.ts --no-db   -- GitHub API only, no burst/ZF signals
 
 import { readFileSync } from "fs";
 import { join } from "path";

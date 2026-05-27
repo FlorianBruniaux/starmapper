@@ -61,7 +61,7 @@ const { values: argv } = parseArgs({
     "per-user":     { type: "string",  default: "20" },
     "since-months": { type: "string",  default: "12" },
     "concurrency":  { type: "string",  default: "8" },
-    "output":       { type: "string",  default: "scripts/repos-from-users.json" },
+    "output":       { type: "string",  default: "scripts/data/repos-from-users.json" },
     // --token <n>  Force a single token by index (1 = GITHUB_TOKEN, 2 = GITHUB_TOKEN_2, …)
     // Useful to run multiple instances in parallel each with a dedicated token.
     "token":        { type: "string",  default: "0" },

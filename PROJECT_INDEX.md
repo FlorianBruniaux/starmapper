@@ -112,7 +112,7 @@ pnpm dev                           # starts on localhost:3000 (Turbopack)
 | `.github/workflows/ci.yml` | CI pipeline (typecheck → lint → test → Semgrep) |
 | `.github/workflows/audit.yml` | Dependency audit (weekly + PR gate) |
 | [`CLAUDE.md §IX Deployment`](CLAUDE.md) | Vercel constraints, DB sync commands |
-| `scripts/db-sync-to-neon.sh` | Local → prod sync script |
+| `scripts/db/db-sync-to-neon.sh` | Local → prod sync script |
 | `prisma/schema.prisma` | DB schema (no migration history — `db push` model) |
 | [`CLAUDE.md §IV Neon DDL Constraints`](CLAUDE.md) | `CONCURRENTLY` banned, statement timeout |
 

@@ -346,8 +346,8 @@ const main = async () => {
     console.log(`\n  Written: ${OUTPUT_FILE} (${output.length} repos)`);
     console.log(`\nNext steps:`);
     console.log(`  # Merge with collect-user-repos output then scan:`);
-    console.log(`  node -e "const a=require('./scripts/repos-from-users.json'),b=require('./scripts/repos-trending.json'),m=[...new Set([...a,...b])];require('fs').writeFileSync('scripts/repos-all.json',JSON.stringify(m,null,2));console.log('Merged:',m.length,'repos')"`);
-    console.log(`  pnpm batch:scan --input scripts/repos-all.json`);
+    console.log(`  node -e "const a=require('./scripts/data/repos-from-users.json'),b=require('./scripts/data/repos-trending.json'),m=[...new Set([...a,...b])];require('fs').writeFileSync('scripts/data/repos-all.json',JSON.stringify(m,null,2));console.log('Merged:',m.length,'repos')"`);
+    console.log(`  pnpm batch:scan --input scripts/data/repos-all.json`);
   }
 
   await prisma.$disconnect();
