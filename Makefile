@@ -67,6 +67,30 @@ backfill-organic-score:
 backfill-organic-score-prod:
 	$(ENV) DATABASE_DRIVER=standard tsx scripts/backfill/backfill-organic-score.ts'
 
+backfill-repo-metrics:
+	$(ENV) DATABASE_DRIVER=standard DATABASE_URL=$$DATABASE_URL_LOCAL tsx scripts/backfill/backfill-repo-metrics.ts'
+
+backfill-repo-metrics-prod:
+	$(ENV) DATABASE_DRIVER=standard NEXT_PUBLIC_ORGANIC_SCORE_ENABLED=true tsx scripts/backfill/backfill-repo-metrics.ts'
+
+backfill-repo-languages:
+	$(ENV) tsx scripts/backfill/backfill-repo-languages.ts'
+
+backfill-repo-languages-prod:
+	$(ENV) tsx scripts/backfill/backfill-repo-languages.ts --prod'
+
+backfill-user-top-repos:
+	$(ENV) DATABASE_URL=$$DATABASE_URL_LOCAL tsx scripts/backfill/backfill-user-top-repos.ts'
+
+backfill-user-top-repos-prod:
+	$(ENV) tsx scripts/backfill/backfill-user-top-repos.ts'
+
+backfill-languages:
+	$(ENV) tsx scripts/backfill/backfill-languages.ts'
+
+backfill-languages-prod:
+	$(ENV) tsx scripts/backfill/backfill-languages.ts --prod'
+
 # ─── Collect + batch scan ──────────────────────────────────────────────────────
 
 collect-repos:
@@ -108,6 +132,10 @@ maintenance-sync-only:
         mv-user-repo-count mv-user-repo-count-prod mv-trending mv-trending-prod \
         mv-language-grid mv-language-grid-prod refresh-all refresh-all-prod \
         backfill-organic-score backfill-organic-score-prod \
+        backfill-repo-metrics backfill-repo-metrics-prod \
+        backfill-repo-languages backfill-repo-languages-prod \
+        backfill-user-top-repos backfill-user-top-repos-prod \
+        backfill-languages backfill-languages-prod \
         maintenance maintenance-dry maintenance-sync-only \
         collect-repos collect-trending collect-merge batch-scan batch-scan-dry \
         calibrate-organic-score probe-star-burst
