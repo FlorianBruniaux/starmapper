@@ -636,14 +636,16 @@ const StargazerMapInner = ({ points, comparePoints, flyTarget, onFlyDone, onRead
       });
 
       const setViewMode = (mode: "clusters" | "heatmap") => {
+        const m = mapRef.current;
+        if (!m || !hasInitializedRef.current) return;
         const clusterLayers = ["clusters", "cluster-count", "unclustered-point"];
         if (mode === "heatmap") {
-          for (const id of clusterLayers) map.setLayoutProperty(id, "visibility", "none");
-          map.setLayoutProperty("heatmap", "visibility", "visible");
-          clearSpider(map, spiderActiveRef);
+          for (const id of clusterLayers) m.setLayoutProperty(id, "visibility", "none");
+          m.setLayoutProperty("heatmap", "visibility", "visible");
+          clearSpider(m, spiderActiveRef);
         } else {
-          for (const id of clusterLayers) map.setLayoutProperty(id, "visibility", "visible");
-          map.setLayoutProperty("heatmap", "visibility", "none");
+          for (const id of clusterLayers) m.setLayoutProperty(id, "visibility", "visible");
+          m.setLayoutProperty("heatmap", "visibility", "none");
         }
       };
 
