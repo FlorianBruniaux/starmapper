@@ -22,7 +22,19 @@ type Props = {
 const TOOLTIP_W = 288;
 const TOOLTIP_H_APPROX = 210;
 const GAP = 12;
+// Minimum safe margin from viewport edges
+const EDGE = 8;
 
+/**
+ * Picks the best placement based on available space around the target.
+ *
+ * Priority on mobile (vw < 640): below > above (never left/right — too narrow).
+ * Priority on desktop: honours the step's declared placement, but falls back
+ * to whichever vertical side has more room when the preferred side would clip.
+ *
+ * Returns absolute {top, left} coordinates for a position:fixed element,
+ * guaranteed to stay within the safe viewport area.
+ */
 const computePosition = (
   rect: Rect | null,
   placement: TourStep["placement"],
@@ -36,34 +48,92 @@ const computePosition = (
 
   const vw = window.innerWidth;
   const vh = window.innerHeight;
+  const isMobile = vw < 640;
+
+  // Available space in each direction (pixels between element edge and viewport edge)
+  const spaceBelow = vh - rect.bottom - GAP;
+  const spaceAbove = rect.top - GAP;
+  const spaceRight = vw - rect.right - GAP;
+  const spaceLeft = rect.left - GAP;
+
+  // Horizontal center of the target, used for top/bottom placement
+  const centerX = rect.left + rect.width / 2;
+  // Vertical center of the target, used for left/right placement
+  const centerY = rect.top + rect.height / 2;
+
+  // Whether the tooltip fits in each direction without clipping
+  const fitsBelow = spaceBelow >= TOOLTIP_H_APPROX;
+  const fitsAbove = spaceAbove >= TOOLTIP_H_APPROX;
+  const fitsRight = !isMobile && spaceRight >= TOOLTIP_W;
+  const fitsLeft = !isMobile && spaceLeft >= TOOLTIP_W;
+
+  // Resolve the effective side. On mobile we only allow top/bottom.
+  // If the preferred side doesn't fit, pick the side with more room.
+  let side: "top" | "bottom" | "left" | "right";
+
+  if (isMobile) {
+    // Mobile: prefer below, fall back to above regardless of declared placement
+    side = fitsBelow ? "bottom" : "top";
+  } else if (placement === "bottom") {
+    side = fitsBelow ? "bottom" : (spaceAbove >= spaceBelow ? "top" : "bottom");
+  } else if (placement === "top") {
+    side = fitsAbove ? "top" : (spaceBelow >= spaceAbove ? "bottom" : "top");
+  } else if (placement === "right") {
+    if (fitsRight) {
+      side = "right";
+    } else if (fitsLeft) {
+      side = "left";
+    } else {
+      // Fall back to whichever vertical side has more room
+      side = spaceBelow >= spaceAbove ? "bottom" : "top";
+    }
+  } else {
+    // placement === "left"
+    if (fitsLeft) {
+      side = "left";
+    } else if (fitsRight) {
+      side = "right";
+    } else {
+      side = spaceBelow >= spaceAbove ? "bottom" : "top";
+    }
+  }
 
   let top = 0;
   let left = 0;
 
-  if (placement === "bottom") {
+  if (side === "bottom") {
     top = rect.bottom + GAP;
-    left = rect.left + rect.width / 2 - TOOLTIP_W / 2;
-  } else if (placement === "top") {
+    left = centerX - TOOLTIP_W / 2;
+  } else if (side === "top") {
     top = rect.top - TOOLTIP_H_APPROX - GAP;
-    left = rect.left + rect.width / 2 - TOOLTIP_W / 2;
-  } else if (placement === "right") {
-    top = rect.top + rect.height / 2 - TOOLTIP_H_APPROX / 2;
+    left = centerX - TOOLTIP_W / 2;
+  } else if (side === "right") {
+    top = centerY - TOOLTIP_H_APPROX / 2;
     left = rect.right + GAP;
-    // Element near viewport bottom: anchor tooltip bottom to element bottom
-    if (top + TOOLTIP_H_APPROX > vh - 8) {
-      top = rect.bottom - TOOLTIP_H_APPROX;
-    }
   } else {
-    top = rect.top + rect.height / 2 - TOOLTIP_H_APPROX / 2;
+    // left
+    top = centerY - TOOLTIP_H_APPROX / 2;
     left = rect.left - TOOLTIP_W - GAP;
-    if (top + TOOLTIP_H_APPROX > vh - 8) {
-      top = rect.bottom - TOOLTIP_H_APPROX;
-    }
   }
 
-  // Clamp to viewport
-  left = Math.max(8, Math.min(left, vw - TOOLTIP_W - 8));
-  top = Math.max(8, Math.min(top, vh - TOOLTIP_H_APPROX - 8));
+  // Clamp to safe viewport bounds — ensures the tooltip never clips any edge
+  left = Math.max(EDGE, Math.min(left, vw - TOOLTIP_W - EDGE));
+  top = Math.max(EDGE, Math.min(top, vh - TOOLTIP_H_APPROX - EDGE));
+
+  // Final guard: if the clamped top position still overlaps the target element,
+  // force it to whichever side of the element leaves more room.
+  const overlapsTarget =
+    top < rect.bottom && top + TOOLTIP_H_APPROX > rect.top;
+
+  if (overlapsTarget) {
+    if (spaceBelow >= spaceAbove) {
+      top = Math.min(rect.bottom + GAP, vh - TOOLTIP_H_APPROX - EDGE);
+    } else {
+      top = Math.max(rect.top - TOOLTIP_H_APPROX - GAP, EDGE);
+    }
+    // Re-clamp after adjustment
+    top = Math.max(EDGE, Math.min(top, vh - TOOLTIP_H_APPROX - EDGE));
+  }
 
   return { top, left };
 };

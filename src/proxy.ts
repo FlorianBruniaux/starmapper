@@ -77,7 +77,10 @@ const isDev = process.env.NODE_ENV === "development";
 const buildCsp = (nonce: string): string =>
   [
     "default-src 'self'",
-    `script-src 'self' 'nonce-${nonce}'${isDev ? " 'unsafe-eval'" : ""}`,
+    // Hash covers Next.js's static perf-measurement script injected before the nonce is known:
+    // requestAnimationFrame(function(){$RT=performance.now()});
+    // Verify hash after Next.js major version bumps.
+    `script-src 'self' 'nonce-${nonce}' 'sha256-7mu4H06fwDCjmnxxr/xNHyuQC6pLTHr4M2E4jXw5WZs='${isDev ? " 'unsafe-eval'" : ""}`,
     "worker-src blob:",
     // <style> elements: only nonce-tagged blocks and self-hosted sheets (no unsafe-inline injection)
     `style-src-elem 'self' 'nonce-${nonce}'`,
