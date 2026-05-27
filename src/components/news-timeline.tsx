@@ -109,11 +109,7 @@ export const NewsTimeline = ({ login, maxItems }: Props) => {
       </div>
 
       {items === null && (
-        <div className="space-y-2">
-          {[1, 2].map((i) => (
-            <div key={i} className="h-12 rounded-lg bg-surface animate-pulse" />
-          ))}
-        </div>
+        <div className="h-10 rounded-lg bg-surface animate-pulse" />
       )}
 
       {items !== null && items.length === 0 && isOwner && (
