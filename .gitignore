@@ -63,6 +63,9 @@ claudedocs/
 # Seed script output
 scripts/geocache-preview.json
 
+# Internal export scripts (sensitive, not for public repo)
+scripts/export-devs-500plus.ts
+
 # Batch scan input/output lists (runtime artifacts — all variants)
 scripts/repos-*.json
 
