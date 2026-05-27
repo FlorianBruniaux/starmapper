@@ -18,6 +18,7 @@ import pg from "pg";
 import { computeOrganicScore } from "../src/lib/organic-score";
 
 const DRY_RUN = process.argv.includes("--dry-run");
+const FORCE   = process.argv.includes("--force");
 const limitArg = process.argv.indexOf("--limit");
 const LIMIT = limitArg !== -1 ? parseInt(process.argv[limitArg + 1] ?? "999999", 10) : 999999;
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
@@ -81,7 +82,7 @@ const fetchGitHubData = async (owner: string, repo: string): Promise<RepoGitHubD
 
 const main = async () => {
   const rows = await prisma.badgeCache.findMany({
-    where: { organicTier: null, totalCount: { gt: 0 } },
+    where: FORCE ? { totalCount: { gt: 0 } } : { organicTier: null, totalCount: { gt: 0 } },
     select: { owner: true, repo: true, totalCount: true, forksCount: true, watchersCount: true },
     orderBy: { updatedAt: "desc" },
     take: LIMIT,

@@ -101,7 +101,24 @@ sync_table "github_user" 'ON CONFLICT (login) DO UPDATE SET
   "languagesFetchedAt"=COALESCE(EXCLUDED."languagesFetchedAt", github_user."languagesFetchedAt"),
   "fetchedAt"=EXCLUDED."fetchedAt"'
 
-sync_table "badge_cache"     'ON CONFLICT (owner, repo) DO UPDATE SET "mappedCount"=EXCLUDED."mappedCount", "countryCount"=EXCLUDED."countryCount", "totalCount"=EXCLUDED."totalCount", "updatedAt"=EXCLUDED."updatedAt" WHERE EXCLUDED."updatedAt" > badge_cache."updatedAt"' &
+sync_table "badge_cache"     'ON CONFLICT (owner, repo) DO UPDATE SET
+  "mappedCount"=EXCLUDED."mappedCount",
+  "countryCount"=EXCLUDED."countryCount",
+  "totalCount"=EXCLUDED."totalCount",
+  language=COALESCE(EXCLUDED.language, badge_cache.language),
+  "forksCount"=COALESCE(EXCLUDED."forksCount", badge_cache."forksCount"),
+  "watchersCount"=COALESCE(EXCLUDED."watchersCount", badge_cache."watchersCount"),
+  "organicScore"=COALESCE(EXCLUDED."organicScore", badge_cache."organicScore"),
+  "organicTier"=COALESCE(EXCLUDED."organicTier", badge_cache."organicTier"),
+  "organicComputedAt"=COALESCE(EXCLUDED."organicComputedAt", badge_cache."organicComputedAt"),
+  "openIssuesCount"=COALESCE(EXCLUDED."openIssuesCount", badge_cache."openIssuesCount"),
+  "openPRsCount"=COALESCE(EXCLUDED."openPRsCount", badge_cache."openPRsCount"),
+  "latestReleaseTag"=COALESCE(EXCLUDED."latestReleaseTag", badge_cache."latestReleaseTag"),
+  "latestReleaseUrl"=COALESCE(EXCLUDED."latestReleaseUrl", badge_cache."latestReleaseUrl"),
+  "latestReleaseAt"=COALESCE(EXCLUDED."latestReleaseAt", badge_cache."latestReleaseAt"),
+  "releasesCount"=COALESCE(EXCLUDED."releasesCount", badge_cache."releasesCount"),
+  "updatedAt"=EXCLUDED."updatedAt"
+  WHERE EXCLUDED."updatedAt" > badge_cache."updatedAt"' &
 sync_table "stargazer_cache" 'ON CONFLICT (owner, repo) DO UPDATE SET points=EXCLUDED.points, unmapped=EXCLUDED.unmapped, "totalCount"=EXCLUDED."totalCount", "scannedAt"=EXCLUDED."scannedAt" WHERE EXCLUDED."scannedAt" > stargazer_cache."scannedAt"' &
 wait
 
