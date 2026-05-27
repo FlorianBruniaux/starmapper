@@ -517,30 +517,32 @@ export default function ProfilePage({ params }: Props) {
         }
       />
 
-      {/* ── Map — full width at top (or placeholder while loading) ──────── */}
-      {(hasMap || loadState === "loading") && (
-        <div data-tour="profile-map" className="h-64 sm:h-80 shrink-0 border-b border-border-subtle relative">
-          {hasMap ? (
-            <StargazerMapDynamic
-              points={allMapPoints}
-              flyTarget={mapFlyTarget}
-              onFlyDone={() => setMapFlyTarget(null)}
-              showProjectionToggle
-              styleUrl={mapStyleUrl}
-              initialCenter={
-                profile?.lng != null && profile?.lat != null
-                  ? [profile.lng, profile.lat]
-                  : undefined
-              }
-            />
-          ) : (
-            <div className="w-full h-full bg-surface-alt animate-pulse motion-reduce:animate-none" />
-          )}
-        </div>
-      )}
+      {/* ── Map — always rendered to prevent layout shift (CLS) ────────── */}
+      <div data-tour="profile-map" className="h-64 sm:h-80 shrink-0 border-b border-border-subtle relative">
+        {hasMap ? (
+          <StargazerMapDynamic
+            points={allMapPoints}
+            flyTarget={mapFlyTarget}
+            onFlyDone={() => setMapFlyTarget(null)}
+            showProjectionToggle
+            styleUrl={mapStyleUrl}
+            initialCenter={
+              profile?.lng != null && profile?.lat != null
+                ? [profile.lng, profile.lat]
+                : undefined
+            }
+          />
+        ) : loadState === "loaded" ? (
+          <div className="w-full h-full flex items-center justify-center bg-surface">
+            <p className="text-xs text-muted">No location set</p>
+          </div>
+        ) : (
+          <div className="w-full h-full bg-surface-alt animate-pulse motion-reduce:animate-none" />
+        )}
+      </div>
 
       {/* ── Content: stacked on mobile, two columns on lg ───────────────── */}
-      <div className={(hasMap || loadState === "loading") ? "flex flex-col lg:flex-row flex-1 lg:overflow-hidden" : "flex flex-1"}>
+      <div className="flex flex-col lg:flex-row flex-1 lg:overflow-hidden">
 
         {/* Main: profile card + repos */}
         <div
@@ -1112,24 +1114,25 @@ export default function ProfilePage({ params }: Props) {
         </div>{/* end left panel */}
 
         {/* ── Developers nearby — bottom section on mobile, right column on lg ── */}
-        {(hasMap || loadState === "loading") && (
-          <aside
-            data-tour="profile-nearby"
-            aria-label="Developers nearby"
-            className="w-full lg:flex-1 lg:overflow-y-auto border-t border-border-subtle lg:border-t-0 px-4 sm:px-5 py-6 pb-12 bg-surface/30 lg:bg-transparent"
-          >
-            {nearby === null ? (
-              /* loading skeleton */
-              <div className="animate-pulse motion-reduce:animate-none space-y-2">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="h-3.5 w-36 bg-surface-alt rounded" />
-                  <div className="h-3.5 w-6 bg-surface-alt rounded-full" />
-                </div>
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="h-14 rounded-lg bg-surface border border-border" />
-                ))}
+        <aside
+          data-tour="profile-nearby"
+          aria-label="Developers nearby"
+          className="w-full lg:flex-1 lg:overflow-y-auto border-t border-border-subtle lg:border-t-0 px-4 sm:px-5 py-6 pb-12 bg-surface/30 lg:bg-transparent"
+        >
+          {loadState === "loaded" && !hasMap ? (
+            <p className="text-muted text-sm pt-2">Set a location on GitHub to find nearby developers.</p>
+          ) : nearby === null ? (
+            /* loading skeleton */
+            <div className="animate-pulse motion-reduce:animate-none space-y-2">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="h-3.5 w-36 bg-surface-alt rounded" />
+                <div className="h-3.5 w-6 bg-surface-alt rounded-full" />
               </div>
-            ) : nearby.users.length === 0 ? (
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="h-14 rounded-lg bg-surface border border-border" />
+              ))}
+            </div>
+          ) : nearby.users.length === 0 ? (
               <p className="text-muted text-sm pt-2">No developers found nearby.</p>
             ) : (
               <section aria-labelledby="nearby-heading">
@@ -1197,8 +1200,7 @@ export default function ProfilePage({ params }: Props) {
                 </ul>
               </section>
             )}
-          </aside>
-        )}
+        </aside>
       </div>{/* end flex container */}
 
       {tokenOpen && <TokenModal onClose={handleTokenClose} />}
