@@ -19,7 +19,7 @@ export default async function TrendingPage() {
 
   if (reposResult.status === "fulfilled") {
     if (reposResult.value === null) {
-      reposError = "Trending data is being initialized — check back soon.";
+      reposError = "Trending data is being initialized. Check back soon.";
     } else {
       repos = reposResult.value.repos;
       total = reposResult.value.meta.total;

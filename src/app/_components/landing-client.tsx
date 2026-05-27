@@ -231,7 +231,7 @@ export const LandingClient = ({ initialRepos, initialTotal }: Props) => {
                   <p className="text-xs text-muted-subtle" aria-live="polite" aria-atomic="true">
                     {parseUsername(input) && (
                       <>
-                        Looks like a username — will scan all repos for{" "}
+                        Looks like a username. Will scan all repos for{" "}
                         <span className="text-foreground font-medium">{parseUsername(input)}</span>
                       </>
                     )}

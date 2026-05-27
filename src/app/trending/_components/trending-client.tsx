@@ -160,7 +160,7 @@ export const TrendingClient = ({ initialRepos, initialTotal, initialMapPoints, r
           {initialMapPoints.length === 0 && !reposError && (
             <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
               <p className="text-muted text-sm bg-surface/80 px-4 py-2 rounded-lg border border-border">
-                No geo data yet for top repos — scan them first.
+                No geo data yet for top repos. Scan them first.
               </p>
             </div>
           )}

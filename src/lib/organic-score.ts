@@ -140,7 +140,7 @@ export const computeOrganicScore = (input: OrganicSignals): OrganicResult => {
     active.push([normReleasesCount(releasesCount!), WEIGHT_RELEASES]);
     activeSignals.push("releases_count");
   } else if (releasesCount === 0) {
-    reasons.push("Releases signal excluded (0 releases — could be a course, script, or one-shot project)");
+    reasons.push("Releases signal excluded (0 releases; could be a course, script, or one-shot project)");
   }
 
   if (active.length === 0) {

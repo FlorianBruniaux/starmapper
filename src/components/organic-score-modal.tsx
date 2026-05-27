@@ -71,7 +71,7 @@ const buildSignals = (organic: RepoOrganic): SignalRow[] => {
   const ZF_TOOLTIP =
     "Accounts with 0 followers are often newly-created bots used by star-farming services. " +
     "A healthy repo has < 10% zero-follower stargazers. " +
-    "Computed from users StarMapper has enriched — requires sufficient sample size (≥ 30 users).";
+    "Computed from users StarMapper has enriched. Requires sufficient sample size (≥ 30 users).";
 
   const RELEASES_TOOLTIP =
     "Repositories that ship regularly attract genuine users who follow development. " +
@@ -95,7 +95,7 @@ const buildSignals = (organic: RepoOrganic): SignalRow[] => {
     rows.push({
       label: "Fork / star ratio",
       tooltip: FORK_TOOLTIP,
-      rawValue: totalCount < 5000 ? "Gated — repo has < 5 000 stars" : "No data",
+      rawValue: totalCount < 5000 ? "Gated (repo has < 5 000 stars)" : "No data",
       weight: "30%",
       signalScore: null,
       status: "na",
@@ -146,7 +146,7 @@ const buildSignals = (organic: RepoOrganic): SignalRow[] => {
     rows.push({
       label: "Releases cadence",
       tooltip: RELEASES_TOOLTIP,
-      rawValue: "No data — click Recompute to fetch",
+      rawValue: "No data. Click Recompute to fetch.",
       weight: "20%",
       signalScore: null,
       status: "na",
@@ -187,13 +187,13 @@ export const OrganicScoreModal = ({ open, onClose, organic, owner, repo, onRecal
     setRecalcError(null);
     try {
       const res = await fetch(`/api/organic-score/${owner}/${repo}/refresh`, { method: "POST" });
-      if (res.status === 429) { setRecalcError("Rate limited — try again in 1 hour"); return; }
-      if (!res.ok) { setRecalcError("Failed to recalculate — try again later"); return; }
+      if (res.status === 429) { setRecalcError("Rate limited. Try again in 1 hour."); return; }
+      if (!res.ok) { setRecalcError("Failed to recalculate. Try again later."); return; }
       const data = await res.json() as { organic: RepoOrganic };
       onRecalculated?.(data.organic);
       onClose();
     } catch {
-      setRecalcError("Network error — try again");
+      setRecalcError("Network error. Try again.");
     } finally {
       setRecalculating(false);
     }

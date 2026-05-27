@@ -64,7 +64,7 @@ export const BadgeModal = ({ open, onClose, owner, repo }: BadgeModalProps) => {
               {badgeTab === "map" && (
                 <div>
                   <p className="text-muted text-xs leading-relaxed mb-2">
-                    Embeds the map image in your README — switches between dark and light theme automatically.
+                    Embeds the map image in your README. Switches between dark and light theme automatically.
                   </p>
                   <div className="bg-background border border-border rounded-lg px-3 py-2.5">
                     <code className="text-muted text-xs break-all select-all leading-relaxed whitespace-pre-wrap">

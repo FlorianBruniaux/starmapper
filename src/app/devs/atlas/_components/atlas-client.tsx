@@ -228,7 +228,7 @@ export const AtlasClient = ({ initialData }: Props) => {
           </svg>
           <p className="text-muted leading-relaxed">
             <span className="text-foreground font-medium">Early preview.</span>{" "}
-            Language data is still being collected — only a sample of developers is represented.
+            Language data is still being collected. Only a sample of developers is represented.
             The map will fill in progressively over the next few days.
           </p>
         </div>

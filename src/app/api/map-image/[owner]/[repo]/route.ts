@@ -141,7 +141,7 @@ const makeSvg = (
   <line x1="${MAP_X}" y1="${MAP_Y + MAP_H * 0.5}" x2="${MAP_X + MAP_W}" y2="${MAP_Y + MAP_H * 0.5}" stroke="${borderColor}" stroke-width="0.4" stroke-dasharray="3,6"/>
   <line x1="${MAP_X}" y1="${MAP_Y + MAP_H * 0.75}" x2="${MAP_X + MAP_W}" y2="${MAP_Y + MAP_H * 0.75}" stroke="${borderColor}" stroke-width="0.4" stroke-dasharray="3,6"/>
   <!-- Dots -->
-  ${hasData ? `<g clip-path="url(#mapClip)">${circles}</g>` : `<text x="${MAP_X + MAP_W / 2}" y="${MAP_Y + MAP_H / 2 + 5}" fill="${muted}" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="13" text-anchor="middle">No data yet — scan to generate map</text>`}
+  ${hasData ? `<g clip-path="url(#mapClip)">${circles}</g>` : `<text x="${MAP_X + MAP_W / 2}" y="${MAP_Y + MAP_H / 2 + 5}" fill="${muted}" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="13" text-anchor="middle">No data yet. Scan to generate the map.</text>`}
   <!-- Header: repo name left, star count right -->
   <text x="${PAD + 12}" y="${PAD + 30}" fill="${fg}" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="13" font-weight="bold">${repoLabel}</text>
   <text x="${W - PAD - 10}" y="${PAD + 30}" fill="${muted}" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="11" text-anchor="end">&#x2605; ${fmt(totalCount)} stars</text>

@@ -287,7 +287,7 @@ export default function DevsLanguagePage({ initialSlug }: Props) {
                   <span className="text-accent-blue">{displayName}</span>
                 </p>
                 <p className="text-muted text-sm">
-                  Backfill is in progress — check back soon.
+                  Backfill is in progress. Check back soon.
                 </p>
               </div>
               <Link

@@ -239,7 +239,7 @@ export const ShareModal = ({
           </a>
           <button
             onClick={() => {
-              onLiDraftChange(`🌍 ${repo} just hit ${starsLabel} ⭐ — with stargazers from ${displayStats?.countryCount ?? "?"} countries!\n\n${typeof window !== "undefined" ? window.location.href : ""}`);
+              onLiDraftChange(`🌍 ${repo} just hit ${starsLabel} ⭐ with stargazers from ${displayStats?.countryCount ?? "?"} countries!\n\n${typeof window !== "undefined" ? window.location.href : ""}`);
               setLiCopied(false);
               setLiPanelOpen(true);
             }}

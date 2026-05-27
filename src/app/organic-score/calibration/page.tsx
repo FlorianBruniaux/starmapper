@@ -202,7 +202,7 @@ export default function CalibrationPage() {
                   <td className="px-4 py-2.5 text-foreground">Fork / star ratio</td>
                   <td className="px-4 py-2.5 text-center text-accent-green">✓ 30%</td>
                   <td className="px-4 py-2.5 text-center text-accent-green">✓</td>
-                  <td className="px-4 py-2.5 text-muted text-xs">Reduced from 40% — fork/star penalises CLI tools with low fork rates by nature</td>
+                  <td className="px-4 py-2.5 text-muted text-xs">Reduced from 40%; fork/star penalises CLI tools with low fork rates by nature</td>
                 </tr>
                 <tr className="border-b border-border-subtle">
                   <td className="px-4 py-2.5 text-foreground">% zero-follower stargazers</td>
@@ -214,19 +214,19 @@ export default function CalibrationPage() {
                   <td className="px-4 py-2.5 text-foreground">Watcher / star ratio</td>
                   <td className="px-4 py-2.5 text-center text-accent-orange">✓ 5%</td>
                   <td className="px-4 py-2.5 text-center text-muted">—</td>
-                  <td className="px-4 py-2.5 text-muted text-xs">Weakly discriminating in practice — weight kept low</td>
+                  <td className="px-4 py-2.5 text-muted text-xs">Weakly discriminating in practice, weight kept low</td>
                 </tr>
                 <tr className="border-b border-border-subtle">
                   <td className="px-4 py-2.5 text-foreground">Releases cadence</td>
                   <td className="px-4 py-2.5 text-center text-accent-green">✓ 20%</td>
                   <td className="px-4 py-2.5 text-center text-muted">—</td>
-                  <td className="px-4 py-2.5 text-muted text-xs">New signal — total GitHub releases as proxy for active, maintained project</td>
+                  <td className="px-4 py-2.5 text-muted text-xs">New signal: total GitHub releases as proxy for active, maintained project</td>
                 </tr>
                 <tr className="border-b border-border-subtle">
                   <td className="px-4 py-2.5 text-foreground">Clustering (account overlap across repos)</td>
                   <td className="px-4 py-2.5 text-center text-muted">—</td>
                   <td className="px-4 py-2.5 text-center text-accent-green">✓</td>
-                  <td className="px-4 py-2.5 text-muted text-xs">Key signal in StarScout — requires full graph analysis</td>
+                  <td className="px-4 py-2.5 text-muted text-xs">Key signal in StarScout, requires full graph analysis</td>
                 </tr>
                 <tr className="border-b border-border-subtle">
                   <td className="px-4 py-2.5 text-foreground">Temporal burst (stars in short window)</td>
@@ -238,14 +238,14 @@ export default function CalibrationPage() {
                   <td className="px-4 py-2.5 text-foreground">Account age + activity pattern</td>
                   <td className="px-4 py-2.5 text-center text-muted">—</td>
                   <td className="px-4 py-2.5 text-center text-accent-green">✓</td>
-                  <td className="px-4 py-2.5 text-muted text-xs">Detects sophisticated fakes — not available from public API alone</td>
+                  <td className="px-4 py-2.5 text-muted text-xs">Detects sophisticated fakes, not available from public API alone</td>
                 </tr>
               </tbody>
             </table>
           </div>
           <p className="text-xs text-muted mt-2">
             StarMapper reaches ~92% accuracy on labelled corpus (weights: fork 30%, ZF 45%, watcher 5%, releases 20%, 2026-05-06).
-            StarScout reaches 98% precision using the full signal set. The gap is structural — not a calibration issue.
+            StarScout reaches 98% precision using the full signal set. The gap is structural, not a calibration issue.
           </p>
         </section>
 
@@ -253,7 +253,7 @@ export default function CalibrationPage() {
         <section className="mb-8">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-muted mb-3">Caveats</h2>
           <ul className="space-y-1.5 text-sm text-muted">
-            <li>Fork/star signal is gated at ≥ 5 000 stars — below this threshold, the ratio is noisy on small repos.</li>
+            <li>Fork/star signal is gated at ≥ 5 000 stars. Below this threshold, the ratio is noisy on small repos.</li>
             <li>CLI and developer tools (install via package manager, few forks) may have a lower fork/star ratio despite being organic. The fork signal is gated at ≥ 5 000 stars and its weight was reduced (70%→40%) to account for this.</li>
             <li>Zero-follower signal requires ≥ 30 enriched users (users StarMapper has seen as stargazers). It is unavailable for repos not scanned on StarMapper.</li>
             <li>Viral repos or niche communities (CLI tools, curated lists) may score lower despite being organic. The score reflects signals, not intent.</li>

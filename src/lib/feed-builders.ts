@@ -55,7 +55,7 @@ export const buildRss20 = (
   return `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>${escapeXml(displayName)} — StarMapper News</title>
+    <title>${escapeXml(displayName)} on StarMapper</title>
     <link>${escapeXml(siteUrl)}/profile/${escapeXml(author.login)}</link>
     <description>Announcements from ${escapeXml(displayName)} on StarMapper</description>
     <language>en</language>

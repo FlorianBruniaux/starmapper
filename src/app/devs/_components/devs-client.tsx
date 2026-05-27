@@ -71,7 +71,7 @@ export const DevsClient = ({ initialData }: Props) => {
               <ellipse cx="8" cy="8" rx="3.5" ry="6.5" />
               <line x1="1.5" y1="8" x2="14.5" y2="8" />
             </svg>
-            <span>Language Atlas — which language dominates each country</span>
+            <span>Language Atlas: which language dominates each country</span>
             <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" className="shrink-0 text-muted-subtle group-hover:text-muted transition-colors">
               <path d="M6.22 3.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042L9.94 8 6.22 4.28a.75.75 0 0 1 0-1.06Z" />
             </svg>
@@ -107,7 +107,7 @@ export const DevsClient = ({ initialData }: Props) => {
         {!initialData ? (
           <div className="flex flex-col items-center justify-center py-20 gap-3 text-center">
             <p className="text-foreground font-medium">No languages tracked yet</p>
-            <p className="text-muted text-sm">Backfill is in progress — check back soon.</p>
+            <p className="text-muted text-sm">Backfill is in progress. Check back soon.</p>
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 gap-3 text-center">
@@ -124,7 +124,7 @@ export const DevsClient = ({ initialData }: Props) => {
             ) : (
               <>
                 <p className="text-foreground font-medium">No languages tracked yet</p>
-                <p className="text-muted text-sm">Backfill is in progress — check back soon.</p>
+                <p className="text-muted text-sm">Backfill is in progress. Check back soon.</p>
               </>
             )}
           </div>

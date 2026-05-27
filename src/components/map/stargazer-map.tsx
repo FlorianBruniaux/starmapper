@@ -478,7 +478,7 @@ const makePopupElement = (props: Record<string, unknown>): HTMLElement => {
         .then((r) => r.json())
         .then((data: { lat?: number; lng?: number; unmapped?: boolean; error?: string }) => {
           if (data.error) {
-            reportBtn.textContent = "Error — try again";
+            reportBtn.textContent = "Error. Try again.";
             reportBtn.disabled = false;
           } else if (data.unmapped) {
             reportBtn.textContent = "No location found";
@@ -489,7 +489,7 @@ const makePopupElement = (props: Record<string, unknown>): HTMLElement => {
           }
         })
         .catch(() => {
-          reportBtn.textContent = "Error — try again";
+          reportBtn.textContent = "Error. Try again.";
           reportBtn.disabled = false;
         });
     });
@@ -838,7 +838,7 @@ const StargazerMapInner = ({ points, comparePoints, flyTarget, onFlyDone, onRead
   if (webglError) {
     return (
       <div className="flex flex-col items-center justify-center w-full h-full text-muted text-sm text-center px-6 gap-3">
-        <p className="text-foreground font-medium">Map unavailable — WebGL is disabled</p>
+        <p className="text-foreground font-medium">Map unavailable: WebGL is disabled</p>
         <p>
           Enable hardware acceleration in your browser settings, then reload the page.
         </p>

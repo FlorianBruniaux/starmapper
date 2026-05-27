@@ -84,7 +84,7 @@ export const PreScanOverlay = ({
         ) : (
           <p className="text-muted text-xs mb-6 leading-relaxed">
             Stargazers are geocoded via their GitHub location field.
-            Results are cached and shared — subsequent visitors load instantly.
+            Results are cached and shared. Subsequent visitors load instantly.
           </p>
         )}
 
@@ -96,7 +96,7 @@ export const PreScanOverlay = ({
                 A GitHub token is required for repos over 50,000 stars
               </p>
               <p className="text-muted text-xs leading-relaxed mb-2.5">
-                Without a token, GitHub limits requests to 60/hr — not enough to index this repo.
+                Without a token, GitHub limits requests to 60/hr, not enough to index this repo.
                 A free token unlocks 5,000/hr. No special permissions needed.
               </p>
               <button type="button" onClick={onStart} className="text-xs text-accent-blue hover:underline font-medium">

@@ -122,7 +122,7 @@ export const POST = async (req: NextRequest) => {
   }
 
   if (activeSessions >= MAX_CONCURRENT) {
-    return jsonError("Server busy — too many concurrent scans. Retry in a few seconds.", 429);
+    return jsonError("Server busy. Too many concurrent scans. Retry in a few seconds.", 429);
   }
 
   activeSessions++;

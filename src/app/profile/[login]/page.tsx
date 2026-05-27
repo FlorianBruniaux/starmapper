@@ -612,7 +612,7 @@ export default function ProfilePage({ params }: Props) {
                     disabled={refreshState !== "idle"}
                     title={
                       refreshState === "cooldown"
-                        ? `Updated recently — try again in ${refreshCooldownMin}min`
+                        ? `Updated recently, try again in ${refreshCooldownMin}min`
                         : "Refresh profile from GitHub"
                     }
                     aria-label="Refresh profile data from GitHub"
@@ -1020,7 +1020,7 @@ export default function ProfilePage({ params }: Props) {
               <p className="text-muted text-sm">
                 {profile.starredCount === 0
                   ? "Hasn't starred any tracked repo yet."
-                  : "Stars found but no badge data available — try scanning the repos directly."}
+                  : "Stars found but no badge data available. Try scanning the repos directly."}
               </p>
             ) : (
               <>

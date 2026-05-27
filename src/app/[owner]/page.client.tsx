@@ -268,7 +268,7 @@ export default function UserPage({ params }: { params: Promise<{ owner: string }
               <p className="text-accent-red text-sm font-medium">{loadErr}</p>
               {!hasToken && (
                 <p className="text-muted text-xs text-center max-w-xs">
-                  No token set — GitHub limits unauthenticated requests to 60/hr.{" "}
+                  No token set. GitHub limits unauthenticated requests to 60/hr.{" "}
                   <button onClick={() => setTokenOpen(true)} className="text-accent-blue hover:underline">Add a token</button>{" "}
                   and try again.
                 </p>
@@ -407,7 +407,7 @@ export default function UserPage({ params }: { params: Promise<{ owner: string }
                 <p className="text-muted text-xs">
                   {selected.size} / {MAX_BATCH} repos selected
                   {selected.size === MAX_BATCH && (
-                    <span className="text-muted-subtle"> — max reached</span>
+                    <span className="text-muted-subtle"> (max reached)</span>
                   )}
                 </p>
                 <button
@@ -490,7 +490,7 @@ export default function UserPage({ params }: { params: Promise<{ owner: string }
                           <div className="flex items-center gap-2">
                             <span className="text-foreground text-sm font-medium truncate">{item.name}</span>
                             {item.status === "rate-limited" && (
-                              <span className="text-2xs text-accent-orange shrink-0">Rate limited — retrying…</span>
+                              <span className="text-2xs text-accent-orange shrink-0">Rate limited, retrying…</span>
                             )}
                             {item.status === "error" && item.err && (
                               <span className="text-2xs text-accent-red truncate">{item.err}</span>

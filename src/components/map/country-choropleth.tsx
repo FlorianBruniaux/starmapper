@@ -325,7 +325,7 @@ export const CountryChoropleth = memo(({ countryData, selectedCountry, onCountry
   if (webglError) {
     return (
       <div className="flex flex-col items-center justify-center w-full h-full text-muted text-sm text-center px-6 gap-3">
-        <p className="text-foreground font-medium">Map unavailable — WebGL is disabled</p>
+        <p className="text-foreground font-medium">Map unavailable: WebGL is disabled</p>
         <p>
           Enable hardware acceleration in your browser settings, then reload the page.
         </p>

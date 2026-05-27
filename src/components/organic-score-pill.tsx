@@ -32,7 +32,7 @@ export const OrganicScorePill = (props: Props) => {
   if (props.pending) {
     const tooltip = (props.totalStars ?? 0) < 5000
       ? "Organic score needs 5 000+ stars"
-      : "Organic score not yet computed — check back soon";
+      : "Organic score not yet computed. Check back soon.";
     return (
       <div
         title={tooltip}

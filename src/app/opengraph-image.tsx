@@ -56,7 +56,7 @@ export default function Image() {
             Map your GitHub stargazers
           </span>
           <span style={{ color: "#8b949e", fontSize: 26, lineHeight: 1.4, maxWidth: 600 }}>
-            See where in the world your repo's fans are — geocoded, clustered, and beautiful.
+            See where in the world your repo's fans are. Geocoded, clustered, and beautiful.
           </span>
         </div>
 

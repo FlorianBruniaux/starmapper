@@ -72,7 +72,7 @@ export default function SponsorPage() {
               <p className="text-sm text-muted leading-relaxed mb-3">
                 Jawg powers every map tile you see on StarMapper and the geocoding cascade
                 that turns "San Francisco Bay Area" or "Paris" into a precise pin on the map.
-                Their dedicated StarMapper instance handles the whole geocoding load — no other
+                Their dedicated StarMapper instance handles the whole geocoding load. No other
                 provider covers that.
               </p>
               <span className="text-xs text-accent-blue group-hover:underline">
@@ -111,7 +111,7 @@ export default function SponsorPage() {
               <p className="text-xs text-muted leading-relaxed mb-2">
                 Neon's serverless Postgres stores the geocache (~51k pre-seeded entries),
                 full scan results, and badge stats that make StarMapper instant for returning
-                visitors — without any always-on server to manage.
+                visitors, no always-on server needed.
               </p>
               <span className="text-xs text-accent-blue group-hover:underline">
                 neon.tech ↗
@@ -126,7 +126,7 @@ export default function SponsorPage() {
           <p className="text-xs text-muted leading-relaxed mb-5">
             StarMapper is used daily by open-source maintainers, developers, and curious
             people exploring the global GitHub community. Your logo and link on the map page,
-            landing page, and this page — in front of a technical audience that actually cares
+            landing page, and this page, in front of a technical audience that actually cares
             about the tools they use.
           </p>
           <ul className="text-xs text-muted space-y-1.5 mb-6">

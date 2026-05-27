@@ -241,10 +241,10 @@ export const TopPanel = ({
           </div>
           <div className="text-2xs text-muted mt-1 text-center">
             {status === "waiting"
-              ? `⏸ Queued — resuming in ${retryIn}s…`
+              ? `⏸ Queued, resuming in ${retryIn}s…`
               : status === "refreshing"
               ? "↻ Fetching new stars…"
-              : `Fetching ${processed.toLocaleString()} / ${total.toLocaleString()} — ${pct}%`
+              : `Fetching ${processed.toLocaleString()} / ${total.toLocaleString()} (${pct}%)`
             }
             {estimate && status === "loading" && (
               <span className="ml-1 text-muted-subtle">· est. {formatEstimate(estimate)}</span>
@@ -347,7 +347,7 @@ export const TopPanel = ({
         {findStatus === "found" && (
           <p className="mt-1.5 text-2xs text-accent-green flex items-center gap-1">
             <Check size={10} aria-hidden="true" />
-            Found — flying to location
+            Found, flying to location
           </p>
         )}
         {findStatus === "no-location" && (

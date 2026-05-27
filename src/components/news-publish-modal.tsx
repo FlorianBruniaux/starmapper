@@ -61,7 +61,7 @@ export const NewsPublishModal = ({ login, rssUrl, jsonUrl, onClose, onPublished 
   const handleSubmit = useCallback(async () => {
     const pat = getStoredToken();
     if (!pat) {
-      setError("Paste your GitHub token first — it's the same one used to scan repos.");
+      setError("Paste your GitHub token first. It's the same one used to scan repos.");
       return;
     }
 
@@ -121,7 +121,7 @@ export const NewsPublishModal = ({ login, rssUrl, jsonUrl, onClose, onPublished 
         {!hasToken ? (
           <div className="p-4 space-y-3">
             <p className="text-sm text-muted">
-              You need a GitHub token to publish. Enter it via the key icon at the top of the page — it's the same one used to scan repos faster.
+              You need a GitHub token to publish. Enter it via the key icon at the top of the page. It's the same one used to scan repos faster.
             </p>
             <button onClick={onClose} className="w-full py-2 rounded-lg border border-border text-sm text-muted hover:text-foreground transition-colors">
               Close
@@ -148,7 +148,7 @@ export const NewsPublishModal = ({ login, rssUrl, jsonUrl, onClose, onPublished 
               type="url"
               value={url}
               onChange={(e) => { setUrl(e.target.value); setError(null); }}
-              placeholder="Link (optional) — https://github.com/you/project"
+              placeholder="Link (optional): https://github.com/you/project"
               className="w-full bg-surface-alt border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent-blue/40 focus:border-accent-blue"
             />
 

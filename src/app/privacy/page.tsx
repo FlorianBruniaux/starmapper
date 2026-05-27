@@ -60,17 +60,17 @@ export default function PrivacyPage() {
             starred that repository, we collect:
           </p>
           <ul className="list-disc list-inside space-y-1.5 pl-2">
-            <li><strong className="text-foreground">GitHub username (login)</strong> — a public identifier</li>
-            <li><strong className="text-foreground">Display name</strong> — optional, publicly visible on GitHub profiles</li>
-            <li><strong className="text-foreground">Self-declared location</strong> — free-text field on the GitHub profile (e.g. &quot;Paris, France&quot;)</li>
-            <li><strong className="text-foreground">Follower count</strong> — publicly visible metric</li>
-            <li><strong className="text-foreground">Star date</strong> — when the user starred the repository</li>
+            <li><strong className="text-foreground">GitHub username (login)</strong>: a public identifier</li>
+            <li><strong className="text-foreground">Display name</strong>: optional, publicly visible on GitHub profiles</li>
+            <li><strong className="text-foreground">Self-declared location</strong>: free-text field on the GitHub profile (e.g. &quot;Paris, France&quot;)</li>
+            <li><strong className="text-foreground">Follower count</strong>: publicly visible metric</li>
+            <li><strong className="text-foreground">Star date</strong>: when the user starred the repository</li>
             <li>
-              <strong className="text-foreground">Account creation date</strong> — publicly visible on GitHub profiles; used as one signal
+              <strong className="text-foreground">Account creation date</strong>: publicly visible on GitHub profiles; used as one signal
               in our organic integrity heuristic to assess the authenticity of a repository&apos;s stargazer base
             </li>
             <li>
-              <strong className="text-foreground">Geocoded coordinates (lat/lng)</strong> — derived from the location field above, via
+              <strong className="text-foreground">Geocoded coordinates (lat/lng)</strong>: derived from the location field above, via
               third-party geocoding services, to place the user on the map
             </li>
           </ul>
@@ -87,7 +87,7 @@ export default function PrivacyPage() {
             as described in GitHub&apos;s Terms of Service and API documentation.
           </p>
           <p>
-            Location text is then sent to third-party geocoding services — Jawg Places, Geoapify, and Nominatim (OpenStreetMap) — to resolve
+            Location text is then sent to third-party geocoding services (Jawg Places, Geoapify, and Nominatim) to resolve
             coordinates. Results are cached in our shared geocoding database to avoid redundant API calls.
           </p>
         </Section>
@@ -99,11 +99,11 @@ export default function PrivacyPage() {
           </p>
           <ul className="list-disc list-inside space-y-1.5 pl-2">
             <li>
-              <strong className="text-foreground">Geographic visualisation</strong> — placing stargazers on an interactive world map
+              <strong className="text-foreground">Geographic visualisation</strong>: placing stargazers on an interactive world map
               with country and city statistics, to help developers understand the reach of their open-source projects
             </li>
             <li>
-              <strong className="text-foreground">Organic integrity assessment</strong> — computing a heuristic score based on publicly
+              <strong className="text-foreground">Organic integrity assessment</strong>: computing a heuristic score based on publicly
               available signals (fork ratio, watcher ratio, zero-follower percentage, account creation date, release activity) to give
               maintainers a rough indicator of whether a repository&apos;s stargazer base appears authentic
             </li>
@@ -220,21 +220,21 @@ export default function PrivacyPage() {
           <p>As a data subject under GDPR, you have the following rights:</p>
           <ul className="list-disc list-inside space-y-2 pl-2">
             <li>
-              <strong className="text-foreground">Right of access (Art. 15)</strong> — request a copy of all data we hold about your
+              <strong className="text-foreground">Right of access (Art. 15)</strong>: request a copy of all data we hold about your
               GitHub account
             </li>
             <li>
-              <strong className="text-foreground">Right to erasure (Art. 17)</strong> — request deletion of your data from our systems
+              <strong className="text-foreground">Right to erasure (Art. 17)</strong>: request deletion of your data from our systems
             </li>
             <li>
-              <strong className="text-foreground">Right to object (Art. 21)</strong> — object to our processing based on legitimate interests
+              <strong className="text-foreground">Right to object (Art. 21)</strong>: object to our processing based on legitimate interests
             </li>
             <li>
-              <strong className="text-foreground">Right to restriction (Art. 18)</strong> — request that we restrict processing while a
+              <strong className="text-foreground">Right to restriction (Art. 18)</strong>: request that we restrict processing while a
               dispute is resolved
             </li>
             <li>
-              <strong className="text-foreground">Right to portability (Art. 20)</strong> — receive your data in a structured,
+              <strong className="text-foreground">Right to portability (Art. 20)</strong>: receive your data in a structured,
               machine-readable format
             </li>
           </ul>

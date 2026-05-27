@@ -54,7 +54,7 @@ export const RateLimitOverlay = ({ status, waitReason, retryIn, retryTotal }: Pr
             style={{ width: retryTotal > 0 ? `${((retryTotal - retryIn) / retryTotal) * 100}%` : "0%" }}
           />
         </div>
-        <p className="text-muted-subtle text-xs mt-4">Your progress is saved — no need to do anything.</p>
+        <p className="text-muted-subtle text-xs mt-4">Your progress is saved. No need to do anything.</p>
       </div>
     </div>
   );

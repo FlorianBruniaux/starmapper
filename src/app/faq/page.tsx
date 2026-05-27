@@ -11,12 +11,12 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://starmapper.bruniaux.
 export const metadata: Metadata = {
   title: "FAQ — StarMapper",
   description:
-    "Frequently asked questions about StarMapper — scan speed, data privacy, GitHub token storage, open source license, badge embeds, and how stargazer geocoding works.",
+    "Frequently asked questions about StarMapper: scan speed, data privacy, GitHub token storage, open source license, badge embeds, and how stargazer geocoding works.",
   alternates: { canonical: "/faq" },
   openGraph: {
     title: "FAQ — StarMapper",
     description:
-      "Frequently asked questions about StarMapper — scan speed, data privacy, GitHub token storage, open source license, badge embeds, and how stargazer geocoding works.",
+      "Frequently asked questions about StarMapper: scan speed, data privacy, GitHub token storage, open source license, badge embeds, and how stargazer geocoding works.",
     url: `${APP_URL}/faq`,
     siteName: "StarMapper",
     type: "website",
@@ -25,22 +25,22 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "FAQ — StarMapper",
     description:
-      "Frequently asked questions about StarMapper — scan speed, data privacy, GitHub token storage, open source license, badge embeds, and how stargazer geocoding works.",
+      "Frequently asked questions about StarMapper: scan speed, data privacy, GitHub token storage, open source license, badge embeds, and how stargazer geocoding works.",
   },
 };
 
 const FAQS = [
   {
     q: "Is StarMapper free?",
-    a: "Yes — no account, no login, no credit card. Paste a repo URL and click Map Stargazers.",
+    a: "Yes, no account, no login, no credit card. Paste a repo URL and click Map Stargazers.",
   },
   {
     q: "How long does a scan take?",
-    a: "Small repos (under 500 stars) scan in under 10 seconds. Large repos (50k+ stars) take a few minutes — the GitHub API processes users in batches of 100. Once a repo is scanned, the result is cached globally: any subsequent visitor loads it instantly, no re-scan needed.",
+    a: "Small repos (under 500 stars) scan in under 10 seconds. Large repos (50k+ stars) take a few minutes. The GitHub API processes users in batches of 100. Once a repo is scanned, the result is cached globally: any subsequent visitor loads it instantly, no re-scan needed.",
   },
   {
     q: "Will my GitHub token be stored?",
-    a: "No. Your token is saved in your browser's localStorage only — it never leaves your device except to authenticate directly with the GitHub API. StarMapper does not store tokens server-side.",
+    a: "No. Your token is saved in your browser's localStorage only. It never leaves your device except to authenticate directly with the GitHub API. StarMapper does not store tokens server-side.",
   },
   {
     q: "Is StarMapper open source?",
@@ -52,7 +52,7 @@ const FAQS = [
   },
   {
     q: "Does it work with private repos?",
-    a: "No. StarMapper only works with public repositories — the GitHub API does not expose stargazer data for private repos.",
+    a: "No. StarMapper only works with public repositories. The GitHub API does not expose stargazer data for private repos.",
   },
   {
     q: "Can I embed a badge in my README?",
@@ -64,7 +64,7 @@ const FAQS = [
   },
   {
     q: "How do I request removal of my data?",
-    a: "Remove your location from your GitHub profile settings — the next scan will reflect the change automatically and your coordinates will no longer be geocoded. To delete existing data, email florian@bruniaux.com with your GitHub username. We will remove your profile data and star events within 30 days.",
+    a: "Remove your location from your GitHub profile settings. The next scan will reflect the change automatically and your coordinates will no longer be geocoded. To delete existing data, email florian@bruniaux.com with your GitHub username. We will remove your profile data and star events within 30 days.",
   },
   {
     q: "Not on the map?",
@@ -119,7 +119,7 @@ export default function FaqPage() {
 
         <h1 className="text-2xl font-bold text-foreground mb-2">Frequently asked questions</h1>
         <p className="text-muted text-sm mb-8 leading-relaxed">
-          Everything you need to know about StarMapper — scan speed, privacy, tokens, and embeds.
+          Everything you need to know about StarMapper: scan speed, privacy, tokens, and embeds.
         </p>
 
         <div className="flex flex-col divide-y divide-border-subtle border border-border-subtle rounded-xl overflow-hidden">
