@@ -3,7 +3,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { memo, useMemo, useState } from "react";
 import { Search, ChevronRight, ChevronUp, ChevronDown, Check, Lock, User } from "lucide-react";
 import Image from "next/image";
 import type { StargazerPoint } from "@/app/api/chunk/route";
@@ -70,7 +70,7 @@ type Props = {
   organic?: RepoOrganic | null;
 };
 
-export const TopPanel = ({
+const TopPanelInner = ({
   owner, repo, repoInfo,
   compareOwner, compareRepo, compareInfo, compareStatus, comparePoints,
   points, total, unmapped, setDrawerOpen,
@@ -89,11 +89,11 @@ export const TopPanel = ({
   const activeOrganic = organicOverride ?? organic ?? null;
   const showOrganic = ORGANIC_ENABLED && total > 0;
   const mappingPct = total > 0 ? Math.round((points.length / total) * 100) : 0;
-  const locationCount = new Set(
+  const locationCount = useMemo(() => new Set(
     points
       .map((p) => { const s = p.location?.split(",").pop()?.trim(); return s && isCountry(s) ? normalizeCountry(s) : null; })
       .filter(Boolean),
-  ).size;
+  ).size, [points]);
 
   return (
     <>
@@ -444,3 +444,5 @@ export const TopPanel = ({
     </>
   );
 };
+
+export const TopPanel = memo(TopPanelInner);

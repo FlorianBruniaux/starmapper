@@ -80,6 +80,10 @@ export default function MapPage({
 
   const [total, setTotal] = useState(0);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const drawerContainerRef = useRef<HTMLDivElement>(null);
+  const [drawerScrollTop, setDrawerScrollTop] = useState(0);
+  const [drawerCols, setDrawerCols] = useState(2);
+  const [drawerVisibleRows, setDrawerVisibleRows] = useState(8);
   const [findInput, setFindInput] = useState("");
   const [findStatus, setFindStatus] = useState<"idle" | "searching" | "found" | "no-location" | "not-found">("idle");
   const [cachedAt, setCachedAt] = useState<number | null>(null);
@@ -126,11 +130,25 @@ export default function MapPage({
     weekBuckets, filteredMapPoints,
   } = useTimelapse(points, followerMapFilter);
 
-  // Debounce clusterRadius changes — map rebuild fires 150ms after slider stops
+  // Debounce clusterRadius changes: map rebuild fires 150ms after slider stops
   useEffect(() => {
     const t = setTimeout(() => setDebouncedClusterRadius(clusterRadius), 150);
     return () => clearTimeout(t);
   }, [clusterRadius]);
+
+  // Drawer: detect column count from container width for virtual scroll calculation
+  useEffect(() => {
+    if (!drawerOpen) return;
+    const el = drawerContainerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => {
+      const w = el.clientWidth;
+      setDrawerCols(w >= 1024 ? 5 : w >= 768 ? 4 : w >= 640 ? 3 : 2);
+      setDrawerVisibleRows(Math.max(3, Math.ceil(el.clientHeight / 48)));
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [drawerOpen]);
 
   const ghHeaders = useCallback((): Record<string, string> => {
     const t = getStoredToken();
@@ -255,6 +273,20 @@ export default function MapPage({
   ], [points, unmapped]);
 
   const hasGrowthData = points.length > 0 || unmapped.length > 0;
+
+  const DRAWER_ROW_H = 48;
+  const DRAWER_OVERSCAN = 3;
+  const sortedUnmapped = useMemo(
+    () => [...unmapped].sort((a, b) => b.followers - a.followers),
+    [unmapped]
+  );
+  const drawerRowCount = Math.ceil(sortedUnmapped.length / drawerCols);
+  const drawerVStartRow = Math.max(0, Math.floor(drawerScrollTop / DRAWER_ROW_H) - DRAWER_OVERSCAN);
+  const drawerVEndRow = Math.min(drawerRowCount, drawerVStartRow + drawerVisibleRows + DRAWER_OVERSCAN * 2);
+  const drawerVStartIdx = drawerVStartRow * drawerCols;
+  const drawerVEndIdx = Math.min(sortedUnmapped.length, drawerVEndRow * drawerCols);
+  const drawerPadTop = drawerVStartRow * DRAWER_ROW_H;
+  const drawerPadBottom = (drawerRowCount - drawerVEndRow) * DRAWER_ROW_H;
 
   const findUser = useCallback((loginOverride?: string) => {
     const raw = (loginOverride ?? findInput).trim();
@@ -521,12 +553,17 @@ export default function MapPage({
               <span className="text-sm text-muted">
                 <strong className="text-foreground">{unmapped.length.toLocaleString()} stargazers</strong> without location
               </span>
-              <span className="ml-2 text-2xs text-muted-subtle">— no location set on their GitHub profile</span>
+              <span className="ml-2 text-2xs text-muted-subtle">(no location set on their GitHub profile)</span>
             </div>
             <button onClick={() => setDrawerOpen(false)} aria-label="Close unmapped list" className="text-muted hover:text-foreground text-lg leading-none"><span aria-hidden="true">✕</span></button>
           </div>
-          <div className="overflow-y-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-            {[...unmapped].sort((a, b) => b.followers - a.followers).map((u) => (
+          <div
+            ref={drawerContainerRef}
+            className="overflow-y-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
+            onScroll={(e) => setDrawerScrollTop(e.currentTarget.scrollTop)}
+          >
+            {drawerPadTop > 0 && <div className="col-span-full" style={{ height: drawerPadTop }} />}
+            {sortedUnmapped.slice(drawerVStartIdx, drawerVEndIdx).map((u) => (
               <div
                 key={u.login}
                 className={`flex items-center gap-2.5 px-4 py-2.5 border-b border-r border-surface text-xs ${
@@ -557,6 +594,7 @@ export default function MapPage({
                 </div>
               </div>
             ))}
+            {drawerPadBottom > 0 && <div className="col-span-full" style={{ height: drawerPadBottom }} />}
           </div>
         </div>
       )}

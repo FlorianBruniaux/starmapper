@@ -21,11 +21,11 @@ const LINKS: LinkItem[] = [
 ];
 
 export const AnnouncementBanner = () => {
-  const [visible, setVisible] = useState(false);
+  const [visible, setVisible] = useState(true);
 
   useEffect(() => {
     try {
-      if (!localStorage.getItem(`starmapper:banner:${BANNER_ID}`)) setVisible(true);
+      if (localStorage.getItem(`starmapper:banner:${BANNER_ID}`)) setVisible(false);
     } catch {
       // localStorage unavailable (private browsing, etc.)
     }

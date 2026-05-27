@@ -5,6 +5,17 @@ Versioning: Semantic Versioning (MAJOR.MINOR.PATCH)
 
 ---
 
+## [0.5.4] (2026-05-27)
+
+### Performance
+
+- **Core Web Vitals: CLS, INP.** Three targeted fixes based on a full audit of landing, map, and profile pages.
+  - `AnnouncementBanner` now renders visible by default and hides via `useEffect` if previously dismissed. Eliminates the ~40px layout shift on first visit that was pushing CLS to 0.164.
+  - `TopPanel` `locationCount` wrapped in `useMemo([points])` and component wrapped in `React.memo`. Stops an O(n) country normalization loop (iterating all points on every render) from running on each keystroke in the "Find a stargazer" input.
+  - Unmapped users drawer virtualized using scroll-based windowing with `ResizeObserver` column detection. Pre-sort moved to `useMemo`. Opening the drawer on a repo with 30k+ unmapped users no longer blocks the main thread for 2-5 seconds.
+
+---
+
 ## [0.5.3] (2026-05-27)
 
 ### Features
