@@ -201,23 +201,31 @@ const ReposBadge = ({ login, count }: { login: string; count: number }) => {
 };
 
 // ---------- User list skeleton ----------
-const UserListSkeleton = () => (
-  <div className="space-y-1" aria-busy="true" aria-label="Loading users">
-    {Array.from({ length: 8 }).map((_, i) => (
-      <div key={i} className="flex items-center gap-3 px-2 py-2 rounded-lg" aria-hidden="true">
-        <div className="w-5 h-3 rounded bg-surface-alt animate-pulse flex-shrink-0" />
-        <div className="w-8 h-8 rounded-full bg-surface-alt animate-pulse flex-shrink-0" />
-        <div className="flex-1 min-w-0 space-y-1.5">
-          <div className="h-3 rounded bg-surface-alt animate-pulse" style={{ width: `${55 + (i % 3) * 10}%` }} />
-          <div className="h-2.5 rounded bg-surface-alt animate-pulse opacity-60" style={{ width: `${35 + (i % 4) * 8}%` }} />
+const UserListSkeleton = ({ rows = PAGE_SIZE }: { rows?: number }) => (
+  <div>
+    <div className="space-y-1" aria-busy="true" aria-label="Loading users">
+      {Array.from({ length: rows }).map((_, i) => (
+        <div key={i} className="flex items-center gap-3 px-2 py-2 rounded-lg" aria-hidden="true">
+          <div className="w-5 h-3 rounded bg-surface-alt animate-pulse flex-shrink-0" />
+          <div className="w-8 h-8 rounded-full bg-surface-alt animate-pulse flex-shrink-0" />
+          <div className="flex-1 min-w-0 space-y-1.5">
+            <div className="h-3 rounded bg-surface-alt animate-pulse" style={{ width: `${55 + (i % 3) * 10}%` }} />
+            <div className="h-2.5 rounded bg-surface-alt animate-pulse opacity-60" style={{ width: `${35 + (i % 4) * 8}%` }} />
+          </div>
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            <div className="w-14 h-4 rounded bg-surface-alt animate-pulse" />
+            <div className="w-8 h-3 rounded bg-surface-alt animate-pulse" />
+            <div className="w-9 h-6 rounded bg-surface-alt animate-pulse" />
+          </div>
         </div>
-        <div className="flex items-center gap-1.5 flex-shrink-0">
-          <div className="w-14 h-4 rounded bg-surface-alt animate-pulse" />
-          <div className="w-8 h-3 rounded bg-surface-alt animate-pulse" />
-          <div className="w-9 h-6 rounded bg-surface-alt animate-pulse" />
-        </div>
-      </div>
-    ))}
+      ))}
+    </div>
+    {/* Pagination placeholder — matches Pagination component height to prevent CLS */}
+    <div className="flex items-center justify-between mt-5 pt-4 border-t border-border-subtle" aria-hidden="true">
+      <div className="w-10 h-5 rounded bg-surface-alt animate-pulse" />
+      <div className="w-12 h-3 rounded bg-surface-alt animate-pulse" />
+      <div className="w-10 h-5 rounded bg-surface-alt animate-pulse" />
+    </div>
   </div>
 );
 
