@@ -67,7 +67,7 @@ export const TokenModal = ({ onClose }: Props) => {
           <span className="text-accent-green font-medium">5,000 requests/hour</span>.
         </p>
         <p className="text-muted text-sm">
-          No scopes needed — a{" "}
+          No scopes needed. A{" "}
           <a
             href="https://github.com/settings/tokens/new?description=StarMapper&scopes="
             target="_blank"
