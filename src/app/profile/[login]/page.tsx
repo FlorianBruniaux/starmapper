@@ -350,11 +350,11 @@ export default function ProfilePage({ params }: Props) {
     const ctrl = new AbortController();
     fetch(`/api/explore/user-repos?login=${encodeURIComponent(login)}`, { signal: ctrl.signal })
       .then(async (res) => {
-        if (!res.ok) return;
+        if (!res.ok) { setGithubRepos([]); return; }
         const data = await res.json() as UserReposResponse;
-        if (data.repos.length > 0) setGithubRepos(data.repos);
+        setGithubRepos(data.repos);
       })
-      .catch(() => {});
+      .catch(() => { setGithubRepos([]); });
     return () => ctrl.abort();
   }, [login]);
 
@@ -839,7 +839,29 @@ export default function ProfilePage({ params }: Props) {
           </div>
         )}
 
-        {/* ── Section skeletons (loading state) ────────────────────────── */}
+        {/* ── News / announcements ────────────────────────────────────── */}
+        {login && (
+          <section data-tour="profile-news" className="mb-2">
+            <NewsTimeline login={login} maxItems={3} />
+          </section>
+        )}
+
+        <hr className="border-border-subtle my-8" />
+
+        {/* ── Tabs — mobile segmented control ─────────────────────────── */}
+        <div className="block sm:hidden mb-4">
+          <Tabs
+            tabs={[
+              { id: "github" as const, label: "GitHub", count: githubRepos?.length ?? profile?.publicRepos },
+              { id: "owned" as const, label: "StarMapper", count: profile?.ownedRepos.length },
+              { id: "starred" as const, label: "Starred", count: profile?.starredCount },
+            ]}
+            activeTab={profileTab}
+            onChange={(t) => setProfileTab(t as "github" | "owned" | "starred")}
+          />
+        </div>
+
+        {/* ── Section skeletons — shown while profile is loading, in the correct position ── */}
         {loadState === "loading" && (
           <div className="animate-pulse motion-reduce:animate-none space-y-8">
             <div>
@@ -867,28 +889,6 @@ export default function ProfilePage({ params }: Props) {
           </div>
         )}
 
-        {/* ── News / announcements ────────────────────────────────────── */}
-        {login && (
-          <section data-tour="profile-news" className="mb-2">
-            <NewsTimeline login={login} maxItems={3} />
-          </section>
-        )}
-
-        <hr className="border-border-subtle my-8" />
-
-        {/* ── Tabs — mobile segmented control ─────────────────────────── */}
-        <div className="block sm:hidden mb-4">
-          <Tabs
-            tabs={[
-              { id: "github" as const, label: "GitHub", count: githubRepos?.length ?? profile?.publicRepos },
-              { id: "owned" as const, label: "StarMapper", count: profile?.ownedRepos.length },
-              { id: "starred" as const, label: "Starred", count: profile?.starredCount },
-            ]}
-            activeTab={profileTab}
-            onChange={(t) => setProfileTab(t as "github" | "owned" | "starred")}
-          />
-        </div>
-
         {/* ── GitHub repos skeleton — shown while fetch is in flight after profile loads ── */}
         {profile && !githubRepos && loadState === "loaded" && (
           <div className={`mb-2 animate-pulse motion-reduce:animate-none ${profileTab !== "github" ? "hidden sm:block" : ""}`}>
@@ -897,7 +897,7 @@ export default function ProfilePage({ params }: Props) {
               <div className="h-3.5 w-6 bg-surface-alt rounded-full" />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {Array.from({ length: 4 }).map((_, i) => (
+              {Array.from({ length: Math.min(Math.max(profile.publicRepos || 4, 1), 8) }).map((_, i) => (
                 <div key={i} className="h-16 rounded-lg bg-surface border border-border" />
               ))}
             </div>
