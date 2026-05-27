@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowLeft, Check, Clock, Trophy, Globe, Map } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import type { MapProjection } from "@/lib/theme";
+import { TourTrigger } from "@/components/tour/tour-trigger";
 
 const pillCls =
   "flex items-center gap-2 bg-surface/90 backdrop-blur-md border border-border rounded-full px-3 py-1.5 shadow-sm";
@@ -77,6 +78,7 @@ export const MapFloatingNav = ({ owner, repo, hasToken, onTokenClick, projection
         </button>
         <div className="w-px h-3.5 bg-border-subtle" aria-hidden="true" />
         <button
+          data-tour="map-projection"
           onClick={onProjectionToggle}
           className="flex items-center gap-1.5 text-xs text-muted hover:text-foreground transition-colors"
           title={projection === "globe" ? "Switch to flat map" : "Switch to globe"}
@@ -91,6 +93,12 @@ export const MapFloatingNav = ({ owner, repo, hasToken, onTokenClick, projection
           )}
           <span className="hidden sm:inline">{projection === "globe" ? "2D" : "3D"}</span>
         </button>
+        <div className="w-px h-3.5 bg-border-subtle" aria-hidden="true" />
+        <TourTrigger
+          tourId="map"
+          label=""
+          className="flex items-center text-xs text-muted hover:text-foreground transition-colors p-1 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/40"
+        />
         <div className="w-px h-3.5 bg-border-subtle" aria-hidden="true" />
         <ThemeToggle />
       </div>

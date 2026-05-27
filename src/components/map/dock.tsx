@@ -83,7 +83,7 @@ export const Dock = ({
 
         {/* View mode toggle — Clusters / Heatmap */}
         {hasPoints && (
-          <div className="bg-background/90 border border-border rounded-lg p-1 backdrop-blur-md flex gap-1">
+          <div data-tour="map-view-toggle" className="bg-background/90 border border-border rounded-lg p-1 backdrop-blur-md flex gap-1">
             {(["clusters", "heatmap"] as const).map((mode) => {
               const isActive = viewMode === mode;
               const isDisabled = !!(compareOwner && compareRepo);
@@ -112,7 +112,7 @@ export const Dock = ({
 
         {/* Map controls (density + follower filter) */}
         {viewMode === "clusters" && (
-          <div className="bg-background/90 border border-border rounded-lg px-3 py-2 backdrop-blur-md flex flex-col gap-1">
+          <div data-tour="map-controls" className="bg-background/90 border border-border rounded-lg px-3 py-2 backdrop-blur-md flex flex-col gap-1">
             <div className="flex items-center justify-between mb-0.5">
               <span className="text-2xs text-muted-subtle uppercase tracking-widest">Map controls</span>
               <button
@@ -180,6 +180,7 @@ export const Dock = ({
 
         {hasStats && (
           <button
+            data-tour="map-stats"
             onClick={() => setStatsOpen(true)}
             className="bg-background/90 border border-border rounded-lg
               px-3 py-2.5 text-xs text-muted hover:text-foreground
@@ -194,6 +195,7 @@ export const Dock = ({
 
         {allStargazersCount > 0 && (
           <button
+            data-tour="map-stargazers"
             onClick={() => setAllOpen(true)}
             className="bg-background/90 border border-border rounded-lg
               px-3 py-2.5 text-xs text-muted hover:text-foreground
@@ -211,6 +213,7 @@ export const Dock = ({
 
         {hasGrowthData && (
           <button
+            data-tour="map-growth"
             onClick={() => setGrowthOpen(true)}
             className="bg-background/90 border border-border rounded-lg
               px-3 py-2.5 text-xs text-muted hover:text-foreground
@@ -225,6 +228,7 @@ export const Dock = ({
 
         {hasGrowthData && (
           <button
+            data-tour="map-watch"
             onClick={watchActive ? onWatchStop : onWatchStart}
             className={`border rounded-lg px-3 py-2.5 text-xs backdrop-blur-md transition-all flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/40 ${
               watchActive
@@ -255,6 +259,7 @@ export const Dock = ({
         )}
 
         <a
+          data-tour="map-history"
           href={`https://star-history.com/#${owner}/${repo}&type=Date`}
           target="_blank"
           rel="noopener noreferrer"
@@ -271,6 +276,7 @@ export const Dock = ({
         {/* Timelapse button */}
         {hasTimelapse && (
           <button
+            data-tour="map-timelapse"
             onClick={() => {
               setTimelapseActive(!timelapseActive);
             }}
@@ -290,6 +296,7 @@ export const Dock = ({
 
         {/* Badge button */}
         <button
+          data-tour="map-badge"
           onClick={() => setBadgeOpen(true)}
           className="bg-background/90 border border-border rounded-lg
             px-3 py-2.5 text-xs text-muted hover:text-foreground
@@ -303,6 +310,7 @@ export const Dock = ({
 
         {/* Share CTA */}
         <button
+          data-tour="map-share"
           onClick={() => setShareOpen(true)}
           className="bg-accent-green-emphasis hover:opacity-90 active:opacity-80
             border border-accent-green-emphasis/60 hover:border-accent-green/60

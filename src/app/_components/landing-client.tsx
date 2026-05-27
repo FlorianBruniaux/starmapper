@@ -14,6 +14,8 @@ import { Footer } from "@/components/footer";
 import Link from "next/link";
 import { CommandSearch } from "@/components/command-search";
 import { HeroGlobeDynamic } from "@/components/hero-globe-dynamic";
+import { LandingTourAutoStart } from "@/components/tour/tour-provider";
+import { TourTrigger } from "@/components/tour/tour-trigger";
 import type { Bookmark } from "@/lib/bookmarks";
 import type { MappedRepo } from "@/app/api/repos/route";
 
@@ -131,6 +133,7 @@ export const LandingClient = ({ initialRepos, initialTotal }: Props) => {
         />
       )}
 
+      <LandingTourAutoStart />
       <AnnouncementBanner />
       <Header
         sticky
@@ -138,6 +141,7 @@ export const LandingClient = ({ initialRepos, initialTotal }: Props) => {
         showToken
         hasToken={hasToken}
         onTokenClick={() => setTokenOpen(true)}
+        rightAccessory={<TourTrigger tourId="landing" label="Tour" />}
       />
 
       <main id="main" className="min-h-screen bg-background flex flex-col">
@@ -200,7 +204,7 @@ export const LandingClient = ({ initialRepos, initialTotal }: Props) => {
                   </li>
                 </ul>
 
-                <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+                <form data-tour="landing-search" onSubmit={handleSubmit} className="flex flex-col gap-3">
                   <div className="flex flex-col sm:flex-row gap-2.5">
                     <input
                       value={input}
@@ -271,6 +275,7 @@ export const LandingClient = ({ initialRepos, initialTotal }: Props) => {
 
                   {!showCompare && (
                     <button
+                      data-tour="landing-compare"
                       type="button"
                       onClick={() => setShowCompare(true)}
                       className="text-xs text-muted-subtle hover:text-muted transition-colors self-start"
@@ -326,7 +331,7 @@ export const LandingClient = ({ initialRepos, initialTotal }: Props) => {
 
         {/* ── Features — framed between borders ── */}
         <div className="border-y border-border-subtle">
-        <section className="w-full max-w-7xl mx-auto px-4 lg:px-6 py-10">
+        <section data-tour="landing-features" className="w-full max-w-7xl mx-auto px-4 lg:px-6 py-10">
           <h2 className="text-muted-subtle text-2xs uppercase tracking-widest mb-6 text-center">
             More to explore
           </h2>
@@ -405,7 +410,7 @@ export const LandingClient = ({ initialRepos, initialTotal }: Props) => {
 
         {/* ── Community Maps (featured) ── */}
         {initialRepos.length > 0 && (
-          <section className="w-full max-w-7xl mx-auto px-4 lg:px-6 pt-4 pb-16">
+          <section data-tour="landing-community" className="w-full max-w-7xl mx-auto px-4 lg:px-6 pt-4 pb-16">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-muted-subtle text-2xs uppercase tracking-widest">
                 Community maps

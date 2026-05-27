@@ -22,6 +22,7 @@ import { CLUSTER_RADIUS } from "@/components/map/constants";
 import type { MapProjection } from "@/lib/theme";
 import type { RepoStats, RepoOrganic } from "@/app/api/stats/[owner]/[repo]/route";
 import { TokenModal, getStoredToken, getStoredUsername, setStoredUsername } from "@/components/token-modal";
+import { MapTourAutoStart } from "@/components/tour/tour-provider";
 import { isCountry, normalizeCountry } from "@/lib/countries";
 import { useTheme } from "@/hooks/useTheme";
 import { MAP_STYLE_DARK, MAP_STYLE_LIGHT } from "@/lib/theme";
@@ -363,6 +364,8 @@ export default function MapPage({
 
   return (
     <main id="main" className="relative w-screen h-screen overflow-hidden bg-background">
+
+      <MapTourAutoStart status={status} hasPoints={points.length > 0} />
 
       {/* Global screen-reader live region for scan progress, errors, and status changes */}
       <div role="status" aria-live="polite" aria-atomic="true" className="sr-only">

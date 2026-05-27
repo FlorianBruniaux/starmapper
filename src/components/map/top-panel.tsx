@@ -97,7 +97,7 @@ export const TopPanel = ({
 
   return (
     <>
-    <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10
+    <div data-tour="map-top-panel" className="absolute top-4 left-1/2 -translate-x-1/2 z-10
       bg-background/90 border border-border rounded-xl
       px-4 py-3 backdrop-blur-md shadow-2xl min-w-80 w-max max-w-sm">
 
@@ -307,7 +307,7 @@ export const TopPanel = ({
       )}
 
       {/* ── Find a stargazer ──────────────────────────────────────────────── */}
-      <div className="mt-2.5 pt-2.5 border-t border-border-subtle">
+      <div data-tour="map-find-stargazer" className="mt-2.5 pt-2.5 border-t border-border-subtle">
         <div className="relative flex items-center">
           {/* Loupe inline dans le field */}
           <Search size={12} className="absolute left-3 text-muted-subtle pointer-events-none" aria-hidden="true" />

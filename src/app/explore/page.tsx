@@ -6,6 +6,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Header } from "@/components/header";
+import { TourTrigger } from "@/components/tour/tour-trigger";
 import { TokenModal, getStoredToken } from "@/components/token-modal";
 import { CommandSearch } from "@/components/command-search";
 import { Footer } from "@/components/footer";
@@ -753,13 +754,16 @@ export default function ExplorePage() {
       <main id="main" className="flex-1 w-full max-w-7xl mx-auto px-4 lg:px-6 pt-6 pb-8">
 
         {/* Page title */}
-        <div className="mb-5">
-          <h1 className="text-2xl font-bold text-foreground">Stargazer Intelligence</h1>
-          <p className="text-muted text-sm mt-1">Global leaderboards across all tracked repos</p>
+        <div className="mb-5 flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Stargazer Intelligence</h1>
+            <p className="text-muted text-sm mt-1">Global leaderboards across all tracked repos</p>
+          </div>
+          <TourTrigger tourId="explore" label="Tour" className="flex-shrink-0 flex items-center gap-1.5 text-xs text-muted hover:text-foreground transition-colors px-2 py-1 rounded border border-border hover:border-accent-blue/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/40 mt-1" />
         </div>
 
         {/* Summary cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+        <div data-tour="explore-summary" className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
           {([
             {
               label: "Developers",
@@ -824,7 +828,7 @@ export default function ExplorePage() {
             <div className="bg-surface border border-border rounded-xl overflow-hidden">
 
               {/* Tab bar */}
-              <div className="relative">
+              <div data-tour="explore-tabs" className="relative">
                 <div className="flex border-b border-border-subtle overflow-x-auto snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                   {(["top", "power", "companies", "countries", "cities", "nearby"] as Tab[]).map((t) => (
                     <button
@@ -864,7 +868,7 @@ export default function ExplorePage() {
 
               {/* Filter bar — hidden on "nearby" tab (has its own search) */}
               {(showCountryFilter || showSearch) && (
-                <div className="flex flex-col gap-2 px-5 pt-4 pb-0">
+                <div data-tour="explore-filters" className="flex flex-col gap-2 px-5 pt-4 pb-0">
                   <div className="flex items-center gap-2">
                     {showCountryFilter && summary && (
                       <FilterCombobox
@@ -1400,7 +1404,7 @@ export default function ExplorePage() {
           </div>
 
           {/* ── RIGHT COLUMN: persistent map ── */}
-          <div ref={mapColumnRef} className="flex-1 min-w-0">
+          <div data-tour="explore-map" ref={mapColumnRef} className="flex-1 min-w-0">
             <div className="bg-surface border border-border rounded-xl overflow-hidden lg:sticky lg:top-[72px]">
 
               {/* Map header */}

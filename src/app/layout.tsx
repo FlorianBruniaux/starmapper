@@ -8,6 +8,7 @@ import { headers } from "next/headers";
 import "./globals.css";
 import { VitalsReporter } from "@/components/vitals-reporter";
 import { StarNudge } from "@/components/star-nudge";
+import { TourProvider } from "@/components/tour/tour-provider";
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-geist-sans", display: "swap" });
 
@@ -184,7 +185,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         >
           Skip to content
         </a>
-        {children}
+        <TourProvider>
+          {children}
+        </TourProvider>
         <VitalsReporter />
         <StarNudge />
       </body>

@@ -19,6 +19,7 @@ import type { UserRepo, UserReposResponse } from "@/app/api/explore/user-repos/r
 import type { UserRepo as GhRepo } from "@/app/api/user-repos/route";
 import { Modal } from "@/components/modal";
 import { NewsTimeline } from "@/components/news-timeline";
+import { TourTrigger } from "@/components/tour/tour-trigger";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -518,7 +519,7 @@ export default function ProfilePage({ params }: Props) {
 
       {/* ── Map — full width at top (or placeholder while loading) ──────── */}
       {(hasMap || loadState === "loading") && (
-        <div className="h-64 sm:h-80 shrink-0 border-b border-border-subtle relative">
+        <div data-tour="profile-map" className="h-64 sm:h-80 shrink-0 border-b border-border-subtle relative">
           {hasMap ? (
             <StargazerMapDynamic
               points={allMapPoints}
@@ -565,7 +566,7 @@ export default function ProfilePage({ params }: Props) {
             </div>
           </div>
         ) : profile && (
-          <div className="flex items-start gap-5 mb-8">
+          <div data-tour="profile-card" className="flex items-start gap-5 mb-8">
             <img
               src={`https://github.com/${profile.login}.png`}
               alt={`${profile.login} avatar`}
@@ -766,6 +767,11 @@ export default function ProfilePage({ params }: Props) {
                       </>
                     )}
                   </div>
+                  <TourTrigger
+                    tourId="profile"
+                    label="Tour"
+                    className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md border border-border text-muted hover:text-foreground hover:border-accent-blue/40 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/40"
+                  />
                 </div>
               </div>
               {!profile.partial && (profile.company || profile.location) && (
@@ -966,6 +972,7 @@ export default function ProfilePage({ params }: Props) {
         {/* ── Owned repos ─────────────────────────────────────────────── */}
         {profile && profile.ownedRepos.length > 0 && (
           <section
+            data-tour="profile-repos"
             className={`mb-2 ${profileTab !== "owned" ? "hidden sm:block" : ""}`}
             aria-labelledby="owned-heading"
           >
@@ -1090,6 +1097,7 @@ export default function ProfilePage({ params }: Props) {
         {/* ── Developers nearby — bottom section on mobile, right column on lg ── */}
         {(hasMap || loadState === "loading") && (
           <aside
+            data-tour="profile-nearby"
             aria-label="Developers nearby"
             className="w-full lg:flex-1 lg:overflow-y-auto border-t border-border-subtle lg:border-t-0 px-4 sm:px-5 py-6 pb-12 bg-surface/30 lg:bg-transparent"
           >

@@ -9,6 +9,7 @@ import Image from "next/image";
 import { getSubscriptions, removeSubscription } from "@/lib/subscriptions";
 import type { Subscription } from "@/lib/subscriptions";
 import type { NewsItem } from "@/app/api/news/route";
+import { TourTrigger } from "@/components/tour/tour-trigger";
 
 type FeedCard = {
   login: string;
@@ -249,18 +250,25 @@ export const FeedsPageClient = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-baseline justify-between gap-4">
+      <div data-tour="feeds-header" className="flex items-baseline justify-between gap-4">
         <div>
           <h1 className="text-lg font-bold text-foreground">Your feeds</h1>
           <p className="text-sm text-muted mt-0.5">
             Latest announcements from developers you follow.
           </p>
         </div>
-        {subs !== null && subs.length > 0 && (
-          <span className="text-xs text-muted bg-surface border border-border rounded-full px-2.5 py-1 shrink-0">
-            {subs.length} following
-          </span>
-        )}
+        <div className="flex items-center gap-2 shrink-0">
+          {subs !== null && subs.length > 0 && (
+            <span className="text-xs text-muted bg-surface border border-border rounded-full px-2.5 py-1">
+              {subs.length} following
+            </span>
+          )}
+          <TourTrigger
+            tourId="feeds"
+            label="Tour"
+            className="flex items-center gap-1.5 text-xs text-muted hover:text-foreground transition-colors px-2 py-1 rounded border border-border hover:border-accent-blue/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/40"
+          />
+        </div>
       </div>
 
       {/* Loading skeleton */}
@@ -277,7 +285,7 @@ export const FeedsPageClient = () => {
 
       {/* Cards grid */}
       {subs !== null && subs.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div data-tour="feeds-cards" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {subs.map((s) => {
             const card = cards[s.login] ?? {
               login: s.login,
