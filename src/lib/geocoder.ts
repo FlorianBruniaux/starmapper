@@ -97,6 +97,10 @@ const cacheBulkRead = async (keys: string[]): Promise<GeoCacheRow[]> => {
   }
 };
 
+const isValidCoords = (lat: number, lng: number): boolean =>
+  Number.isFinite(lat) && Number.isFinite(lng) &&
+  lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
+
 // --- API callers ---
 const fetchWithTimeout = (url: string, ms: number, options?: RequestInit): Promise<Response> => {
   const controller = new AbortController();
@@ -119,6 +123,7 @@ const callGeoapify = async (
     const feature = data.features?.[0];
     if (feature) {
       const [lng, lat] = feature.geometry.coordinates as [number, number];
+      if (!isValidCoords(lat, lng)) return null;
       return [lat, lng];
     }
     return null; // valid "not found"
@@ -143,6 +148,7 @@ const callJawg = async (
     const data = await res.json();
     if (data.features?.length > 0) {
       const [lng, lat] = data.features[0].geometry.coordinates as [number, number];
+      if (!isValidCoords(lat, lng)) return null;
       return [lat, lng];
     }
     return null; // valid "not found"
@@ -160,7 +166,10 @@ const callNominatim = async (location: string): Promise<[number, number] | null>
     if (!res.ok) return null;
     const data = await res.json();
     if (Array.isArray(data) && data.length > 0) {
-      return [parseFloat(data[0].lat), parseFloat(data[0].lon)];
+      const lat = parseFloat(data[0].lat);
+      const lng = parseFloat(data[0].lon);
+      if (!isValidCoords(lat, lng)) return null;
+      return [lat, lng];
     }
     return null;
   } catch {

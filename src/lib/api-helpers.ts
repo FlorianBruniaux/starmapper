@@ -93,7 +93,8 @@ export const sanitizeError = (err: unknown): string => {
     .replace(/ghp_[A-Za-z0-9]+/g, "[gh-token-redacted]")
     .replace(/github_pat_[A-Za-z0-9_]+/g, "[gh-token-redacted]")
     .replace(/gho_[A-Za-z0-9]+/g, "[gh-token-redacted]")
-    .replace(/ghs_[A-Za-z0-9]+/g, "[gh-token-redacted]");
+    .replace(/ghs_[A-Za-z0-9]+/g, "[gh-token-redacted]")
+    .replace(/apiKey=[A-Za-z0-9_\-.]+/gi, "apiKey=[redacted]");
 };
 
 /** Safe server-side error logger that never leaks secrets. */

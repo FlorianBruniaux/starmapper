@@ -21,16 +21,16 @@ export const env = createEnv({
 
     // Security — optional but strongly recommended in production
     SM_TOKEN_SECRET: z.string().min(32).optional(),
-    CACHE_SIGN_SECRET: z.string().optional(),
+    CACHE_SIGN_SECRET: z.string().min(16).optional(),
 
     // Upstash Redis — required for distributed rate limiting in production
     UPSTASH_REDIS_REST_URL: z.string().optional(),
     UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
 
     // Feature flags + admin
-    ADMIN_SECRET: z.string().optional(),
+    ADMIN_SECRET: z.string().min(16).optional(),
     ADMIN_ALLOWED_IPS: z.string().optional(),
-    CRON_SECRET: z.string().optional(),
+    CRON_SECRET: z.string().min(16).optional(),
     ORGANIC_SCORE_ENABLED: z.string().optional(),
 
     NODE_ENV: z.enum(["development", "production", "test"]).default("development"),

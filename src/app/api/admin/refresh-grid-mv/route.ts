@@ -16,7 +16,7 @@ import type { NextRequest} from "next/server";
 import { NextResponse } from "next/server";
 import { revalidateTag } from "next/cache";
 import { Pool } from "pg";
-import { requireAdminAuth, jsonError, logError } from "@/lib/api-helpers";
+import { requireAdminAuth, jsonError, logError, sanitizeError } from "@/lib/api-helpers";
 import { safeEqual } from "@/lib/api-token";
 
 export const maxDuration = 300;
@@ -73,7 +73,7 @@ const runRefresh = async () => {
         results.push({ mv: name, durationMs: Date.now() - t });
       } catch (err) {
         logError(`admin/refresh-grid-mv [${name}]`, err);
-        results.push({ mv: name, durationMs: Date.now() - t, error: String(err) });
+        results.push({ mv: name, durationMs: Date.now() - t, error: sanitizeError(err) });
       }
     }
   } finally {

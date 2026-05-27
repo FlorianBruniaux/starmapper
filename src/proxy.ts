@@ -66,6 +66,10 @@ const TIER_LIMITERS: Record<"strict-get" | "stargazer-cache-get" | "moderate-get
 // When unset (local dev without env), falls back to Referer check + rate limit only.
 const SM_SECRET = process.env.SM_TOKEN_SECRET ?? "";
 
+if (!SM_SECRET && process.env.NODE_ENV === "production") {
+  console.warn("[proxy] SM_TOKEN_SECRET not set in production — HMAC session protection is disabled, falling back to Referer-only checks");
+}
+
 const isDev = process.env.NODE_ENV === "development";
 
 // Build a per-request CSP with a unique nonce.
