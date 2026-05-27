@@ -867,7 +867,7 @@ export default function ProfilePage({ params }: Props) {
 
         {/* ── News / announcements ────────────────────────────────────── */}
         {login && (
-          <section className="mb-2">
+          <section data-tour="profile-news" className="mb-2">
             <NewsTimeline login={login} maxItems={3} />
           </section>
         )}
@@ -890,6 +890,7 @@ export default function ProfilePage({ params }: Props) {
         {/* ── GitHub repos (scannable) ─────────────────────────────────── */}
         {githubRepos && githubRepos.length > 0 && (
           <section
+            data-tour="profile-github-repos"
             className={`mb-2 ${profileTab !== "github" ? "hidden sm:block" : ""}`}
             aria-labelledby="gh-repos-heading"
           >
@@ -1006,6 +1007,7 @@ export default function ProfilePage({ params }: Props) {
         {/* ── Starred repos ────────────────────────────────────────────── */}
         {profile && (
           <section
+            data-tour="profile-starred-repos"
             className={`mb-2 ${profileTab !== "starred" ? "hidden sm:block" : ""}`}
             aria-labelledby="starred-heading"
           >

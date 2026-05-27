@@ -198,6 +198,25 @@ const PROFILE_STEPS: TourStep[] = [
     placement: "bottom",
   },
   {
+    selector: "[data-tour='profile-news']",
+    title: "News & Follow",
+    description: "Recent announcements from this developer: new releases, blog posts, project news. Hit Follow to add them to your Feeds so their updates land in one place.",
+    placement: "bottom",
+  },
+  {
+    selector: "[data-tour='profile-github-repos']",
+    title: "GitHub repos",
+    description: "All public repos from this developer. Click Map a repo to run a full stargazer scan on any of them and see where their audience lives on the world map.",
+    placement: "top",
+  },
+  {
+    selector: "[data-tour='profile-starred-repos']",
+    title: "Starred repos on StarMapper",
+    description: "Repos this developer has starred that were also scanned on StarMapper. Sorted by recency, stars, or mapping ratio. A quick way to discover what they find interesting.",
+    placement: "top",
+    optional: true,
+  },
+  {
     selector: "[data-tour='profile-repos']",
     title: "Repos on StarMapper",
     description: "Every repo from this developer that has been mapped. Stars, mapping ratio, and language visible at a glance. Click any card to open its stargazer map.",
