@@ -5,6 +5,26 @@ Versioning: Semantic Versioning (MAJOR.MINOR.PATCH)
 
 ---
 
+## [0.5.3] (2026-05-27)
+
+### Features
+
+- **Guided tour.** Five-page contextual tour (landing, map, explore, feeds, profile) with step-by-step overlay tooltips, keyboard navigation (arrow keys + Esc), and persistent completion state in localStorage. A TourTrigger button on each page lets users restart the tour at any time.
+
+### Bug Fixes
+
+- **`setViewMode` stale closure.** The function closed over the local `map` variable from `initMap` which could be destroyed after unmount or unset before layers were added. Switched to `mapRef.current` + `hasInitializedRef` guard to prevent null-pointer errors on fast navigation.
+- **Scripts backfill `--force` flag.** `backfill-organic-score` now accepts `--force` to recompute already-scored rows, useful after signal weight changes or calibration updates. `db-sync-to-neon` expands the `badge_cache` upsert to preserve nullable columns during sync.
+
+### Internal
+
+- **SEO/GEO pass.** `robots.ts` adds `Bingbot`, `msnbot`, `Google-Extended` explicitly. `layout.tsx` `SoftwareApplication` description rewritten value-first; `dateModified` added; `speakable` cssSelector extended. FAQ gains 5 new Q&As targeting high-GEO queries (fake star detection, Watch Mode, Geographic Velocity, influential stargazers, multi-repo compare). `</script>` injection escaping (`<`) applied consistently to all inline JSON-LD scripts. Sitemap adds `/organic-score/calibration` and `/sponsor`.
+- **Anti-AI text cleanup.** Em dashes removed from all user-visible strings across 30 files (landing, map, profile, trending, FAQ, privacy).
+- **API parallelization.** `badge-update` runs plausibility and organic score checks in parallel. `/devs` count and top-countries queries use language materialized views. Nearby users and city queries use `Promise.all`. `badge-update` city scan timeout guard added.
+- **Geocoder logging.** `recordSuccess()` added, Jawg/Geoapify HTTP status logged on error for faster diagnosis. Sitemap response cached for 1 hour.
+
+---
+
 ## [0.5.2] (2026-05-25)
 
 ### Features

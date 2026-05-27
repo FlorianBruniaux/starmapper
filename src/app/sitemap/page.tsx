@@ -78,6 +78,7 @@ const SECTIONS: Section[] = [
     description: "Documentation and legal.",
     links: [
       { href: "/faq", label: "FAQ", desc: "Frequently asked questions about StarMapper" },
+      { href: "/organic-score/calibration", label: "Organic Score calibration", desc: "Methodology and calibration corpus for the Organic Score" },
       { href: "/changelog", label: "Changelog", desc: "What changed in each release" },
       { href: "/privacy", label: "Privacy policy" },
       { href: "/terms", label: "Terms of service" },
