@@ -5,6 +5,21 @@ Versioning: Semantic Versioning (MAJOR.MINOR.PATCH)
 
 ---
 
+## [0.5.5] (2026-05-27)
+
+### UX
+
+- **Token modal clarity.** Reframed "GitHub Access Token" as "Speed Boost: GitHub Token" to remove the auth/login connotation. Added a trust banner ("No account, no login, no signup. A GitHub token is just a speed pass for the API") with a Shield icon. Copy simplified: 60 vs 5,000 req/hr now explicit, link reads "Create a free token (zero permissions)". Modal widened to `max-w-lg`. Browser-native password reveal/autofill icons suppressed via CSS.
+- **Data freshness communication.** A "Data updates when someone refreshes, not in real time." line now appears under the cache status row. Lock icon tooltips on Refresh and Full rescan buttons explain "Add a free GitHub token for faster scanning. No login needed."
+- **Community cache model explained.** Pre-scan overlay rewritten: "Results are shared with everyone. When you scan, all future visitors see your results instantly." The 50k+ token warning now says "free token / zero permissions / no login, no signup." and "Add a free token (takes 30 sec)".
+- **FAQ additions.** Two new entries: "Do I need to create an account?" (no, zero accounts anywhere) and "Is the data real-time?" (no, community snapshot model explained). Fixed a factual error: token storage was documented as `localStorage` but the implementation uses `sessionStorage` with a 30-minute TTL.
+- **Watch Mode wording.** Tour step and dock button title replace "real time" with "polls GitHub every 60 seconds" for accuracy.
+- **Landing one-liner.** A three-step summary added below the community count: "1. Paste a repo · 2. We scan GitHub · 3. Everyone sees the map".
+- **Header / floating nav.** Token button label changed from "Add token" to "Faster scans" when no token is set.
+- **Privacy page.** sessionStorage token storage and 30-minute TTL documented in the cookies/storage section.
+
+---
+
 ## [0.5.4] (2026-05-27)
 
 ### Performance
