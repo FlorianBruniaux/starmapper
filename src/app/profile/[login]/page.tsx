@@ -887,6 +887,21 @@ export default function ProfilePage({ params }: Props) {
           />
         </div>
 
+        {/* ── GitHub repos skeleton — shown while fetch is in flight after profile loads ── */}
+        {profile && !githubRepos && loadState === "loaded" && (
+          <div className={`mb-2 animate-pulse motion-reduce:animate-none ${profileTab !== "github" ? "hidden sm:block" : ""}`}>
+            <div className="flex items-center gap-2 mb-3">
+              <div className="h-3.5 w-24 bg-surface-alt rounded" />
+              <div className="h-3.5 w-6 bg-surface-alt rounded-full" />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="h-16 rounded-lg bg-surface border border-border" />
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* ── GitHub repos (scannable) ─────────────────────────────────── */}
         {githubRepos && githubRepos.length > 0 && (
           <section
