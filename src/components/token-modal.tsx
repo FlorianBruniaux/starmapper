@@ -4,6 +4,7 @@
 "use client";
 
 import { useState } from "react";
+import { Shield } from "lucide-react";
 import { Modal } from "@/components/modal";
 import {
   getStoredToken,
@@ -57,33 +58,38 @@ export const TokenModal = ({ onClose }: Props) => {
   };
 
   return (
-    <Modal open title="GitHub Access Token" onClose={onClose}>
+    <Modal open title="Speed Boost — GitHub Token" onClose={onClose}>
       {/* Body */}
       <div className="px-6 py-5 space-y-4">
+        <div className="flex items-start gap-2.5 bg-accent-green/8 border border-accent-green/20 rounded-lg px-4 py-3">
+          <Shield size={14} className="text-accent-green mt-0.5 flex-shrink-0" aria-hidden="true" />
+          <p className="text-xs text-muted leading-relaxed">
+            <span className="text-foreground font-medium">No account, no login, no signup.</span>{" "}
+            A GitHub token is just a speed pass for the API. It never gives StarMapper access to your repos or private data.
+          </p>
+        </div>
         <p className="text-foreground text-sm leading-relaxed">
-          StarMapper uses the GitHub API to fetch stargazers. Without a token, you're limited to{" "}
-          <span className="text-accent-red font-medium">60 requests/hour</span> (unauthenticated).
-          With your own token, you get{" "}
-          <span className="text-accent-green font-medium">5,000 requests/hour</span>.
+          StarMapper reads public stargazer data from the GitHub API. Without a token, you share{" "}
+          <span className="text-accent-red font-medium">60 requests/hour</span> with everyone.
+          With your token:{" "}
+          <span className="text-accent-green font-medium">5,000 requests/hour</span> dedicated to you.
         </p>
         <p className="text-muted text-sm">
-          No scopes needed. A{" "}
           <a
             href="https://github.com/settings/tokens/new?description=StarMapper&scopes="
             target="_blank"
             rel="noopener noreferrer"
-            aria-label="Create a public-only GitHub token (opens in new tab)"
+            aria-label="Create a free GitHub token with zero permissions (opens in new tab)"
             className="text-accent-blue hover:underline"
           >
-            public-only token
+            Create a free token (zero permissions)
           </a>{" "}
-          is enough. It's stored only in your browser's session memory (auto-cleared after
-          30 minutes or when you close the tab), never persisted to our servers except as an API relay header.
+          in 30 seconds. Stored in your browser session only, auto-cleared after 30 min or when you close the tab.
         </p>
 
         <div>
           <label htmlFor="gh-token-input" className="block text-foreground text-xs font-medium mb-1.5">
-            Personal Access Token
+            GitHub Token (no permissions needed)
           </label>
           <input
             id="gh-token-input"

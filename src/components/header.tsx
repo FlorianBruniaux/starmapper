@@ -88,7 +88,7 @@ export const Header = ({
       ) : (
         <>
           <Clock size={11} aria-hidden="true" />
-          Add token
+          Faster scans
         </>
       )}
     </button>
@@ -275,7 +275,7 @@ export const Header = ({
                           ) : (
                             <>
                               <Clock size={13} aria-hidden="true" />
-                              Add token
+                              Faster scans
                             </>
                           )}
                         </button>

@@ -270,6 +270,7 @@ const TopPanelInner = ({
 
       {/* ── Cache status ──────────────────────────────────────────────────── */}
       {(status === "cached" || status === "done") && cachedAt && (
+        <>
         <div className="mt-2 pt-2 border-t border-border-subtle
           flex items-center justify-between gap-2">
           <span className="text-2xs text-accent-green flex items-center gap-1">
@@ -283,7 +284,12 @@ const TopPanelInner = ({
                 className="text-2xs text-accent-blue hover:underline flex items-center gap-1"
               >
                 {!hasToken && (
-                  <Lock size={9} className="opacity-60" aria-hidden="true" />
+                  <span className="relative group/tip">
+                    <Lock size={9} className="opacity-60" aria-hidden="true" />
+                    <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-44 rounded-lg bg-surface border border-border px-3 py-2 text-xs text-foreground leading-relaxed shadow-xl opacity-0 group-hover/tip:opacity-100 transition-opacity duration-150 z-50 whitespace-normal font-normal normal-case tracking-normal">
+                      Add a free GitHub token for faster scanning. No login needed.
+                    </span>
+                  </span>
                 )}
                 ↻ {newStarsCount > 0 ? `${newStarsCount} new stars` : "Refresh"}
               </button>
@@ -293,12 +299,22 @@ const TopPanelInner = ({
               className="text-2xs text-muted-subtle hover:text-muted transition-colors flex items-center gap-1"
             >
               {!hasToken && (
-                <Lock size={9} className="opacity-60" aria-hidden="true" />
+                <span className="relative group/tip">
+                  <Lock size={9} className="opacity-60" aria-hidden="true" />
+                  <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-44 rounded-lg bg-surface border border-border px-3 py-2 text-xs text-foreground leading-relaxed shadow-xl opacity-0 group-hover/tip:opacity-100 transition-opacity duration-150 z-50 whitespace-normal font-normal normal-case tracking-normal">
+                    Add a free GitHub token for faster scanning. No login needed.
+                  </span>
+                </span>
               )}
               Full rescan
             </button>
           </div>
         </div>
+        <p className="text-2xs text-muted-subtle mt-1 text-center leading-relaxed">
+          Data updates when someone refreshes, not in real time.
+          {!hasToken && " Add a token to refresh yourself."}
+        </p>
+        </>
       )}
 
       {/* ── Error state ───────────────────────────────────────────────────── */}

@@ -100,7 +100,7 @@ const MAP_STEPS: TourStep[] = [
   {
     selector: "[data-tour='map-watch']",
     title: "Live watch mode",
-    description: "Tracks new stars on your repo in real time while you watch. New pins appear on the map live, useful during a launch or a Hacker News post.",
+    description: "Polls GitHub every 60 seconds and shows new stars as they arrive on the map. Useful during a launch or a Hacker News post.",
     placement: "right",
     optional: true,
   },

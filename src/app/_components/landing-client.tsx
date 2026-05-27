@@ -315,6 +315,13 @@ export const LandingClient = ({ initialRepos, initialTotal }: Props) => {
                       community so far
                     </p>
                   )}
+                  <p className="text-2xs text-muted-subtle flex items-center gap-1.5">
+                    <span>1. Paste a repo</span>
+                    <span className="text-border" aria-hidden="true">·</span>
+                    <span>2. We scan GitHub</span>
+                    <span className="text-border" aria-hidden="true">·</span>
+                    <span>3. Everyone sees the map</span>
+                  </p>
                 </div>
               </div>
 

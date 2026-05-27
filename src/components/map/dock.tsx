@@ -235,7 +235,7 @@ export const Dock = ({
                 ? "bg-accent-green/10 border-accent-green/50 text-accent-green"
                 : "bg-background/90 border-border text-muted hover:text-foreground hover:border-accent-green/50"
             }`}
-            title={watchActive ? "Stop watching" : "Watch for new stars in real time"}
+            title={watchActive ? "Stop watching" : "Poll for new stars every 60 seconds"}
           >
             {watchActive ? (
               <>

@@ -35,12 +35,20 @@ const FAQS = [
     a: "Yes, no account, no login, no credit card. Paste a repo URL and click Map Stargazers.",
   },
   {
+    q: "Do I need to create an account?",
+    a: "No. StarMapper has no accounts, no login, no signup. Everything works immediately. Adding a GitHub token is optional and free — it just raises the GitHub API rate limit from 60 to 5,000 requests per hour so large repos scan faster. The token requires zero permissions, stays in your browser's session memory, and auto-deletes after 30 minutes.",
+  },
+  {
     q: "How long does a scan take?",
     a: "Small repos (under 500 stars) scan in under 10 seconds. Large repos (50k+ stars) take a few minutes. The GitHub API processes users in batches of 100. Once a repo is scanned, the result is cached globally: any subsequent visitor loads it instantly, no re-scan needed.",
   },
   {
+    q: "Is the data real-time?",
+    a: "No. StarMapper shows the last scan result, not a live feed. When you or anyone else clicks Refresh or Full rescan, the data is updated and shared with all future visitors. Think of it as a community-maintained snapshot: one person's refresh benefits everyone. Watch Mode is the exception — it polls GitHub every 60 seconds to surface new stars as they arrive, useful during a launch.",
+  },
+  {
     q: "Will my GitHub token be stored?",
-    a: "No. Your token is saved in your browser's localStorage only. It never leaves your device except to authenticate directly with the GitHub API. StarMapper does not store tokens server-side.",
+    a: "No. Your token is saved in your browser's session memory (sessionStorage) and auto-clears after 30 minutes or when you close the tab. It never leaves your browser except as an API relay header to GitHub. StarMapper has no accounts and does not store tokens server-side.",
   },
   {
     q: "Is StarMapper open source?",

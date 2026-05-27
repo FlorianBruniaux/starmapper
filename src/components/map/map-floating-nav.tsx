@@ -66,15 +66,15 @@ export const MapFloatingNav = ({ owner, repo, hasToken, onTokenClick, projection
           className={`flex items-center gap-1.5 text-xs transition-colors ${
             hasToken ? "text-accent-green" : "text-muted hover:text-foreground"
           }`}
-          title={hasToken ? "Token set" : "Add GitHub token"}
-          aria-label={hasToken ? "GitHub token set" : "Add GitHub token"}
+          title={hasToken ? "Token set" : "Faster scans: add a free GitHub token"}
+          aria-label={hasToken ? "GitHub token set" : "Add a free GitHub token for faster scans"}
         >
           {hasToken ? (
             <Check size={12} aria-hidden="true" />
           ) : (
             <Clock size={12} aria-hidden="true" />
           )}
-          <span className="hidden sm:inline">{hasToken ? "Token set" : "Add token"}</span>
+          <span className="hidden sm:inline">{hasToken ? "Token set" : "Faster scans"}</span>
         </button>
         <div className="w-px h-3.5 bg-border-subtle" aria-hidden="true" />
         <button

@@ -23,19 +23,19 @@ describe("TokenModal", () => {
 
   it("displays the modal title", () => {
     render(<TokenModal onClose={vi.fn()} />);
-    expect(screen.getByText("GitHub Access Token")).toBeInTheDocument();
+    expect(screen.getByText("Speed Boost — GitHub Token")).toBeInTheDocument();
   });
 
   it("renders the password input field", () => {
     render(<TokenModal onClose={vi.fn()} />);
-    const input = screen.getByLabelText("Personal Access Token");
+    const input = screen.getByLabelText("GitHub Token (no permissions needed)");
     expect(input).toBeInTheDocument();
     expect(input).toHaveAttribute("type", "password");
   });
 
   it("accepts text input in the token field", () => {
     render(<TokenModal onClose={vi.fn()} />);
-    const input = screen.getByLabelText("Personal Access Token") as HTMLInputElement;
+    const input = screen.getByLabelText("GitHub Token (no permissions needed)") as HTMLInputElement;
 
     fireEvent.change(input, { target: { value: "ghp_testtoken123" } });
 
@@ -74,7 +74,7 @@ describe("TokenModal", () => {
 
   it("clears the input when Remove token is clicked", () => {
     render(<TokenModal onClose={vi.fn()} />);
-    const input = screen.getByLabelText("Personal Access Token") as HTMLInputElement;
+    const input = screen.getByLabelText("GitHub Token (no permissions needed)") as HTMLInputElement;
 
     fireEvent.change(input, { target: { value: "ghp_testtoken123" } });
     expect(input.value).toBe("ghp_testtoken123");

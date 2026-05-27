@@ -213,6 +213,12 @@ export default function PrivacyPage() {
             in <code className="bg-surface-alt px-1.5 py-0.5 rounded text-xs font-mono">localStorage</code>, which is not a cookie and not
             transmitted to any server.
           </p>
+          <p>
+            If you optionally provide a GitHub Personal Access Token, it is stored in{" "}
+            <code className="bg-surface-alt px-1.5 py-0.5 rounded text-xs font-mono">sessionStorage</code>{" "}
+            with a 30-minute TTL. It is automatically cleared when you close the tab and is never persisted
+            to our servers.
+          </p>
         </Section>
 
         {/* 9. Your rights */}

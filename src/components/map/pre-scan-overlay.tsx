@@ -83,8 +83,8 @@ export const PreScanOverlay = ({
           </div>
         ) : (
           <p className="text-muted text-xs mb-6 leading-relaxed">
-            Stargazers are geocoded via their GitHub location field.
-            Results are cached and shared. Subsequent visitors load instantly.
+            Stargazers are geocoded from their GitHub profile location.
+            Results are shared with everyone. When you scan, all future visitors see your results instantly.
           </p>
         )}
 
@@ -93,14 +93,14 @@ export const PreScanOverlay = ({
             <span className="text-accent-orange mt-0.5 flex-shrink-0 text-sm">⚠</span>
             <div>
               <p className="text-accent-orange text-xs font-medium mb-1">
-                A GitHub token is required for repos over 50,000 stars
+                A free GitHub token is needed for large repos (50k+ stars)
               </p>
               <p className="text-muted text-xs leading-relaxed mb-2.5">
-                Without a token, GitHub limits requests to 60/hr, not enough to index this repo.
-                A free token unlocks 5,000/hr. No special permissions needed.
+                GitHub limits unauthenticated requests to 60/hr, not enough for this repo.
+                A free token with zero permissions unlocks 5,000/hr. No login, no signup.
               </p>
               <button type="button" onClick={onStart} className="text-xs text-accent-blue hover:underline font-medium">
-                Add your GitHub token →
+                Add a free token (takes 30 sec) →
               </button>
             </div>
           </div>
