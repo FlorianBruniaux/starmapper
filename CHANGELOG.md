@@ -9,10 +9,14 @@ Versioning: Semantic Versioning (MAJOR.MINOR.PATCH)
 
 ### Performance
 
-- **Core Web Vitals: CLS, INP.** Three targeted fixes based on a full audit of landing, map, and profile pages.
+- **Core Web Vitals: CLS pass on all pages.** Full audit of landing, map, profile, and explore pages. Six targeted fixes.
   - `AnnouncementBanner` now renders visible by default and hides via `useEffect` if previously dismissed. Eliminates the ~40px layout shift on first visit that was pushing CLS to 0.164.
-  - `TopPanel` `locationCount` wrapped in `useMemo([points])` and component wrapped in `React.memo`. Stops an O(n) country normalization loop (iterating all points on every render) from running on each keystroke in the "Find a stargazer" input.
+  - `TopPanel` `locationCount` wrapped in `useMemo([points])` and component wrapped in `React.memo`. Stops an O(n) country normalization loop from running on each keystroke in the "Find a stargazer" input.
   - Unmapped users drawer virtualized using scroll-based windowing with `ResizeObserver` column detection. Pre-sort moved to `useMemo`. Opening the drawer on a repo with 30k+ unmapped users no longer blocks the main thread for 2-5 seconds.
+  - Profile page map container now always rendered (height 0 when no coords) instead of conditionally mounted. Eliminates the 256px layout shift (CLS 0.931) on partial profiles (repo owners without a geocodable location).
+  - Profile page GitHub repos section now has a correctly-sized skeleton during the async fetch window, and the section skeleton is positioned after `NewsTimeline` to match the loaded DOM order. Prevents two separate insertion-based layout shifts.
+  - Explore page `UserListSkeleton` now renders `PAGE_SIZE` rows (30) with a matching pagination placeholder instead of 8 rows. On the mobile flex-col layout the left panel was growing from ~500px to ~1600px when data loaded, shifting the map column. CLS dropped from 0.179 to 0.001.
+  - `NewsTimeline` loading skeleton reduced from 2 × h-12 (104px) to a single h-10 row. For profiles with no news the old skeleton collapsed to a 38px empty-state text, causing a 66px layout shift.
 
 ---
 
