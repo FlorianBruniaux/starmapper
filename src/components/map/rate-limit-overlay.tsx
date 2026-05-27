@@ -1,7 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 
+"use client";
+
+import { useRef } from "react";
 import type { ScanStatus } from "@/hooks/useScanController";
+import { useFocusTrap } from "@/hooks/use-focus-trap";
 
 type Props = {
   status: ScanStatus;
@@ -11,10 +15,15 @@ type Props = {
 };
 
 export const RateLimitOverlay = ({ status, waitReason, retryIn, retryTotal }: Props) => {
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(dialogRef, status === "waiting");
+
   if (status !== "waiting") return null;
   return (
     <div className="absolute inset-0 z-30 flex items-center justify-center bg-background/75 backdrop-blur-sm">
       <div
+        ref={dialogRef}
+        tabIndex={-1}
         role="alertdialog"
         aria-modal="true"
         aria-labelledby="rate-wait-title"

@@ -1,10 +1,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 
+"use client";
+
+import { useRef } from "react";
 import NextImage from "next/image";
 import { formatEstimate, timeAgo } from "@/lib/format";
 import type { TimeEstimate } from "@/lib/format";
 import type { ScanStatus } from "@/hooks/useScanController";
+import { useFocusTrap } from "@/hooks/use-focus-trap";
 
 const TOKEN_REQUIRED_STARS = 50_000;
 
@@ -33,10 +37,15 @@ export const PreScanOverlay = ({
   status, cacheCheckDone, repoInfo, estimate,
   total, lastDbScan, hasToken, onStart,
 }: Props) => {
-  if (status !== "idle" || !cacheCheckDone || !estimate) return null;
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const isActive = status === "idle" && cacheCheckDone && !!estimate;
+  useFocusTrap(dialogRef, isActive);
+
+  if (!isActive) return null;
   return (
     <div className="absolute inset-0 z-30 flex items-center justify-center bg-background/85 backdrop-blur-sm">
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="prescan-title"

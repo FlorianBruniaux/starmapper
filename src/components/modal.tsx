@@ -4,53 +4,23 @@
 "use client";
 
 import { useEffect, useId, useRef } from "react";
+import { useFocusTrap } from "@/hooks/use-focus-trap";
 
 type Props = {
   open: boolean;
   onClose: () => void;
   title?: string;
+  ariaLabel?: string;
   maxWidth?: string;
   innerClassName?: string;
   children: React.ReactNode;
 };
 
-export const Modal = ({ open, onClose, title, maxWidth = "max-w-md", innerClassName = "", children }: Props) => {
+export const Modal = ({ open, onClose, title, ariaLabel, maxWidth = "max-w-md", innerClassName = "", children }: Props) => {
   const dialogRef = useRef<HTMLDivElement>(null);
   const titleId = useId();
 
-  // ESC to close
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
-    document.addEventListener("keydown", handler);
-    return () => document.removeEventListener("keydown", handler);
-  }, [open, onClose]);
-
-  // Focus trap
-  useEffect(() => {
-    if (!open || !dialogRef.current) return;
-    const el = dialogRef.current;
-    const focusable = el.querySelectorAll<HTMLElement>(
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-    );
-    const first = focusable[0];
-    const last = focusable[focusable.length - 1];
-
-    const autoFocusEl = el.querySelector<HTMLElement>("[autofocus]");
-    (autoFocusEl ?? first)?.focus();
-
-    const trap = (e: KeyboardEvent) => {
-      if (e.key !== "Tab") return;
-      if (focusable.length === 0) { e.preventDefault(); return; }
-      if (e.shiftKey) {
-        if (document.activeElement === first) { e.preventDefault(); last?.focus(); }
-      } else {
-        if (document.activeElement === last) { e.preventDefault(); first?.focus(); }
-      }
-    };
-    document.addEventListener("keydown", trap);
-    return () => document.removeEventListener("keydown", trap);
-  }, [open]);
+  useFocusTrap(dialogRef, open, onClose);
 
   // Prevent body scroll while open
   useEffect(() => {
@@ -72,6 +42,7 @@ export const Modal = ({ open, onClose, title, maxWidth = "max-w-md", innerClassN
       role="dialog"
       aria-modal="true"
       aria-labelledby={title ? titleId : undefined}
+      aria-label={title ? undefined : ariaLabel}
     >
       <div
         ref={dialogRef}

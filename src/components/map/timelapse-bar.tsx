@@ -94,10 +94,16 @@ export const TimelapseBar = ({
 
           <div className="flex items-center gap-1 flex-shrink-0">
             {/* Speed selector */}
-            <div className="flex rounded-md border border-border overflow-hidden">
+            <div
+              className="flex rounded-md border border-border overflow-hidden"
+              role="radiogroup"
+              aria-label="Playback speed"
+            >
               {TIMELAPSE_SPEEDS.map(({ label, ms }) => (
                 <button
                   key={ms}
+                  role="radio"
+                  aria-checked={speed === ms}
                   onClick={() => onSpeedChange(ms)}
                   className={`text-2xs px-1.5 py-0.5 transition-colors ${
                     speed === ms

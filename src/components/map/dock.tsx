@@ -150,31 +150,35 @@ export const Dock = ({
 
             <div className="border-t border-border-subtle" />
 
-            {([
-              { key: "all", label: "All", dot: null },
-              { key: "elite", label: "5k+ followers", dot: "bg-accent-purple" },
-              { key: "vhigh", label: "1k+ followers", dot: "bg-accent-red" },
-              { key: "high", label: "500+ followers", dot: "bg-accent-orange" },
-              { key: "mid", label: "100–500", dot: "bg-accent-blue" },
-              { key: "low", label: "<100", dot: "bg-muted" },
-            ] as const).map(({ key, label, dot }) => {
-              const active = followerMapFilter === key;
-              return (
-                <button
-                  key={key}
-                  onClick={() => setFollowerMapFilter(active && key !== "all" ? "all" : key)}
-                  className={`flex items-center gap-2 rounded px-1.5 py-2 text-xs transition-colors text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/40 ${
-                    active ? "bg-surface-alt text-foreground" : "text-muted hover:bg-surface hover:text-foreground"
-                  }`}
-                >
-                  {dot
-                    ? <span className={`inline-block w-2 h-2 rounded-full ${dot} flex-shrink-0`} />
-                    : <span className="inline-block w-2 h-2 flex-shrink-0" />
-                  }
-                  {label}
-                </button>
-              );
-            })}
+            <div role="radiogroup" aria-label="Filter by follower count">
+              {([
+                { key: "all", label: "All", dot: null },
+                { key: "elite", label: "5k+ followers", dot: "bg-accent-purple" },
+                { key: "vhigh", label: "1k+ followers", dot: "bg-accent-red" },
+                { key: "high", label: "500+ followers", dot: "bg-accent-orange" },
+                { key: "mid", label: "100–500", dot: "bg-accent-blue" },
+                { key: "low", label: "<100", dot: "bg-muted" },
+              ] as const).map(({ key, label, dot }) => {
+                const active = followerMapFilter === key;
+                return (
+                  <button
+                    key={key}
+                    role="radio"
+                    aria-checked={active}
+                    onClick={() => setFollowerMapFilter(active && key !== "all" ? "all" : key)}
+                    className={`flex items-center gap-2 rounded px-1.5 py-2 text-xs transition-colors text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/40 ${
+                      active ? "bg-surface-alt text-foreground" : "text-muted hover:bg-surface hover:text-foreground"
+                    }`}
+                  >
+                    {dot
+                      ? <span className={`inline-block w-2 h-2 rounded-full ${dot} flex-shrink-0`} />
+                      : <span className="inline-block w-2 h-2 flex-shrink-0" />
+                    }
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         )}
 

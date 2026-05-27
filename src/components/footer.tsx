@@ -46,9 +46,9 @@ export const Footer = () => (
 
         {/* Product */}
         <div>
-          <h2 className="text-foreground text-xs font-semibold uppercase tracking-widest mb-3">
+          <p className="text-foreground text-xs font-semibold uppercase tracking-widest mb-3">
             StarMapper
-          </h2>
+          </p>
           <ul className="space-y-2">
             {PRODUCT_LINKS.map(({ href, label }) => (
               <li key={href}>
@@ -65,9 +65,9 @@ export const Footer = () => (
 
         {/* Author */}
         <div>
-          <h2 className="text-foreground text-xs font-semibold uppercase tracking-widest mb-3">
+          <p className="text-foreground text-xs font-semibold uppercase tracking-widest mb-3">
             Author
-          </h2>
+          </p>
           <ul className="space-y-2">
             {AUTHOR_LINKS.map(({ href, label }) => (
               <li key={href}>

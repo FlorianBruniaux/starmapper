@@ -233,7 +233,14 @@ const TopPanelInner = ({
       {/* ── Progress bar — during scan ────────────────────────────────────── */}
       {(status === "loading" || status === "refreshing" || status === "waiting") && (
         <div className="mt-2.5">
-          <div className="w-full bg-surface-alt rounded-full h-1 overflow-hidden">
+          <div
+            className="w-full bg-surface-alt rounded-full h-1 overflow-hidden"
+            role="progressbar"
+            aria-valuenow={status === "refreshing" ? 100 : pct}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label="Scan progress"
+          >
             <div
               className="bg-accent-blue h-full rounded-full transition-all duration-300"
               style={{ width: status === "refreshing" ? "100%" : `${pct}%` }}
@@ -256,7 +263,14 @@ const TopPanelInner = ({
       {/* ── Mapping ratio bar — after scan ───────────────────────────────── */}
       {(status === "cached" || status === "done") && total > 0 && points.length > 0 && (
         <div className="mt-2.5">
-          <div className="w-full bg-surface-alt rounded-full h-1 overflow-hidden">
+          <div
+            className="w-full bg-surface-alt rounded-full h-1 overflow-hidden"
+            role="progressbar"
+            aria-valuenow={mappingPct}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label="Mapping ratio"
+          >
             <div
               className="bg-accent-blue h-full rounded-full transition-all duration-500"
               style={{ width: `${mappingPct}%` }}
@@ -332,6 +346,7 @@ const TopPanelInner = ({
             onChange={(e) => { setFindInput(e.target.value); setFindStatus("idle"); }}
             onKeyDown={(e) => { if (e.key === "Enter") findUser(); }}
             placeholder="Find a stargazer…"
+            aria-label="Find a stargazer"
             className="flex-1 bg-surface border border-border rounded-lg
               pl-8 pr-3 py-2 text-xs text-foreground placeholder:text-muted-subtle
               focus:outline-none focus:border-accent-blue focus:ring-1 focus:ring-accent-blue/30
@@ -360,22 +375,24 @@ const TopPanelInner = ({
         </div>
 
         {/* Find feedback */}
-        {findStatus === "found" && (
-          <p className="mt-1.5 text-2xs text-accent-green flex items-center gap-1">
-            <Check size={10} aria-hidden="true" />
-            Found, flying to location
-          </p>
-        )}
-        {findStatus === "no-location" && (
-          <p className="mt-1.5 text-2xs text-accent-orange">
-            Starred but has no location set on GitHub
-          </p>
-        )}
-        {findStatus === "not-found" && (
-          <p className="mt-1.5 text-2xs text-accent-red">
-            Not found in stargazers
-          </p>
-        )}
+        <div aria-live="polite" role="status">
+          {findStatus === "found" && (
+            <p className="mt-1.5 text-2xs text-accent-green flex items-center gap-1">
+              <Check size={10} aria-hidden="true" />
+              Found, flying to location
+            </p>
+          )}
+          {findStatus === "no-location" && (
+            <p className="mt-1.5 text-2xs text-accent-orange">
+              Starred but has no location set on GitHub
+            </p>
+          )}
+          {findStatus === "not-found" && (
+            <p className="mt-1.5 text-2xs text-accent-red">
+              Not found in stargazers
+            </p>
+          )}
+        </div>
 
         {/* ── Find me shortcut ──────────────────────────────────────────── */}
         <div className="mt-2 pt-2 border-t border-border-subtle">

@@ -139,13 +139,14 @@ export const StatsModal = ({ open, onClose, owner, repo, displayStats, starsThis
                 key={u.login}
                 href={`/profile/${u.login}`}
                 title={`@${u.login} (${u.followers.toLocaleString()} followers)`}
+                aria-label={`@${u.login}, ${u.followers.toLocaleString()} followers`}
                 className="flex items-center gap-1 hover:opacity-75 transition-opacity flex-shrink-0"
               >
                 {u.avatarUrl
                   ? <NextImage src={u.avatarUrl} alt="" width={20} height={20} sizes="20px" className="w-5 h-5 rounded-full ring-1 ring-border" />
                   : <div className="w-5 h-5 rounded-full bg-surface-alt ring-1 ring-border flex-shrink-0" />
                 }
-                <span className="text-2xs text-muted-subtle tabular-nums">
+                <span className="text-2xs text-muted-subtle tabular-nums" aria-hidden="true">
                   {u.followers >= 1000 ? `${(u.followers / 1000).toFixed(1)}k` : u.followers}
                 </span>
               </a>

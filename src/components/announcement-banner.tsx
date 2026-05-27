@@ -42,7 +42,8 @@ export const AnnouncementBanner = () => {
 
   return (
     <div
-      role="banner"
+      role="region"
+      aria-label="Announcement"
       className="relative flex items-center justify-center gap-4 px-10 py-2.5
                  bg-surface border-b border-border
                  border-t-2 border-t-accent-orange"

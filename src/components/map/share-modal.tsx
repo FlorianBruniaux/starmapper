@@ -3,9 +3,10 @@
 
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import NextImage from "next/image";
 import { Modal } from "@/components/modal";
+import { useFocusTrap } from "@/hooks/use-focus-trap";
 import type { StargazerPoint } from "@/app/api/chunk/route";
 import type { RepoStats } from "@/app/api/stats/[owner]/[repo]/route";
 type RepoInfo = {
@@ -45,6 +46,8 @@ export const ShareModal = ({
 }: Props) => {
   const [liPanelOpen, setLiPanelOpen] = useState(false);
   const [liCopied, setLiCopied] = useState(false);
+  const liPanelRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(liPanelRef, liPanelOpen, () => setLiPanelOpen(false));
   const [badgeCopied, setBadgeCopied] = useState(false);
   const [filterLinkCopied, setFilterLinkCopied] = useState(false);
 
@@ -251,7 +254,7 @@ export const ShareModal = ({
 
           {/* LinkedIn pre-share panel */}
           {liPanelOpen && (
-            <div className="absolute inset-0 z-10 rounded-xl bg-background border border-border flex flex-col p-4 gap-3">
+            <div ref={liPanelRef} tabIndex={-1} className="absolute inset-0 z-10 rounded-xl bg-background border border-border flex flex-col p-4 gap-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-medium text-foreground">Your LinkedIn post</span>
                 <button onClick={() => setLiPanelOpen(false)} aria-label="Close LinkedIn post" className="text-muted hover:text-foreground text-lg leading-none"><span aria-hidden="true">×</span></button>

@@ -266,6 +266,15 @@ export default function ProfilePage({ params }: Props) {
     }
   }, [login, contactDetails, contactLoading]);
 
+  useEffect(() => {
+    if (!contactOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setContactOpen(false);
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [contactOpen]);
+
   // Resolve async params
   useEffect(() => {
     params.then(({ login: l }) => setLogin(l));
@@ -662,6 +671,8 @@ export default function ProfilePage({ params }: Props) {
                       onClick={handleContactOpen}
                       title="Contact channels"
                       aria-label="Open contact channels"
+                      aria-haspopup="true"
+                      aria-expanded={contactOpen}
                       className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md border
                                  border-border text-muted hover:text-foreground hover:border-accent-blue/50 transition-colors"
                     >
@@ -674,7 +685,9 @@ export default function ProfilePage({ params }: Props) {
                       <>
                         <div className="fixed inset-0 z-10" onClick={() => setContactOpen(false)} />
                         {/* Mobile: bottom-sheet full-width / Desktop: positioned dropdown */}
-                        <div className="
+                        <div
+                          role="menu"
+                          className="
                           fixed inset-x-0 bottom-0 z-20 rounded-t-2xl border-t border-border bg-surface shadow-lg py-2
                           sm:absolute sm:inset-auto sm:right-0 sm:bottom-auto sm:top-full sm:mt-1 sm:w-56 sm:rounded-lg sm:border sm:border-border sm:py-1
                         ">
@@ -682,6 +695,7 @@ export default function ProfilePage({ params }: Props) {
                             href={`https://github.com/${profile.login}`}
                             target="_blank"
                             rel="noopener noreferrer"
+                            role="menuitem"
                             onClick={() => setContactOpen(false)}
                             className="flex items-center gap-2.5 px-3 py-2 text-sm text-muted hover:text-foreground hover:bg-surface-alt transition-colors"
                           >

@@ -45,7 +45,10 @@ export const GrowthChart = ({ data }: { data: [string, number][] }) => {
         className="w-full"
         style={{ height: H + 20 }}
         onMouseLeave={() => setHoveredIdx(null)}
+        role="img"
+        aria-label={`Star growth chart: ${total.toLocaleString()} total stars, peak week ${peak[1].toLocaleString()} stars on ${peak[0]}, average ${avg.toLocaleString()} per week`}
       >
+        <title>Star growth chart</title>
         {/* Average line */}
         <line
           x1={0} y1={avgY} x2={W} y2={avgY}

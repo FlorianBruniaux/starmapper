@@ -1,16 +1,25 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 
+"use client";
+
+import { useRef } from "react";
+import { useFocusTrap } from "@/hooks/use-focus-trap";
+
 type Props = {
   open: boolean;
   onAddToken: () => void;
 };
 
 export const RateLimitedModal = ({ open, onAddToken }: Props) => {
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useFocusTrap(dialogRef, open);
+
   if (!open) return null;
   return (
     <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
       <div
+        ref={dialogRef}
         role="alertdialog"
         aria-modal="true"
         aria-labelledby="rate-limited-title"

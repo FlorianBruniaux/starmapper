@@ -355,6 +355,7 @@ export const AllStargazersModal = ({
                     <th className="px-3 py-2.5 w-8">
                       <input
                         type="checkbox"
+                        aria-label="Select all stargazers"
                         checked={selected.size > 0 && selected.size === filteredStargazers.length}
                         ref={(el) => { if (el) el.indeterminate = selected.size > 0 && selected.size < filteredStargazers.length; }}
                         onChange={toggleAll}
@@ -411,6 +412,7 @@ export const AllStargazersModal = ({
                       <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
                         <input
                           type="checkbox"
+                          aria-label={`Select ${u.login}`}
                           checked={selected.has(u.login)}
                           onChange={() => toggleRow(u.login)}
                           className="accent-accent-blue cursor-pointer"
@@ -456,18 +458,18 @@ export const AllStargazersModal = ({
                     <td className="px-3 py-2 hidden xl:table-cell" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center gap-2">
                         {u.email && (
-                          <a href={`mailto:${u.email}`} title={u.email} className="text-muted hover:text-accent-blue transition-colors" target="_blank" rel="noopener noreferrer">
-                            <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M1.75 2A1.75 1.75 0 0 0 0 3.75v8.5C0 13.216.784 14 1.75 14h12.5A1.75 1.75 0 0 0 16 12.25v-8.5A1.75 1.75 0 0 0 14.25 2Zm0 1.5h12.5a.25.25 0 0 1 .25.25v.852l-6.36 3.682a.25.25 0 0 1-.254 0L1.5 4.602V3.75a.25.25 0 0 1 .25-.25Zm-.25 2.68 5.86 3.393a1.75 1.75 0 0 0 1.78 0L15 6.18v6.07a.25.25 0 0 1-.25.25H1.75a.25.25 0 0 1-.25-.25Z"/></svg>
+                          <a href={`mailto:${u.email}`} title={u.email} aria-label={`Email ${u.email}`} className="text-muted hover:text-accent-blue transition-colors" target="_blank" rel="noopener noreferrer">
+                            <svg aria-hidden="true" width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M1.75 2A1.75 1.75 0 0 0 0 3.75v8.5C0 13.216.784 14 1.75 14h12.5A1.75 1.75 0 0 0 16 12.25v-8.5A1.75 1.75 0 0 0 14.25 2Zm0 1.5h12.5a.25.25 0 0 1 .25.25v.852l-6.36 3.682a.25.25 0 0 1-.254 0L1.5 4.602V3.75a.25.25 0 0 1 .25-.25Zm-.25 2.68 5.86 3.393a1.75 1.75 0 0 0 1.78 0L15 6.18v6.07a.25.25 0 0 1-.25.25H1.75a.25.25 0 0 1-.25-.25Z"/></svg>
                           </a>
                         )}
                         {u.blog && (
-                          <a href={u.blog.startsWith("http") ? u.blog : `https://${u.blog}`} title={u.blog} className="text-muted hover:text-accent-blue transition-colors" target="_blank" rel="noopener noreferrer">
-                            <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M7.775 3.275a.75.75 0 0 0 1.06 1.06l1.25-1.25a2 2 0 1 1 2.83 2.83l-2.5 2.5a2 2 0 0 1-2.83 0 .75.75 0 0 0-1.06 1.06 3.5 3.5 0 0 0 4.95 0l2.5-2.5a3.5 3.5 0 0 0-4.95-4.95l-1.25 1.25Zm-4.69 9.64a2 2 0 0 1 0-2.83l2.5-2.5a2 2 0 0 1 2.83 0 .75.75 0 0 0 1.06-1.06 3.5 3.5 0 0 0-4.95 0l-2.5 2.5a3.5 3.5 0 0 0 4.95 4.95l1.25-1.25a.75.75 0 0 0-1.06-1.06l-1.25 1.25a2 2 0 0 1-2.83 0Z"/></svg>
+                          <a href={u.blog.startsWith("http") ? u.blog : `https://${u.blog}`} title={u.blog} aria-label={`Blog: ${u.blog}`} className="text-muted hover:text-accent-blue transition-colors" target="_blank" rel="noopener noreferrer">
+                            <svg aria-hidden="true" width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M7.775 3.275a.75.75 0 0 0 1.06 1.06l1.25-1.25a2 2 0 1 1 2.83 2.83l-2.5 2.5a2 2 0 0 1-2.83 0 .75.75 0 0 0-1.06 1.06 3.5 3.5 0 0 0 4.95 0l2.5-2.5a3.5 3.5 0 0 0-4.95-4.95l-1.25 1.25Zm-4.69 9.64a2 2 0 0 1 0-2.83l2.5-2.5a2 2 0 0 1 2.83 0 .75.75 0 0 0 1.06-1.06 3.5 3.5 0 0 0-4.95 0l-2.5 2.5a3.5 3.5 0 0 0 4.95 4.95l1.25-1.25a.75.75 0 0 0-1.06-1.06l-1.25 1.25a2 2 0 0 1-2.83 0Z"/></svg>
                           </a>
                         )}
                         {u.twitter_username && (
-                          <a href={`https://x.com/${u.twitter_username}`} title={`@${u.twitter_username}`} className="text-muted hover:text-accent-blue transition-colors" target="_blank" rel="noopener noreferrer">
-                            <svg width="12" height="12" viewBox="0 0 1200 1227" fill="currentColor"><path d="M714.163 519.284 1160.89 0h-105.86L667.137 450.887 357.328 0H0l468.492 681.821L0 1226.37h105.866l409.625-476.152 327.181 476.152H1200L714.137 519.284h.026ZM569.165 687.828l-47.468-67.894-377.686-540.24h162.604l304.797 435.991 47.468 67.894 396.2 566.721H892.476L569.165 687.854v-.026Z"/></svg>
+                          <a href={`https://x.com/${u.twitter_username}`} title={`@${u.twitter_username}`} aria-label={`Twitter: @${u.twitter_username}`} className="text-muted hover:text-accent-blue transition-colors" target="_blank" rel="noopener noreferrer">
+                            <svg aria-hidden="true" width="12" height="12" viewBox="0 0 1200 1227" fill="currentColor"><path d="M714.163 519.284 1160.89 0h-105.86L667.137 450.887 357.328 0H0l468.492 681.821L0 1226.37h105.866l409.625-476.152 327.181 476.152H1200L714.137 519.284h.026ZM569.165 687.828l-47.468-67.894-377.686-540.24h162.604l304.797 435.991 47.468 67.894 396.2 566.721H892.476L569.165 687.854v-.026Z"/></svg>
                           </a>
                         )}
                         {!u.email && !u.blog && !u.twitter_username && (
@@ -476,7 +478,11 @@ export const AllStargazersModal = ({
                       </div>
                     </td>
                     <td className="px-3 py-2 text-center">
-                      <span className={`inline-block w-1.5 h-1.5 rounded-full ${u.mapped ? "bg-accent-green" : "bg-border"}`} />
+                      <span
+                        role="img"
+                        aria-label={u.mapped ? "Mapped" : "Not mapped"}
+                        className={`inline-block w-1.5 h-1.5 rounded-full ${u.mapped ? "bg-accent-green" : "bg-border"}`}
+                      />
                     </td>
                     <td className="px-2 py-2 text-center">
                       {u.mapped && (
