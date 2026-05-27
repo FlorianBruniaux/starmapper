@@ -285,3 +285,12 @@ input[type="range"].sm-slider:focus-visible::-webkit-slider-thumb {
   outline: 2px solid var(--color-accent-blue);
   outline-offset: 2px;
 }
+
+/* Hide browser-native password autofill/reveal controls */
+input[type="password"]::-webkit-credentials-auto-fill-button,
+input[type="password"]::-webkit-strong-password-auto-fill-button {
+  display: none !important;
+}
+input[type="password"]::-ms-reveal {
+  display: none;
+}

@@ -23,7 +23,7 @@ describe("TokenModal", () => {
 
   it("displays the modal title", () => {
     render(<TokenModal onClose={vi.fn()} />);
-    expect(screen.getByText("Speed Boost — GitHub Token")).toBeInTheDocument();
+    expect(screen.getByText("Speed Boost: GitHub Token")).toBeInTheDocument();
   });
 
   it("renders the password input field", () => {

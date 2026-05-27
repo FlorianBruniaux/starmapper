@@ -58,7 +58,7 @@ export const TokenModal = ({ onClose }: Props) => {
   };
 
   return (
-    <Modal open title="Speed Boost — GitHub Token" onClose={onClose}>
+    <Modal open title="Speed Boost: GitHub Token" onClose={onClose} maxWidth="max-w-lg">
       {/* Body */}
       <div className="px-6 py-5 space-y-4">
         <div className="flex items-start gap-2.5 bg-accent-green/8 border border-accent-green/20 rounded-lg px-4 py-3">
