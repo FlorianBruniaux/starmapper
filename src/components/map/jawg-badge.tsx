@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 
-"use client";
-
 /**
  * Small "Map by Jawg Maps" badge rendered as an absolute overlay
  * on top of any MapLibre map container. Appears just above the

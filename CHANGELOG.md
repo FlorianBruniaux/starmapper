@@ -5,6 +5,23 @@ Versioning: Semantic Versioning (MAJOR.MINOR.PATCH)
 
 ---
 
+## [0.5.7] (2026-05-28)
+
+### Performance
+
+- **App Router SC/CC split on 3 major pages.** `[owner]/[repo]`, `/explore`, and `/profile/[login]` were monolithic "use client" pages with no server-side rendering. Each now has a Server Component wrapper that pre-fetches the critical-path data (repo info, explore summary, profile) and passes it as `initialData` to the client component. The client-side fetch becomes a fallback (private repo, 404, network error) instead of the default path. LCP improves for all three routes; crawlers and social preview bots see real HTML content on first byte.
+- **`map-style-urls.ts` extracted from `theme.ts`.** `MAP_STYLE_DARK`, `MAP_STYLE_LIGHT`, `Theme`, and `MapProjection` moved to a server-safe module with no `"use client"` marker. `theme.ts` re-exports them for backward compatibility. Prevents accidental bundle pollution if a server component ever imports map URL builders.
+
+### Bug Fixes
+
+- **`sanitizeError` missing from `refresh-grid-mv` test mock.** The route imported `sanitizeError` from `@/lib/api-helpers` (added in 0.5.6) but the Vitest mock factory did not expose it. The function was added to the mock; the 1 failing test now passes (895/895).
+
+### Internal
+
+- **`JawgBadge` component made server-safe.** `"use client"` removed from `src/components/map/jawg-badge.tsx`. The component is a static `<a>` tag with no hooks or browser APIs; the directive served no purpose.
+
+---
+
 ## [0.5.6] (2026-05-28)
 
 ### Performance

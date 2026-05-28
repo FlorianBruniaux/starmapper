@@ -17,6 +17,7 @@ vi.mock("@/lib/api-helpers", () => ({
   jsonError: (msg: string, status: number) =>
     new Response(JSON.stringify({ error: msg }), { status }),
   logError: vi.fn(),
+  sanitizeError: (err: unknown) => (err instanceof Error ? err.message : String(err)),
 }));
 
 // Pool now comes from pg (TCP mode). clearAllMocks resets the implementation, so

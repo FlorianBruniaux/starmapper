@@ -7,11 +7,13 @@
 // Priority: manual localStorage override > prefers-color-scheme system preference
 // Stores "light" | "dark" | null (null = follow system)
 
-export type Theme = "light" | "dark";
+// Re-export server-safe types and map URL builders so existing imports still work
+export { MAP_STYLE_DARK, MAP_STYLE_LIGHT } from "@/lib/map-style-urls";
+export type { Theme, MapProjection } from "@/lib/map-style-urls";
 
 const STORAGE_KEY = "starmapper:theme";
 
-export const getStoredTheme = (): Theme | null => {
+export const getStoredTheme = (): import("@/lib/map-style-urls").Theme | null => {
   try {
     const v = localStorage.getItem(STORAGE_KEY);
     if (v === "light" || v === "dark") return v;
@@ -21,7 +23,7 @@ export const getStoredTheme = (): Theme | null => {
   }
 };
 
-export const setStoredTheme = (theme: Theme | null): void => {
+export const setStoredTheme = (theme: import("@/lib/map-style-urls").Theme | null): void => {
   try {
     if (theme === null) {
       localStorage.removeItem(STORAGE_KEY);
@@ -31,13 +33,13 @@ export const setStoredTheme = (theme: Theme | null): void => {
   } catch { /* localStorage unavailable */ }
 };
 
-export const getSystemTheme = (): Theme => {
+export const getSystemTheme = (): import("@/lib/map-style-urls").Theme => {
   if (typeof window === "undefined") return "dark";
   return window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
 };
 
 // Apply theme class to <html> and return the resolved theme
-export const applyTheme = (theme: Theme | null): Theme => {
+export const applyTheme = (theme: import("@/lib/map-style-urls").Theme | null): import("@/lib/map-style-urls").Theme => {
   const resolved = theme ?? getSystemTheme();
   const html = document.documentElement;
   if (resolved === "light") {
@@ -50,21 +52,12 @@ export const applyTheme = (theme: Theme | null): Theme => {
   return resolved;
 };
 
-// Map tile URLs — swapped based on resolved theme
-export const MAP_STYLE_DARK = (token: string) =>
-  `https://api.jawg.io/styles/jawg-dark.json?access-token=${token}`;
-
-export const MAP_STYLE_LIGHT = (token: string) =>
-  `https://api.jawg.io/styles/jawg-light.json?access-token=${token}`;
-
 // ─── Map projection preference ──────────────────────────────────────────────
 // Persists user's globe ↔ mercator toggle choice across sessions.
 
-export type MapProjection = "globe" | "mercator";
-
 const PROJECTION_KEY = "starmapper:projection";
 
-export const getStoredProjection = (): MapProjection | null => {
+export const getStoredProjection = (): import("@/lib/map-style-urls").MapProjection | null => {
   try {
     const v = localStorage.getItem(PROJECTION_KEY);
     if (v === "globe" || v === "mercator") return v;
@@ -74,7 +67,7 @@ export const getStoredProjection = (): MapProjection | null => {
   }
 };
 
-export const setStoredProjection = (p: MapProjection): void => {
+export const setStoredProjection = (p: import("@/lib/map-style-urls").MapProjection): void => {
   try {
     localStorage.setItem(PROJECTION_KEY, p);
   } catch { /* localStorage unavailable */ }
