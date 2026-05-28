@@ -5,6 +5,7 @@ import type { NextRequest} from "next/server";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { jsonError, logError } from "@/lib/api-helpers";
+import { LOGIN_RE } from "@/lib/api-validation";
 
 export type ProfileRepo = {
   owner: string;
@@ -40,7 +41,7 @@ export const GET = async (
   { params }: { params: Promise<{ login: string }> },
 ) => {
   const { login } = await params;
-  if (!/^[a-zA-Z0-9_-]{1,100}$/.test(login)) {
+  if (!LOGIN_RE.test(login)) {
     return jsonError("invalid_params", 400);
   }
 

@@ -9,6 +9,7 @@ const ISO_8601_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z$/;
 const ownerRepo = z
   .string({ error: "Invalid owner/repo format" })
   .regex(OWNER_REPO_RE, "Invalid owner/repo format")
+  .refine((s) => !/^\.+$/.test(s), "Invalid owner/repo format")
   .transform((s) => s.toLowerCase());
 
 export const chunkSchema = z.object({

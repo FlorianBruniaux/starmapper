@@ -6,10 +6,10 @@ import { NextRequest } from "next/server";
 
 // ─── Mocks ───────────────────────────────────────────────────────────────────
 
-const mockQueryRawUnsafe = vi.fn();
+const mockQueryRaw = vi.fn();
 
 vi.mock("@/lib/db", () => ({
-  prisma: { $queryRawUnsafe: (...args: unknown[]) => mockQueryRawUnsafe(...args) },
+  prisma: { $queryRaw: (...args: unknown[]) => mockQueryRaw(...args) },
 }));
 
 // slugToLanguage maps e.g. "typescript" → "TypeScript"
@@ -40,7 +40,7 @@ describe("GET /api/devs/[language]", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     // First call: grid query; second: country query
-    mockQueryRawUnsafe
+    mockQueryRaw
       .mockResolvedValueOnce([gridRow])   // grid MV
       .mockResolvedValueOnce([countryRow]); // country query
   });
@@ -99,8 +99,8 @@ describe("GET /api/devs/[language]", () => {
 
   describe("error handling", () => {
     it("returns 500 when DB throws (both MV and fallback)", async () => {
-      mockQueryRawUnsafe.mockReset();
-      mockQueryRawUnsafe.mockRejectedValue(new Error("connection timeout"));
+      mockQueryRaw.mockReset();
+      mockQueryRaw.mockRejectedValue(new Error("connection timeout"));
       const [req, ctx] = makeReq("typescript");
       const res = await GET(req, ctx);
       expect(res.status).toBe(500);

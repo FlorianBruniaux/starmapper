@@ -12,7 +12,11 @@ export const vitalsSchema = z.object({
   delta: z.number({ error: "invalid_value" }).refine(Number.isFinite, { message: "invalid_value" }),
   rating: z.enum(ALLOWED_RATINGS, { error: "invalid_rating" }),
   id: z.string({ error: "invalid_metric" }),
-  navigationType: z.union([z.string(), z.null()]).optional(),
+  navigationType: z
+    .string()
+    .transform((s) => s.replace(/[\r\n\t\x00-\x1f\x7f]/g, "").slice(0, 50))
+    .optional()
+    .nullable(),
   path: z
     .string({ error: "invalid_metric" })
     .transform((p) => p.replace(/[\r\n\t]/g, " ").slice(0, 200)),

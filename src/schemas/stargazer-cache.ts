@@ -9,6 +9,7 @@ export const MAX_CACHEABLE_STARS = 500_000;
 const ownerRepo = z
   .string({ error: "invalid_params" })
   .regex(OWNER_REPO_RE, "invalid_params")
+  .refine((s) => !/^\.+$/.test(s), "invalid_params")
   .transform((s) => s.toLowerCase());
 
 export const stargazerCacheEnvelopeSchema = z.object({

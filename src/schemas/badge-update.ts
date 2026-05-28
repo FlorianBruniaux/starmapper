@@ -7,6 +7,7 @@ import { OWNER_REPO_RE } from "@/lib/api-validation";
 const ownerRepo = z
   .string({ error: "invalid_params" })
   .regex(OWNER_REPO_RE, "invalid_params")
+  .refine((s) => !/^\.+$/.test(s), "invalid_params")
   .transform((s) => s.toLowerCase());
 
 const boundedInt = (max: number) =>
@@ -23,8 +24,8 @@ export const badgeUpdateSchema = z.object({
   countryCount: boundedInt(10_000),
   totalCount: boundedInt(10_000_000),
   language: z.string({ error: "invalid_params" }).nullable().optional(),
-  forksCount: z.number({ error: "invalid_params" }).optional(),
-  watchersCount: z.number({ error: "invalid_params" }).optional(),
+  forksCount: boundedInt(10_000_000).optional(),
+  watchersCount: boundedInt(10_000_000).optional(),
 });
 
 export type BadgeUpdateBody = z.infer<typeof badgeUpdateSchema>;
