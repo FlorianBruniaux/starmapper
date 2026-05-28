@@ -4,19 +4,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
 
-// ─── Mocks ───────────────────────────────────────────────────────────────────
-
-// Upstash — stub so getAutocompleteLimiter() fails-open in tests.
-vi.mock("@upstash/ratelimit", () => ({
-  Ratelimit: class {
-    static slidingWindow() { return {}; }
-    async limit() { return { success: true }; }
-  },
-}));
-vi.mock("@upstash/redis", () => ({
-  Redis: { fromEnv: () => ({}) },
-}));
-
 import { GET } from "@/app/api/explore/autocomplete/route";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────

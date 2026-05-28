@@ -3,9 +3,7 @@
 
 import type { NextRequest} from "next/server";
 import { NextResponse } from "next/server";
-import { Ratelimit } from "@upstash/ratelimit";
-import { Redis } from "@upstash/redis";
-import { jsonError, logError, getIP } from "@/lib/api-helpers";
+import { jsonError, logError } from "@/lib/api-helpers";
 
 export type AutocompleteResult = {
   label: string;
@@ -15,25 +13,6 @@ export type AutocompleteResult = {
 
 const JAWG_AUTOCOMPLETE = "https://api.jawg.io/places/v1/autocomplete";
 const NOMINATIM_SEARCH  = "https://nominatim.openstreetmap.org/search";
-
-// Fail-open: if Redis is unavailable, requests are allowed through (autocomplete is a UX feature,
-// not a gating endpoint — quota exhaustion is less critical than geocode forward/reverse).
-let _limiter: Ratelimit | null = null;
-let _limiterReady = false;
-const getAutocompleteLimiter = (): Ratelimit | null => {
-  if (_limiterReady) return _limiter;
-  _limiterReady = true;
-  try {
-    _limiter = new Ratelimit({
-      redis: Redis.fromEnv(),
-      limiter: Ratelimit.slidingWindow(10, "60 s"),
-      prefix: "rl:explore-autocomplete",
-    });
-  } catch {
-    _limiter = null;
-  }
-  return _limiter;
-};
 
 const fetchJawg = async (q: string): Promise<AutocompleteResult[]> => {
   const token = process.env.JAWGMAP_ACCESS_TOKEN;
@@ -70,16 +49,6 @@ const fetchNominatim = async (q: string): Promise<AutocompleteResult[]> => {
 };
 
 export const GET = async (req: NextRequest) => {
-  const limiter = getAutocompleteLimiter();
-  if (limiter) {
-    try {
-      const { success } = await limiter.limit(getIP(req));
-      if (!success) return jsonError("rate_limit", 429);
-    } catch {
-      // Fail-open: Redis unavailable — allow through rather than block autocomplete UX.
-    }
-  }
-
   const q = (new URL(req.url).searchParams.get("q") ?? "").trim().substring(0, 100);
   if (!q || q.length < 2) return jsonError("invalid_query", 400);
 
