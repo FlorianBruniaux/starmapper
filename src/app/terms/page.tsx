@@ -8,6 +8,13 @@ export const metadata: Metadata = {
   title: "Terms of Service — StarMapper",
   description: "StarMapper terms of service — acceptable use, disclaimers, and governing law.",
   robots: { index: true, follow: true },
+  alternates: { canonical: "/terms" },
+  openGraph: {
+    title: "Terms of Service — StarMapper",
+    description: "StarMapper terms of service — acceptable use, disclaimers, and governing law.",
+    type: "website",
+  },
+  twitter: { card: "summary" },
 };
 
 const Section = ({ id, title, children }: { id: string; title: string; children: React.ReactNode }) => (

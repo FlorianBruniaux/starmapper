@@ -11,6 +11,14 @@ export const metadata: Metadata = {
   description:
     "Support StarMapper and get visibility in front of a global open-source developer audience. See our current sponsors and learn how to become one.",
   robots: { index: true, follow: true },
+  alternates: { canonical: "/sponsor" },
+  openGraph: {
+    title: "Sponsor StarMapper",
+    description:
+      "Support StarMapper and get visibility in front of a global open-source developer audience. See our current sponsors and learn how to become one.",
+    type: "website",
+  },
+  twitter: { card: "summary_large_image" },
 };
 
 export default function SponsorPage() {

@@ -551,9 +551,14 @@ export default function MapPageClient({ owner, repo, initialRepoInfo }: Props) {
       )}
 
       {drawerOpen && (
-        <div className="absolute bottom-0 left-0 right-0 z-20
+        <div
+          role="region"
+          aria-label="Unmapped stargazers"
+          onKeyDown={(e) => { if (e.key === "Escape") setDrawerOpen(false); }}
+          className="absolute bottom-0 left-0 right-0 z-20
           bg-background/95 border-t border-border backdrop-blur-md
-          flex flex-col max-h-[45dvh]">
+          flex flex-col max-h-[45dvh]"
+        >
           <div className="flex items-center justify-between px-5 py-3 border-b border-border-subtle flex-shrink-0">
             <div>
               <span className="text-sm text-muted">

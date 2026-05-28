@@ -8,6 +8,13 @@ export const metadata: Metadata = {
   title: "Privacy Policy — StarMapper",
   description: "How StarMapper collects, stores, and processes public GitHub stargazer data. Your GDPR rights and how to exercise them.",
   robots: { index: true, follow: true },
+  alternates: { canonical: "/privacy" },
+  openGraph: {
+    title: "Privacy Policy — StarMapper",
+    description: "How StarMapper collects, stores, and processes public GitHub stargazer data. Your GDPR rights and how to exercise them.",
+    type: "website",
+  },
+  twitter: { card: "summary" },
 };
 
 const Section = ({ id, title, children }: { id: string; title: string; children: React.ReactNode }) => (

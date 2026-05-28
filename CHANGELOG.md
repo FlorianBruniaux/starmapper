@@ -5,6 +5,25 @@ Versioning: Semantic Versioning (MAJOR.MINOR.PATCH)
 
 ---
 
+## [0.5.8] (2026-05-28)
+
+### Accessibility
+
+- **WCAG AA pass, 9 violations fixed.** Six text inputs (`explore` city search, login/name search, `profile` repo search, `[owner]` repo search and min-stars filter, map `top-panel` username input) were missing accessible names and now carry explicit `aria-label` attributes. The min-stars `<label>` is now programmatically linked via `htmlFor`/`id`. The `StarNudge` popup (role: dialog) gains keyboard dismissal via Escape. The unmapped-stargazers bottom drawer gains `role="region"`, `aria-label`, and Escape-to-close.
+- **Dark-mode contrast raised to WCAG AA.** `text-muted-subtle` token in dark mode bumped from `#848d97` (4.2:1 ratio — below threshold) to `#8b929a` (~4.55:1). Affects secondary labels, breadcrumb separators, and stat hints across all pages.
+
+### SEO
+
+- **Metadata added to two high-traffic unindexed routes.** `/trending` now has a dedicated `layout.tsx` with title, description, OG, Twitter card, and canonical. `/[owner]` (user scan page) has `generateMetadata` producing a dynamic title `{owner}'s repos | StarMapper` and a canonical URL.
+- **OG / Twitter / canonical added to 6 secondary pages.** `/privacy`, `/terms`, `/legal`, `/changelog`, `/sponsor`, and `/organic-score/calibration` now carry full social metadata alongside their existing title and description.
+- **JSON-LD root sanitization aligned.** Root `layout.tsx` now applies `.replace(/</g, "\\u003c")` on the JSON-LD payload, consistent with the per-repo and profile layouts.
+
+### Performance
+
+- **Three raw `<img>` tags in `/explore` replaced with `<Image>`.** Avatar thumbnails in the Top Contributors, Power Users, and Nearby Developers panels now use Next.js `<Image>` with `loading="lazy"`, enabling automatic AVIF/WebP delivery via the optimizer.
+
+---
+
 ## [0.5.7] (2026-05-28)
 
 ### Performance

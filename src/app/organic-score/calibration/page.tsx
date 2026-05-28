@@ -7,6 +7,13 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Organic Score — Calibration Data · StarMapper",
   description: "Empirical calibration of the Organic Score signals: corpus, weights, and fit results.",
+  alternates: { canonical: "/organic-score/calibration" },
+  openGraph: {
+    title: "Organic Score — Calibration Data · StarMapper",
+    description: "Empirical calibration of the Organic Score signals: corpus, weights, and fit results.",
+    type: "website",
+  },
+  twitter: { card: "summary_large_image" },
 };
 
 const TIER: Record<string, string> = {

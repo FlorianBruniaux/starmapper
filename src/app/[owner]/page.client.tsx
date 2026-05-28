@@ -305,8 +305,9 @@ export default function UserPage({ params }: { params: Promise<{ owner: string }
               <div className="flex flex-col gap-2 mb-4">
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
-                    <label className="text-muted text-xs shrink-0">Min stars</label>
+                    <label htmlFor="min-stars" className="text-muted text-xs shrink-0">Min stars</label>
                     <input
+                      id="min-stars"
                       type="number"
                       min={0}
                       value={minStars}
@@ -341,6 +342,7 @@ export default function UserPage({ params }: { params: Promise<{ owner: string }
                   <input
                     type="text"
                     placeholder="Search repos…"
+                    aria-label="Search repos"
                     value={repoSearch}
                     onChange={(e) => setRepoSearch(e.target.value)}
                     className="w-full bg-surface border border-border rounded-md pl-8 pr-3 py-1.5 text-foreground text-xs focus:outline-none focus:border-accent-blue transition-colors placeholder:text-muted-subtle"

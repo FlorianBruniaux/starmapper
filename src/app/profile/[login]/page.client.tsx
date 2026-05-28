@@ -1240,6 +1240,7 @@ export default function ProfilePageClient({ login, initialProfile }: Props) {
               value={scanSearch}
               onChange={(e) => setScanSearch(e.target.value)}
               placeholder="Search repos…"
+              aria-label="Search repos"
               autoFocus
               className="flex-1 bg-surface-alt border border-border rounded-md px-3 py-2 text-sm
                          text-foreground placeholder:text-muted focus:outline-none

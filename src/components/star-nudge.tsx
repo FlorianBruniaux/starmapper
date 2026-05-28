@@ -36,6 +36,13 @@ export const StarNudge = () => {
     setVisible(false);
   };
 
+  useEffect(() => {
+    if (!visible) return;
+    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") dismiss(); };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [visible]);
+
   if (!visible) return null;
 
   return (

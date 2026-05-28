@@ -9,7 +9,7 @@
   --color-surface-alt: #1c2128;
   --color-foreground: #f0f6fc;
   --color-muted: #8b949e;
-  --color-muted-subtle: #848d97;
+  --color-muted-subtle: #8b929a;
   --color-border: #30363d;
   --color-border-subtle: #21262d;
   --color-accent-blue: #7eb8ff;
@@ -77,7 +77,7 @@ html.dark {
   --color-surface-alt: #1c2128;
   --color-foreground: #f0f6fc;
   --color-muted: #8b949e;
-  --color-muted-subtle: #848d97;
+  --color-muted-subtle: #8b929a;
   --color-border: #30363d;
   --color-border-subtle: #21262d;
   --color-accent-blue: #7eb8ff;

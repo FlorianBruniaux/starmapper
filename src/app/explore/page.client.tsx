@@ -4,6 +4,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
 import { createPortal } from "react-dom";
 import { Header } from "@/components/header";
 import { TourTrigger } from "@/components/tour/tour-trigger";
@@ -333,6 +334,7 @@ const LocationInput = ({
             onFocus={() => suggestions.length > 0 && setOpen(true)}
             onKeyDown={handleKeyDown}
             placeholder={placeholder ?? "Enter a city or place…"}
+            aria-label="Search city or place"
             className="w-full bg-background border border-border rounded-lg text-sm text-foreground
               placeholder:text-muted-subtle px-3 py-2 pr-8 focus:outline-none
               focus:ring-2 focus:ring-accent-blue/40 focus:border-accent-blue transition-colors"
@@ -898,6 +900,7 @@ export default function ExplorePage({ initialSummary }: ExplorePageProps = {}) {
                         value={searchInput}
                         onChange={(e) => setSearchInput(e.target.value)}
                         placeholder="Search login or name…"
+                        aria-label="Search login or name"
                         className={`flex-1 bg-background border border-border rounded text-xs text-foreground
                           placeholder:text-muted-subtle px-3 py-2 h-9 focus:outline-none
                           focus:ring-1 focus:ring-accent-blue/40 focus:border-accent-blue transition-colors
@@ -979,11 +982,12 @@ export default function ExplorePage({ initialSummary }: ExplorePageProps = {}) {
                           <span className="text-muted-subtle text-xs w-5 text-right flex-shrink-0 tabular-nums">
                             {(pages.top - 1) * PAGE_SIZE + i + 1}
                           </span>
-                          <img
+                          <Image
                             src={u.avatarUrl}
                             alt={`Avatar of ${u.login}`}
                             width={32}
                             height={32}
+                            loading="lazy"
                             className="w-8 h-8 rounded-full flex-shrink-0 ring-1 ring-border"
                           />
                           <div className="flex-1 min-w-0">
@@ -1094,11 +1098,12 @@ export default function ExplorePage({ initialSummary }: ExplorePageProps = {}) {
                               <span className="text-muted-subtle text-xs w-5 text-right flex-shrink-0 tabular-nums">
                                 {(pages.power - 1) * PAGE_SIZE + i + 1}
                               </span>
-                              <img
+                              <Image
                                 src={u.avatarUrl}
                                 alt={`Avatar of ${u.login}`}
                                 width={32}
                                 height={32}
+                                loading="lazy"
                                 className="w-8 h-8 rounded-full flex-shrink-0 ring-1 ring-border"
                               />
                               <div className="flex-1 min-w-0">
@@ -1313,11 +1318,12 @@ export default function ExplorePage({ initialSummary }: ExplorePageProps = {}) {
                                 <span className="text-muted-subtle text-xs w-5 text-right flex-shrink-0 tabular-nums">
                                   {(pages.nearby - 1) * PAGE_SIZE + i + 1}
                                 </span>
-                                <img
+                                <Image
                                   src={`https://github.com/${u.login}.png`}
                                   alt={`Avatar of ${u.login}`}
                                   width={32}
                                   height={32}
+                                  loading="lazy"
                                   className="w-8 h-8 rounded-full flex-shrink-0 ring-1 ring-border"
                                 />
                                 <div className="flex-1 min-w-0">

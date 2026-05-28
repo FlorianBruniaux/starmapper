@@ -428,6 +428,7 @@ const TopPanelInner = ({
                 value={usernameInput}
                 onChange={(e) => setUsernameInput(e.target.value)}
                 placeholder="Your GitHub username…"
+                aria-label="Your GitHub username"
                 className="flex-1 bg-surface border border-border rounded-md px-2 py-1 text-xs
                   text-foreground placeholder:text-muted-subtle
                   focus:outline-none focus:border-accent-blue focus:ring-1 focus:ring-accent-blue/30

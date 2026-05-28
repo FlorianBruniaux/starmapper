@@ -8,6 +8,13 @@ export const metadata: Metadata = {
   title: "Legal — StarMapper",
   description: "Legal information for StarMapper: Privacy Policy, Terms of Service, and contact details.",
   robots: { index: true, follow: true },
+  alternates: { canonical: "/legal" },
+  openGraph: {
+    title: "Legal — StarMapper",
+    description: "Legal information for StarMapper: Privacy Policy, Terms of Service, and contact details.",
+    type: "website",
+  },
+  twitter: { card: "summary" },
 };
 
 const cards = [
