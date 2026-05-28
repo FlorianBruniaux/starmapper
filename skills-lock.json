@@ -1,17 +1,47 @@
 {
   "version": 1,
   "skills": {
+    "maplibre-tile-sources": {
+      "source": "maplibre/maplibre-agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/maplibre-tile-sources/SKILL.md",
+      "computedHash": "3a54ecb94144f640b88f35a2b3d03e17090d4d07f4dc87a5cc26221885f39d31"
+    },
+    "neon-postgres": {
+      "source": "neondatabase/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/neon-postgres/SKILL.md",
+      "computedHash": "3c53df29c959dc0a7f724ff8620063b20fabd2b1fa702ec97e3f17e6a23d5a1c"
+    },
     "next-cache-components": {
       "source": "vercel-labs/next-skills",
       "sourceType": "github",
       "skillPath": "skills/next-cache-components/SKILL.md",
       "computedHash": "f835d8226c28abf012cc013928e2627c8a7a046de61127ef229be1711bd1f255"
     },
+    "nextjs-app-router-patterns": {
+      "source": "wshobson/agents",
+      "sourceType": "github",
+      "skillPath": "plugins/frontend-mobile-development/skills/nextjs-app-router-patterns/SKILL.md",
+      "computedHash": "b4fea42eecf1f803155ef7fa133d5286ee8f2dbba3e616954e9e43c6f0ffc144"
+    },
+    "prisma-driver-adapter-implementation": {
+      "source": "prisma/skills",
+      "sourceType": "github",
+      "skillPath": "prisma-driver-adapter-implementation/SKILL.md",
+      "computedHash": "2e00b0d05f0da23796f6d44684e19219b74cf993f8a2df6e5b044812f375bbc6"
+    },
     "runtime-cache": {
       "source": "vercel-labs/vercel-plugin",
       "sourceType": "github",
       "skillPath": "skills/runtime-cache/SKILL.md",
       "computedHash": "448f9889dc50e212b6781904c1290a5e5a7c832b541aaf6c3d6e22e4801dfe41"
+    },
+    "tailwind-v4-shadcn": {
+      "source": "secondsky/claude-skills",
+      "sourceType": "github",
+      "skillPath": "plugins/tailwind-v4-shadcn/skills/tailwind-v4-shadcn/SKILL.md",
+      "computedHash": "c2b354b64cbd922c8d93121091d079026e2c8a3ca81c07c4f31b6e738c2695f1"
     }
   }
 }
