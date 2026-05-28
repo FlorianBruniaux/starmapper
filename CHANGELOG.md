@@ -5,6 +5,20 @@ Versioning: Semantic Versioning (MAJOR.MINOR.PATCH)
 
 ---
 
+## [0.5.6] (2026-05-28)
+
+### Performance
+
+- **Prisma query payload reduction.** Five `findUnique` calls without `select` now fetch only the columns actually consumed: `badge-update` fetches `totalCount` only (was all 15+ columns), `map-image` fetches 4 badge columns, `stargazer-cache GET` fetches `updatedAt` for the fallback path and explicit 5-column select for the full row. Reduces data transferred from Neon on every scan completion and every map image generation.
+- **`organic-score-stats` SQL aggregate.** The admin stats endpoint was loading all `badge_cache` rows into Node.js memory for in-memory aggregation. Replaced with two parallel `$queryRaw` GROUP BY queries (per-tier counts + per-bucket distribution via `width_bucket`). Memory footprint is now O(1) regardless of table size.
+
+### Internal
+
+- **`import-geocache` bulk upsert.** N+1 pattern (one `prisma.geoCache.upsert` per row inside a nested loop) replaced with a single `$queryRaw` UNNEST INSERT ... ON CONFLICT DO UPDATE per batch of 500. Same pattern as `bulkUpsertUsers` in `user-cache.ts`. Admin dev-only route, blocked in production.
+- **GDPR deletion atomicity.** `delete-user` route wraps `starEvent.deleteMany` + `gitHubUser.delete` in `prisma.$transaction([...])`. Prevents partial deletion if the process crashes between the two operations.
+
+---
+
 ## [0.5.5] (2026-05-27)
 
 ### UX

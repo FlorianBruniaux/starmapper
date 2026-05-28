@@ -7,7 +7,7 @@ import { NextRequest } from "next/server";
 // ─── Mocks ───────────────────────────────────────────────────────────────────
 
 const mockRequireAdminAuth = vi.fn();
-const mockGeoCacheUpsert = vi.fn();
+const mockQueryRaw = vi.fn();
 const mockGeoCacheCount = vi.fn();
 
 vi.mock("@/lib/api-helpers", () => ({
@@ -18,8 +18,8 @@ vi.mock("@/lib/api-helpers", () => ({
 
 vi.mock("@/lib/db", () => ({
   prisma: {
+    $queryRaw: (...args: unknown[]) => mockQueryRaw(...args),
     geoCache: {
-      upsert: (...args: unknown[]) => mockGeoCacheUpsert(...args),
       count: (...args: unknown[]) => mockGeoCacheCount(...args),
     },
   },
@@ -49,7 +49,7 @@ describe("POST /api/admin/import-geocache", () => {
     vi.resetAllMocks();
     vi.unstubAllEnvs();
     mockRequireAdminAuth.mockReturnValue(null);
-    mockGeoCacheUpsert.mockResolvedValue({});
+    mockQueryRaw.mockResolvedValue(undefined);
     mockGeoCacheCount.mockResolvedValue(51000);
   });
 
@@ -72,13 +72,12 @@ describe("POST /api/admin/import-geocache", () => {
     expect(res.status).toBe(413);
   });
 
-  it("upserts entries and returns inserted count", async () => {
+  it("upserts entries and returns upserted count", async () => {
     const entries = { paris: [48.85, 2.35] as [number, number], london: [51.5, -0.12] as [number, number] };
     const res = await POST(makeReq(entries));
     expect(res.status).toBe(200);
     const json = await res.json();
-    expect(json.inserted).toBe(2);
-    expect(json.skipped).toBe(0);
+    expect(json.upserted).toBe(2);
     expect(json.total).toBe(51000);
   });
 
@@ -87,6 +86,6 @@ describe("POST /api/admin/import-geocache", () => {
     const res = await POST(makeReq(entries));
     expect(res.status).toBe(200);
     const json = await res.json();
-    expect(json.inserted).toBe(1);
+    expect(json.upserted).toBe(1);
   });
 });

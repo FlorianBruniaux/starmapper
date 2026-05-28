@@ -12,6 +12,7 @@ const mockDeletionLogUpdate = vi.fn();
 const mockUserFindUnique = vi.fn();
 const mockStarDeleteMany = vi.fn();
 const mockUserDelete = vi.fn();
+const mockTransaction = vi.fn();
 
 vi.mock("@/lib/api-helpers", () => ({
   requireAdminAuth: (...args: unknown[]) => mockRequireAdminAuth(...args),
@@ -22,6 +23,7 @@ vi.mock("@/lib/api-helpers", () => ({
 
 vi.mock("@/lib/db", () => ({
   prisma: {
+    $transaction: (...args: unknown[]) => mockTransaction(...args),
     deletionLog: {
       create: (...args: unknown[]) => mockDeletionLogCreate(...args),
       update: (...args: unknown[]) => mockDeletionLogUpdate(...args),
@@ -58,6 +60,10 @@ describe("POST /api/admin/delete-user", () => {
     mockUserFindUnique.mockResolvedValue({ login: "octocat" });
     mockStarDeleteMany.mockResolvedValue({ count: 10 });
     mockUserDelete.mockResolvedValue({});
+    // $transaction receives an array of already-started promises and resolves them together.
+    mockTransaction.mockImplementation((ops: unknown[]) =>
+      Promise.all(ops as Promise<unknown>[]),
+    );
   });
 
   it("returns 404 when admin auth fails", async () => {
@@ -87,7 +93,7 @@ describe("POST /api/admin/delete-user", () => {
     expect(json.status).toBe("not_found");
   });
 
-  it("deletes user and star events, returns counts", async () => {
+  it("deletes user and star events atomically, returns counts", async () => {
     const res = await POST(makeReq({ login: "octocat" }));
     expect(res.status).toBe(200);
     const json = await res.json();

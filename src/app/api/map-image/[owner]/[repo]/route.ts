@@ -186,7 +186,10 @@ export const GET = async (
         where: { owner_repo: key },
         select: { points: true, totalCount: true, scannedAt: true },
       }),
-      prisma.badgeCache.findUnique({ where: { owner_repo: key } }),
+      prisma.badgeCache.findUnique({
+        where: { owner_repo: key },
+        select: { mappedCount: true, countryCount: true, totalCount: true, updatedAt: true },
+      }),
     ]);
 
     if (cached) {

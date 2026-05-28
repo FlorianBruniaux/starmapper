@@ -37,7 +37,7 @@ export const POST = async (req: NextRequest) => {
 
     try {
       // 1. Check whether the user exists
-      const user = await prisma.gitHubUser.findUnique({ where: { login } });
+      const user = await prisma.gitHubUser.findUnique({ where: { login }, select: { login: true } });
       if (!user) {
         await prisma.deletionLog.update({
           where: { id: logId },
@@ -46,13 +46,13 @@ export const POST = async (req: NextRequest) => {
         return NextResponse.json({ ok: true, status: "not_found", login });
       }
 
-      // 2. Delete star events first (FK constraint)
-      const { count: eventsDeleted } = await prisma.starEvent.deleteMany({ where: { login } });
+      // 2. Delete events and user atomically (GDPR atomicity requirement)
+      const [{ count: eventsDeleted }] = await prisma.$transaction([
+        prisma.starEvent.deleteMany({ where: { login } }),
+        prisma.gitHubUser.delete({ where: { login } }),
+      ]);
 
-      // 3. Delete the user record
-      await prisma.gitHubUser.delete({ where: { login } });
-
-      // 4. Mark deletion as complete in audit log
+      // 3. Mark deletion as complete in audit log
       await prisma.deletionLog.update({
         where: { id: logId },
         data: { status: "completed", deletedAt: new Date() },

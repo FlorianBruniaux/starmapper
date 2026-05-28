@@ -26,7 +26,10 @@ export const GET = async (
 
     if (!meta) {
       // No stargazer cache — check badge_cache for last scan metadata
-      const badge = await prisma.badgeCache.findUnique({ where: { owner_repo: key } });
+      const badge = await prisma.badgeCache.findUnique({
+        where: { owner_repo: key },
+        select: { updatedAt: true },
+      });
       if (badge) {
         return NextResponse.json({ lastScan: badge.updatedAt.toISOString() }, { status: 206 });
       }
@@ -41,7 +44,10 @@ export const GET = async (
     }
 
     // Step 2: full row only on ETag mismatch (first visit or after rescan)
-    const cached = await prisma.stargazerCache.findUnique({ where: { owner_repo: key } });
+    const cached = await prisma.stargazerCache.findUnique({
+      where: { owner_repo: key },
+      select: { points: true, unmapped: true, totalCount: true, scannedAt: true, latestStarredAt: true },
+    });
     if (!cached) return jsonError("not_found", 404);
 
     const points = decompressGzBase64<Record<string, unknown>>(cached.points);

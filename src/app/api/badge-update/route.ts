@@ -36,7 +36,7 @@ export const POST = defineRoute(badgeUpdateSchema, async (req: NextRequest, body
     const shouldComputeOrganic = ORGANIC_ENABLED && forks !== null && watchers !== null && body.totalCount > 0;
 
     const [existing, sample] = await Promise.all([
-      prisma.badgeCache.findUnique({ where: { owner_repo: key } }),
+      prisma.badgeCache.findUnique({ where: { owner_repo: key }, select: { totalCount: true } }),
       shouldComputeOrganic
         ? prisma.$queryRaw<Array<{ zero_count: bigint; sample_size: bigint }>>`
             SELECT
