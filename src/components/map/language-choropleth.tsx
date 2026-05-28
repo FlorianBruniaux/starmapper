@@ -13,7 +13,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { feature } from "topojson-client";
 import type { Topology, GeometryCollection } from "topojson-specification";
 import { toGeoName } from "@/lib/country-geo-names";
-import { LANGUAGE_COLORS, NO_DATA_COLOR } from "@/lib/language-colors";
+import { LANGUAGE_COLORS, NO_DATA_COLOR, DEFAULT_LANG_COLOR } from "@/lib/language-colors";
 import type { AtlasCountry } from "@/app/api/devs/atlas/route";
 
 export type SelectedCountry = {
@@ -222,7 +222,7 @@ export const LanguageChoropleth = memo(({ countries, onCountryClick }: Props) =>
         const pct = props.total > 0
           ? Math.round((props.topCnt / props.total) * 100)
           : 0;
-        const dotColor = props.topLang ? (LANGUAGE_COLORS[props.topLang] ?? "#8b949e") : "#8b949e";
+        const dotColor = props.topLang ? (LANGUAGE_COLORS[props.topLang] ?? DEFAULT_LANG_COLOR) : DEFAULT_LANG_COLOR;
 
         const tipEl = document.createElement("div");
         tipEl.className = "choropleth-tip";

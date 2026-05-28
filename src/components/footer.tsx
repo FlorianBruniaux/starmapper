@@ -39,7 +39,7 @@ export const Footer = () => (
             <LogoMark />
             <span className="font-semibold text-sm text-foreground">StarMapper</span>
           </div>
-          <p className="text-muted text-xs leading-relaxed max-w-[200px]">
+          <p className="text-muted text-xs leading-relaxed max-w-52">
             See who stars your repo, on a map. Free, no login required.
           </p>
         </div>

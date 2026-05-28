@@ -322,7 +322,7 @@ export const Dock = ({
             text-white text-xs font-semibold
             backdrop-blur-md transition-all duration-150
             flex items-center gap-2 w-full
-            shadow-[0_0_12px_rgba(14,152,86,0.3)] hover:shadow-[0_0_20px_rgba(16,208,112,0.35)]
+            shadow-glow-green hover:shadow-glow-green-hover
             focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/40"
           aria-label="Share this stargazer map"
         >

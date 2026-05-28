@@ -95,7 +95,7 @@ export const LanguageSwitcher = ({
       </button>
 
       {open && !loading && (
-        <div className="absolute left-0 top-full mt-1 z-50 min-w-[220px] rounded-md border border-border bg-surface shadow-xl overflow-hidden">
+        <div className="absolute left-0 top-full mt-1 z-50 min-w-56 rounded-md border border-border bg-surface shadow-xl overflow-hidden">
           {/* Search */}
           <div className="border-b border-border px-2.5 py-1.5">
             <input

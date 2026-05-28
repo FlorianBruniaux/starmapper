@@ -9,6 +9,7 @@ import { Modal } from "@/components/modal";
 import { useFocusTrap } from "@/hooks/use-focus-trap";
 import type { StargazerPoint } from "@/app/api/chunk/route";
 import type { RepoStats } from "@/app/api/stats/[owner]/[repo]/route";
+import { SHARE_IMAGE } from "@/lib/theme-colors";
 type RepoInfo = {
   name: string;
   description: string | null;
@@ -81,11 +82,11 @@ export const ShareModal = ({
     const footerH = Math.round(28 * S);
     const panelH = pad + avatarSize + Math.round(12 * S) + boxH + tagsH + footerH + pad;
 
-    ctx.fillStyle = "rgba(13,17,23,0.92)";
+    ctx.fillStyle = SHARE_IMAGE.surfaceOverlay;
     ctx.beginPath();
     ctx.roundRect(panelX, panelY, panelW, panelH, Math.round(12 * S));
     ctx.fill();
-    ctx.strokeStyle = "#30363d"; ctx.lineWidth = 1; ctx.stroke();
+    ctx.strokeStyle = SHARE_IMAGE.border; ctx.lineWidth = 1; ctx.stroke();
 
     if (repoInfo.avatar) {
       try {
@@ -101,7 +102,7 @@ export const ShareModal = ({
     }
 
     const nameSize = Math.round(13 * S);
-    ctx.fillStyle = "#f0f6fc";
+    ctx.fillStyle = SHARE_IMAGE.foreground;
     ctx.font = `bold ${nameSize}px -apple-system, BlinkMacSystemFont, sans-serif`;
     ctx.textAlign = "left";
     ctx.fillText(`${owner}/${repo}`, panelX + pad + avatarSize + Math.round(10 * S), panelY + pad + Math.round(nameSize * 0.85));
@@ -110,13 +111,13 @@ export const ShareModal = ({
     const gap = Math.round(6 * S);
     const bW = Math.round((panelW - pad * 2 - gap * 2) / 3);
     const statsArr = [
-      { v: repoInfo.stars, label: "★ STARS", color: "#ffa657" },
-      { v: points.length, label: "MAPPED", color: "#58a6ff" },
-      { v: displayStats?.countryCount ?? 0, label: "COUNTRIES", color: "#3fb950" },
+      { v: repoInfo.stars, label: "★ STARS", color: SHARE_IMAGE.statAmber },
+      { v: points.length, label: "MAPPED", color: SHARE_IMAGE.linkBlue },
+      { v: displayStats?.countryCount ?? 0, label: "COUNTRIES", color: SHARE_IMAGE.statGreen },
     ];
     for (let i = 0; i < 3; i++) {
       const bx = panelX + pad + i * (bW + gap);
-      ctx.fillStyle = "rgba(22,27,34,0.9)";
+      ctx.fillStyle = SHARE_IMAGE.panelBg;
       ctx.beginPath(); ctx.roundRect(bx, statsY, bW, boxH, Math.round(8 * S)); ctx.fill();
       const valStr = statsArr[i].v >= 1000 ? `${(statsArr[i].v / 1000).toFixed(1)}k` : String(statsArr[i].v);
       const valSize = Math.round(20 * S);
@@ -124,7 +125,7 @@ export const ShareModal = ({
       ctx.font = `bold ${valSize}px -apple-system, sans-serif`;
       ctx.textAlign = "center";
       ctx.fillText(valStr, bx + bW / 2, statsY + Math.round(38 * S));
-      ctx.fillStyle = "#484f58";
+      ctx.fillStyle = SHARE_IMAGE.mutedSubtle;
       ctx.font = `${Math.round(8 * S)}px -apple-system, sans-serif`;
       ctx.fillText(statsArr[i].label, bx + bW / 2, statsY + Math.round(54 * S));
     }
@@ -138,19 +139,19 @@ export const ShareModal = ({
         const text = `${country} · ${count}`;
         const tw = ctx.measureText(text).width + Math.round(14 * S);
         const tH = Math.round(20 * S);
-        ctx.fillStyle = "rgba(13,17,23,0.8)";
+        ctx.fillStyle = SHARE_IMAGE.surfaceOverlay80;
         ctx.beginPath(); ctx.roundRect(tagX, tagsY, tw, tH, Math.round(5 * S)); ctx.fill();
-        ctx.strokeStyle = "#30363d"; ctx.lineWidth = 1; ctx.stroke();
-        ctx.fillStyle = "#8b949e"; ctx.textAlign = "left";
+        ctx.strokeStyle = SHARE_IMAGE.border; ctx.lineWidth = 1; ctx.stroke();
+        ctx.fillStyle = SHARE_IMAGE.muted; ctx.textAlign = "left";
         ctx.fillText(text, tagX + Math.round(7 * S), tagsY + Math.round(14 * S));
         tagX += tw + Math.round(6 * S);
       }
     }
 
-    ctx.fillStyle = "rgba(13,17,23,0.75)";
+    ctx.fillStyle = SHARE_IMAGE.surfaceOverlay75;
     const brandY = H - Math.round(28 * S);
     ctx.fillRect(0, brandY, Math.round(160 * S), Math.round(28 * S));
-    ctx.fillStyle = "#58a6ff";
+    ctx.fillStyle = SHARE_IMAGE.linkBlue;
     ctx.font = `${Math.round(11 * S)}px -apple-system, sans-serif`;
     ctx.textAlign = "left";
     ctx.fillText("🌍 starmapper.bruniaux.com", Math.round(12 * S), brandY + Math.round(18 * S));
@@ -284,7 +285,7 @@ export const ShareModal = ({
                     window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}`, "_blank", "noopener,noreferrer");
                     setLiPanelOpen(false);
                   }}
-                  className="flex-1 bg-[#0a66c2] hover:bg-[#0856a5] text-white text-xs py-2 rounded-lg transition-colors font-medium flex items-center justify-center gap-1.5"
+                  className="flex-1 bg-brand-linkedin hover:bg-brand-linkedin-hover text-white text-xs py-2 rounded-lg transition-colors font-medium flex items-center justify-center gap-1.5"
                 >
                   <svg aria-hidden="true" width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
                   Post on LinkedIn →

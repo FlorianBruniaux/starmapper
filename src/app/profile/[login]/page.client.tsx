@@ -11,7 +11,7 @@ import { Header } from "@/components/header";
 import { StargazerMapDynamic } from "@/components/map/stargazer-map-dynamic";
 import { getStoredToken } from "@/lib/token";
 const TokenModal = dynamic(() => import("@/components/token-modal").then((m) => ({ default: m.TokenModal })), { ssr: false });
-import { LANGUAGE_COLORS } from "@/lib/language-colors";
+import { LANGUAGE_COLORS, DEFAULT_LANG_COLOR } from "@/lib/language-colors";
 import { MAP_STYLE_DARK, MAP_STYLE_LIGHT } from "@/lib/map-style-urls";
 import { useTheme } from "@/hooks/useTheme";
 import type { ProfileResponse, ProfileRepo } from "@/app/api/profile/[login]/route";
@@ -77,9 +77,9 @@ const RepoCard = ({ repo }: { repo: ProfileRepo }) => {
           <span
             className="shrink-0 text-2xs font-medium px-1.5 py-0.5 rounded-full border"
             style={{
-              color: LANGUAGE_COLORS[repo.language] ?? "#8b949e",
-              borderColor: `${LANGUAGE_COLORS[repo.language] ?? "#8b949e"}40`,
-              backgroundColor: `${LANGUAGE_COLORS[repo.language] ?? "#8b949e"}14`,
+              color: LANGUAGE_COLORS[repo.language] ?? DEFAULT_LANG_COLOR,
+              borderColor: `${LANGUAGE_COLORS[repo.language] ?? DEFAULT_LANG_COLOR}40`,
+              backgroundColor: `${LANGUAGE_COLORS[repo.language] ?? DEFAULT_LANG_COLOR}14`,
             }}
           >
             {repo.language}
@@ -845,9 +845,9 @@ export default function ProfilePageClient({ login, initialProfile }: Props) {
                       href={`/devs/${encodeURIComponent(lang.toLowerCase())}`}
                       className="text-2xs font-medium px-1.5 py-0.5 rounded-full border transition-opacity hover:opacity-80"
                       style={{
-                        color: LANGUAGE_COLORS[lang] ?? "#8b949e",
-                        borderColor: `${LANGUAGE_COLORS[lang] ?? "#8b949e"}40`,
-                        backgroundColor: `${LANGUAGE_COLORS[lang] ?? "#8b949e"}14`,
+                        color: LANGUAGE_COLORS[lang] ?? DEFAULT_LANG_COLOR,
+                        borderColor: `${LANGUAGE_COLORS[lang] ?? DEFAULT_LANG_COLOR}40`,
+                        backgroundColor: `${LANGUAGE_COLORS[lang] ?? DEFAULT_LANG_COLOR}14`,
                       }}
                     >
                       {lang}
@@ -966,9 +966,9 @@ export default function ProfilePageClient({ login, initialProfile }: Props) {
                       <span
                         className="shrink-0 text-2xs font-medium px-1.5 py-0.5 rounded-full border"
                         style={{
-                          color: LANGUAGE_COLORS[r.language] ?? "#8b949e",
-                          borderColor: `${LANGUAGE_COLORS[r.language] ?? "#8b949e"}40`,
-                          backgroundColor: `${LANGUAGE_COLORS[r.language] ?? "#8b949e"}14`,
+                          color: LANGUAGE_COLORS[r.language] ?? DEFAULT_LANG_COLOR,
+                          borderColor: `${LANGUAGE_COLORS[r.language] ?? DEFAULT_LANG_COLOR}40`,
+                          backgroundColor: `${LANGUAGE_COLORS[r.language] ?? DEFAULT_LANG_COLOR}14`,
                         }}
                       >
                         {r.language}
@@ -1301,9 +1301,9 @@ export default function ProfilePageClient({ login, initialProfile }: Props) {
                       <span
                         className="shrink-0 text-2xs font-medium px-1.5 py-0.5 rounded-full border"
                         style={{
-                          color: LANGUAGE_COLORS[r.language] ?? "#8b949e",
-                          borderColor: `${LANGUAGE_COLORS[r.language] ?? "#8b949e"}40`,
-                          backgroundColor: `${LANGUAGE_COLORS[r.language] ?? "#8b949e"}14`,
+                          color: LANGUAGE_COLORS[r.language] ?? DEFAULT_LANG_COLOR,
+                          borderColor: `${LANGUAGE_COLORS[r.language] ?? DEFAULT_LANG_COLOR}40`,
+                          backgroundColor: `${LANGUAGE_COLORS[r.language] ?? DEFAULT_LANG_COLOR}14`,
                         }}
                       >
                         {r.language}

@@ -160,7 +160,7 @@ export default function ChangelogPage() {
             {entries.map((entry) => (
               <div key={entry.version} className="relative pl-8">
                 {/* Timeline dot */}
-                <div className="absolute left-0 top-[6px] size-[15px] rounded-full bg-surface border-2 border-border" />
+                <div className="absolute left-0 top-1.5 size-[15px] rounded-full bg-surface border-2 border-border" />
 
                 {/* Version header */}
                 <div className="flex items-baseline gap-3 mb-5">

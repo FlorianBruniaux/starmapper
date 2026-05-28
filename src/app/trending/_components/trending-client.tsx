@@ -7,7 +7,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Header } from "@/components/header";
 import { StargazerMapDynamic } from "@/components/map/stargazer-map-dynamic";
-import { LANGUAGE_COLORS } from "@/lib/language-colors";
+import { langColor } from "@/lib/language-colors";
 import type { TrendingRepo } from "@/app/api/trending/repos/route";
 import type { StargazerPoint } from "@/app/api/chunk/route";
 
@@ -26,7 +26,7 @@ const formatK = (n: number) =>
 
 const LangDot = ({ language }: { language: string | null }) => {
   if (!language) return null;
-  const color = LANGUAGE_COLORS[language] ?? "#8b949e";
+  const color = langColor(language);
   return (
     <span
       className="inline-block size-2.5 rounded-full shrink-0"

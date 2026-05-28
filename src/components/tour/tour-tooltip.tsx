@@ -154,7 +154,7 @@ export const TourTooltip = ({ step, currentIndex, totalSteps, targetRect, onNext
       role="dialog"
       aria-modal="true"
       aria-label={`Tour step ${currentIndex + 1} of ${totalSteps}: ${step.title}`}
-      className="fixed z-[61] w-72 bg-surface border border-border rounded-xl shadow-2xl
+      className="fixed z-tour-tooltip w-72 bg-surface border border-border rounded-xl shadow-2xl
                  animate-in fade-in zoom-in-95 duration-150"
       style={{ top, left }}
     >

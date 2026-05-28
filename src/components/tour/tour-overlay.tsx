@@ -94,7 +94,7 @@ export const TourOverlay = ({ step, currentIndex, totalSteps, onNext, onPrev, on
     <>
       {/* Backdrop with hole cut out via clip-path */}
       <div
-        className="fixed inset-0 z-[60] bg-black/60 transition-all duration-200"
+        className="fixed inset-0 z-tour-overlay bg-black/60 transition-all duration-200"
         style={clipPath ? { clipPath } : undefined}
         onClick={onSkip}
         aria-hidden="true"
@@ -103,7 +103,7 @@ export const TourOverlay = ({ step, currentIndex, totalSteps, onNext, onPrev, on
       {/* Highlight ring around the target element */}
       {rect && (
         <div
-          className="fixed z-[60] rounded-lg pointer-events-none ring-2 ring-accent-blue/70 transition-all duration-200"
+          className="fixed z-tour-overlay rounded-lg pointer-events-none ring-2 ring-accent-blue/70 transition-all duration-200"
           style={{
             top: rect.top,
             left: rect.left,

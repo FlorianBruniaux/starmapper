@@ -221,7 +221,7 @@ export const LandingClient = ({ initialRepos, initialTotal }: Props) => {
                     />
                     <button
                       type="submit"
-                      className="sm:shrink-0 bg-accent-green-emphasis hover:opacity-90 hover:shadow-[0_0_20px_rgba(14,152,86,0.4)] text-white font-bold py-3 px-6 rounded-lg transition-[opacity,box-shadow] text-base whitespace-nowrap"
+                      className="sm:shrink-0 bg-accent-green-emphasis hover:opacity-90 hover:shadow-glow-green-cta text-white font-bold py-3 px-6 rounded-lg transition-[opacity,box-shadow] text-base whitespace-nowrap"
                     >
                       Map Stargazers
                     </button>

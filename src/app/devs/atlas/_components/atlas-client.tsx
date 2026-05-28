@@ -8,7 +8,7 @@ import Link from "next/link";
 import { Header } from "@/components/header";
 import { TokenModal, getStoredToken } from "@/components/token-modal";
 import { LanguageChoroplethDynamic } from "@/components/map/language-choropleth-dynamic";
-import { LANGUAGE_COLORS, NO_DATA_COLOR, langColor } from "@/lib/language-colors";
+import { NO_DATA_COLOR, langColor } from "@/lib/language-colors";
 import { languageToSlug } from "@/lib/languages";
 import type { AtlasDominantData, AtlasCountry } from "@/app/api/devs/atlas/route";
 import type { SelectedCountry } from "@/components/map/language-choropleth";
@@ -23,7 +23,7 @@ const computeLegend = (countries: AtlasCountry[]) => {
   return [...freq.entries()]
     .sort((a, b) => b[1] - a[1])
     .slice(0, MAX_LEGEND_LANGS)
-    .map(([lang, count]) => ({ lang, count, color: LANGUAGE_COLORS[lang] ?? "#8b949e" }));
+    .map(([lang, count]) => ({ lang, count, color: langColor(lang) }));
 };
 
 const formatDate = (iso: string) => {

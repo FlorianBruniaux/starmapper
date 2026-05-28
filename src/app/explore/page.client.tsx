@@ -144,7 +144,7 @@ const ReposBadge = ({ login, count }: { login: string; count: number }) => {
         <div
           ref={popoverRef}
           style={{ top: popoverPos.top, right: popoverPos.right }}
-          className="fixed w-72 bg-surface border border-border rounded-xl shadow-lg z-[9999] overflow-hidden"
+          className="fixed w-72 bg-surface border border-border rounded-xl shadow-lg z-popover-top overflow-hidden"
         >
           <div className="px-3 py-2 border-b border-border-subtle flex items-center justify-between">
             <span className="text-xs font-medium text-foreground">Top GitHub repos</span>
@@ -1425,7 +1425,7 @@ export default function ExplorePage({ initialSummary }: ExplorePageProps = {}) {
 
           {/* ── RIGHT COLUMN: persistent map ── */}
           <div data-tour="explore-map" ref={mapColumnRef} className="flex-1 min-w-0">
-            <div className="bg-surface border border-border rounded-xl overflow-hidden lg:sticky lg:top-[72px]">
+            <div className="bg-surface border border-border rounded-xl overflow-hidden lg:sticky lg:top-(--spacing-header-offset)">
 
               {/* Map header */}
               <div className="flex items-center justify-between px-4 py-3 border-b border-border-subtle">

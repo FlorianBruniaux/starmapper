@@ -115,6 +115,24 @@ html.dark {
   --color-warning-subtle: var(--color-warning-subtle);
   --color-map-bg: var(--color-map-bg);
 
+  /* Third-party brand colors */
+  --color-brand-linkedin: #0a66c2;
+  --color-brand-linkedin-hover: #0856a5;
+
+  /* Z-index scale (above Tailwind defaults 0-50) */
+  --z-tour-overlay: 60;
+  --z-tour-tooltip: 61;
+  --z-skip-link: 100;
+  --z-popover-top: 9999;
+
+  /* CTA glow effects */
+  --shadow-glow-green: 0 0 12px rgba(14, 152, 86, 0.3);
+  --shadow-glow-green-hover: 0 0 20px rgba(16, 208, 112, 0.35);
+  --shadow-glow-green-cta: 0 0 20px rgba(14, 152, 86, 0.4);
+
+  /* Layout offsets */
+  --spacing-header-offset: 4.5rem;
+
   /* Fonts */
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);

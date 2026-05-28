@@ -143,12 +143,12 @@ export const FilterCombobox = ({ value, onChange, options, placeholder }: Filter
             : "text-muted hover:text-foreground",
         ].join(" ")}
       >
-        <span className="max-w-[80px] truncate" aria-hidden="true">{label}</span>
+        <span className="max-w-20 truncate" aria-hidden="true">{label}</span>
         <ChevronDown size={8} className="shrink-0 opacity-60" aria-hidden="true" />
       </button>
 
       {open && (
-        <div className="absolute left-0 top-full mt-1 z-50 min-w-[160px] rounded-md border border-border bg-surface shadow-xl overflow-hidden">
+        <div className="absolute left-0 top-full mt-1 z-50 min-w-40 rounded-md border border-border bg-surface shadow-xl overflow-hidden">
           {/* Search */}
           <div className="border-b border-border px-2 py-1.5">
             <input

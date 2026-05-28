@@ -435,10 +435,10 @@ export const AllStargazersModal = ({
                             @{u.login}
                           </a>
                           {u.name && u.name !== u.login && (
-                            <div className="text-muted text-2xs truncate max-w-[140px]">{u.name}</div>
+                            <div className="text-muted text-2xs truncate max-w-36">{u.name}</div>
                           )}
                           {u.bio && (
-                            <div className="text-muted-subtle text-2xs truncate max-w-[140px]" title={u.bio}>{u.bio}</div>
+                            <div className="text-muted-subtle text-2xs truncate max-w-36" title={u.bio}>{u.bio}</div>
                           )}
                         </div>
                       </div>
@@ -446,14 +446,14 @@ export const AllStargazersModal = ({
                     <td className="px-3 py-2 text-right text-muted tabular-nums">
                       {u.followers > 0 ? u.followers.toLocaleString() : "—"}
                     </td>
-                    <td className="px-3 py-2 text-muted max-w-[160px] hidden sm:table-cell">
+                    <td className="px-3 py-2 text-muted max-w-40 hidden sm:table-cell">
                       <span className="truncate block">{u.location ?? "—"}</span>
                     </td>
                     <td className="px-3 py-2 text-muted-subtle hidden md:table-cell tabular-nums">
                       {u.starredAt ? new Date(u.starredAt).toLocaleDateString() : "—"}
                     </td>
                     <td className="px-3 py-2 text-muted-subtle hidden lg:table-cell">
-                      <span className="truncate block max-w-[120px]">{u.company ?? "—"}</span>
+                      <span className="truncate block max-w-28">{u.company ?? "—"}</span>
                     </td>
                     <td className="px-3 py-2 hidden xl:table-cell" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center gap-2">
