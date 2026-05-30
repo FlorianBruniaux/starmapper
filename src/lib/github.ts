@@ -36,6 +36,7 @@ export type StargazersPage = {
   stargazers: StargazerRaw[];
   nextCursor: string | null;
   totalCount: number;
+  quotaRemaining: number | null;
 };
 
 export const fetchStargazersPage = async (
@@ -65,9 +66,6 @@ export const fetchStargazersPage = async (
               followers { totalCount }
               following { totalCount }
               repositories(first: 0) { totalCount }
-              socialAccounts(first: 5) {
-                nodes { provider url }
-              }
             }
           }
         }
@@ -101,6 +99,12 @@ export const fetchStargazersPage = async (
   }
   if (res.status === 401) throw new GitHubTokenInvalidError();
   if (!res.ok) throw new Error(`GitHub API error: ${res.status}`);
+  const quotaRemaining = (() => {
+    const raw = res.headers.get("x-ratelimit-remaining");
+    if (!raw) return null;
+    const n = parseInt(raw, 10);
+    return isNaN(n) ? null : n;
+  })();
   const json = await res.json();
   if (json.errors) throw new Error(json.errors[0].message);
 
@@ -116,9 +120,6 @@ export const fetchStargazersPage = async (
       hasMore = false; // hit stars we already have — stop here
       break;
     }
-    const linkedinNode = (e.node.socialAccounts?.nodes ?? []).find(
-      (n: { provider: string; url: string }) => n.provider === "LINKEDIN",
-    );
     stargazers.push({
       login: e.node.login,
       name: e.node.name ?? null,
@@ -131,7 +132,7 @@ export const fetchStargazersPage = async (
       accountCreatedAt: e.node.createdAt ?? null,
       avatarUrl: e.node.avatarUrl,
       starredAt: e.starredAt,
-      linkedinUrl: linkedinNode?.url?.startsWith("https://") ? linkedinNode.url : null,
+      linkedinUrl: null,
     });
   }
 
@@ -139,5 +140,6 @@ export const fetchStargazersPage = async (
     totalCount: data.stargazerCount,
     nextCursor: hasMore ? page.pageInfo.endCursor : null,
     stargazers,
+    quotaRemaining,
   };
 }

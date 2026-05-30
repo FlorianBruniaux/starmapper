@@ -21,6 +21,8 @@ const readSession = (key: string): string => {
       sessionStorage.removeItem(key);
       return "";
     }
+    // Rolling TTL: reset expiry on each active read so long scans don't lose the token
+    sessionStorage.setItem(key, JSON.stringify({ v: parsed.v, exp: Date.now() + TOKEN_TTL_MS }));
     return parsed.v;
   } catch { return ""; }
 };

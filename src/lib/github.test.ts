@@ -195,35 +195,8 @@ describe("fetchStargazersPage()", () => {
       expect(result.stargazers[0].company).toBe("GitHub Inc.");
     });
 
-    it("extracts LinkedIn URL from socialAccounts.nodes", async () => {
-      const edges = [
-        makeEdge({
-          socialAccounts: {
-            nodes: [{ provider: "LINKEDIN", url: "https://linkedin.com/in/octocat" }],
-          },
-        }),
-      ];
-      vi.mocked(fetch).mockReturnValue(mockFetchOk(makeGraphQLResponse({ edges })));
-      const result = await fetchStargazersPage("o", "r", null);
-      expect(result.stargazers[0].linkedinUrl).toBe("https://linkedin.com/in/octocat");
-    });
-
-    it("returns null linkedinUrl when no LINKEDIN social account", async () => {
-      const edges = [makeEdge({ socialAccounts: { nodes: [] } })];
-      vi.mocked(fetch).mockReturnValue(mockFetchOk(makeGraphQLResponse({ edges })));
-      const result = await fetchStargazersPage("o", "r", null);
-      expect(result.stargazers[0].linkedinUrl).toBeNull();
-    });
-
-    it("returns null linkedinUrl when LinkedIn URL does not start with https://", async () => {
-      const edges = [
-        makeEdge({
-          socialAccounts: {
-            nodes: [{ provider: "LINKEDIN", url: "http://linkedin.com/in/octocat" }],
-          },
-        }),
-      ];
-      vi.mocked(fetch).mockReturnValue(mockFetchOk(makeGraphQLResponse({ edges })));
+    it("always returns null linkedinUrl (socialAccounts removed from chunk query)", async () => {
+      vi.mocked(fetch).mockReturnValue(mockFetchOk(makeGraphQLResponse()));
       const result = await fetchStargazersPage("o", "r", null);
       expect(result.stargazers[0].linkedinUrl).toBeNull();
     });

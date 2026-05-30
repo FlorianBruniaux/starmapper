@@ -87,6 +87,7 @@ export const useScanController = ({
   const [waitReason, setWaitReason] = useState<"github" | "server">("server");
   const [error, setError] = useState("");
   const [tokenFallback, setTokenFallback] = useState(false);
+  const [quotaRemaining, setQuotaRemaining] = useState<number | null>(null);
   const runningRef = useRef(false);
   const pendingScanRef = useRef(false);
   const pendingRefreshRef = useRef(false);
@@ -155,6 +156,9 @@ export const useScanController = ({
         }
 
         if (!newestStarredAt && chunk!.latestStarredAt) newestStarredAt = chunk!.latestStarredAt;
+        if (chunk!.quotaRemaining !== null && chunk!.quotaRemaining !== undefined) {
+          setQuotaRemaining(chunk!.quotaRemaining);
+        }
         setTotal(chunk!.totalCount);
         // Spread into new arrays — new references trigger memo() re-render and the throttled
         // setData effect in StargazerMap. Mutation in place would keep same reference →
@@ -397,6 +401,7 @@ export const useScanController = ({
     status, setStatus,
     retryIn, retryTotal, waitReason, error,
     tokenFallback,
+    quotaRemaining,
     startScraping, startRefresh,
     handleStartScan, handleStartRefresh, handleTokenClose,
     runningRef,

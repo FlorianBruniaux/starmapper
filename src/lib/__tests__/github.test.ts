@@ -178,7 +178,7 @@ describe("fetchStargazersPage", () => {
       expect(sg.company).toBe("acmecorp");
       expect(sg.location).toBe("Berlin, Germany");
       expect(sg.followers).toBe(150);
-      expect(sg.linkedinUrl).toBe("https://linkedin.com/in/janedoe");
+      expect(sg.linkedinUrl).toBeNull();
       expect(sg.starredAt).toBe("2024-03-01T08:00:00Z");
     });
 
@@ -194,13 +194,9 @@ describe("fetchStargazersPage", () => {
       expect(result.stargazers[0].company).toBe("github");
     });
 
-    it("returns null linkedinUrl when no LinkedIn social account exists", async () => {
-      const edge = makeEdge({
-        socialAccounts: [{ provider: "TWITTER", url: "https://twitter.com/user" }],
-      });
-
+    it("always returns null linkedinUrl (socialAccounts removed from chunk query)", async () => {
       vi.spyOn(global, "fetch").mockResolvedValueOnce(
-        makeOkResponse(makeGitHubResponse({ edges: [edge] })),
+        makeOkResponse(makeGitHubResponse({})),
       );
 
       const result = await fetchStargazersPage("owner", "repo", null);

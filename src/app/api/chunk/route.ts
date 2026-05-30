@@ -34,7 +34,8 @@ export type ChunkResponse = {
   unmapped: { login: string; name: string | null; followers: number; starredAt: string | null }[];
   nextCursor: string | null;
   totalCount: number;
-  latestStarredAt: string | null; // ISO timestamp of most recent star in this chunk
+  latestStarredAt: string | null;
+  quotaRemaining: number | null;
 };
 
 const buildUserWritePayload = (
@@ -228,6 +229,7 @@ export const POST = async (req: NextRequest) => {
         nextCursor: page.nextCursor,
         totalCount: page.totalCount,
         latestStarredAt,
+        quotaRemaining: page.quotaRemaining,
       } satisfies ChunkResponse);
     })(req);
   } catch (err: unknown) {
