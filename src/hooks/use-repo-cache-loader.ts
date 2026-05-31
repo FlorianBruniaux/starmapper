@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 
 import { useEffect, useRef, useState } from "react";
-import { loadCache, saveCache } from "@/lib/repo-cache";
+import { loadCache, saveCache, clearCache } from "@/lib/repo-cache";
 import { saveBookmark } from "@/lib/bookmarks";
 import { compressToBase64 } from "@/lib/compress-client";
 import { isCountry, normalizeCountry } from "@/lib/countries";
@@ -73,7 +73,10 @@ export const useRepoCacheLoader = ({
 
   // Effect 1: load localStorage + revalidate against DB
   useEffect(() => {
-    const local = loadCache(owner, repo);
+    const MAX_LOCAL_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+    const loaded = loadCache(owner, repo);
+    const local = loaded && Date.now() - loaded.scannedAt <= MAX_LOCAL_AGE_MS ? loaded : null;
+    if (loaded && !local) clearCache(owner, repo);
     if (local) {
       dispatch({ type: "set", points: local.points, unmapped: local.unmapped });
       setTotal(local.totalCount);
@@ -133,7 +136,9 @@ export const useRepoCacheLoader = ({
   // Effect 2: badge-sync — fires after localStorage hit, reads repoInfo via ref so it
   // doesn't re-run on every repoInfo update (forksCount/watchersCount are bonus fields).
   useEffect(() => {
-    const local = loadCache(owner, repo);
+    const MAX_LOCAL_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+    const loaded = loadCache(owner, repo);
+    const local = loaded && Date.now() - loaded.scannedAt <= MAX_LOCAL_AGE_MS ? loaded : null;
     if (!local) return;
     const countrySet = new Set(
       local.points
