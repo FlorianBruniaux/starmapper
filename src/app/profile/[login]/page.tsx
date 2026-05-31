@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 
+import { Suspense } from "react";
 import { cacheLife, cacheTag } from "next/cache";
 import ProfilePageClient from "./page.client";
 import type { ProfileResponse } from "@/app/api/profile/[login]/route";
@@ -20,12 +21,16 @@ const fetchProfile = async (login: string): Promise<ProfileResponse | null> => {
   }
 };
 
-export default async function ProfilePage({
-  params,
-}: {
-  params: Promise<{ login: string }>;
-}) {
+const ProfileContent = async ({ params }: { params: Promise<{ login: string }> }) => {
   const { login } = await params;
   const initialProfile = await fetchProfile(login);
   return <ProfilePageClient login={login} initialProfile={initialProfile} />;
+};
+
+export default function ProfilePage({ params }: { params: Promise<{ login: string }> }) {
+  return (
+    <Suspense fallback={null}>
+      <ProfileContent params={params} />
+    </Suspense>
+  );
 }

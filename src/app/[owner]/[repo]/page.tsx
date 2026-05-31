@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 
+import { Suspense } from "react";
 import { cacheLife, cacheTag } from "next/cache";
 import MapPageClient from "./page.client";
 
@@ -31,12 +32,16 @@ const fetchRepoInfo = async (owner: string, repo: string): Promise<RepoInfo | nu
   }
 };
 
-export default async function MapPage({
-  params,
-}: {
-  params: Promise<{ owner: string; repo: string }>;
-}) {
+const MapContent = async ({ params }: { params: Promise<{ owner: string; repo: string }> }) => {
   const { owner, repo } = await params;
   const initialRepoInfo = await fetchRepoInfo(owner, repo);
   return <MapPageClient owner={owner} repo={repo} initialRepoInfo={initialRepoInfo} />;
+};
+
+export default function MapPage({ params }: { params: Promise<{ owner: string; repo: string }> }) {
+  return (
+    <Suspense fallback={null}>
+      <MapContent params={params} />
+    </Suspense>
+  );
 }
