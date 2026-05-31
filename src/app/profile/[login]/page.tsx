@@ -1,10 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 
-// Profile pages depend on a dynamic [login] segment and hit the live API —
-// can't be statically prerendered at build time.
-export const dynamic = "force-dynamic";
-
+import { Suspense } from "react";
 import ProfilePageClient from "./page.client";
 import type { ProfileResponse } from "@/app/api/profile/[login]/route";
 
@@ -23,12 +20,22 @@ const fetchProfile = async (login: string): Promise<ProfileResponse | null> => {
   }
 };
 
+// Wrapped in Suspense so cacheComponents can prerender the static shell while
+// this async fetch stays per-request (dynamic [login] segment).
+const ProfileContent = async ({ login }: { login: string }) => {
+  const initialProfile = await fetchProfile(login);
+  return <ProfilePageClient login={login} initialProfile={initialProfile} />;
+};
+
 export default async function ProfilePage({
   params,
 }: {
   params: Promise<{ login: string }>;
 }) {
   const { login } = await params;
-  const initialProfile = await fetchProfile(login);
-  return <ProfilePageClient login={login} initialProfile={initialProfile} />;
+  return (
+    <Suspense fallback={null}>
+      <ProfileContent login={login} />
+    </Suspense>
+  );
 }
