@@ -88,6 +88,10 @@ export const useRepoCacheLoader = ({
     (async () => {
       try {
         const r = await fetch(`/api/stargazer-cache/${owner}/${repo}`, { signal: ac.signal });
+        if (r.status === 304) {
+          // Server data unchanged since last fetch — local cache is already current.
+          return;
+        }
         if (r.status === 206) {
           const d = await r.json();
           if (!local) setLastDbScan(d.lastScan);
@@ -101,7 +105,9 @@ export const useRepoCacheLoader = ({
         const data = await r.json();
         if (!data.points) return;
         const scannedMs = new Date(data.scannedAt).getTime();
-        if (local && scannedMs <= local.scannedAt) return;
+        // Skip update only if server data is both older AND has fewer/equal stars.
+        // A higher totalCount on the server always wins (rescan captured more users).
+        if (local && scannedMs <= local.scannedAt && data.totalCount <= local.totalCount) return;
         dispatch({ type: "set", points: data.points, unmapped: data.unmapped });
         setTotal(data.totalCount);
         setCachedAt(scannedMs);
