@@ -7,6 +7,8 @@ import { prisma } from "@/lib/db";
 import { normalizeOwnerRepo, OWNER_REPO_RE } from "@/lib/api-validation";
 import { jsonError, logError } from "@/lib/api-helpers";
 
+export const maxDuration = 30;
+
 export type GeoVelocityItem = {
   country: string;
   stars30d: number;
@@ -15,6 +17,8 @@ export type GeoVelocityItem = {
   trend: "rising" | "new" | "stable" | "declining";
   ratio: number; // 30d daily rate ÷ 60d historical daily rate (capped at 10)
 };
+
+export type GeoVelocityResponse = { items: GeoVelocityItem[]; timedOut?: boolean };
 
 export const GET = async (
   _req: NextRequest,
@@ -86,6 +90,19 @@ export const GET = async (
       headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600" },
     });
   } catch (err) {
+    // P2010 = raw query failed (statement_timeout from Neon)
+    // P2024 = connection pool exhausted (burst traffic before index exists)
+    const isOverload =
+      err != null &&
+      typeof err === "object" &&
+      "code" in err &&
+      (err.code === "P2010" || err.code === "P2024");
+    if (isOverload) {
+      return NextResponse.json(
+        { items: [], timedOut: true },
+        { status: 200, headers: { "Cache-Control": "no-store" } },
+      );
+    }
     logError("stats/geo-velocity", err);
     return jsonError("internal", 500);
   }

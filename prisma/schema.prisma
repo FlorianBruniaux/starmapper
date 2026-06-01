@@ -115,6 +115,7 @@ model StarEvent {
 
   @@unique([login, owner, repo])
   @@index([owner, repo, login])
+  @@index([owner, repo, login, starredAt])
   @@map("star_event")
 }
 

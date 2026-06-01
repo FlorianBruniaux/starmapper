@@ -63,7 +63,10 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS github_user_grid_mv AS
 CREATE UNIQUE INDEX IF NOT EXISTS github_user_grid_mv_lat_lng_idx ON github_user_grid_mv (lat, lng);
 SQL
 
-echo "==> 4/4 Optional: country_language_stats_mv (Language Atlas)"
+echo "==> 4/5 Covering index for geo-velocity (owner, repo, login, starredAt)"
+psql "$DB_URL" -f "$(dirname "$0")/sql/create-geo-velocity-index.sql"
+
+echo "==> 5/5 Optional: country_language_stats_mv (Language Atlas)"
 echo "    Skipped on fresh DB (requires github_user.languages[] to be populated)."
 echo "    Run 'pnpm create:country-language-mv' after backfilling language data."
 
