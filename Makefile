@@ -53,6 +53,12 @@ mv-language-grid:
 mv-language-grid-prod:
 	$(ENV) psql "$$DATABASE_URL" -f scripts/db/sql/create-language-grid-mv.sql'
 
+idx-geo-velocity:
+	$(ENV) psql "$$DATABASE_URL_LOCAL" -f scripts/db/sql/create-geo-velocity-index.sql'
+
+idx-geo-velocity-prod:
+	$(ENV) psql "$$DATABASE_URL" -f scripts/db/sql/create-geo-velocity-index.sql'
+
 refresh-all:
 	$(ENV) psql "$$DATABASE_URL_LOCAL" -c "SET statement_timeout = 0; REFRESH MATERIALIZED VIEW country_stats_mv; REFRESH MATERIALIZED VIEW power_users_mv; REFRESH MATERIALIZED VIEW company_stats_mv; REFRESH MATERIALIZED VIEW user_repo_count_mv;"'
 
@@ -99,14 +105,17 @@ collect-repos:
 collect-trending:
 	$(ENV) tsx scripts/ops/collect-trending-repos.ts'
 
+collect-trending-no-ts:
+	$(ENV) tsx scripts/ops/collect-trending-repos.ts --exclude-language typescript --exclude-language javascript'
+
 collect-merge:
-	node -e "const fs=require('fs'),g=p=>fs.existsSync(p)?require(p):[];const a=g('./scripts/data/repos-from-users.json'),b=g('./scripts/data/repos-trending.json'),m=[...new Set([...a,...b])];fs.writeFileSync('scripts/data/repos-all.json',JSON.stringify(m,null,2));console.log('Merged:',m.length,'repos')"
+	node -e "const fs=require('fs'),g=p=>fs.existsSync(p)?require(p):[];const a=g('./scripts/repos-from-users.json'),b=g('./scripts/repos-trending.json'),m=[...new Set([...a,...b])];fs.writeFileSync('scripts/repos-all.json',JSON.stringify(m,null,2));console.log('Merged:',m.length,'repos')"
 
 batch-scan:
-	$(ENV) caffeinate -i tsx scripts/ops/batch-scan.ts --local --input scripts/data/repos-all.json'
+	$(ENV) caffeinate -i tsx scripts/ops/batch-scan.ts --local --input scripts/repos-all.json'
 
 batch-scan-dry:
-	$(ENV) tsx scripts/ops/batch-scan.ts --local --input scripts/data/repos-all.json --dry-run'
+	$(ENV) tsx scripts/ops/batch-scan.ts --local --input scripts/repos-all.json --dry-run'
 
 # ─── Calibration + probes ──────────────────────────────────────────────────────
 
@@ -130,12 +139,14 @@ maintenance-sync-only:
 .PHONY: db-sync-to-prod db-sync-from-prod db-dump db-restore db-pull \
         mv-country-stats mv-country-stats-prod mv-country-language mv-country-language-prod \
         mv-user-repo-count mv-user-repo-count-prod mv-trending mv-trending-prod \
-        mv-language-grid mv-language-grid-prod refresh-all refresh-all-prod \
+        mv-language-grid mv-language-grid-prod \
+        idx-geo-velocity idx-geo-velocity-prod \
+        refresh-all refresh-all-prod \
         backfill-organic-score backfill-organic-score-prod \
         backfill-repo-metrics backfill-repo-metrics-prod \
         backfill-repo-languages backfill-repo-languages-prod \
         backfill-user-top-repos backfill-user-top-repos-prod \
         backfill-languages backfill-languages-prod \
         maintenance maintenance-dry maintenance-sync-only \
-        collect-repos collect-trending collect-merge batch-scan batch-scan-dry \
+        collect-repos collect-trending collect-trending-no-ts collect-merge batch-scan batch-scan-dry \
         calibrate-organic-score probe-star-burst
