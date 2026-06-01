@@ -24,7 +24,7 @@ const LIMIT = limitArg !== -1 ? parseInt(process.argv[limitArg + 1] ?? "999999",
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const DELAY_MS = 300;
 
-const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, options: "-c statement_timeout=0" });
 const prisma = new PrismaClient({ adapter: new PrismaPg(pool) });
 
 const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));

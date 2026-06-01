@@ -67,7 +67,7 @@ if (!GITHUB_TOKEN) { console.error("Error: GITHUB_TOKEN not set"); process.exit(
 
 const prisma = USE_PROD
   ? new PrismaClient({ adapter: new PrismaNeon({ connectionString: DB_URL }) })
-  : new PrismaClient({ adapter: new PrismaPg(new pg.Pool({ connectionString: DB_URL })) });
+  : new PrismaClient({ adapter: new PrismaPg(new pg.Pool({ connectionString: DB_URL, options: "-c statement_timeout=0" })) });
 
 // ─── GitHub REST ──────────────────────────────────────────────────────────────
 

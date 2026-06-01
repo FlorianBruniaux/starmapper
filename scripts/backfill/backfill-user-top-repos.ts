@@ -91,7 +91,7 @@ if (!DATABASE_URL) {
   process.exit(1);
 }
 
-const pool = new pg.Pool({ connectionString: DATABASE_URL });
+const pool = new pg.Pool({ connectionString: DATABASE_URL, options: "-c statement_timeout=0" });
 const prisma = new PrismaClient({ adapter: new PrismaPg(pool) });
 
 // ─── Multi-token pool (identical to collect-user-repos.ts) ────────────────────

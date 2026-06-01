@@ -92,7 +92,7 @@ const DB_URL = USE_PROD
 
 if (!DB_URL) { console.error("Error: no DB URL found"); process.exit(1); }
 
-const pool   = new pg.Pool({ connectionString: DB_URL });
+const pool   = new pg.Pool({ connectionString: DB_URL, options: "-c statement_timeout=0" });
 const prisma = new PrismaClient({ adapter: new PrismaPg(pool) });
 
 // ─── Multi-token pool ─────────────────────────────────────────────────────────
