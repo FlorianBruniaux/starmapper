@@ -181,7 +181,7 @@ const TopPanelInner = ({
           {/* Total stars */}
           <div className="flex flex-col items-center py-2 px-3">
             <div className="text-xl font-bold text-foreground tabular-nums leading-tight">
-              {total.toLocaleString() || "—"}
+              {(repoInfo?.stars ?? total).toLocaleString() || "—"}
             </div>
             <div className="text-2xs text-muted uppercase tracking-wide mt-0.5">Stars</div>
           </div>
