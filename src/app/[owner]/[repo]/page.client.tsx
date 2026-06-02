@@ -357,12 +357,12 @@ export default function MapPageClient({ owner, repo, initialRepoInfo }: Props) {
       .map((u) => ({ login: u.login, name: u.name, followers: u.followers, publicRepos: 0, location: u.location, avatarUrl: u.avatarUrl, company: u.company }));
     const topCompanies = [...companyCount.entries()].sort((a, b) => b[1] - a[1]).slice(0, 30);
     const scannedTotal = deferredPointsForStats.length + unmapped.length;
-    const mappingRate = Math.round((deferredPointsForStats.length / scannedTotal) * 100);
+    // Use current GitHub star count as source of truth — cached scan data can be older than the current count
+    const totalStars = repoInfo?.stars ?? scannedTotal;
+    const mappingRate = totalStars > 0 ? Math.round((deferredPointsForStats.length / totalStars) * 100) : 0;
     const avgFollowers = deferredPointsForStats.length > 0
       ? Math.round(deferredPointsForStats.reduce((s, p) => s + p.followers, 0) / deferredPointsForStats.length)
       : 0;
-    // Use current GitHub star count as source of truth — cached scan data can be older than the current count
-    const totalStars = repoInfo?.stars ?? scannedTotal;
     // botCount, enrichedUserCount, powerStargazers come from server stats only (requires dataVersion + cross-repo query)
     return { topCountries, topCities, topUsers, topCompanies, mappingRate, countryCount: countryCount.size, avgFollowers, totalStars, mappedCount: deferredPointsForStats.length, botCount: 0, enrichedUserCount: 0, powerStargazers: [] as RepoStats["powerStargazers"], isCapped: false, organic: null };
   }, [deferredPointsForStats, unmapped, repoInfo]);

@@ -88,7 +88,8 @@ const TopPanelInner = ({
   const [organicOverride, setOrganicOverride] = useState<RepoOrganic | null>(null);
   const activeOrganic = organicOverride ?? organic ?? null;
   const showOrganic = ORGANIC_ENABLED && total > 0;
-  const mappingPct = total > 0 ? Math.round((points.length / total) * 100) : 0;
+  const displayTotal = repoInfo?.stars ?? total;
+  const mappingPct = displayTotal > 0 ? Math.round((points.length / displayTotal) * 100) : 0;
   const locationCount = useMemo(() => new Set(
     points
       .map((p) => { const s = p.location?.split(",").pop()?.trim(); return s && isCountry(s) ? normalizeCountry(s) : null; })
@@ -277,7 +278,7 @@ const TopPanelInner = ({
             />
           </div>
           <div className="text-2xs text-muted-subtle mt-0.5 text-center">
-            {points.length.toLocaleString()} / {total.toLocaleString()} mapped ({mappingPct}%)
+            {points.length.toLocaleString()} / {displayTotal.toLocaleString()} mapped ({mappingPct}%)
           </div>
         </div>
       )}
