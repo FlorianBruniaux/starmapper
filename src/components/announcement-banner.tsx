@@ -8,16 +8,16 @@ import Link from "next/link";
 import { ArrowRight, X } from "lucide-react";
 
 // Bump this ID whenever you want the banner to reappear for users who dismissed it.
-const BANNER_ID = "announce-may-2026-v1";
+const BANNER_ID = "announce-chrome-ext-v1";
 
-type LinkItem = { label: string; href: string };
+type LinkItem = { label: string; href: string; external?: boolean };
 
 const LINKS: LinkItem[] = [
+  { label: "Chrome Extension", href: "https://chromewebstore.google.com/detail/starmapper/ejpbdhlaohhngpfbjjfadokgnndnnmmh", external: true },
   { label: "Trending repos", href: "/trending" },
   { label: "vs Star History", href: "/vs/star-history" },
   { label: "Dev Maps", href: "/devs" },
   { label: "Language Atlas", href: "/devs/atlas" },
-  { label: "Changelog", href: "/changelog" },
 ];
 
 export const AnnouncementBanner = () => {
@@ -53,19 +53,27 @@ export const AnnouncementBanner = () => {
                          bg-accent-orange text-white tracking-wide uppercase">
           New
         </span>
-        {LINKS.map((link, i) => (
-          <Link
-            key={link.href}
-            href={link.href}
-            className="text-sm text-muted hover:text-foreground transition-colors flex items-center gap-1"
-          >
-            {link.label}
-            <ArrowRight size={12} aria-hidden="true" />
-            {i < LINKS.length - 1 && (
-              <span className="ml-2 text-border-subtle select-none">·</span>
-            )}
-          </Link>
-        ))}
+        {LINKS.map((link, i) => {
+          const cls = "text-sm text-muted hover:text-foreground transition-colors flex items-center gap-1";
+          const inner = (
+            <>
+              {link.label}
+              <ArrowRight size={12} aria-hidden="true" />
+              {i < LINKS.length - 1 && (
+                <span className="ml-2 text-border-subtle select-none">·</span>
+              )}
+            </>
+          );
+          return link.external ? (
+            <a key={link.href} href={link.href} target="_blank" rel="noopener noreferrer" className={cls}>
+              {inner}
+            </a>
+          ) : (
+            <Link key={link.href} href={link.href} className={cls}>
+              {inner}
+            </Link>
+          );
+        })}
       </span>
 
       <button

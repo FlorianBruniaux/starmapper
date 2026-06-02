@@ -4,7 +4,9 @@
 import Link from "next/link";
 import { LogoMark } from "@/components/logo";
 
-const PRODUCT_LINKS = [
+type NavLink = { href: string; label: string; external?: boolean };
+
+const PRODUCT_LINKS: NavLink[] = [
   { href: "/explore", label: "Explore" },
   { href: "/trending", label: "Trending" },
   { href: "/repos", label: "Community maps" },
@@ -13,6 +15,7 @@ const PRODUCT_LINKS = [
   { href: "/faq", label: "FAQ" },
   { href: "/changelog", label: "Changelog" },
   { href: "/vs/star-history", label: "vs Star History" },
+  { href: "https://chromewebstore.google.com/detail/starmapper/ejpbdhlaohhngpfbjjfadokgnndnnmmh", label: "Chrome Extension", external: true },
 ];
 
 const AUTHOR_LINKS = [
@@ -50,14 +53,25 @@ export const Footer = () => (
             StarMapper
           </p>
           <ul className="space-y-2">
-            {PRODUCT_LINKS.map(({ href, label }) => (
+            {PRODUCT_LINKS.map(({ href, label, external }) => (
               <li key={href}>
-                <Link
-                  href={href}
-                  className="text-muted hover:text-foreground text-xs transition-colors"
-                >
-                  {label}
-                </Link>
+                {external ? (
+                  <a
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-muted hover:text-foreground text-xs transition-colors"
+                  >
+                    {label}
+                  </a>
+                ) : (
+                  <Link
+                    href={href}
+                    className="text-muted hover:text-foreground text-xs transition-colors"
+                  >
+                    {label}
+                  </Link>
+                )}
               </li>
             ))}
           </ul>

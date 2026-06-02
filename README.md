@@ -2,6 +2,7 @@
 
 <p align="center">
   <a href="https://starmapper.bruniaux.com"><img src="https://img.shields.io/badge/Live_Demo-starmapper.bruniaux.com-58a6ff?style=for-the-badge" alt="Live Demo"/></a>
+  <a href="https://chromewebstore.google.com/detail/starmapper/ejpbdhlaohhngpfbjjfadokgnndnnmmh"><img src="https://img.shields.io/badge/Chrome_Extension-Install-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Chrome Extension"/></a>
   <a href="https://starmapper.bruniaux.com/FlorianBruniaux/starmapper"><img src="https://starmapper.bruniaux.com/api/badge/FlorianBruniaux/starmapper" alt="StarMapper badge"/></a>
 </p>
 
