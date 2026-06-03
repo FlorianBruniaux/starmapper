@@ -39,6 +39,26 @@ export type StargazersPage = {
   quotaRemaining: number | null;
 };
 
+export type FollowerRaw = {
+  login: string;
+  name: string | null;
+  bio: string | null;
+  company: string | null;
+  location: string | null;
+  followers: number;
+  following: number;
+  publicRepos: number;
+  accountCreatedAt: string | null;
+  avatarUrl: string;
+};
+
+export type FollowersPage = {
+  followers: FollowerRaw[];
+  nextCursor: string | null;
+  totalCount: number;
+  quotaRemaining: number | null;
+};
+
 export const fetchStargazersPage = async (
   owner: string,
   repo: string,
@@ -142,4 +162,99 @@ export const fetchStargazersPage = async (
     stargazers,
     quotaRemaining,
   };
-}
+};
+
+export const fetchFollowersPage = async (
+  login: string,
+  cursor: string | null,
+  clientToken?: string,
+): Promise<FollowersPage> => {
+  const token = clientToken || process.env.GITHUB_TOKEN;
+  const query = `
+    query($login: String!, $cursor: String) {
+      user(login: $login) {
+        followers(first: 100, after: $cursor) {
+          nodes {
+            login
+            name
+            bio
+            company
+            location
+            avatarUrl
+            createdAt
+            followers { totalCount }
+            following { totalCount }
+            repositories(first: 0) { totalCount }
+          }
+          pageInfo { hasNextPage endCursor }
+          totalCount
+        }
+      }
+    }
+  `;
+
+  const res = await fetch(GITHUB_GRAPHQL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify({
+      query,
+      variables: cursor ? { login, cursor } : { login },
+    }),
+  });
+
+  if (!res.ok && (res.status === 403 || res.status === 429)) {
+    const resetEpoch = res.headers.get("x-ratelimit-reset");
+    const retryAfter = res.headers.get("retry-after");
+    let resetAt: number;
+    if (retryAfter) {
+      resetAt = Date.now() + parseInt(retryAfter, 10) * 1000;
+    } else if (resetEpoch) {
+      resetAt = parseInt(resetEpoch, 10) * 1000;
+    } else {
+      resetAt = Date.now() + 60_000;
+    }
+    throw new GitHubRateLimitError(resetAt);
+  }
+  if (res.status === 401) throw new GitHubTokenInvalidError();
+  if (!res.ok) throw new Error(`GitHub API error: ${res.status}`);
+
+  const quotaRemaining = (() => {
+    const raw = res.headers.get("x-ratelimit-remaining");
+    if (!raw) return null;
+    const n = parseInt(raw, 10);
+    return isNaN(n) ? null : n;
+  })();
+
+  const json = await res.json();
+  if (json.errors) throw new Error(json.errors[0].message);
+
+  const data = json.data.user.followers;
+
+  const followers: FollowerRaw[] = (data.nodes as Array<{
+    login: string; name: string | null; bio: string | null; company: string | null;
+    location: string | null; avatarUrl: string; createdAt: string | null;
+    followers: { totalCount: number }; following: { totalCount: number };
+    repositories: { totalCount: number };
+  }>).map((node) => ({
+    login: node.login,
+    name: node.name ?? null,
+    bio: node.bio ?? null,
+    company: node.company ? node.company.trim().replace(/^@/, "") : null,
+    location: node.location ?? null,
+    followers: node.followers.totalCount,
+    following: node.following.totalCount,
+    publicRepos: node.repositories.totalCount,
+    accountCreatedAt: node.createdAt ?? null,
+    avatarUrl: node.avatarUrl,
+  }));
+
+  return {
+    totalCount: data.totalCount,
+    nextCursor: data.pageInfo.hasNextPage ? (data.pageInfo.endCursor as string) : null,
+    followers,
+    quotaRemaining,
+  };
+};

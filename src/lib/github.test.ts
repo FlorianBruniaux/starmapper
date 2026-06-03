@@ -2,7 +2,12 @@
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { fetchStargazersPage, GitHubRateLimitError } from "@/lib/github";
+import {
+  fetchStargazersPage,
+  fetchFollowersPage,
+  GitHubRateLimitError,
+  GitHubTokenInvalidError,
+} from "@/lib/github";
 
 // ─── Fixtures ────────────────────────────────────────────────────────────────
 
@@ -217,5 +222,103 @@ describe("fetchStargazersPage()", () => {
       const headers = call[1]?.headers as Record<string, string>;
       expect(headers["Authorization"]).toBe("Bearer ghp_user_pat_123");
     });
+  });
+});
+
+describe("fetchFollowersPage()", () => {
+  const makeFollowerNode = (o: { login?: string; location?: string | null } = {}) => ({
+    login: o.login ?? "octocat",
+    name: "The Octocat",
+    bio: null,
+    company: null,
+    location: o.location !== undefined ? o.location : "San Francisco, CA",
+    avatarUrl: "https://avatars.githubusercontent.com/u/1",
+    createdAt: "2011-01-25T18:44:36Z",
+    followers: { totalCount: 100 },
+    following: { totalCount: 10 },
+    repositories: { totalCount: 50 },
+  });
+
+  const makeFollowersResponse = (overrides: {
+    nodes?: ReturnType<typeof makeFollowerNode>[];
+    hasNextPage?: boolean;
+    endCursor?: string | null;
+    totalCount?: number;
+  } = {}) => ({
+    data: {
+      user: {
+        followers: {
+          pageInfo: {
+            hasNextPage: overrides.hasNextPage ?? false,
+            endCursor: overrides.endCursor ?? null,
+          },
+          nodes: overrides.nodes ?? [makeFollowerNode()],
+          totalCount: overrides.totalCount ?? 1,
+        },
+      },
+    },
+  });
+
+  beforeEach(() => {
+    vi.stubGlobal("fetch", vi.fn());
+  });
+
+  it("returns followers with correct fields", async () => {
+    vi.mocked(fetch).mockReturnValue(mockFetchOk(makeFollowersResponse()));
+    const page = await fetchFollowersPage("octocat", null);
+    expect(page.followers).toHaveLength(1);
+    expect(page.followers[0].login).toBe("octocat");
+    expect(page.followers[0].location).toBe("San Francisco, CA");
+    expect(page.followers[0].followers).toBe(100);
+    expect(page.totalCount).toBe(1);
+    expect(page.nextCursor).toBeNull();
+  });
+
+  it("returns nextCursor when hasNextPage is true", async () => {
+    vi.mocked(fetch).mockReturnValue(
+      mockFetchOk(makeFollowersResponse({ hasNextPage: true, endCursor: "cursor123" })),
+    );
+    const page = await fetchFollowersPage("octocat", null);
+    expect(page.nextCursor).toBe("cursor123");
+  });
+
+  it("returns null nextCursor when hasNextPage is false", async () => {
+    vi.mocked(fetch).mockReturnValue(mockFetchOk(makeFollowersResponse({ hasNextPage: false })));
+    const page = await fetchFollowersPage("octocat", null);
+    expect(page.nextCursor).toBeNull();
+  });
+
+  it("passes cursor variable when provided", async () => {
+    vi.mocked(fetch).mockReturnValue(mockFetchOk(makeFollowersResponse()));
+    await fetchFollowersPage("octocat", "cursor_abc");
+    const body = JSON.parse((vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string);
+    expect(body.variables.cursor).toBe("cursor_abc");
+  });
+
+  it("omits cursor variable when null", async () => {
+    vi.mocked(fetch).mockReturnValue(mockFetchOk(makeFollowersResponse()));
+    await fetchFollowersPage("octocat", null);
+    const body = JSON.parse((vi.mocked(fetch).mock.calls[0][1] as RequestInit).body as string);
+    expect(body.variables.cursor).toBeUndefined();
+  });
+
+  it("throws GitHubRateLimitError on 403", async () => {
+    vi.mocked(fetch).mockReturnValue(
+      mockFetchError(403, { "x-ratelimit-reset": String(Math.floor(Date.now() / 1000) + 60) }),
+    );
+    await expect(fetchFollowersPage("octocat", null)).rejects.toBeInstanceOf(GitHubRateLimitError);
+  });
+
+  it("throws GitHubTokenInvalidError on 401", async () => {
+    vi.mocked(fetch).mockReturnValue(mockFetchError(401));
+    await expect(fetchFollowersPage("octocat", null)).rejects.toBeInstanceOf(GitHubTokenInvalidError);
+  });
+
+  it("extracts quotaRemaining from x-ratelimit-remaining header", async () => {
+    vi.mocked(fetch).mockReturnValue(
+      mockFetchOk(makeFollowersResponse(), { "x-ratelimit-remaining": "4800" }),
+    );
+    const page = await fetchFollowersPage("octocat", null);
+    expect(page.quotaRemaining).toBe(4800);
   });
 });
