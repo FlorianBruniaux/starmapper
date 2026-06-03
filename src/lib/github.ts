@@ -3,6 +3,21 @@
 
 const GITHUB_GRAPHQL = "https://api.github.com/graphql";
 
+const parseRateLimitResetAt = (headers: Headers): number => {
+  const retryAfter = headers.get("retry-after");
+  const resetEpoch = headers.get("x-ratelimit-reset");
+  if (retryAfter) return Date.now() + parseInt(retryAfter, 10) * 1000;
+  if (resetEpoch) return parseInt(resetEpoch, 10) * 1000;
+  return Date.now() + 60_000;
+};
+
+const parseQuotaRemaining = (headers: Headers): number | null => {
+  const raw = headers.get("x-ratelimit-remaining");
+  if (!raw) return null;
+  const n = parseInt(raw, 10);
+  return isNaN(n) ? null : n;
+};
+
 export class GitHubRateLimitError extends Error {
   resetAt: number; // ms epoch
   constructor(resetAt: number) {
@@ -103,28 +118,11 @@ export const fetchStargazersPage = async (
   });
 
   if (!res.ok && (res.status === 403 || res.status === 429)) {
-    // Primary rate limit: x-ratelimit-remaining === "0"
-    // Secondary rate limit: retry-after header present
-    const resetEpoch = res.headers.get("x-ratelimit-reset");
-    const retryAfter = res.headers.get("retry-after");
-    let resetAt: number;
-    if (retryAfter) {
-      resetAt = Date.now() + parseInt(retryAfter, 10) * 1000;
-    } else if (resetEpoch) {
-      resetAt = parseInt(resetEpoch, 10) * 1000;
-    } else {
-      resetAt = Date.now() + 60_000; // fallback: 1 min
-    }
-    throw new GitHubRateLimitError(resetAt);
+    throw new GitHubRateLimitError(parseRateLimitResetAt(res.headers));
   }
   if (res.status === 401) throw new GitHubTokenInvalidError();
   if (!res.ok) throw new Error(`GitHub API error: ${res.status}`);
-  const quotaRemaining = (() => {
-    const raw = res.headers.get("x-ratelimit-remaining");
-    if (!raw) return null;
-    const n = parseInt(raw, 10);
-    return isNaN(n) ? null : n;
-  })();
+  const quotaRemaining = parseQuotaRemaining(res.headers);
   const json = await res.json();
   if (json.errors) throw new Error(json.errors[0].message);
 
@@ -162,6 +160,19 @@ export const fetchStargazersPage = async (
     stargazers,
     quotaRemaining,
   };
+};
+
+type GraphQLFollowerNode = {
+  login: string;
+  name: string | null;
+  bio: string | null;
+  company: string | null;
+  location: string | null;
+  avatarUrl: string;
+  createdAt: string | null;
+  followers: { totalCount: number };
+  following: { totalCount: number };
+  repositories: { totalCount: number };
 };
 
 export const fetchFollowersPage = async (
@@ -206,39 +217,20 @@ export const fetchFollowersPage = async (
   });
 
   if (!res.ok && (res.status === 403 || res.status === 429)) {
-    const resetEpoch = res.headers.get("x-ratelimit-reset");
-    const retryAfter = res.headers.get("retry-after");
-    let resetAt: number;
-    if (retryAfter) {
-      resetAt = Date.now() + parseInt(retryAfter, 10) * 1000;
-    } else if (resetEpoch) {
-      resetAt = parseInt(resetEpoch, 10) * 1000;
-    } else {
-      resetAt = Date.now() + 60_000;
-    }
-    throw new GitHubRateLimitError(resetAt);
+    throw new GitHubRateLimitError(parseRateLimitResetAt(res.headers));
   }
   if (res.status === 401) throw new GitHubTokenInvalidError();
   if (!res.ok) throw new Error(`GitHub API error: ${res.status}`);
 
-  const quotaRemaining = (() => {
-    const raw = res.headers.get("x-ratelimit-remaining");
-    if (!raw) return null;
-    const n = parseInt(raw, 10);
-    return isNaN(n) ? null : n;
-  })();
+  const quotaRemaining = parseQuotaRemaining(res.headers);
 
   const json = await res.json();
   if (json.errors) throw new Error(json.errors[0].message);
 
   const data = json.data.user.followers;
+  const hasMore = data.pageInfo.hasNextPage;
 
-  const followers: FollowerRaw[] = (data.nodes as Array<{
-    login: string; name: string | null; bio: string | null; company: string | null;
-    location: string | null; avatarUrl: string; createdAt: string | null;
-    followers: { totalCount: number }; following: { totalCount: number };
-    repositories: { totalCount: number };
-  }>).map((node) => ({
+  const followers: FollowerRaw[] = (data.nodes as GraphQLFollowerNode[]).map((node) => ({
     login: node.login,
     name: node.name ?? null,
     bio: node.bio ?? null,
@@ -253,7 +245,7 @@ export const fetchFollowersPage = async (
 
   return {
     totalCount: data.totalCount,
-    nextCursor: data.pageInfo.hasNextPage ? (data.pageInfo.endCursor as string) : null,
+    nextCursor: hasMore ? data.pageInfo.endCursor : null,
     followers,
     quotaRemaining,
   };

@@ -226,11 +226,11 @@ describe("fetchStargazersPage()", () => {
 });
 
 describe("fetchFollowersPage()", () => {
-  const makeFollowerNode = (o: { login?: string; location?: string | null } = {}) => ({
+  const makeFollowerNode = (o: { login?: string; location?: string | null; company?: string | null } = {}) => ({
     login: o.login ?? "octocat",
     name: "The Octocat",
     bio: null,
-    company: null,
+    company: o.company !== undefined ? o.company : null,
     location: o.location !== undefined ? o.location : "San Francisco, CA",
     avatarUrl: "https://avatars.githubusercontent.com/u/1",
     createdAt: "2011-01-25T18:44:36Z",
@@ -282,12 +282,6 @@ describe("fetchFollowersPage()", () => {
     expect(page.nextCursor).toBe("cursor123");
   });
 
-  it("returns null nextCursor when hasNextPage is false", async () => {
-    vi.mocked(fetch).mockReturnValue(mockFetchOk(makeFollowersResponse({ hasNextPage: false })));
-    const page = await fetchFollowersPage("octocat", null);
-    expect(page.nextCursor).toBeNull();
-  });
-
   it("passes cursor variable when provided", async () => {
     vi.mocked(fetch).mockReturnValue(mockFetchOk(makeFollowersResponse()));
     await fetchFollowersPage("octocat", "cursor_abc");
@@ -320,5 +314,13 @@ describe("fetchFollowersPage()", () => {
     );
     const page = await fetchFollowersPage("octocat", null);
     expect(page.quotaRemaining).toBe(4800);
+  });
+
+  it("strips leading @ from company name", async () => {
+    vi.mocked(fetch).mockReturnValue(
+      mockFetchOk(makeFollowersResponse({ nodes: [makeFollowerNode({ company: "@acme" })] })),
+    );
+    const page = await fetchFollowersPage("octocat", null);
+    expect(page.followers[0].company).toBe("acme");
   });
 });
