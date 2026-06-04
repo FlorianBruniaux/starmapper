@@ -5,6 +5,31 @@ Versioning: Semantic Versioning (MAJOR.MINOR.PATCH)
 
 ---
 
+## [0.5.9] (2026-06-04)
+
+### Followers Map
+
+A GitHub user's followers can now be mapped, exactly like a repo's stargazers. Every developer profile on StarMapper gains a `/[owner]/followers` page: an interactive map with GeoJSON clustering, a side panel listing followers sorted by influence (follower count), fly-to on click, and virtual scroll for large lists.
+
+- **`/[owner]/followers` page**: full-screen map + `FollowersPanel` side panel with virtual scroll, fly-to on marker click, and a summary badge (mapped / total).
+- **Profile page entry points**: the followers count badge on `/profile/[login]` is now a link to the followers map. A "Map followers" action button appears in the profile actions row.
+- **Announcement banner + More to Explore**: the site-wide banner promotes the followers map feature; the "More to Explore" section on the landing page includes a followers map card.
+- **`/api/followers-chunk`**: new POST endpoint. Fetches 100 followers per call via GitHub GraphQL, geocodes locations through the standard 3-tier cascade (Jawg, Geoapify, Nominatim), applies the 30-day stale cache strategy, and returns `FollowerPoint[]` + `unmapped[]`. Distributed rate limiting via Upstash (30 req/min per IP, 300 req/h per PAT). IP rate limiting is skipped in development.
+- **`useFollowersScanController`**: client-side hook that drives the `/api/followers-chunk` loop sequentially, accumulates points progressively, and surfaces quota remaining.
+
+### Ops scripts
+
+- **`scripts/ops/index-followers.ts`**: single-user followers geocache warm-up. Drives the API loop for one login (`make index-followers LOGIN=owner`).
+- **`scripts/ops/batch-index-followers.ts`**: batch geocache warm-up for all users in DB with ≥N followers (default 100). Calls `fetchFollowersPage` + `geocodeBatch` directly, no HTTP server required. Multi-token rotation reads `GITHUB_TOKEN`, `GITHUB_TOKEN_2`… and parks exhausted tokens on GitHub 429 instead of waiting.
+- **`scripts/ops/index-repo.ts`**: drives the `/api/chunk` loop for any repo to pre-warm its geocache. Supports `--base-url` for local dev.
+
+### Bug Fixes
+
+- **Followers page sticky header**: fixed map overlap caused by non-sticky header on the followers page.
+- **Touch targets on FollowersPanel**: replaced arbitrary Tailwind values with standard spacing classes for 44px minimum touch targets.
+
+---
+
 ## [0.5.8] (2026-05-28)
 
 ### Accessibility

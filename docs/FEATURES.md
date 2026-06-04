@@ -26,6 +26,7 @@ The core insight: stars are a proxy for developer community. Where those develop
 | https://starmapper.bruniaux.com/devs | Developer maps filtered by language |
 | https://starmapper.bruniaux.com/devs/atlas | Language Atlas — dominant language per country |
 | https://starmapper.bruniaux.com/trending | Trending repos × stargazer geography |
+| https://starmapper.bruniaux.com/torvalds/followers | Map of torvalds's GitHub followers |
 | https://starmapper.bruniaux.com/feed/florianbruniaux | RSS subscription page |
 | https://starmapper.bruniaux.com/faq | Frequently asked questions |
 | https://starmapper.bruniaux.com/changelog | Version history |
@@ -47,6 +48,15 @@ The core. Given a GitHub repo, StarMapper fetches all stargazers via the GitHub 
 - **Star growth timeline** — "Growth" button in the Dock opens a bar chart of weekly star accumulation. Shows the shape of growth (steady climb, viral spike, plateau) as a complement to the `+N/mo` velocity indicator. Data from `starredAt` already in DB; falls back to in-memory scan data for recent, uncached repos.
 - **Watch mode** — during a product launch, polls GitHub every 60s and shows `+N ★ · India, Germany` with a pulsing badge. Auto-stops after 10 min of inactivity. No DB writes, cache-free.
 - **Shared cache** — first scan is cached globally. Any subsequent visitor loads the same repo instantly, no re-scan.
+
+### Followers Map `/[owner]/followers`
+
+Every GitHub user indexed in StarMapper has a followers map. The page geocodes all their GitHub followers through the same 3-tier cascade (Jawg, Geoapify, Nominatim) used for repo stargazers.
+
+- **Full-screen map with clustering**: GeoJSON cluster layer, same rendering as repo maps. Points appear progressively as each batch of 100 followers is geocoded.
+- **FollowersPanel side panel**: list of followers sorted by influence (follower count), with avatar, name, location, and follower badge. Virtual scroll handles large lists. Click a follower to fly the map to their location.
+- **Summary badge**: mapped count and total, updated in real time during the scan.
+- **Entry points on profile pages**: the followers count badge on `/profile/[login]` links to the followers map. A "Map followers" button appears in the profile actions row.
 
 ### Stats panel
 
