@@ -396,12 +396,28 @@ const makePopupElement = (props: Record<string, unknown>): HTMLElement => {
 
   const meta = document.createElement("div");
   meta.style.cssText = "font-size:12px;color:var(--color-muted);line-height:1.9";
-  const lines: string[] = [];
-  if (company) lines.push(company);
-  if (location) lines.push(location);
-  if (props.followers) lines.push(`${Number(props.followers).toLocaleString()} followers`);
-  meta.textContent = lines.join(" · ");
-  if (lines.length) el.appendChild(meta);
+  const metaParts: (string | HTMLElement)[] = [];
+  if (company) metaParts.push(company);
+  if (location) metaParts.push(location);
+  if (props.followers) {
+    const followersLink = document.createElement("a");
+    followersLink.href = `/${login}/followers`;
+    followersLink.style.cssText = "color:var(--color-muted);text-decoration:none;border-bottom:1px dotted currentColor;cursor:pointer";
+    followersLink.textContent = `${Number(props.followers).toLocaleString()} followers`;
+    followersLink.addEventListener("mouseenter", () => {
+      followersLink.style.color = "var(--color-accent-blue)";
+    });
+    followersLink.addEventListener("mouseleave", () => {
+      followersLink.style.color = "var(--color-muted)";
+    });
+    metaParts.push(followersLink);
+  }
+  metaParts.forEach((part, i) => {
+    if (i > 0) meta.appendChild(document.createTextNode(" · "));
+    if (typeof part === "string") meta.appendChild(document.createTextNode(part));
+    else meta.appendChild(part);
+  });
+  if (metaParts.length) el.appendChild(meta);
 
   const safeLinkedinUrl = typeof linkedinUrl === "string" && linkedinUrl.startsWith("https://") ? linkedinUrl : null;
   if (safeLinkedinUrl) {
