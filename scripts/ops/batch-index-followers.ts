@@ -39,6 +39,8 @@ const { values } = parseArgs({
     "prod":           { type: "boolean", default: false },
     "gh-token":       { type: "string" },
     "timeout":        { type: "string",  default: "30000" },
+    // Delay between users (ms). Default 2200 = ~27 req/min, under the 30/min IP limit.
+    "inter-delay":    { type: "string",  default: "2200" },
   },
   strict: true,
   args: process.argv.slice(2),
@@ -51,6 +53,7 @@ const dryRun        = values["dry-run"] as boolean;
 const useProd       = values["prod"] as boolean;
 const ghToken       = (values["gh-token"] as string | undefined) ?? process.env.GITHUB_TOKEN ?? null;
 const timeoutMs     = parseInt(values["timeout"] as string, 10);
+const interDelayMs  = parseInt(values["inter-delay"] as string, 10);
 
 const DB_URL = useProd
   ? (process.env.DATABASE_URL ?? "")
@@ -100,10 +103,11 @@ const indexLoginFollowers = async (
   tokenRef: { value: string | null; chunkCount: number },
 ): Promise<ChunkResult> => {
   let cursor: string | null = null;
-  let mapped   = 0;
-  let unmapped = 0;
-  let chunkNum = 0;
-  let total    = 0;
+  let mapped    = 0;
+  let unmapped  = 0;
+  let chunkNum  = 0;
+  let total     = 0;
+  let ipRetries = 0;
 
   while (true) {
     chunkNum++;
@@ -145,15 +149,25 @@ const indexLoginFollowers = async (
       if (data.resetAt) {
         const waitMs  = Math.max(10_000, data.resetAt - Date.now());
         const waitSec = Math.ceil(waitMs / 1000);
-        process.stdout.write(`\n    Rate limited. Waiting ${waitSec}s...\n`);
+        process.stdout.write(`\n    GitHub rate limited. Waiting ${waitSec}s...\n`);
         await new Promise((r) => setTimeout(r, waitMs));
         chunkNum--;
         tokenRef.chunkCount--;
         continue;
       }
-      console.error(`    Chunk ${chunkNum} HTTP 429`);
+      // IP rate limit (sliding window) — back off and retry up to 3 times.
+      if (ipRetries < 3) {
+        ipRetries++;
+        process.stdout.write(`\n    IP rate limited (${ipRetries}/3). Waiting 5s...\n`);
+        await new Promise((r) => setTimeout(r, 5_000));
+        chunkNum--;
+        tokenRef.chunkCount--;
+        continue;
+      }
+      console.error(`    Chunk ${chunkNum} HTTP 429 — too many retries`);
       return { mapped, unmapped, chunks: chunkNum, ok: false };
     }
+    ipRetries = 0;
 
     if (!resp.ok) {
       console.error(`    Chunk ${chunkNum} HTTP ${resp.status}`);
@@ -249,6 +263,10 @@ const main = async () => {
     const u = users[i];
     if (!u) continue;
     console.log(`\n[${i + 1}/${users.length}] @${u.login} (${fmtCount(u.followers)} followers)`);
+
+    if (i > 0 && interDelayMs > 0) {
+      await new Promise((r) => setTimeout(r, interDelayMs));
+    }
 
     const result = await indexLoginFollowers(u.login, baseHeaders, tokenRef);
 
