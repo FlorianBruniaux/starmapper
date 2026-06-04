@@ -2,7 +2,7 @@
 # db-sync-to-neon.sh
 #
 # Syncs local batch-scanned data to Neon production DB.
-# Tables synced: github_user, star_event, badge_cache, stargazer_cache
+# Tables synced: github_user, star_event, badge_cache, stargazer_cache, news, api_key
 # NOT synced: geocache (already in prod with 51k entries — do not overwrite)
 #
 # Usage:
@@ -123,6 +123,12 @@ sync_table "stargazer_cache" 'ON CONFLICT (owner, repo) DO UPDATE SET points=EXC
 wait
 
 sync_table "star_event" "WHERE login IN (SELECT login FROM github_user) ON CONFLICT (login, owner, repo) DO NOTHING"
+
+# news after github_user (FK constraint)
+sync_table "news" 'WHERE "authorLogin" IN (SELECT login FROM github_user) ON CONFLICT (id) DO UPDATE SET body=EXCLUDED.body, url=EXCLUDED.url, "deletedAt"=EXCLUDED."deletedAt"'
+
+# api_key — no FK deps
+sync_table "api_key" 'ON CONFLICT (key) DO UPDATE SET "lastUsedAt"=EXCLUDED."lastUsedAt", "revokedAt"=EXCLUDED."revokedAt"'
 
 echo ""
 echo "Creating/refreshing materialized views on Neon..."

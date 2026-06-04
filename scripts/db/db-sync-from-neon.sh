@@ -33,7 +33,7 @@ fi
 
 # ── Parse options ─────────────────────────────────────────────────────────────
 LIMIT=""
-TABLES="github_user,star_event,badge_cache,stargazer_cache"
+TABLES="github_user,star_event,badge_cache,stargazer_cache,api_key,news"
 REPO=""
 
 shift || true
@@ -167,6 +167,17 @@ else
     "SELECT id,login,owner,repo,\"starredAt\",\"createdAt\" FROM star_event
      WHERE login IN (SELECT login FROM github_user) ORDER BY id DESC $LIMIT_CLAUSE" \
     'ON CONFLICT (login, owner, repo) DO NOTHING'
+
+  # news after github_user (FK: authorLogin references github_user.login)
+  has_table "news" && import_table "news" \
+    "SELECT id,\"authorLogin\",body,url,\"publishedAt\",\"deletedAt\" FROM news
+     WHERE \"authorLogin\" IN (SELECT login FROM github_user) ORDER BY \"publishedAt\" DESC $LIMIT_CLAUSE" \
+    'ON CONFLICT (id) DO UPDATE SET body=EXCLUDED.body, url=EXCLUDED.url, "deletedAt"=EXCLUDED."deletedAt"'
+
+  # api_key — no FK deps
+  has_table "api_key" && import_table "api_key" \
+    "SELECT key,\"keyHash\",email,name,note,\"createdAt\",\"revokedAt\",\"lastUsedAt\" FROM api_key ORDER BY \"createdAt\" DESC" \
+    'ON CONFLICT (key) DO UPDATE SET "lastUsedAt"=EXCLUDED."lastUsedAt", "revokedAt"=EXCLUDED."revokedAt"'
 fi
 
 echo ""
