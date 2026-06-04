@@ -9,8 +9,8 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { computeOrganicScore, tierLabel } from "@/lib/organic-score";
-import { normalizeOwnerRepo, OWNER_REPO_RE } from "@/lib/api-validation";
+import { computeOrganicScore, tierLabel, ORGANIC_WEIGHTS, ORGANIC_CORPUS_ACCURACY } from "@/lib/organic-score";
+import { validateOwnerRepo } from "@/lib/api-validation";
 import { jsonError, logError } from "@/lib/api-helpers";
 
 export type McpOrganicScoreResponse = {
@@ -36,18 +36,13 @@ export type McpOrganicScoreResponse = {
   corpusAccuracy: number;
 };
 
-const WEIGHTS = { fork_ratio: 30, watcher_ratio: 5, zero_follower_pct: 45, releases_count: 20 };
-const CORPUS_ACCURACY = 85.7;
-
 export const GET = async (
   _req: NextRequest,
   { params }: { params: Promise<{ owner: string; repo: string }> },
 ) => {
   const { owner: rawOwner, repo: rawRepo } = await params;
-  if (!OWNER_REPO_RE.test(rawOwner) || !OWNER_REPO_RE.test(rawRepo)) {
-    return jsonError("invalid_params", 400);
-  }
-  const key = normalizeOwnerRepo(rawOwner, rawRepo);
+  const key = validateOwnerRepo(rawOwner, rawRepo);
+  if (!key) return jsonError("invalid_params", 400);
 
   try {
     const row = await prisma.badgeCache.findUnique({
@@ -92,13 +87,13 @@ export const GET = async (
     const response: McpOrganicScoreResponse = {
       score:        row.organicScore,
       tier:         row.organicTier,
-      tierLabel:    tierLabel(row.organicTier as Parameters<typeof tierLabel>[0]),
+      tierLabel:    tierLabel(row.organicTier as Parameters<typeof tierLabel>[0]) ?? row.organicTier,
       computedAt:   row.organicComputedAt?.toISOString() ?? null,
       signals:      result.signals,
-      weights:      WEIGHTS,
+      weights:      ORGANIC_WEIGHTS,
       activeSignals: result.activeSignals,
       reasons:      result.reasons,
-      corpusAccuracy: CORPUS_ACCURACY,
+      corpusAccuracy: ORGANIC_CORPUS_ACCURACY,
     };
 
     return NextResponse.json(response, {

@@ -14,8 +14,10 @@ vi.mock("@/lib/db", () => ({
 }));
 
 vi.mock("@/lib/api-validation", () => ({
-  OWNER_REPO_RE: /^[a-zA-Z0-9_.-]+$/,
-  normalizeOwnerRepo: (owner: string, repo: string) => ({ owner: owner.toLowerCase(), repo: repo.toLowerCase() }),
+  validateOwnerRepo: (owner: string, repo: string) =>
+    owner.match(/^[a-zA-Z0-9_.-]+$/) && repo.match(/^[a-zA-Z0-9_.-]+$/)
+      ? { owner: owner.toLowerCase(), repo: repo.toLowerCase() }
+      : null,
 }));
 
 vi.mock("@/lib/api-helpers", () => ({
@@ -107,5 +109,12 @@ describe("GET /api/mcp/organic-score/[owner]/[repo]", () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.signals.zeroFollowerPct).toBeNull();
+  });
+
+  test("returns 500 when DB throws", async () => {
+    const { prisma } = await import("@/lib/db");
+    vi.mocked(prisma.badgeCache.findUnique).mockRejectedValue(new Error("connection refused"));
+    const res = await GET(makeRequest(), makeParams());
+    expect(res.status).toBe(500);
   });
 });

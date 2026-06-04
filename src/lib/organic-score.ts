@@ -78,6 +78,15 @@ const WEIGHT_WATCH    = 5;
 const WEIGHT_ZF       = 45;  // reduced from 55 — still strongest discriminator
 const WEIGHT_RELEASES = 20;  // new — active maintenance proxy, corrects CLI tool bias
 
+export const ORGANIC_WEIGHTS = {
+  fork_ratio:       WEIGHT_FORK,
+  watcher_ratio:    WEIGHT_WATCH,
+  zero_follower_pct: WEIGHT_ZF,
+  releases_count:   WEIGHT_RELEASES,
+} as const;
+
+export const ORGANIC_CORPUS_ACCURACY = 85.7;
+
 const GATE_MIN_STARS      = 500;   // repos below this threshold are too small for reliable signals
 const GATE_FORK_MIN_STARS = 5000;
 const GATE_ZF_MIN_SAMPLE  = 30;
