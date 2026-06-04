@@ -342,7 +342,7 @@ export const LandingClient = ({ initialRepos, initialTotal }: Props) => {
           <h2 className="text-muted-subtle text-2xs uppercase tracking-widest mb-6 text-center">
             More to explore
           </h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {[
               {
                 href: "/explore",
@@ -383,6 +383,14 @@ export const LandingClient = ({ initialRepos, initialTotal }: Props) => {
                 colorClass: "text-accent-red",
                 bgClass: "bg-accent-red/8",
                 icon: <path d="M1.5 2.5h2.5v11H1.5Zm4.5 4h2.5v7H6Zm4.5-2.5H13v9.5h-2.5Z" />,
+              },
+              {
+                href: "/FlorianBruniaux/followers",
+                label: "Followers map",
+                desc: "See where your GitHub followers live. Map any user's followers — who follows you, and where in the world they are.",
+                colorClass: "text-accent-blue",
+                bgClass: "bg-accent-blue/8",
+                icon: <path d="M2 5.5a3.5 3.5 0 1 1 5.898 2.549 5.508 5.508 0 0 1 3.034 4.084.75.75 0 1 1-1.482.235 4 4 0 0 0-7.9 0 .75.75 0 0 1-1.482-.236A5.507 5.507 0 0 1 3.102 8.05 3.493 3.493 0 0 1 2 5.5ZM11 4a3.001 3.001 0 0 1 2.22 5.018 5.01 5.01 0 0 1 2.56 3.012.749.749 0 0 1-.885.628.75.75 0 0 1-.514-.637 3.499 3.499 0 0 0-6.651-.609.75.75 0 1 1-1.443-.389A5.011 5.011 0 0 1 8.9 8.92 3.001 3.001 0 0 1 11 4ZM5.5 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z" />,
               },
             ].map(({ href, label, desc, colorClass, bgClass, icon }) => (
               <Link
