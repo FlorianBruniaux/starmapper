@@ -19,43 +19,53 @@ const ownerRepo = {
   repo: z.string().describe("GitHub repository name (e.g. 'next.js')"),
 };
 
-server.tool(
+server.registerTool(
   "get_repo_stats",
-  "Get audience statistics for a GitHub repository indexed on StarMapper. Returns total stars, geocoded count, top countries, top cities, and organic score summary.",
-  ownerRepo,
+  {
+    description: "Get audience statistics for a GitHub repository indexed on StarMapper. Returns total stars, geocoded count, top countries, top cities, and organic score summary.",
+    inputSchema: ownerRepo,
+  },
   async ({ owner, repo }) => ({ content: [{ type: "text" as const, text: await getRepoStats({ owner, repo }) }] }),
 );
 
-server.tool(
+server.registerTool(
   "get_organic_score",
-  "Get the organic score for a GitHub repository: a 0-100 heuristic measuring whether star growth looks natural. Returns score, verdict, and breakdown of all signals with their weights.",
-  ownerRepo,
+  {
+    description: "Get the organic score for a GitHub repository: a 0-100 heuristic measuring whether star growth looks natural. Returns score, verdict, and breakdown of all signals with their weights.",
+    inputSchema: ownerRepo,
+  },
   async ({ owner, repo }) => ({ content: [{ type: "text" as const, text: await getOrganicScore({ owner, repo }) }] }),
 );
 
-server.tool(
+server.registerTool(
   "get_velocity",
-  "Get per-country star velocity for a GitHub repository: rising, new, stable, or declining over the last 30 days vs the 31-90 day window.",
-  ownerRepo,
+  {
+    description: "Get per-country star velocity for a GitHub repository: rising, new, stable, or declining over the last 30 days vs the 31-90 day window.",
+    inputSchema: ownerRepo,
+  },
   async ({ owner, repo }) => ({ content: [{ type: "text" as const, text: await getVelocity({ owner, repo }) }] }),
 );
 
-server.tool(
+server.registerTool(
   "get_influential_stargazers",
-  "List stargazers of a GitHub repository above a follower threshold. Useful for finding VIP users to engage with for a product launch or announcement.",
   {
-    ...ownerRepo,
-    min_followers: z.number().int().min(0).optional().describe("Minimum follower count. Use 500, 1000, or 5000. Defaults to 500."),
+    description: "List stargazers of a GitHub repository above a follower threshold. Useful for finding VIP users to engage with for a product launch or announcement.",
+    inputSchema: {
+      ...ownerRepo,
+      min_followers: z.number().int().min(0).optional().describe("Minimum follower count. Use 500, 1000, or 5000. Defaults to 500."),
+    },
   },
   async ({ owner, repo, min_followers }) => ({
     content: [{ type: "text" as const, text: await getInfluentialStargazers({ owner, repo, min_followers }) }],
   }),
 );
 
-server.tool(
+server.registerTool(
   "index_repo",
-  "Trigger full indexation of a GitHub repository on StarMapper. Fetches all stargazers, geocodes their locations, and saves the result. For large repos (10k+ stars) this may take several minutes.",
-  ownerRepo,
+  {
+    description: "Trigger full indexation of a GitHub repository on StarMapper. Fetches all stargazers, geocodes their locations, and saves the result. For large repos (10k+ stars) this may take several minutes.",
+    inputSchema: ownerRepo,
+  },
   async ({ owner, repo }) => ({ content: [{ type: "text" as const, text: await indexRepo({ owner, repo }) }] }),
 );
 

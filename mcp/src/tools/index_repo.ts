@@ -1,21 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 import { gzipSync } from "zlib";
-import { triggerChunk } from "../client.js";
-
-export const INDEX_REPO_SCHEMA = {
-  name: "index_repo",
-  description:
-    "Trigger full indexation of a GitHub repository on StarMapper. Fetches all stargazers, geocodes their locations, and saves the result. For large repos (10k+ stars) this may take several minutes.",
-  inputSchema: {
-    type: "object" as const,
-    properties: {
-      owner: { type: "string", description: "GitHub repository owner" },
-      repo:  { type: "string", description: "GitHub repository name" },
-    },
-    required: ["owner", "repo"],
-  },
-};
+import { triggerChunk, BASE_URL } from "../client.js";
 
 type Point = { login: string; lat: number; lng: number };
 type Unmapped = { login: string; location: string | null };
@@ -27,11 +13,10 @@ const saveToCache = async (
   unmapped: Unmapped[],
   totalCount: number,
 ): Promise<void> => {
-  const baseUrl = process.env.STARMAPPER_BASE_URL ?? "https://starmapper.bruniaux.com";
   const pointsGz = gzipSync(Buffer.from(JSON.stringify(points))).toString("base64");
   const unmappedGz = gzipSync(Buffer.from(JSON.stringify(unmapped))).toString("base64");
 
-  const res = await fetch(`${baseUrl}/api/stargazer-cache`, {
+  const res = await fetch(`${BASE_URL}/api/stargazer-cache`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ owner, repo, pointsGz, unmappedGz, totalCount }),
@@ -47,6 +32,8 @@ export const indexRepo = async (args: { owner: string; repo: string }): Promise<
   let totalCount = 0;
   let chunks = 0;
 
+  const MAX_CHUNKS = 1500; // 1500 * 100 users = 150k stars max
+
   try {
     do {
       const result = await triggerChunk(owner, repo, cursor);
@@ -55,7 +42,7 @@ export const indexRepo = async (args: { owner: string; repo: string }): Promise<
       cursor = result.nextCursor;
       totalCount = result.totalCount;
       chunks++;
-    } while (cursor !== null);
+    } while (cursor !== null && chunks < MAX_CHUNKS);
 
     if (totalCount === 0) {
       return `## ${owner}/${repo}\n\n0 stars found. The repository may not exist or may be private.`;

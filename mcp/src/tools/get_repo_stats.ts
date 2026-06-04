@@ -2,20 +2,6 @@
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 import { fetchRepoStats } from "../client.js";
 
-export const GET_REPO_STATS_SCHEMA = {
-  name: "get_repo_stats",
-  description:
-    "Get audience statistics for a GitHub repository indexed on StarMapper. Returns total stars, geocoded count, top countries, top cities, and organic score summary.",
-  inputSchema: {
-    type: "object" as const,
-    properties: {
-      owner: { type: "string", description: "GitHub repository owner (e.g. 'vercel')" },
-      repo:  { type: "string", description: "GitHub repository name (e.g. 'next.js')" },
-    },
-    required: ["owner", "repo"],
-  },
-};
-
 export const getRepoStats = async (args: { owner: string; repo: string }): Promise<string> => {
   const stats = await fetchRepoStats(args.owner, args.repo);
 

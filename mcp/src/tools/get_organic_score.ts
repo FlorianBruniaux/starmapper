@@ -2,20 +2,6 @@
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 import { fetchOrganicScore } from "../client.js";
 
-export const GET_ORGANIC_SCORE_SCHEMA = {
-  name: "get_organic_score",
-  description:
-    "Get the organic score for a GitHub repository: a 0-100 heuristic measuring whether star growth looks natural. Returns score, verdict, and breakdown of all signals with their weights.",
-  inputSchema: {
-    type: "object" as const,
-    properties: {
-      owner: { type: "string", description: "GitHub repository owner" },
-      repo:  { type: "string", description: "GitHub repository name" },
-    },
-    required: ["owner", "repo"],
-  },
-};
-
 export const getOrganicScore = async (args: { owner: string; repo: string }): Promise<string> => {
   const data = await fetchOrganicScore(args.owner, args.repo);
 

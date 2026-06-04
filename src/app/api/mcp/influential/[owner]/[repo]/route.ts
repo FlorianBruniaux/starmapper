@@ -40,7 +40,7 @@ export const GET = async (
 
   const minFollowersParam = req.nextUrl.searchParams.get("minFollowers");
   const minFollowers = minFollowersParam ? parseInt(minFollowersParam, 10) : DEFAULT_MIN_FOLLOWERS;
-  if (isNaN(minFollowers) || minFollowers < 0) {
+  if (isNaN(minFollowers) || minFollowers < 0 || minFollowers > 1_000_000) {
     return jsonError("invalid_min_followers", 400);
   }
 

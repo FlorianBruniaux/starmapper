@@ -2,20 +2,6 @@
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 import { fetchVelocity } from "../client.js";
 
-export const GET_VELOCITY_SCHEMA = {
-  name: "get_velocity",
-  description:
-    "Get per-country star velocity for a GitHub repository: rising, new, stable, or declining over the last 30 days vs the 31-90 day window. Useful for spotting geographic trends after a launch or blog post.",
-  inputSchema: {
-    type: "object" as const,
-    properties: {
-      owner: { type: "string", description: "GitHub repository owner" },
-      repo:  { type: "string", description: "GitHub repository name" },
-    },
-    required: ["owner", "repo"],
-  },
-};
-
 const TREND_LABEL: Record<string, string> = {
   rising: "up",
   new: "new",

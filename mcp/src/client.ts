@@ -4,7 +4,7 @@
 // BASE_URL defaults to the production StarMapper instance.
 // Override STARMAPPER_BASE_URL env var for local dev or self-hosted instances.
 
-const BASE_URL = process.env.STARMAPPER_BASE_URL ?? "https://starmapper.bruniaux.com";
+export const BASE_URL = process.env.STARMAPPER_BASE_URL ?? "https://starmapper.bruniaux.com";
 
 const get = async <T>(path: string): Promise<T> => {
   const res = await fetch(`${BASE_URL}${path}`, { method: "GET" });
