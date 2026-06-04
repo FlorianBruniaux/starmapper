@@ -159,7 +159,7 @@ export const FollowersPanel = ({
         <button
           onClick={onClose}
           aria-label="Close followers panel"
-          className="flex items-center justify-center min-h-[44px] min-w-[44px] text-muted hover:text-foreground transition-colors -mr-2"
+          className="flex items-center justify-center min-h-11 min-w-11 text-muted hover:text-foreground transition-colors -mr-2"
         >
           <X size={16} aria-hidden="true" />
         </button>
