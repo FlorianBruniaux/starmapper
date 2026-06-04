@@ -620,6 +620,18 @@ export default function ProfilePageClient({ login, initialProfile }: Props) {
                     </svg>
                     <span className="hidden sm:inline">GitHub</span>
                   </a>
+                  <Link
+                    href={`/${profile.login}/followers`}
+                    title="Map followers"
+                    aria-label="Map followers on world map"
+                    className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md border
+                               border-border text-muted hover:text-foreground hover:border-accent-blue/50 transition-colors"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                      <path d="M2 5.5a3.5 3.5 0 1 1 5.898 2.549 5.508 5.508 0 0 1 3.034 4.084.75.75 0 1 1-1.482.235 4.001 4.001 0 0 0-7.9 0 .75.75 0 0 1-1.482-.236A5.507 5.507 0 0 1 3.102 8.05 3.493 3.493 0 0 1 2 5.5ZM11 4a3.001 3.001 0 0 1 2.22 5.018 5.01 5.01 0 0 1 2.56 3.012.749.749 0 0 1-.885.954.752.752 0 0 1-.549-.514 3.507 3.507 0 0 0-2.522-2.372.75.75 0 0 1-.574-.73v-.352a.75.75 0 0 1 .416-.672A1.5 1.5 0 0 0 11 5.5.75.75 0 0 1 11 4Zm-5.5-.5a2 2 0 1 0 0 4 2 2 0 0 0 0-4Z"/>
+                    </svg>
+                    <span className="hidden sm:inline">Map followers</span>
+                  </Link>
                   <button
                     onClick={handleRefresh}
                     disabled={refreshState !== "idle"}
@@ -819,15 +831,20 @@ export default function ProfilePageClient({ login, initialProfile }: Props) {
               {/* Stat chips — followers + public repos, visually distinct from descriptive text */}
               {!profile.partial && (
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="inline-flex items-center gap-1.5 text-xs font-medium
-                                   bg-surface border border-border px-2 py-1 rounded-full">
+                  <Link
+                    href={`/${profile.login}/followers`}
+                    title="See followers map"
+                    className="inline-flex items-center gap-1.5 text-xs font-medium
+                               bg-surface border border-border px-2 py-1 rounded-full
+                               hover:border-accent-blue/50 hover:text-foreground transition-colors"
+                  >
                     <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor"
                          className="text-muted" aria-hidden="true">
                       <path d="M2 5.5a3.5 3.5 0 1 1 5.898 2.549 5.508 5.508 0 0 1 3.034 4.084.75.75 0 1 1-1.482.235 4.001 4.001 0 0 0-7.9 0 .75.75 0 0 1-1.482-.236A5.507 5.507 0 0 1 3.102 8.05 3.493 3.493 0 0 1 2 5.5zM11 4a3.001 3.001 0 0 1 2.22 5.018 5.01 5.01 0 0 1 2.56 3.012.749.749 0 0 1-.885.954.752.752 0 0 1-.549-.514 3.507 3.507 0 0 0-2.522-2.372.75.75 0 0 1-.574-.73v-.352a.75.75 0 0 1 .416-.672A1.5 1.5 0 0 0 11 5.5.75.75 0 0 1 11 4zm-5.5-.5a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/>
                     </svg>
                     <span className="text-foreground tabular-nums">{profile.followers.toLocaleString()}</span>
                     <span className="text-muted-subtle">followers</span>
-                  </span>
+                  </Link>
                   {profile.publicRepos > 0 && (
                     <span className="inline-flex items-center gap-1.5 text-xs font-medium
                                      bg-surface border border-border px-2 py-1 rounded-full">
