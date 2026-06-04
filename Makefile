@@ -117,6 +117,18 @@ batch-scan:
 batch-scan-dry:
 	$(ENV) tsx scripts/ops/batch-scan.ts --local --input scripts/repos-all.json --dry-run'
 
+index-repo: ## make index-repo REPO=owner/repo
+	$(ENV) caffeinate -i tsx scripts/ops/index-repo.ts $(REPO)'
+
+index-repo-local: ## make index-repo-local REPO=owner/repo
+	$(ENV) caffeinate -i tsx scripts/ops/index-repo.ts --base-url http://localhost:3000 $(REPO)'
+
+index-followers: ## make index-followers LOGIN=FlorianBruniaux
+	$(ENV) caffeinate -i tsx scripts/ops/index-followers.ts $(LOGIN)'
+
+index-followers-local: ## make index-followers-local LOGIN=FlorianBruniaux
+	$(ENV) caffeinate -i tsx scripts/ops/index-followers.ts --base-url http://localhost:3000 $(LOGIN)'
+
 # ─── Calibration + probes ──────────────────────────────────────────────────────
 
 calibrate-organic-score:
