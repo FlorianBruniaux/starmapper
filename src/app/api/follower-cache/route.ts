@@ -23,12 +23,14 @@ export const POST = async (req: NextRequest) => {
     if (!parsed.success) return jsonError("invalid_params", 400);
     const { login, pointsGz, unmappedGz, totalCount } = parsed.data;
 
-    const SM_SECRET = process.env.SM_TOKEN_SECRET ?? "";
-    if (SM_SECRET) {
-      const smToken = req.cookies.get(COOKIE_NAME)?.value;
-      if (!(await verifyToken(smToken, SM_SECRET))) {
-        return jsonError("forbidden", 403);
-      }
+    const SM_SECRET = process.env.SM_TOKEN_SECRET;
+    if (!SM_SECRET) {
+      logError("follower-cache POST", new Error("SM_TOKEN_SECRET not configured"));
+      return jsonError("forbidden", 403);
+    }
+    const smToken = req.cookies.get(COOKIE_NAME)?.value;
+    if (!(await verifyToken(smToken, SM_SECRET))) {
+      return jsonError("forbidden", 403);
     }
 
     const health = await checkDbHealth();
