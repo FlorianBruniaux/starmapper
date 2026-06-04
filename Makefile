@@ -129,6 +129,12 @@ index-followers: ## make index-followers LOGIN=FlorianBruniaux
 index-followers-local: ## make index-followers-local LOGIN=FlorianBruniaux
 	$(ENV) caffeinate -i tsx scripts/ops/index-followers.ts --base-url http://localhost:3000 $(LOGIN)'
 
+index-followers-all: ## make index-followers-all [MIN_FOLLOWERS=100] [LIMIT=n]
+	$(ENV) caffeinate -i tsx scripts/ops/batch-index-followers.ts --prod --min-followers $(or $(MIN_FOLLOWERS),100) $(if $(LIMIT),--limit $(LIMIT))'
+
+index-followers-all-local: ## make index-followers-all-local [MIN_FOLLOWERS=100] [LIMIT=n]
+	$(ENV) caffeinate -i tsx scripts/ops/batch-index-followers.ts --base-url http://localhost:3000 --min-followers $(or $(MIN_FOLLOWERS),100) $(if $(LIMIT),--limit $(LIMIT))'
+
 # ─── Calibration + probes ──────────────────────────────────────────────────────
 
 calibrate-organic-score:
