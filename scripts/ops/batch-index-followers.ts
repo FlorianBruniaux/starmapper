@@ -32,6 +32,7 @@ import pg from "pg";
 import { fetchFollowersPage, GitHubRateLimitError } from "@/lib/github";
 import { geocodeBatch } from "@/lib/geocoder";
 import { bulkReadUsers } from "@/lib/user-cache";
+import { compressToGzBase64 } from "@/lib/compression";
 
 // ─── CLI args ─────────────────────────────────────────────────────────────────
 
@@ -122,7 +123,9 @@ const STALE_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 
 // ─── Per-login chunk loop ─────────────────────────────────────────────────────
 
-type ChunkResult = { mapped: number; unmapped: number; chunks: number; ok: boolean };
+type CachedPoint = { login: string; name: string | null; location: string | null; followers: number; avatarUrl: string; lat: number; lng: number };
+type CachedUnmapped = { login: string; name: string | null; followers: number; avatarUrl: string };
+type ChunkResult = { mapped: number; unmapped: number; chunks: number; ok: boolean; points: CachedPoint[]; unmappedList: CachedUnmapped[] };
 
 const indexLoginFollowers = async (login: string): Promise<ChunkResult> => {
   let cursor: string | null = null;
@@ -130,6 +133,8 @@ const indexLoginFollowers = async (login: string): Promise<ChunkResult> => {
   let unmapped = 0;
   let chunkNum = 0;
   let total    = 0;
+  const allPoints: CachedPoint[] = [];
+  const allUnmapped: CachedUnmapped[] = [];
 
   while (true) {
     chunkNum++;
@@ -153,7 +158,7 @@ const indexLoginFollowers = async (login: string): Promise<ChunkResult> => {
         continue;
       }
       console.error(`    Chunk ${chunkNum} error: ${err instanceof Error ? err.message : String(err)}`);
-      return { mapped, unmapped, chunks: chunkNum, ok: false };
+      return { mapped, unmapped, chunks: chunkNum, ok: false, points: allPoints, unmappedList: allUnmapped };
     }
 
     total = page.totalCount;
@@ -188,7 +193,26 @@ const indexLoginFollowers = async (login: string): Promise<ChunkResult> => {
         coords = geoMap.get(loc) ?? null;
       }
 
-      if (coords) { pts++; } else { unm++; }
+      if (coords) {
+        pts++;
+        allPoints.push({
+          login: f.login,
+          name: f.name ?? null,
+          location: f.location ?? null,
+          followers: f.followers ?? 0,
+          avatarUrl: f.avatarUrl ?? `https://github.com/${f.login}.png`,
+          lat: coords[0],
+          lng: coords[1],
+        });
+      } else {
+        unm++;
+        allUnmapped.push({
+          login: f.login,
+          name: f.name ?? null,
+          followers: f.followers ?? 0,
+          avatarUrl: f.avatarUrl ?? `https://github.com/${f.login}.png`,
+        });
+      }
     }
 
     mapped   += pts;
@@ -202,7 +226,7 @@ const indexLoginFollowers = async (login: string): Promise<ChunkResult> => {
     if (!cursor) break;
   }
 
-  return { mapped, unmapped, chunks: chunkNum, ok: true };
+  return { mapped, unmapped, chunks: chunkNum, ok: true, points: allPoints, unmappedList: allUnmapped };
 };
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
@@ -216,9 +240,6 @@ const main = async () => {
     orderBy: { followers: "desc" },
     ...(limit !== undefined ? { take: limit } : {}),
   });
-
-  await prisma.$disconnect();
-  await pool.end();
 
   const filterDesc = minFollowers > 0 ? ` with followers >= ${minFollowers}` : "";
   console.log(`Found ${users.length} users${filterDesc} (ordered by followers desc)`);
@@ -259,10 +280,30 @@ const main = async () => {
       (result.ok ? "" : " [ERROR]"),
     );
 
+    // Write to follower_cache so the map page auto-loads without a token
+    if (result.ok && result.points.length > 0) {
+      try {
+        const pointsGz   = compressToGzBase64(result.points);
+        const unmappedGz = compressToGzBase64(result.unmappedList);
+        const totalCount = result.points.length + result.unmappedList.length;
+        await prisma.followerCache.upsert({
+          where: { login: u.login },
+          create: { login: u.login, pointsGz, unmappedGz, totalCount, scannedAt: new Date() },
+          update: { pointsGz, unmappedGz, totalCount, scannedAt: new Date() },
+        });
+        console.log(`  Cache: written (${result.points.length} pts, ${result.unmappedList.length} unmapped)`);
+      } catch (err) {
+        console.error(`  Cache write error: ${err instanceof Error ? err.message : String(err)}`);
+      }
+    }
+
     totalMapped   += result.mapped;
     totalUnmapped += result.unmapped;
     if (!result.ok) totalErrors++;
   }
+
+  await prisma.$disconnect();
+  await pool.end();
 
   const durationMs  = Date.now() - startMs;
   const durationMin = Math.round(durationMs / 60_000);

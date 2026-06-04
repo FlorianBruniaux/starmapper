@@ -55,6 +55,18 @@ model StargazerCache {
   @@map("stargazer_cache")
 }
 
+model FollowerCache {
+  login      String   @id
+  pointsGz   String   @db.Text
+  unmappedGz String   @db.Text
+  totalCount Int
+  scannedAt  DateTime @default(now())
+  expiresAt  DateTime @default(dbgenerated("NOW() + INTERVAL '90 days'"))
+
+  @@index([expiresAt])
+  @@map("follower_cache")
+}
+
 model GitHubUser {
   login            String      @id
   name             String?

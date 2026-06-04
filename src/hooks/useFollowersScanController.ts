@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 
-import { useCallback, useRef, useState, startTransition } from "react";
+import { useCallback, useEffect, useRef, useState, startTransition } from "react";
 import type { FollowerPoint, FollowersChunkResponse } from "@/app/api/followers-chunk/route";
 import { getStoredToken, setStoredToken } from "@/lib/token";
+import { compressToBase64 } from "@/lib/compress-client";
 
 export type UnmappedFollowerEntry = {
   login: string;
@@ -81,8 +82,37 @@ export const useFollowersScanController = ({
   const [waitReason, setWaitReason] = useState<"github" | "server">("server");
   const [error, setError] = useState("");
   const [quotaRemaining, setQuotaRemaining] = useState<number | null>(null);
+  const [cacheScannedAt, setCacheScannedAt] = useState<string | null>(null);
   const runningRef = useRef(false);
   const pendingScanRef = useRef(false);
+
+  // Auto-load from follower_cache on mount — no token required
+  useEffect(() => {
+    let cancelled = false;
+    const loadCache = async () => {
+      try {
+        const res = await fetch(`/api/follower-cache/${encodeURIComponent(login)}`);
+        if (!res.ok || cancelled) return;
+        const data = await res.json() as {
+          points: FollowerPoint[];
+          unmapped: UnmappedFollowerEntry[];
+          totalCount: number;
+          scannedAt: string;
+        };
+        if (cancelled) return;
+        setTotal(data.totalCount);
+        setCacheScannedAt(data.scannedAt);
+        startTransition(() => {
+          dispatch({ type: "chunk", points: data.points, unmapped: data.unmapped });
+        });
+        setStatus("done");
+      } catch {
+        // Cache miss or network error — keep idle, let user trigger scan manually
+      }
+    };
+    loadCache();
+    return () => { cancelled = true; };
+  }, [login, dispatch, setTotal]);
 
   const fetchNextChunk = useCallback(async (cursor: string | null) => {
     const res = await fetch("/api/followers-chunk", {
@@ -149,6 +179,22 @@ export const useFollowersScanController = ({
         cursor = chunk!.nextCursor;
       }
 
+      // Write to follower_cache so subsequent visits load instantly (no token required)
+      try {
+        const [pointsGz, unmappedGz] = await Promise.all([
+          compressToBase64(allPoints),
+          compressToBase64(allUnmapped),
+        ]);
+        await fetch("/api/follower-cache", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ login, pointsGz, unmappedGz, totalCount: allPoints.length + allUnmapped.length }),
+        });
+        setCacheScannedAt(new Date().toISOString());
+      } catch {
+        // Non-critical — map already loaded
+      }
+
       setStatus("done");
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Unknown error");
@@ -156,7 +202,7 @@ export const useFollowersScanController = ({
     } finally {
       runningRef.current = false;
     }
-  }, [fetchNextChunk, dispatch, setTotal, setHasToken]);
+  }, [fetchNextChunk, dispatch, setTotal, setHasToken, login]);
 
   const handleStartScan = useCallback(() => {
     if (!getStoredToken()) {
@@ -183,6 +229,7 @@ export const useFollowersScanController = ({
     waitReason,
     error,
     quotaRemaining,
+    cacheScannedAt,
     startScraping,
     handleStartScan,
     handleTokenClose,
