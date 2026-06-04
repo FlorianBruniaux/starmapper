@@ -77,19 +77,23 @@ const getPatLimiter = (): Ratelimit | null => {
 let activeSessions = 0;
 const MAX_CONCURRENT = 3;
 
-export const POST = async (req: NextRequest) => {
-  const limiter = getLimiter();
-  if (limiter) {
-    const { success } = await limiter.limit(getIP(req));
-    if (!success) return jsonError("Rate limit exceeded. Retry in a few seconds.", 429);
-  }
+const isDev = process.env.NODE_ENV !== "production";
 
-  const clientPat = req.headers.get("x-gh-token");
-  if (clientPat) {
-    const patLimiter = getPatLimiter();
-    if (patLimiter) {
-      const { success } = await patLimiter.limit(hashApiKey(clientPat));
-      if (!success) return jsonError("Rate limit exceeded. Retry in a few minutes.", 429);
+export const POST = async (req: NextRequest) => {
+  if (!isDev) {
+    const limiter = getLimiter();
+    if (limiter) {
+      const { success } = await limiter.limit(getIP(req));
+      if (!success) return jsonError("Rate limit exceeded. Retry in a few seconds.", 429);
+    }
+
+    const clientPat = req.headers.get("x-gh-token");
+    if (clientPat) {
+      const patLimiter = getPatLimiter();
+      if (patLimiter) {
+        const { success } = await patLimiter.limit(hashApiKey(clientPat));
+        if (!success) return jsonError("Rate limit exceeded. Retry in a few minutes.", 429);
+      }
     }
   }
 
