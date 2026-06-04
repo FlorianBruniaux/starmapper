@@ -33,6 +33,19 @@ export const POST = async (req: NextRequest) => {
       return jsonError("forbidden", 403);
     }
 
+    // Plausibility check — totalCount must not vastly exceed the user's known follower count.
+    // Prevents cache poisoning by verifying against the ground-truth stored in github_user.
+    const knownUser = await prisma.gitHubUser.findUnique({
+      where: { login },
+      select: { followers: true },
+    });
+    if (knownUser && knownUser.followers > 0) {
+      // Allow up to 110% of known follower count (some followers may not be in DB yet)
+      if (totalCount > knownUser.followers * 1.1) {
+        return jsonError("totalCount_mismatch", 400);
+      }
+    }
+
     const health = await checkDbHealth();
     if (health.ok && health.usagePct >= DB_CRITICAL_PCT) return jsonError("storage_full", 507);
 
