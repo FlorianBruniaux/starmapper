@@ -6,6 +6,7 @@
 import { use, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { Users } from "lucide-react";
 import { TokenModal, getStoredToken } from "@/components/token-modal";
 import { Header } from "@/components/header";
 import { CommandSearch } from "@/components/command-search";
@@ -283,9 +284,16 @@ export default function UserPage({ params }: { params: Promise<{ owner: string }
               {/* User header */}
               <div className="flex items-center gap-4 mb-8">
                 <Image src={userInfo.avatar} alt="" width={56} height={56} className="size-14 rounded-full border border-border" />
-                <div>
+                <div className="flex-1">
                   <h1 className="text-foreground font-semibold text-lg">{userInfo.name ?? userInfo.login}</h1>
                   <p className="text-muted text-sm">{userInfo.publicRepos} public repos</p>
+                  <Link
+                    href={`/${owner}/followers`}
+                    className="inline-flex items-center gap-1.5 text-xs text-muted border border-border-subtle rounded-full px-3 py-1.5 hover:text-foreground hover:border-border transition-colors mt-2"
+                  >
+                    <Users size={12} aria-hidden="true" />
+                    Followers map
+                  </Link>
                 </div>
               </div>
 
