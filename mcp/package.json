@@ -1,0 +1,27 @@
+{
+  "name": "starmapper-mcp",
+  "version": "0.1.0",
+  "description": "MCP server for querying GitHub repo audience data via StarMapper",
+  "main": "dist/index.js",
+  "bin": {
+    "starmapper-mcp": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "files": ["dist"],
+  "keywords": ["mcp", "starmapper", "github", "stargazers"],
+  "license": "AGPL-3.0-only",
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^2.0.0"
+  }
+}
