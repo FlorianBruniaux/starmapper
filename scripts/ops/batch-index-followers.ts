@@ -19,8 +19,12 @@
  *   --limit <n>            Max users to process (for testing)
  *   --dry-run              Print target list without indexing
  *   --prod                 Use Neon prod DB (default: local Docker)
- *   --gh-token <token>     GitHub PAT for dedicated quota
+ *   --gh-token <token>     Force a single GitHub PAT (overrides pool)
  *   --timeout <ms>         Per-chunk timeout in ms (default: 30000)
+ *
+ * Multi-token: set GITHUB_TOKEN, GITHUB_TOKEN_2, GITHUB_TOKEN_3… in .env.local
+ * for automatic rotation. On GitHub 429, the exhausted token is parked until its
+ * resetAt and the next available token is used immediately.
  */
 
 import { parseArgs } from "node:util";
@@ -37,6 +41,7 @@ const { values } = parseArgs({
     "limit":          { type: "string" },
     "dry-run":        { type: "boolean", default: false },
     "prod":           { type: "boolean", default: false },
+    // --gh-token forces a single PAT; otherwise reads GITHUB_TOKEN, GITHUB_TOKEN_2, …
     "gh-token":       { type: "string" },
     "timeout":        { type: "string",  default: "30000" },
     // Delay between users (ms). Default 2200 = ~27 req/min, under the 30/min IP limit.
@@ -51,9 +56,9 @@ const minFollowers  = parseInt(values["min-followers"] as string, 10);
 const limit         = values["limit"] ? parseInt(values["limit"] as string, 10) : undefined;
 const dryRun        = values["dry-run"] as boolean;
 const useProd       = values["prod"] as boolean;
-const ghToken       = (values["gh-token"] as string | undefined) ?? process.env.GITHUB_TOKEN ?? null;
-const timeoutMs     = parseInt(values["timeout"] as string, 10);
-const interDelayMs  = parseInt(values["inter-delay"] as string, 10);
+const ghTokenOverride = values["gh-token"] as string | undefined;
+const timeoutMs       = parseInt(values["timeout"] as string, 10);
+const interDelayMs    = parseInt(values["inter-delay"] as string, 10);
 
 const DB_URL = useProd
   ? (process.env.DATABASE_URL ?? "")
@@ -68,6 +73,55 @@ if (!DB_URL) {
 
 const pool   = new pg.Pool({ connectionString: DB_URL, options: "-c statement_timeout=0" });
 const prisma = new PrismaClient({ adapter: new PrismaPg(pool) });
+
+// ─── Multi-token pool ─────────────────────────────────────────────────────────
+
+type TokenState = {
+  token: string;
+  exhaustedUntil: number; // Date.now() ms; 0 = available
+};
+
+const buildTokenPool = (): TokenState[] => {
+  // --gh-token overrides: use that single token only.
+  if (ghTokenOverride) return [{ token: ghTokenOverride, exhaustedUntil: 0 }];
+
+  const tokens: string[] = [];
+  if (process.env.GITHUB_TOKEN) tokens.push(process.env.GITHUB_TOKEN);
+  let i = 2;
+  while (true) {
+    const t = process.env[`GITHUB_TOKEN_${i}`];
+    if (!t) break;
+    tokens.push(t);
+    i++;
+  }
+  return tokens.map((token) => ({ token, exhaustedUntil: 0 }));
+};
+
+const TOKEN_POOL = buildTokenPool();
+
+/** Returns the first non-exhausted token, or null if all are still cooling down. */
+const getAvailableToken = (): TokenState | null => {
+  const now = Date.now();
+  return TOKEN_POOL.find((t) => t.exhaustedUntil <= now) ?? null;
+};
+
+/**
+ * Returns an available token. If all tokens are exhausted, waits for the
+ * earliest one to recover and returns it.
+ */
+const acquireToken = async (): Promise<TokenState | null> => {
+  if (TOKEN_POOL.length === 0) return null;
+  const available = getAvailableToken();
+  if (available) return available;
+
+  const earliest = TOKEN_POOL.reduce((min, t) => (t.exhaustedUntil < min.exhaustedUntil ? t : min));
+  const waitMs   = Math.max(0, earliest.exhaustedUntil - Date.now()) + 2_000;
+  const waitSec  = Math.ceil(waitMs / 1000);
+  process.stdout.write(`\n    [token-pool] All ${TOKEN_POOL.length} tokens exhausted — waiting ${waitSec}s\n`);
+  await new Promise((r) => setTimeout(r, waitMs));
+  earliest.exhaustedUntil = 0;
+  return earliest;
+};
 
 // ─── HTTP helpers ─────────────────────────────────────────────────────────────
 
@@ -122,6 +176,14 @@ const indexLoginFollowers = async (
       }
     }
 
+    // Pick the best available GitHub token for this chunk.
+    const ghTok = await acquireToken();
+    if (ghTok) {
+      baseHeaders["x-gh-token"] = ghTok.token;
+    } else {
+      delete baseHeaders["x-gh-token"];
+    }
+
     const body: Record<string, string> = { login };
     if (cursor) body.cursor = cursor;
 
@@ -147,10 +209,17 @@ const indexLoginFollowers = async (
     if (resp.status === 429) {
       const data = (await resp.json().catch(() => ({}))) as { resetAt?: number };
       if (data.resetAt) {
-        const waitMs  = Math.max(10_000, data.resetAt - Date.now());
-        const waitSec = Math.ceil(waitMs / 1000);
-        process.stdout.write(`\n    GitHub rate limited. Waiting ${waitSec}s...\n`);
-        await new Promise((r) => setTimeout(r, waitMs));
+        // GitHub quota exhausted for this token — park it and rotate immediately.
+        if (ghTok) {
+          ghTok.exhaustedUntil = data.resetAt + 2_000;
+          const poolDesc = TOKEN_POOL.length > 1 ? ` (rotating, ${TOKEN_POOL.filter((t) => t.exhaustedUntil <= Date.now()).length} token(s) left)` : "";
+          process.stdout.write(`\n    GitHub rate limited${poolDesc} — token parked until ${new Date(data.resetAt).toLocaleTimeString()}\n`);
+        } else {
+          const waitMs  = Math.max(10_000, data.resetAt - Date.now());
+          const waitSec = Math.ceil(waitMs / 1000);
+          process.stdout.write(`\n    GitHub rate limited (no token). Waiting ${waitSec}s...\n`);
+          await new Promise((r) => setTimeout(r, waitMs));
+        }
         chunkNum--;
         tokenRef.chunkCount--;
         continue;
@@ -233,8 +302,8 @@ const main = async () => {
   }
 
   console.log(`Target: ${baseUrl}`);
-  if (ghToken) {
-    console.log("Using personal GitHub token (dedicated quota).");
+  if (TOKEN_POOL.length > 0) {
+    console.log(`GitHub tokens: ${TOKEN_POOL.length} (rotation ${TOKEN_POOL.length > 1 ? "enabled" : "disabled"})`);
   } else {
     console.log("No GitHub token — using shared server quota.");
   }
@@ -250,7 +319,7 @@ const main = async () => {
     "User-Agent": "StarMapper-indexer/1.0 (script; starmapper.bruniaux.com)",
   };
   if (smToken) baseHeaders["Cookie"] = `${COOKIE_NAME}=${smToken}`;
-  if (ghToken)  baseHeaders["x-gh-token"] = ghToken;
+  // x-gh-token is set per-chunk inside indexLoginFollowers via acquireToken()
 
   const tokenRef = { value: smToken, chunkCount: 0 };
 
