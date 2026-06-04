@@ -23,9 +23,11 @@ vi.mock("@/lib/api-helpers", () => ({
   logError: vi.fn(),
 }));
 
-const makeRequest = (owner = "vercel", repo = "next.js", minFollowers = "500") =>
+const makeRequest = (owner = "vercel", repo = "next.js", minFollowers?: string) =>
   new NextRequest(
-    `http://localhost/api/mcp/influential/${owner}/${repo}?minFollowers=${minFollowers}`
+    minFollowers !== undefined
+      ? `http://localhost/api/mcp/influential/${owner}/${repo}?minFollowers=${minFollowers}`
+      : `http://localhost/api/mcp/influential/${owner}/${repo}`
   );
 
 const makeParams = (owner = "vercel", repo = "next.js") =>
@@ -53,7 +55,7 @@ describe("GET /api/mcp/influential/[owner]/[repo]", () => {
     const { prisma } = await import("@/lib/db");
     vi.mocked(prisma.$queryRaw).mockResolvedValue([]);
 
-    const res = await GET(makeRequest(), makeParams());
+    const res = await GET(makeRequest("vercel", "next.js", "500"), makeParams());
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.users).toEqual([]);
@@ -64,8 +66,8 @@ describe("GET /api/mcp/influential/[owner]/[repo]", () => {
   test("returns users sorted by followers desc with profile URL", async () => {
     const { prisma } = await import("@/lib/db");
     vi.mocked(prisma.$queryRaw).mockResolvedValue([
-      { login: "tj", name: "TJ Holowaychuk", followers: 42000, location: "Victoria, BC", company: null },
-      { login: "addyosmani", name: "Addy Osmani", followers: 35000, location: "San Francisco, CA", company: "Google" },
+      { login: "tj", name: "TJ Holowaychuk", followers: 42000, location: "Victoria, BC" },
+      { login: "addyosmani", name: "Addy Osmani", followers: 35000, location: "San Francisco, CA" },
     ]);
 
     const res = await GET(makeRequest("vercel", "next.js", "1000"), makeParams());
@@ -99,7 +101,7 @@ describe("GET /api/mcp/influential/[owner]/[repo]", () => {
   test("returns 500 when DB throws", async () => {
     const { prisma } = await import("@/lib/db");
     vi.mocked(prisma.$queryRaw).mockRejectedValue(new Error("connection refused"));
-    const res = await GET(makeRequest(), makeParams());
+    const res = await GET(makeRequest("vercel", "next.js", "500"), makeParams());
     expect(res.status).toBe(500);
   });
 });
