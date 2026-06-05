@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 import { gzipSync } from "zlib";
-import { triggerChunk, BASE_URL } from "../client.js";
+import { triggerChunk, fetchSmToken, BASE_URL } from "../client.js";
+
+const REFRESH_EVERY = 200;
 
 type Point = { login: string; lat: number; lng: number };
 type Unmapped = { login: string; location: string | null };
@@ -35,8 +37,13 @@ export const indexRepo = async (args: { owner: string; repo: string }): Promise<
   const MAX_CHUNKS = 1500; // 1500 * 100 users = 150k stars max
 
   try {
+    let smToken = await fetchSmToken();
+
     do {
-      const result = await triggerChunk(owner, repo, cursor);
+      if (smToken && chunks > 0 && chunks % REFRESH_EVERY === 0) {
+        smToken = await fetchSmToken();
+      }
+      const result = await triggerChunk(owner, repo, cursor, smToken);
       allPoints.push(...result.points);
       allUnmapped.push(...result.unmapped);
       cursor = result.nextCursor;

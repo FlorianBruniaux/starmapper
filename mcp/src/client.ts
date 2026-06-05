@@ -6,6 +6,23 @@
 
 export const BASE_URL = process.env.STARMAPPER_BASE_URL ?? "https://starmapper.bruniaux.com";
 
+const SM_COOKIE = "sm-token";
+const GH_TOKEN = process.env.GITHUB_TOKEN ?? null;
+
+export const fetchSmToken = async (): Promise<string | null> => {
+  try {
+    const res = await fetch(`${BASE_URL}/`, {
+      headers: { "User-Agent": "starmapper-mcp/0.1.0", Accept: "text/html" },
+      redirect: "follow",
+    });
+    const setCookie = res.headers.get("set-cookie") ?? "";
+    const match = setCookie.match(new RegExp(`${SM_COOKIE}=([^;]+)`));
+    return match?.[1] ?? null;
+  } catch {
+    return null;
+  }
+};
+
 const get = async <T>(path: string): Promise<T> => {
   const res = await fetch(`${BASE_URL}${path}`, { method: "GET" });
   if (!res.ok) throw new Error(`StarMapper API error ${res.status} on GET ${path}`);
@@ -99,11 +116,15 @@ export const triggerChunk = async (
   owner: string,
   repo: string,
   cursor: string | null,
+  smToken?: string | null,
 ): Promise<ChunkResult> => {
   const body = cursor ? { owner, repo, cursor } : { owner, repo };
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (smToken) headers["Cookie"] = `${SM_COOKIE}=${smToken}`;
+  if (GH_TOKEN) headers["x-gh-token"] = GH_TOKEN;
   const res = await fetch(`${BASE_URL}/api/chunk`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers,
     body: JSON.stringify(body),
   });
   if (!res.ok) throw new Error(`StarMapper chunk error ${res.status}`);

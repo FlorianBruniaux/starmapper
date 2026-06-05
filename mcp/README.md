@@ -34,7 +34,7 @@ Per-country star velocity over the last 30 days vs the 31-90 day window. Classif
 Stargazers above a follower threshold (500/1000/5000, default 500), sorted by influence. Includes GitHub profile URL.
 
 ### `index_repo(owner, repo)`
-Triggers a full re-indexation of the repository on StarMapper. Drives the chunk loop, geocodes all stargazers, and saves the result. For large repos this may take several minutes.
+Triggers a full re-indexation of the repository on StarMapper. Drives the chunk loop, geocodes all stargazers, and saves the result. For large repos this may take several minutes. Set `GITHUB_TOKEN` in the env config to use your own GitHub API quota instead of the shared server quota (strongly recommended for repos with more than 6k stars).
 
 ## Example prompts
 
@@ -46,7 +46,23 @@ Triggers a full re-indexation of the repository on StarMapper. Drives the chunk 
 
 ## Self-hosted / development
 
-Override the base URL via env var:
+Add a GitHub token (read:user scope) to use your own API quota for `index_repo`:
+
+```json
+{
+  "mcpServers": {
+    "starmapper": {
+      "command": "npx",
+      "args": ["-y", "starmapper-mcp"],
+      "env": {
+        "GITHUB_TOKEN": "ghp_xxxx"
+      }
+    }
+  }
+}
+```
+
+Override the base URL for a self-hosted instance:
 
 ```json
 {

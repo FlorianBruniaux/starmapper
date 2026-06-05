@@ -25,9 +25,15 @@ const chunkResponse = (
 const cacheResponse = () =>
   Promise.resolve(new Response(JSON.stringify({ ok: true }), { status: 200 }));
 
+// fetchSmToken always calls GET / first; return a response with no Set-Cookie header
+// so smToken resolves to null and the rest of the test mocks run in order.
+const homepageResponse = () =>
+  Promise.resolve(new Response("", { status: 200 }));
+
 describe("indexRepo", () => {
   test("calls chunk loop until nextCursor is null and returns summary", async () => {
     mockFetch
+      .mockReturnValueOnce(homepageResponse())
       .mockReturnValueOnce(chunkResponse(
         [{ login: "alice", lat: 48.8, lng: 2.3 }], "cursor_1", 2
       ))
@@ -38,9 +44,9 @@ describe("indexRepo", () => {
 
     const result = await indexRepo({ owner: "owner", repo: "repo" });
 
-    expect(mockFetch).toHaveBeenCalledTimes(3);
+    expect(mockFetch).toHaveBeenCalledTimes(4);
 
-    expect(mockFetch).toHaveBeenNthCalledWith(1,
+    expect(mockFetch).toHaveBeenNthCalledWith(2,
       "https://starmapper.test/api/chunk",
       expect.objectContaining({
         method: "POST",
@@ -48,7 +54,7 @@ describe("indexRepo", () => {
       })
     );
 
-    expect(mockFetch).toHaveBeenNthCalledWith(2,
+    expect(mockFetch).toHaveBeenNthCalledWith(3,
       "https://starmapper.test/api/chunk",
       expect.objectContaining({
         body: JSON.stringify({ owner: "owner", repo: "repo", cursor: "cursor_1" }),
@@ -60,16 +66,18 @@ describe("indexRepo", () => {
   });
 
   test("returns error message when chunk call fails", async () => {
-    mockFetch.mockReturnValueOnce(
-      Promise.resolve(new Response("{}", { status: 500 }))
-    );
+    mockFetch
+      .mockReturnValueOnce(homepageResponse())
+      .mockReturnValueOnce(Promise.resolve(new Response("{}", { status: 500 })));
 
     const result = await indexRepo({ owner: "owner", repo: "repo" });
     expect(result).toContain("Error");
   });
 
   test("returns warning when totalCount is 0", async () => {
-    mockFetch.mockReturnValueOnce(chunkResponse([], null, 0));
+    mockFetch
+      .mockReturnValueOnce(homepageResponse())
+      .mockReturnValueOnce(chunkResponse([], null, 0));
 
     const result = await indexRepo({ owner: "owner", repo: "repo" });
     expect(result).toContain("0 stars");
