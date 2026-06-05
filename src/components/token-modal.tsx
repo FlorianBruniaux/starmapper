@@ -84,7 +84,7 @@ export const TokenModal = ({ onClose }: Props) => {
           >
             Create a free token (zero permissions)
           </a>{" "}
-          in 30 seconds. Stored in your browser session only, auto-cleared after 30 min or when you close the tab.
+          in 30 seconds. Stored in your browser for 7 days, then auto-cleared.
         </p>
 
         <div>
