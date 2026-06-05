@@ -30,6 +30,7 @@ Enter a GitHub repo URL and StarMapper maps every stargazer, identifies the infl
 - **Compare two audiences side by side**: overlay two repos on the same map, blue vs purple points, see instantly whether you share an audience or target different communities
 - **Watch stars arrive during a launch**: live mode polls GitHub every 60 seconds and shows "+N stars, India, Germany" with a pulsing indicator, built for Product Hunt and HN days
 - **Verify whether the count is real**: the Organic Score (0-100) flags suspicious patterns using fork/star ratios and zero-follower accounts, 85.7% accuracy on a calibrated corpus
+- **Query audience data from Claude Code**: `starmapper-mcp` exposes all five data surfaces as MCP tools so you can ask "who are my most influential stargazers?" or "which countries are accelerating?" directly in your terminal
 
 Full feature list: [docs/FEATURES.md](docs/FEATURES.md) · Architecture: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
 
@@ -78,6 +79,20 @@ Scores map to: **Healthy** (75–100), **Moderate** (50–74), **Suspicious** (0
 **Map image** (scatter map, dark/light themes via `<picture>`): the "Embed" button on the map page generates the full HTML snippet ready to paste.
 
 Replace `owner/repo` with your repository.
+
+---
+
+## Claude Code
+
+Install `starmapper-mcp` as an MCP server to query StarMapper data directly from your terminal:
+
+```json
+{ "mcpServers": { "starmapper": { "command": "npx", "args": ["starmapper-mcp"] } } }
+```
+
+Five tools are available: `get_repo_stats`, `get_organic_score`, `get_velocity`, `get_influential_stargazers`, and `index_repo`. The last one drives the full indexation loop from the MCP client, so you can keep a repo's data fresh without opening a browser.
+
+Override the default endpoint with `STARMAPPER_BASE_URL` if you run a self-hosted instance. Full docs: [`mcp/README.md`](mcp/README.md)
 
 ---
 

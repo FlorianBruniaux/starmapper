@@ -46,6 +46,7 @@
 - **Comparison page** — `/vs/star-history` with structured data and UTM tracking. (v0.4.9)
 - **Environment validation** — `src/env.ts` via `@t3-oss/env-nextjs`. Build fails fast if `DATABASE_URL`, `GITHUB_TOKEN`, or `NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN` are missing. (v0.5.0)
 - **Trending split endpoints** — `GET /api/trending/repos` and `GET /api/trending/map` replace the monolithic endpoint. Repos list renders before the map. `loading.tsx` skeleton. (v0.5.0)
+- **Claude Code / MCP integration**: `starmapper-mcp` npm package with 5 tools (`get_repo_stats`, `get_organic_score`, `get_velocity`, `get_influential_stargazers`, `index_repo`). New public endpoints `GET /api/mcp/organic-score` and `GET /api/mcp/influential`. (v0.6.0)
 
 ---
 
