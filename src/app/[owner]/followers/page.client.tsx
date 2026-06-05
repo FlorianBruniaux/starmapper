@@ -3,12 +3,14 @@
 
 "use client";
 
-import { use, useCallback, useMemo, useReducer, useState } from "react";
+import { use, useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { Users, Loader2 } from "lucide-react";
 import { Header } from "@/components/header";
 import { FollowersPanel } from "@/components/map/followers-panel";
+import { FollowersDock } from "@/components/map/followers-dock";
 import { StargazerMapDynamic } from "@/components/map/stargazer-map-dynamic";
+import { CLUSTER_RADIUS } from "@/components/map/stargazer-map";
 import {
   followersScanReducer,
   useFollowersScanController,
@@ -65,10 +67,45 @@ export default function FollowersPageClient({ params }: Props) {
     ghHeaders,
   });
 
+  // Map controls
+  type ViewMode = "clusters" | "heatmap";
+  type FollowerFilter = "all" | "elite" | "vhigh" | "high" | "mid" | "low";
+  const mapControlsRef = useRef<{ setViewMode: (m: ViewMode) => void } | null>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>("clusters");
+  const [followerFilter, setFollowerFilter] = useState<FollowerFilter>("all");
+  const [clusterRadius, setClusterRadius] = useState<number>(CLUSTER_RADIUS.default);
+  const [debouncedClusterRadius, setDebouncedClusterRadius] = useState<number>(CLUSTER_RADIUS.default);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedClusterRadius(clusterRadius), 150);
+    return () => clearTimeout(t);
+  }, [clusterRadius]);
+
+  useEffect(() => {
+    mapControlsRef.current?.setViewMode(viewMode);
+  }, [viewMode]);
+
+  const handleMapReady = useCallback(
+    (controls: { setViewMode: (m: ViewMode) => void }) => {
+      mapControlsRef.current = controls;
+    },
+    [],
+  );
+
   // SAFETY: FollowerPoint is structurally compatible with StargazerPoint for map rendering
   // (map only uses lat/lng/login/followers/avatarUrl). starredAt and linkedinUrl are null in
   // StargazerPoint anyway, and FollowerPoint does not carry them.
-  const mapPoints = useMemo(() => points as unknown as StargazerPoint[], [points]);
+  const allMapPoints = useMemo(() => points as unknown as StargazerPoint[], [points]);
+
+  const filteredMapPoints = useMemo(() => {
+    if (followerFilter === "elite") return allMapPoints.filter((p) => p.followers >= 5000);
+    if (followerFilter === "vhigh") return allMapPoints.filter((p) => p.followers >= 1000);
+    if (followerFilter === "high") return allMapPoints.filter((p) => p.followers >= 500);
+    if (followerFilter === "mid") return allMapPoints.filter((p) => p.followers >= 100 && p.followers < 500);
+    if (followerFilter === "low") return allMapPoints.filter((p) => p.followers < 100);
+    return allMapPoints;
+  }, [allMapPoints, followerFilter]);
 
   const isScanning = status === "loading" || status === "waiting";
   const isDone = status === "done";
@@ -86,10 +123,28 @@ export default function FollowersPageClient({ params }: Props) {
       <main className="relative flex-1 overflow-hidden">
         {/* Map fills the entire space */}
         <StargazerMapDynamic
-          points={mapPoints}
+          points={filteredMapPoints}
           flyTarget={flyTarget}
           onFlyDone={() => setFlyTarget(null)}
+          onReady={handleMapReady}
+          clusterRadius={debouncedClusterRadius}
           styleUrl={mapStyleUrl}
+        />
+
+        {/* Map controls dock */}
+        <FollowersDock
+          hasPoints={allMapPoints.length > 0}
+          viewMode={viewMode}
+          setViewMode={setViewMode}
+          followerFilter={followerFilter}
+          setFollowerFilter={setFollowerFilter}
+          clusterRadius={clusterRadius}
+          setClusterRadius={setClusterRadius}
+          sidebarOpen={sidebarOpen}
+          setSidebarOpen={setSidebarOpen}
+          followersCount={allMapPoints.length}
+          totalCount={total}
+          onFollowersOpen={() => setPanelOpen(true)}
         />
 
         {/* Top bar — centered, floating above the map */}

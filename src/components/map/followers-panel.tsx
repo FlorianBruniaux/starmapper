@@ -130,9 +130,9 @@ export const FollowersPanel = ({
       className={[
         "absolute z-20 flex flex-col bg-surface border-border",
         // Desktop: right panel sliding in from right
-        "md:right-0 md:top-0 md:bottom-0 md:w-80 md:border-l md:rounded-none",
+        "md:left-auto md:right-0 md:top-0 md:bottom-0 md:w-80 md:border-l md:rounded-none md:max-h-none",
         "md:transition-transform md:duration-300",
-        open ? "md:translate-x-0" : "md:translate-x-full",
+        open ? "md:translate-x-0 md:translate-y-0" : "md:translate-x-full",
         // Mobile: bottom sheet sliding up
         "left-0 right-0 bottom-0 max-h-[80dvh] rounded-t-2xl border-t",
         "transition-transform duration-300",
