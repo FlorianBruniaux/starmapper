@@ -7,7 +7,6 @@ import { use, useCallback, useMemo, useReducer, useState } from "react";
 import dynamic from "next/dynamic";
 import { Users, Loader2 } from "lucide-react";
 import { Header } from "@/components/header";
-import { Footer } from "@/components/footer";
 import { FollowersPanel } from "@/components/map/followers-panel";
 import { StargazerMapDynamic } from "@/components/map/stargazer-map-dynamic";
 import {
@@ -151,8 +150,6 @@ export default function FollowersPageClient({ params }: Props) {
           setFlyTarget={setFlyTarget}
         />
       </main>
-
-      <Footer />
 
       {/* Token modal — only rendered when needed */}
       {tokenOpen && <TokenModal onClose={handleTokenClose} />}

@@ -109,6 +109,7 @@ pnpm stats:views                 # Analytics overview (last 7 days, top 20)
 | `db` | schema.prisma, Prisma config, DDL scripts |
 | `ui` | Landing page, map page, stats panel, drawer |
 | `admin` | Admin-only endpoints |
+| `mcp` | mcp/ package, MCP tools, /api/mcp/* routes |
 | `config` | env, next.config, tsconfig |
 | `deps` | package.json, pnpm-lock |
 
@@ -142,5 +143,5 @@ pnpm stats:views                 # Analytics overview (last 7 days, top 20)
 
 ---
 
-*Last updated: 2026-05-19*
-*Version: 0.5.0*
+*Last updated: 2026-06-05*
+*Version: 0.6.0*
