@@ -18,6 +18,7 @@ import {
 import { getStoredToken } from "@/lib/token";
 import { useTheme } from "@/hooks/useTheme";
 import { MAP_STYLE_DARK, MAP_STYLE_LIGHT } from "@/lib/map-style-urls";
+import { FollowersUserSwitcher } from "@/components/followers-user-switcher";
 import type { StargazerPoint } from "@/app/api/chunk/route";
 
 const TokenModal = dynamic(
@@ -115,6 +116,7 @@ export default function FollowersPageClient({ params }: Props) {
       <Header
         sticky
         backLink="/"
+        nav={<FollowersUserSwitcher currentOwner={owner} />}
         showToken
         hasToken={hasToken}
         onTokenClick={() => setTokenOpen(true)}

@@ -5,6 +5,18 @@ Versioning: Semantic Versioning (MAJOR.MINOR.PATCH)
 
 ---
 
+## [0.6.1] (2026-06-08)
+
+### Followers Map: User Switcher
+
+On the `/[owner]/followers` page, users can now navigate to any other GitHub user's followers map without leaving the page. A compact `@login /` trigger in the header opens a command-palette modal that queries the GitHub Search API with a 200 ms debounce, showing up to 8 user results with avatars. Keyboard navigation (↑↓ Enter Escape) and the `/` global shortcut are supported.
+
+New files:
+- **`src/components/followers-user-switcher.tsx`**: trigger button + modal component
+- **`src/app/api/users/autocomplete/route.ts`**: `GET /api/users/autocomplete?q=` proxies GitHub `search/users`, returns `{ login, name, avatarUrl }[]`, 60 s CDN cache
+
+---
+
 ## [0.6.0] (2026-06-05)
 
 ### Claude Code / MCP Integration
