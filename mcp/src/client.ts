@@ -112,6 +112,42 @@ export const fetchInfluentialStargazers = (
 ): Promise<{ users: InfluentialUser[]; total: number; minFollowers: number }> =>
   get(`/api/mcp/influential/${owner}/${repo}?minFollowers=${minFollowers}`);
 
+export type CacheStatus = {
+  cached: boolean;
+  scannedAt: string | null;
+  totalCount: number | null;
+  mappedCount: number | null;
+};
+
+export type TrendingRepo = {
+  owner: string;
+  repo: string;
+  stars7d: number;
+  stars30d: number;
+  stars90d: number;
+  language: string | null;
+  totalCount: number;
+  mappedCount: number;
+};
+
+export type RepoItem = {
+  owner: string;
+  repo: string;
+  mappedCount: number;
+  countryCount: number;
+  totalCount: number;
+  mappedPercent: number;
+};
+
+export const fetchCacheStatus = (owner: string, repo: string): Promise<CacheStatus> =>
+  get<CacheStatus>(`/api/mcp/cache-status/${owner}/${repo}`);
+
+export const fetchTrending = (): Promise<{ repos: TrendingRepo[]; meta: { total: number } }> =>
+  get(`/api/trending/repos`);
+
+export const fetchListRepos = (limit: number): Promise<{ repos: RepoItem[]; total: number }> =>
+  get(`/api/repos?limit=${limit}`);
+
 export const triggerChunk = async (
   owner: string,
   repo: string,

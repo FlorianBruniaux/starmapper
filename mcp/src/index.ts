@@ -11,6 +11,9 @@ import { getOrganicScore } from "./tools/get_organic_score.js";
 import { getVelocity } from "./tools/get_velocity.js";
 import { getInfluentialStargazers } from "./tools/get_influential_stargazers.js";
 import { indexRepo } from "./tools/index_repo.js";
+import { getCacheStatus } from "./tools/get_cache_status.js";
+import { getTrending } from "./tools/get_trending.js";
+import { listRepos } from "./tools/list_repos.js";
 
 const server = new McpServer({ name: "starmapper", version: "0.1.0" });
 
@@ -67,6 +70,39 @@ server.registerTool(
     inputSchema: ownerRepo,
   },
   async ({ owner, repo }) => ({ content: [{ type: "text" as const, text: await indexRepo({ owner, repo }) }] }),
+);
+
+server.registerTool(
+  "get_cache_status",
+  {
+    description: "Check whether a GitHub repository is already indexed on StarMapper. Returns last scan date, total star count, and geocoded count. Use before index_repo to avoid redundant re-scans.",
+    inputSchema: ownerRepo,
+  },
+  async ({ owner, repo }) => ({
+    content: [{ type: "text" as const, text: await getCacheStatus({ owner, repo }) }],
+  }),
+);
+
+server.registerTool(
+  "get_trending",
+  {
+    description: "List the GitHub repositories currently trending on StarMapper, ranked by star velocity over the last 7 days. Returns up to 20 repos with 7-day and 30-day star counts and programming language.",
+    inputSchema: {},
+  },
+  async () => ({ content: [{ type: "text" as const, text: await getTrending() }] }),
+);
+
+server.registerTool(
+  "list_repos",
+  {
+    description: "List GitHub repositories already indexed on StarMapper with their geocoded star counts and mapping rates. Useful to discover what data is available before calling other tools.",
+    inputSchema: {
+      limit: z.number().int().min(1).max(200).optional().describe("Maximum number of repos to return (default 50, max 200)."),
+    },
+  },
+  async ({ limit }) => ({
+    content: [{ type: "text" as const, text: await listRepos({ limit }) }],
+  }),
 );
 
 const transport = new StdioServerTransport();
