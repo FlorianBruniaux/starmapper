@@ -7,7 +7,11 @@ missing=()
 while IFS= read -r file; do
   [[ "$file" == *.ts || "$file" == *.tsx ]] || continue
   [[ -f "$file" ]] || continue
-  head -1 "$file" | grep -qF "$SPDX" || missing+=("$file")
+  if head -1 "$file" | grep -qE '^#!'; then
+    head -3 "$file" | grep -qF "$SPDX" || missing+=("$file")
+  else
+    head -1 "$file" | grep -qF "$SPDX" || missing+=("$file")
+  fi
 done < <(git diff --cached --name-only --diff-filter=ACM)
 
 if [[ ${#missing[@]} -gt 0 ]]; then

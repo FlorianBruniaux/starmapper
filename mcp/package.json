@@ -25,7 +25,7 @@
   "homepage": "https://starmapper.bruniaux.com",
   "repository": {
     "type": "git",
-    "url": "https://github.com/FlorianBruniaux/starmapper.git",
+    "url": "git+https://github.com/FlorianBruniaux/starmapper.git",
     "directory": "mcp"
   },
   "license": "AGPL-3.0-only",

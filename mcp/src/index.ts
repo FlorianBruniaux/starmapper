@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 // StarMapper MCP server - stdio transport, exposes 5 tools.
