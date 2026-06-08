@@ -60,6 +60,8 @@ No new items currently queued. See Medium term for backlog.
 
 - **Starred-by-user map** — From `/profile/[login]`, aggregate map of stargazers from ALL repos starred by that user (already indexed in StarMapper). Route `GET /api/profile/[login]/starred-map`. "Where do people who like what I like live?" No existing tool crosses user-stars × geography.
 
+- **Dependents explorer**: for library authors, lists the repos that depend on a given package, sorted by stars or forks. GitHub has a `/network/dependents` page but no public API. Viable data sources: Libraries.io API (npm, pip, gem, go; 60 req/min free tier) and deps.dev (Google, no rate limit, good npm/go/maven coverage). Only useful for published packages, not apps; shows ecosystem reach at a glance. Potential "Repo Intelligence" section alongside the map. Implementation: Libraries.io fetch cached in Neon with 24h TTL, fallback to deps.dev. Scraping the GitHub dependents HTML page is a last resort (fragile, ToS risk).
+
 ---
 
 ## If monetization ever
