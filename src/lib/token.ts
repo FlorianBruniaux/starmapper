@@ -8,21 +8,21 @@ const TOKEN_KEY = "gh_token";
 const USERNAME_KEY = "gh_username";
 
 // 30-minute TTL — matches token-modal.tsx
-const TOKEN_TTL_MS = 30 * 60 * 1000;
+const TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 type StoredValue = { v: string; exp: number };
 
 const readSession = (key: string): string => {
   try {
-    const raw = sessionStorage.getItem(key);
+    const raw = localStorage.getItem(key);
     if (!raw) return "";
     const parsed: StoredValue = JSON.parse(raw);
     if (parsed.exp < Date.now()) {
-      sessionStorage.removeItem(key);
+      localStorage.removeItem(key);
       return "";
     }
-    // Rolling TTL: reset expiry on each active read so long scans don't lose the token
-    sessionStorage.setItem(key, JSON.stringify({ v: parsed.v, exp: Date.now() + TOKEN_TTL_MS }));
+    // Rolling TTL: reset expiry on each active read
+    localStorage.setItem(key, JSON.stringify({ v: parsed.v, exp: Date.now() + TOKEN_TTL_MS }));
     return parsed.v;
   } catch { return ""; }
 };
@@ -30,9 +30,9 @@ const readSession = (key: string): string => {
 const writeSession = (key: string, value: string) => {
   try {
     if (value) {
-      sessionStorage.setItem(key, JSON.stringify({ v: value, exp: Date.now() + TOKEN_TTL_MS }));
+      localStorage.setItem(key, JSON.stringify({ v: value, exp: Date.now() + TOKEN_TTL_MS }));
     } else {
-      sessionStorage.removeItem(key);
+      localStorage.removeItem(key);
     }
   } catch { /* ignore */ }
 };

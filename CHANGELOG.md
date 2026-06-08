@@ -5,6 +5,33 @@ Versioning: Semantic Versioning (MAJOR.MINOR.PATCH)
 
 ---
 
+## [0.6.0] (2026-06-05)
+
+### Claude Code / MCP Integration
+
+`starmapper-mcp` is a standalone npm package that wraps StarMapper's API as an MCP (Model Context Protocol) server. Claude Code users can query any indexed repo's audience data from the terminal, trigger re-indexation, and get audience breakdowns directly in their AI conversations.
+
+Five tools:
+
+- **`get_repo_stats`**: total stars, geocoded count, top countries, top cities, organic score summary
+- **`get_organic_score`**: signal breakdown with weights, active signals, reasons, and 85.7% corpus accuracy label
+- **`get_velocity`**: per-country star velocity (last 30 days vs prior 60-day window) with rising / new / stable / declining labels
+- **`get_influential_stargazers`**: stargazers above a follower threshold (default 500, max 1,000,000), sorted by influence, capped at 50 results
+- **`index_repo`**: drives the full chunk loop from the MCP client, geocodes all stargazers, and saves the result to StarMapper's shared cache
+
+```json
+{ "mcpServers": { "starmapper": { "command": "npx", "args": ["starmapper-mcp"] } } }
+```
+
+Set `STARMAPPER_BASE_URL` to point at a self-hosted instance.
+
+### New API routes
+
+- **`GET /api/mcp/organic-score/[owner]/[repo]`**: full organic score signal breakdown. Recomputes signals live from `badge_cache` values plus a real-time zero-follower query. Public. `Cache-Control: public, s-maxage=300, stale-while-revalidate=600`.
+- **`GET /api/mcp/influential/[owner]/[repo]?minFollowers=N`**: influential stargazers above a follower threshold (0 to 1,000,000, default 500). Public, no auth gate. Hard-capped at 50 results.
+
+---
+
 ## [0.5.9] (2026-06-04)
 
 ### Followers Map

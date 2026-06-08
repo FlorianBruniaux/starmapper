@@ -46,6 +46,7 @@
 - **Comparison page** — `/vs/star-history` with structured data and UTM tracking. (v0.4.9)
 - **Environment validation** — `src/env.ts` via `@t3-oss/env-nextjs`. Build fails fast if `DATABASE_URL`, `GITHUB_TOKEN`, or `NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN` are missing. (v0.5.0)
 - **Trending split endpoints** — `GET /api/trending/repos` and `GET /api/trending/map` replace the monolithic endpoint. Repos list renders before the map. `loading.tsx` skeleton. (v0.5.0)
+- **Claude Code / MCP integration**: `starmapper-mcp` npm package with 5 tools (`get_repo_stats`, `get_organic_score`, `get_velocity`, `get_influential_stargazers`, `index_repo`). New public endpoints `GET /api/mcp/organic-score` and `GET /api/mcp/influential`. (v0.6.0)
 
 ---
 
@@ -58,6 +59,8 @@ No new items currently queued. See Medium term for backlog.
 ## Medium term
 
 - **Starred-by-user map** — From `/profile/[login]`, aggregate map of stargazers from ALL repos starred by that user (already indexed in StarMapper). Route `GET /api/profile/[login]/starred-map`. "Where do people who like what I like live?" No existing tool crosses user-stars × geography.
+
+- **Dependents explorer**: for library authors, lists the repos that depend on a given package, sorted by stars or forks. GitHub has a `/network/dependents` page but no public API. Viable data sources: Libraries.io API (npm, pip, gem, go; 60 req/min free tier) and deps.dev (Google, no rate limit, good npm/go/maven coverage). Only useful for published packages, not apps; shows ecosystem reach at a glance. Potential "Repo Intelligence" section alongside the map. Implementation: Libraries.io fetch cached in Neon with 24h TTL, fallback to deps.dev. Scraping the GitHub dependents HTML page is a last resort (fragile, ToS risk).
 
 ---
 

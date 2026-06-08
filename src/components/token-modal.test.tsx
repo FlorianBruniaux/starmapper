@@ -5,7 +5,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { TokenModal } from "./token-modal";
 
-// getStoredToken / setStoredToken read sessionStorage which jsdom provides,
+// getStoredToken / setStoredToken read localStorage which jsdom provides,
 // but return "" when empty — safe without mocking.
 
 beforeEach(() => {

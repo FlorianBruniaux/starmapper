@@ -1,7 +1,7 @@
 # StarMapper Architecture
 
-**Version**: 0.5.0
-**Last updated**: 2026-05-19
+**Version**: 0.6.0
+**Last updated**: 2026-06-05
 
 ---
 
@@ -617,6 +617,26 @@ Atomic daily page view upsert (`page_view` table, `count += 1`). Fire-and-forget
 
 ---
 
+### `GET /api/mcp/organic-score/[owner]/[repo]`
+
+Full organic score signal breakdown for MCP and automation use. Recomputes signals live from `badge_cache` values plus a real-time zero-follower query against `star_event + github_user`. Falls back gracefully to `zeroFollowerPct: null` on Neon timeout.
+
+**Response**: `McpOrganicScoreResponse` with fields `score`, `tier`, `tierLabel`, `signals` (ratios + sample size), `weights`, `activeSignals`, `reasons`, `corpusAccuracy: 85.7`
+
+**Cache**: `public, s-maxage=300, stale-while-revalidate=600`
+
+---
+
+### `GET /api/mcp/influential/[owner]/[repo]`
+
+Influential stargazers above a follower threshold. Public endpoint (no auth gate), designed for MCP and automation access.
+
+**Query params**: `?minFollowers=N` (default 500, range 0–1,000,000)
+
+**Response**: `{ users: McpInfluentialUser[], total: number, minFollowers: number }`. Each user includes `login`, `name`, `followers`, `location`, `profileUrl`, `avatarUrl`. Hard-capped at 50 results.
+
+---
+
 ## 7. File Structure
 
 ```
@@ -715,6 +735,19 @@ Atomic daily page view upsert (`page_view` table, `count += 1`). Fire-and-forget
 │       ├── countries.ts                       # ISO 3166 country set + normalizeCountry()
 │       ├── language-colors.ts                 # LANGUAGE_COLORS map (24 languages → hex)
 │       └── theme.ts                           # getStoredTheme() / applyTheme() / MAP_STYLE_DARK/_LIGHT
+├── mcp/                                       # starmapper-mcp: standalone npm MCP server
+│   ├── package.json                           # bin: starmapper-mcp → dist/index.js
+│   ├── tsconfig.json                          # CommonJS target (Node MCP runtime)
+│   ├── vitest.config.ts
+│   └── src/
+│       ├── index.ts                           # McpServer + StdioServerTransport, 5 tools wired
+│       ├── client.ts                          # Typed fetch wrappers for all StarMapper API endpoints
+│       └── tools/
+│           ├── get_repo_stats.ts
+│           ├── get_organic_score.ts
+│           ├── get_velocity.ts
+│           ├── get_influential_stargazers.ts
+│           └── index_repo.ts                  # Drives chunk loop + saves to stargazer-cache
 ├── extension/                                 # Chrome Extension (Manifest V3, WXT framework)
 │   ├── wxt.config.ts                          # WXT manifest + permissions
 │   ├── entrypoints/
