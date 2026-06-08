@@ -21,6 +21,13 @@
     "github",
     "stargazers"
   ],
+  "author": "Florian Bruniaux <florian@bruniaux.com>",
+  "homepage": "https://starmapper.bruniaux.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/FlorianBruniaux/starmapper.git",
+    "directory": "mcp"
+  },
   "license": "AGPL-3.0-only",
   "engines": {
     "node": ">=18"

@@ -14,6 +14,7 @@ import { indexRepo } from "./tools/index_repo.js";
 import { getCacheStatus } from "./tools/get_cache_status.js";
 import { getTrending } from "./tools/get_trending.js";
 import { listRepos } from "./tools/list_repos.js";
+import { healthCheck } from "./tools/health_check.js";
 
 const server = new McpServer({ name: "starmapper", version: "0.1.0" });
 
@@ -70,6 +71,15 @@ server.registerTool(
     inputSchema: ownerRepo,
   },
   async ({ owner, repo }) => ({ content: [{ type: "text" as const, text: await indexRepo({ owner, repo }) }] }),
+);
+
+server.registerTool(
+  "health_check",
+  {
+    description: "Check that the StarMapper MCP server is correctly configured. Verifies API reachability, GITHUB_TOKEN presence, and active endpoint. Call this first to confirm your setup is working.",
+    inputSchema: {},
+  },
+  async () => ({ content: [{ type: "text" as const, text: await healthCheck() }] }),
 );
 
 server.registerTool(
