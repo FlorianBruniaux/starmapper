@@ -9,6 +9,8 @@ export const BASE_URL = process.env.STARMAPPER_BASE_URL ?? "https://starmapper.b
 const SM_COOKIE = "sm-token";
 const GH_TOKEN = process.env.GITHUB_TOKEN ?? null;
 
+export const hasGhToken = (): boolean => GH_TOKEN !== null;
+
 export const fetchSmToken = async (): Promise<string | null> => {
   try {
     const res = await fetch(`${BASE_URL}/`, {

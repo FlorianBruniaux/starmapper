@@ -1,7 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 import { gzipSync } from "zlib";
-import { triggerChunk, fetchSmToken, BASE_URL } from "../client.js";
+import { triggerChunk, fetchSmToken, hasGhToken, BASE_URL } from "../client.js";
+
+const TOKEN_WARNING =
+  "⚠️  GITHUB_TOKEN not set — using StarMapper's shared GitHub quota (5,000 pts/hr across all users).\n" +
+  "Set GITHUB_TOKEN in your mcp.json env to use your own rate limit and avoid throttling others.\n";
 
 const REFRESH_EVERY = 200;
 
@@ -61,7 +65,7 @@ export const indexRepo = async (args: { owner: string; repo: string }): Promise<
 
     const mappingRate = totalCount > 0 ? Math.round((allPoints.length / totalCount) * 100) : 0;
 
-    return [
+    const lines = [
       `## Indexation complete: ${owner}/${repo}`,
       ``,
       `Indexed ${totalCount.toLocaleString()} users in ${chunks} chunk${chunks !== 1 ? "s" : ""}`,
@@ -69,7 +73,11 @@ export const indexRepo = async (args: { owner: string; repo: string }): Promise<
       `Unmapped: ${allUnmapped.length.toLocaleString()} (no location or unrecognized location)`,
       ``,
       `View on StarMapper: https://starmapper.bruniaux.com/${owner}/${repo}`,
-    ].join("\n");
+    ];
+
+    if (!hasGhToken()) lines.push(``, TOKEN_WARNING);
+
+    return lines.join("\n");
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     return `## Error indexing ${owner}/${repo}\n\n${message}\n\nCheck that the repository exists and StarMapper is reachable.`;
