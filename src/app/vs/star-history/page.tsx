@@ -8,9 +8,9 @@ import { Footer } from "@/components/footer";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://starmapper.bruniaux.com";
 
-const TITLE = "GitHub Star History vs StarMapper: time charts and world maps";
+const TITLE = "StarMapper vs GitHub Star History";
 const DESC =
-  "star-history.com tracks when your GitHub stars grow. StarMapper shows where your stargazers are located. Two complementary tools for understanding your open-source audience.";
+  "star-history.com answers when your GitHub repo gained stars. StarMapper answers where your stargazers live. Two complementary tools — most open-source maintainers use both.";
 
 export const metadata: Metadata = {
   title: `${TITLE} | StarMapper`,
@@ -22,11 +22,14 @@ export const metadata: Metadata = {
     url: `${APP_URL}/vs/star-history`,
     siteName: "StarMapper",
     type: "website",
+    images: [{ url: `${APP_URL}/opengraph-image`, width: 1200, height: 630 }],
   },
   twitter: {
     card: "summary_large_image",
+    site: "@FlorianBruniaux",
     title: `${TITLE} | StarMapper`,
     description: DESC,
+    images: [`${APP_URL}/opengraph-image`],
   },
 };
 

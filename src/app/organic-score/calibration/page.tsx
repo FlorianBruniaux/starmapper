@@ -4,16 +4,61 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://starmapper.bruniaux.com";
+
+const TITLE = "Organic Score — Calibration Data";
+const DESC =
+  "Empirical calibration of StarMapper's Organic Score: 19 repositories tested, 85.7% classification accuracy. Fork/star ratio (40%), watcher ratio (5%), and zero-follower percentage (55%) as signals.";
+
 export const metadata: Metadata = {
-  title: "Organic Score — Calibration Data · StarMapper",
-  description: "Empirical calibration of the Organic Score signals: corpus, weights, and fit results.",
+  title: `${TITLE} · StarMapper`,
+  description: DESC,
   alternates: { canonical: "/organic-score/calibration" },
   openGraph: {
-    title: "Organic Score — Calibration Data · StarMapper",
-    description: "Empirical calibration of the Organic Score signals: corpus, weights, and fit results.",
+    title: `${TITLE} · StarMapper`,
+    description: DESC,
+    url: `${APP_URL}/organic-score/calibration`,
+    siteName: "StarMapper",
     type: "website",
+    images: [{ url: `${APP_URL}/opengraph-image`, width: 1200, height: 630 }],
   },
-  twitter: { card: "summary_large_image" },
+  twitter: {
+    card: "summary_large_image",
+    site: "@FlorianBruniaux",
+    title: `${TITLE} · StarMapper`,
+    description: DESC,
+    images: [`${APP_URL}/opengraph-image`],
+  },
+};
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Home", item: APP_URL },
+        { "@type": "ListItem", position: 2, name: "Organic Score Calibration", item: `${APP_URL}/organic-score/calibration` },
+      ],
+    },
+    {
+      "@type": "Dataset",
+      "@id": `${APP_URL}/organic-score/calibration#dataset`,
+      name: "StarMapper Organic Score Calibration Corpus",
+      description:
+        "Calibration dataset for the StarMapper Organic Score algorithm. Contains 19 GitHub repositories (11 healthy, 4 suspicious, 2 controls, 2 edge cases) with fork/star ratio, watcher/star ratio, zero-follower percentage, and release cadence signals. Classification accuracy: 92% at updated weights (May 2026).",
+      url: `${APP_URL}/organic-score/calibration`,
+      creator: {
+        "@type": "Person",
+        name: "Florian Bruniaux",
+        url: "https://bruniaux.com",
+      },
+      dateCreated: "2026-05-06",
+      dateModified: "2026-06-09",
+      license: "https://opensource.org/licenses/AGPL-3.0",
+      isPartOf: { "@id": `${APP_URL}/#app` },
+    },
+  ],
 };
 
 const TIER: Record<string, string> = {
@@ -71,6 +116,11 @@ const expectedColor = (expected: string) => {
 
 export default function CalibrationPage() {
   return (
+    <>
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
+    />
     <div className="min-h-screen bg-background text-foreground">
       <div className="max-w-5xl mx-auto px-4 py-12">
         {/* Header */}
@@ -286,5 +336,6 @@ export default function CalibrationPage() {
         </section>
       </div>
     </div>
+    </>
   );
 }

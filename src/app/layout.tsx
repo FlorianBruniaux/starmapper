@@ -15,13 +15,22 @@ const geist = Geist({ subsets: ["latin"], variable: "--font-geist-sans", display
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://starmapper.bruniaux.com";
 
 const SITE_DESCRIPTION =
-  "Map your GitHub stargazers worldwide. See where they live, who the influential ones are, and whether the star count is organic. Free, no login.";
+  "Map your GitHub stargazers worldwide. See country breakdowns, identify influential developers, and check the Organic Score (0–100) to detect fake stars. On average 60–80% of stargazers geocoded. Free, no login.";
 
 export const metadata: Metadata = {
   title: "GitHub Stargazers Map | StarMapper",
   description: SITE_DESCRIPTION,
   metadataBase: new URL(APP_URL),
   alternates: { canonical: "/" },
+  keywords: [
+    "GitHub stargazers map",
+    "GitHub stars geographic distribution",
+    "open source audience analytics",
+    "fake GitHub stars detector",
+    "organic score GitHub",
+    "GitHub repository analytics",
+    "developer map",
+  ],
   icons: {
     icon: "/icon.svg",
     apple: "/icon.svg",
@@ -36,6 +45,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
+    site: "@FlorianBruniaux",
+    creator: "@FlorianBruniaux",
     title: "GitHub Stargazers Map | StarMapper",
     description: SITE_DESCRIPTION,
     images: [`${APP_URL}/opengraph-image`],
@@ -76,8 +87,8 @@ const jsonLd = {
       operatingSystem: "Web",
       browserRequirements: "Requires JavaScript",
       datePublished: "2024-01-01",
-      dateModified: "2026-05-27",
-      softwareVersion: "0.5.2",
+      dateModified: "2026-06-09",
+      softwareVersion: "0.6.0",
       releaseNotes: `${APP_URL}/changelog`,
       offers: {
         "@type": "Offer",

@@ -55,8 +55,8 @@ export default function Image() {
           <span style={{ color: "#f0f6fc", fontSize: 64, fontWeight: 800, lineHeight: 1.1, maxWidth: 700 }}>
             Map your GitHub stargazers
           </span>
-          <span style={{ color: "#8b949e", fontSize: 26, lineHeight: 1.4, maxWidth: 600 }}>
-            See where in the world your repo's fans are. Geocoded, clustered, and beautiful.
+          <span style={{ color: "#8b949e", fontSize: 26, lineHeight: 1.4, maxWidth: 620 }}>
+            Country breakdowns, influential developers, and Organic Score (0–100) to detect fake stars. 60–80% geocoded on average.
           </span>
         </div>
 
