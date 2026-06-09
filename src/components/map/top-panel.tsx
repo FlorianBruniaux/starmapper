@@ -4,7 +4,7 @@
 "use client";
 
 import { memo, useMemo, useState } from "react";
-import { Search, ChevronRight, ChevronUp, ChevronDown, Check, Lock, User } from "lucide-react";
+import { Search, ChevronRight, ChevronUp, ChevronDown, Check, Lock, User, Info } from "lucide-react";
 import Image from "next/image";
 import type { StargazerPoint } from "@/app/api/chunk/route";
 import type { TimeEstimate } from "@/lib/format";
@@ -219,9 +219,17 @@ const TopPanelInner = ({
             bg-surface-alt/50 hover:bg-surface-alt transition-colors
             border-t border-border-subtle group"
         >
-          <span className="text-2xs text-muted-subtle uppercase tracking-wide">
-            No location
-          </span>
+          <div className="flex items-center gap-1.5">
+            <span className="text-2xs text-muted-subtle uppercase tracking-wide">
+              Hidden from map
+            </span>
+            <span className="relative group/tip">
+              <Info size={9} className="text-muted-subtle opacity-60" aria-hidden="true" />
+              <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-52 rounded-lg bg-surface border border-border px-3 py-2 text-xs text-foreground leading-relaxed shadow-xl opacity-0 group-hover/tip:opacity-100 transition-opacity duration-150 z-50 whitespace-normal font-normal normal-case tracking-normal">
+                These stargazers are fully indexed but haven&apos;t set a location in their GitHub profile, so they can&apos;t be placed on the map.
+              </span>
+            </span>
+          </div>
           <div className="flex items-center gap-1.5">
             <span className="text-xs font-medium text-muted-subtle tabular-nums">
               {unmapped.length.toLocaleString()}
@@ -261,24 +269,32 @@ const TopPanelInner = ({
         </div>
       )}
 
-      {/* ── Mapping ratio bar — after scan ───────────────────────────────── */}
+      {/* ── Location coverage bar — after scan ──────────────────────────── */}
       {(status === "cached" || status === "done") && total > 0 && points.length > 0 && (
         <div className="mt-2.5">
           <div
             className="w-full bg-surface-alt rounded-full h-1 overflow-hidden"
-            role="progressbar"
+            role="meter"
             aria-valuenow={mappingPct}
             aria-valuemin={0}
             aria-valuemax={100}
-            aria-label="Mapping ratio"
+            aria-label="Location coverage"
           >
             <div
-              className="bg-accent-blue h-full rounded-full transition-all duration-500"
+              className="bg-accent-green h-full rounded-full transition-all duration-500"
               style={{ width: `${mappingPct}%` }}
             />
           </div>
-          <div className="text-2xs text-muted-subtle mt-0.5 text-center">
-            {points.length.toLocaleString()} / {displayTotal.toLocaleString()} mapped ({mappingPct}%)
+          <div className="text-2xs text-muted-subtle mt-0.5 text-center flex items-center justify-center gap-1">
+            <span>
+              {mappingPct}% have a GitHub location ({points.length.toLocaleString()} of {displayTotal.toLocaleString()})
+            </span>
+            <span className="relative group/tip">
+              <Info size={9} className="opacity-60" aria-hidden="true" />
+              <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-52 rounded-lg bg-surface border border-border px-3 py-2 text-xs text-foreground leading-relaxed shadow-xl opacity-0 group-hover/tip:opacity-100 transition-opacity duration-150 z-50 whitespace-normal font-normal normal-case tracking-normal">
+                All {displayTotal.toLocaleString()} stargazers are indexed. Only those who&apos;ve set a location in their GitHub profile can be placed on the map.
+              </span>
+            </span>
           </div>
         </div>
       )}
