@@ -1,7 +1,7 @@
 # StarMapper Architecture
 
-**Version**: 0.6.0
-**Last updated**: 2026-06-05
+**Version**: 0.6.2
+**Last updated**: 2026-06-09
 
 ---
 
@@ -637,6 +637,249 @@ Influential stargazers above a follower threshold. Public endpoint (no auth gate
 
 ---
 
+### `GET /api/mcp/cache-status/[owner]/[repo]`
+
+Lightweight cache metadata for MCP use. Returns whether the repo has been scanned, when, and how many users were mapped. Does not transfer the full stargazer blob.
+
+**Response**: `McpCacheStatusResponse { cached: boolean, scannedAt: string | null, totalCount: number | null, mappedCount: number | null }`
+
+---
+
+### `POST /api/followers-chunk`
+
+Fetches and geocodes one page of GitHub followers for a given user. Mirrors the chunk loop pattern of `/api/chunk` but operates on followers instead of stargazers.
+
+**Request body**
+
+```ts
+{
+  login: string,
+  cursor: string | null   // null = first page
+}
+```
+
+**Response**
+
+```ts
+{
+  points: FollowerPoint[],   // geocoded followers
+  unmapped: { login, name, followers, avatarUrl }[],
+  nextCursor: string | null,
+  totalCount: number,
+  quotaRemaining: number | null
+}
+```
+
+Rate-limited 30 req/min per IP via Upstash (fail-open if Redis unavailable). `FollowerPoint` and `FollowersChunkResponse` are exported from `src/app/api/followers-chunk/route.ts`.
+
+---
+
+### `POST /api/follower-cache`
+
+Writes the full followers scan result for a user to the `FollowerCache` table (gzip+base64).
+
+**Request body**: `{ login, pointsGz: string, unmappedGz: string, totalCount: number }`
+
+Requires a valid `sm-token` cookie (HMAC, set by the followers page on first scan). Validates `totalCount` against the user's known follower count in DB to prevent cache poisoning.
+
+---
+
+### `GET /api/follower-cache/[login]`
+
+Reads the full cached followers scan for a user.
+
+**Responses**:
+- `200`: `{ points, unmapped, totalCount, scannedAt }`, full data decompressed on server. Supports `If-None-Match` / 304.
+- `404`: login not found in `FollowerCache`.
+
+---
+
+### `GET /api/profile/[login]`
+
+Returns a developer's full profile data from DB. Auto-fetches from GitHub if not found (first visit).
+
+**Response**: `ProfileResponse { login, name, company, location, followers, publicRepos, avatarUrl, bio, blogUrl, twitterUsername, languages, topRepos, lat, lng, countryNormalized, cityNormalized, ... }`.
+
+`ProfileResponse` and `ProfileRepo` are exported from `src/app/api/profile/[login]/route.ts`.
+
+---
+
+### `GET /api/organic-score/[owner]/[repo]`
+
+Lightweight organic score endpoint that reads directly from `badge_cache`. Works even when the stats API returns 404 (repo not deeply indexed).
+
+**Response**: `RepoOrganic { organicScore, organicTier, forksCount, watchersCount, totalCount, openIssuesCount, openPRsCount, latestReleaseTag, latestReleaseUrl, latestReleaseAt, organicComputedAt }` or `{ organicScore: null }` if not computed.
+
+---
+
+### `POST /api/organic-score/[owner]/[repo]/refresh`
+
+Re-fetches GitHub repo data and recomputes the organic score. Rate-limited to once per hour per repo (checked via `organicComputedAt`).
+
+**Response**: `{ ok: true, score: number, tier: OrganicTier }` or `{ error: "cooldown", retryAfterSec: number }` (429).
+
+---
+
+### `GET /api/stats/[owner]/[repo]/growth`
+
+Weekly star accumulation bar chart data. Aggregates `star_event` rows with `DATE_TRUNC('week')`.
+
+**Response**: `GrowthResponse { weeks: GrowthWeek[], total: number, withTimestamps: number }`. Each `GrowthWeek` is `{ week: string, count: number }` (ISO date of Monday).
+
+**Cache**: `public, s-maxage=300` (5 min CDN).
+
+---
+
+### `GET /api/stats/[owner]/[repo]/top-users`
+
+Top stargazers by follower count for a repo. Requires `sm-token` cookie and valid `Referer` header (middleware guard against unauthenticated PII scraping).
+
+**Response**: `{ users: TopUser[] }`. `TopUser` includes `login`, `name`, `followers`, `publicRepos`, `location`, `avatarUrl`, `company`.
+
+---
+
+### `GET /api/trending`
+
+Aggregate trending data combining repos and map points. Reads the same `trending_repos_mv` as `/api/trending/repos`.
+
+**Response**: `{ repos: TrendingRepo[], mapPoints: StargazerPoint[], meta: { total } }`
+
+**Cache**: `public, s-maxage=3600` (1h CDN).
+
+---
+
+### `GET /api/devs/[language]`
+
+Developer map points filtered by a specific programming language (path param variant of `/api/devs?language=`).
+
+**Route param**: `[language]` slug (e.g. `typescript`, `python`, `c-cpp`)
+
+**Response**: `{ points: GeoPoint[], total: number }`, geocoded users only.
+
+---
+
+### `GET /api/users/autocomplete`
+
+Proxies GitHub's `search/users` API for user search suggestions. Used by the followers user switcher modal.
+
+**Query params**: `?q=<query>` (min 2 chars, max 50)
+
+**Response**: `{ items: UserAutocompleteItem[] }` where each item has `login`, `name | null`, `avatarUrl`. CDN-cached 60 s.
+
+---
+
+### `GET /api/explore`
+
+Root explore endpoint returning summary data for the explore page (top users, power users counts). May redirect or aggregate sub-endpoints.
+
+---
+
+### `GET /api/explore/top`
+
+Leaderboard of developers ranked by follower count across all indexed repos.
+
+**Query params**: `?page=`, `?size=` (max 50), `?country=`, `?search=`, `?minFollowers=`
+
+**Response**: `TopUsersResponse { items: TopUser[], total, page, pageSize }`.
+
+---
+
+### `GET /api/explore/power`
+
+Power users: developers who have starred the most indexed repos. Backed by `power_users_mv`.
+
+**Query params**: `?page=`, `?size=` (max 50), `?cursor=` (keyset `"${cnt}|${login}"`)
+
+**Response**: `PowerResponse { items, total, page, pageSize, nextCursor }`.
+
+---
+
+### `GET /api/explore/nearby`
+
+Developers near a geographic bounding box or point. City-level precision only (lat/lng rounded to 1 decimal).
+
+**Query params**: `?lat=`, `?lng=`, `?radiusKm=`, `?page=`, `?size=`
+
+**Response**: `NearbyResponse { users: NearbyUser[], cities: NearbyCity[], total, page, pageSize }`.
+
+---
+
+### `GET /api/explore/companies`
+
+Top companies appearing in developer profiles across all indexed repos.
+
+**Query params**: `?page=`, `?size=`, `?search=`
+
+**Response**: `CompaniesResponse { items: [string, number][], total, page, pageSize }`. Noise companies (freelance, student, etc.) are filtered out.
+
+---
+
+### `GET /api/explore/autocomplete`
+
+Location or user autocomplete for the explore search input. Backed by Jawg geocoding or DB prefix search.
+
+---
+
+### `GET /api/explore/geocode`
+
+Geocodes a location string for the explore map pin. Returns lat/lng or 404.
+
+---
+
+### `GET /api/explore/global-map`
+
+Returns aggregate GeoJSON points for the explore map (all indexed developers).
+
+---
+
+### `GET /api/explore/locations`
+
+Top locations (cities + countries) across all indexed developers. Used for the explore filter comboboxes.
+
+---
+
+### `POST /api/recalculate-location`
+
+Re-geocodes a user's self-declared location string through the standard cascade (Jawg, Geoapify, Nominatim). Updates `GitHubUser.lat/lng` in DB.
+
+**Request body**: validated by `src/schemas/recalculate-location.ts`
+
+---
+
+### `POST /api/vitals`
+
+Receives Core Web Vitals metrics from the `VitalsReporter` client component. Logs to stdout (consumed by Vercel log drains). Never returns errors.
+
+**Request body**: validated by `src/schemas/vitals.ts` (name, value, rating, delta, navigationType, path).
+
+---
+
+### `GET /api/admin/cleanup`
+
+Admin endpoint to purge stale or orphaned data from the database. No authentication guard. Use with care.
+
+---
+
+### `POST /api/admin/daily-digest`
+
+Cron endpoint that generates a daily digest of platform statistics (scans, user growth, geocache hit rate). Triggered by Vercel Cron.
+
+---
+
+### `POST /api/admin/delete-user`
+
+Removes a developer's data from all tables (`GitHubUser`, `StarEvent`, `FollowerCache`, `PageView`). Used for GDPR deletion requests.
+
+**Request body**: `{ login: string }`
+
+---
+
+### `GET /api/admin/organic-score-stats`
+
+Returns aggregate statistics on the organic score corpus: distribution of tiers, mean score, scores per tier bucket. Used for calibration monitoring.
+
+---
+
 ## 7. File Structure
 
 ```
@@ -646,33 +889,101 @@ Influential stargazers above a follower threshold. Public endpoint (no auth gate
 │   │   ├── layout.tsx                         # Root layout, global metadata, JSON-LD, FOUC prevention
 │   │   ├── globals.css                        # @theme tokens (dark + light), popup styles
 │   │   ├── page.tsx                           # Landing page: repo URL input + community maps
-│   │   ├── [owner]/[repo]/
-│   │   │   ├── page.tsx                       # Map page: chunk loop via useScanController + delegates to sub-components
-│   │   │   ├── loading.tsx                    # Next.js route-level loading skeleton
-│   │   │   └── opengraph-image.tsx            # OG image generation
+│   │   ├── manifest.ts                        # PWA web manifest (name, icons, theme colors)
+│   │   ├── sitemap.ts                         # Next.js sitemap generator (all public routes)
+│   │   ├── robots.ts                          # robots.txt: allow all, sitemap pointer
+│   │   ├── opengraph-image.tsx                # Default OG image for pages without a dedicated one
+│   │   ├── icon.svg                           # App icon (favicon)
+│   │   ├── [owner]/
+│   │   │   ├── page.tsx                       # Owner page: lists repos + links to their profile
+│   │   │   ├── followers/
+│   │   │   │   └── page.tsx                   # Followers map for a GitHub user
+│   │   │   └── [repo]/
+│   │   │       ├── page.tsx                   # Map page: chunk loop via useScanController + sub-components
+│   │   │       ├── loading.tsx                # Next.js route-level loading skeleton
+│   │   │       └── opengraph-image.tsx        # OG image generation (repo-specific)
+│   │   ├── changelog/
+│   │   │   └── page.tsx                       # Versioned changelog timeline, reads CHANGELOG.md at build
 │   │   ├── devs/
 │   │   │   ├── page.tsx                       # Dev Maps: language selector + map
 │   │   │   ├── [language]/page.tsx            # Dev map filtered by language
 │   │   │   └── atlas/page.tsx                 # Language Atlas: choropleth map by country
+│   │   ├── explore/
+│   │   │   └── page.tsx                       # Explore: 4-tab leaderboard + sticky map
+│   │   ├── faq/
+│   │   │   └── page.tsx                       # Frequently asked questions (extracted from landing)
 │   │   ├── feed/[login]/
 │   │   │   ├── page.tsx                       # RSS subscription page (identity hero + subscribe card + news)
 │   │   │   └── page.client.tsx                # Subscribe card (copy RSS/JSON URLs)
+│   │   ├── feeds/
+│   │   │   └── page.tsx                       # All developer feeds index
+│   │   ├── legal/
+│   │   │   └── page.tsx                       # Legal notices
+│   │   ├── organic-score/calibration/
+│   │   │   └── page.tsx                       # Organic score calibration corpus details
+│   │   ├── privacy/
+│   │   │   └── page.tsx                       # Privacy policy
+│   │   ├── profile/[login]/
+│   │   │   └── page.tsx                       # Developer profile: 2-col layout, map + stats panel
+│   │   ├── repos/
+│   │   │   └── page.tsx                       # All indexed repos (sortable table)
+│   │   ├── sitemap/
+│   │   │   └── page.tsx                       # Human-readable sitemap page
+│   │   ├── sponsor/
+│   │   │   └── page.tsx                       # Sponsors and acknowledgments
+│   │   ├── terms/
+│   │   │   └── page.tsx                       # Terms of service
+│   │   ├── trending/
+│   │   │   └── page.tsx                       # Trending repos x stargazer geography
+│   │   ├── vs/star-history/
+│   │   │   └── page.tsx                       # Comparison page vs star-history.com
 │   │   └── api/
 │   │       ├── chunk/route.ts                 # POST: fetch + geocode 100 stargazers
 │   │       ├── repo-info/route.ts             # GET:  repo metadata (GitHub REST)
 │   │       ├── repos/route.ts                 # GET:  community maps list (BadgeCache)
 │   │       ├── stats/[owner]/[repo]/
 │   │       │   ├── route.ts                   # GET:  aggregated repo stats (GitHubUser + StarEvent)
-│   │       │   └── geo-velocity/route.ts      # GET:  country velocity 30d vs 31–90d
+│   │       │   ├── geo-velocity/route.ts      # GET:  country velocity 30d vs 31-90d
+│   │       │   ├── growth/route.ts            # GET:  weekly star accumulation (GrowthResponse)
+│   │       │   └── top-users/route.ts         # GET:  top stargazers by followers (sm-token gated)
 │   │       ├── watch/[owner]/[repo]/route.ts  # GET:  live star polling (no-store, GitHub REST)
 │   │       ├── map-image/[owner]/[repo]/route.ts # GET: SVG scatter map for README embeds
 │   │       ├── trending/
+│   │       │   ├── route.ts                   # GET:  all trending data (repos + map) combined
 │   │       │   ├── repos/route.ts             # GET:  trending repos by star velocity (1h CDN)
 │   │       │   └── map/route.ts               # GET:  aggregate map points for top 5 repos (1h CDN)
 │   │       ├── geo/[owner]/[repo]/route.ts    # GET:  API-key auth, country+city aggregates
 │   │       ├── devs/
 │   │       │   ├── route.ts                   # GET:  developer map points by language
-│   │       │   └── atlas/route.ts             # GET:  country × language dominance (MV)
+│   │       │   ├── [language]/route.ts        # GET:  same as ?language= but path-param variant
+│   │       │   └── atlas/route.ts             # GET:  country x language dominance (MV)
+│   │       ├── explore/
+│   │       │   ├── route.ts                   # GET:  explore page summary counts
+│   │       │   ├── top/route.ts               # GET:  leaderboard by followers, filterable
+│   │       │   ├── power/route.ts             # GET:  power users (most repos starred), keyset paged
+│   │       │   ├── nearby/route.ts            # GET:  developers near a lat/lng bounding box
+│   │       │   ├── companies/route.ts         # GET:  top companies across all indexed devs
+│   │       │   ├── autocomplete/route.ts      # GET:  location/user autocomplete for explore search
+│   │       │   ├── geocode/route.ts           # GET:  geocode a location string for the explore map pin
+│   │       │   ├── global-map/route.ts        # GET:  all indexed developer GeoJSON points
+│   │       │   ├── locations/route.ts         # GET:  top cities + countries for filter comboboxes
+│   │       │   └── user-repos/route.ts        # GET:  cached top repos for a user (7-day TTL)
+│   │       ├── followers-chunk/route.ts       # POST: fetch + geocode 100 followers (FollowerPoint[])
+│   │       ├── follower-cache/
+│   │       │   ├── route.ts                   # POST: write full followers scan (gzip+base64, sm-token gated)
+│   │       │   └── [login]/route.ts           # GET:  read cached followers scan (ETag/304 support)
+│   │       ├── profile/[login]/
+│   │       │   ├── route.ts                   # GET:  developer profile (auto-fetch on 404)
+│   │       │   └── refresh/route.ts           # POST: re-fetch from GitHub (1h cooldown)
+│   │       ├── organic-score/[owner]/[repo]/
+│   │       │   ├── route.ts                   # GET:  organic score from badge_cache (lightweight)
+│   │       │   └── refresh/route.ts           # POST: recompute score from GitHub API (1h cooldown)
+│   │       ├── users/
+│   │       │   └── autocomplete/route.ts      # GET:  proxy GitHub user search (UserAutocompleteItem[])
+│   │       ├── mcp/
+│   │       │   ├── organic-score/[owner]/[repo]/route.ts # GET: full signal breakdown for MCP
+│   │       │   ├── influential/[owner]/[repo]/route.ts   # GET: influential stargazers for MCP
+│   │       │   └── cache-status/[owner]/[repo]/route.ts  # GET: cache metadata for MCP
 │   │       ├── stargazer-cache/
 │   │       │   ├── route.ts                   # POST: write full scan (gzip+base64)
 │   │       │   └── [owner]/[repo]/route.ts    # GET:  read full scan (200/206/404)
@@ -683,38 +994,89 @@ Influential stargazers above a follower threshold. Public endpoint (no auth gate
 │   │       ├── feed/[login]/
 │   │       │   ├── rss/route.ts               # GET:  RSS 2.0 feed (1h cache)
 │   │       │   └── json/route.ts              # GET:  JSON Feed 1.1 (1h cache)
+│   │       ├── recalculate-location/route.ts  # POST: re-geocode a user location, update DB
+│   │       ├── vitals/route.ts                # POST: Core Web Vitals telemetry (log-only)
 │   │       ├── user-details/route.ts          # POST: stargazer details (bio, followers)
+│   │       ├── user-repos/route.ts            # GET:  public repos for a GitHub user (up to 500)
 │   │       ├── badge-update/route.ts          # POST: upsert BadgeCache
 │   │       ├── badge/[owner]/[repo]/route.ts  # GET:  SVG shield badge
 │   │       ├── track/route.ts                 # POST: fire-and-forget daily page view upsert
 │   │       └── admin/
 │   │           ├── clear-geocache/route.ts    # GET:  truncate geocache (admin)
 │   │           ├── import-geocache/route.ts   # POST: bulk import geocache (admin)
-│   │           └── refresh-grid-mv/route.ts   # GET:  refresh all MVs (Vercel Cron 03:00 UTC)
+│   │           ├── refresh-grid-mv/route.ts   # GET:  refresh all MVs (Vercel Cron 03:00 UTC)
+│   │           ├── cleanup/route.ts           # GET:  purge stale/orphaned DB data
+│   │           ├── daily-digest/route.ts      # POST: platform stats digest (Vercel Cron)
+│   │           ├── delete-user/route.ts       # POST: GDPR user deletion across all tables
+│   │           └── organic-score-stats/route.ts # GET: organic score corpus distribution
 │   ├── components/
 │   │   ├── ui/
 │   │   │   └── tabs.tsx                       # Reusable Tabs component
 │   │   ├── announcement-banner.tsx            # Dismissible top banner (localStorage keyed by BANNER_ID)
-│   │   ├── token-modal.tsx                    # GitHub token input modal (PAT override)
-│   │   ├── theme-toggle.tsx                   # Dark/light mode toggle button
+│   │   ├── command-search.tsx                 # Global command palette / search modal
+│   │   ├── external-link.tsx                  # Anchor with rel="noopener noreferrer" + icon
 │   │   ├── filter-combobox.tsx                # Reusable combobox (country/city filters)
-│   │   ├── repo-table.tsx                     # Community maps table (sortable, paginated)
+│   │   ├── follow-button.tsx                  # Follow/unfollow action on developer profiles
+│   │   ├── followers-user-switcher.tsx        # Command-palette modal to switch users on the followers page
 │   │   ├── footer.tsx                         # Landing page footer with ecosystem links
-│   │   ├── news-timeline.tsx                  # News section on profile pages
+│   │   ├── header.tsx                         # Sitewide navigation header
+│   │   ├── hero-globe.tsx                     # Animated 3D globe for the landing hero (client)
+│   │   ├── hero-globe-dynamic.tsx             # Dynamic import wrapper, ssr: false
+│   │   ├── logo.tsx                           # StarMapper logo mark + wordmark
+│   │   ├── modal.tsx                          # Generic accessible modal (focus trap, Escape)
 │   │   ├── news-publish-modal.tsx             # Publish/delete flow + feed URLs display
-│   │   └── map/
-│   │       ├── stargazer-map.tsx              # MapLibre GL map (client component, React.memo)
-│   │       ├── stargazer-map-dynamic.tsx      # Dynamic import wrapper, ssr: false
-│   │       ├── dock.tsx                       # Vertical Dock — view controls, stats/watch/share buttons
-│   │       ├── country-choropleth.tsx         # Choropleth map — stargazer density by country
-│   │       ├── language-choropleth.tsx        # Choropleth map — language dominance by country
-│   │       └── language-choropleth-dynamic.tsx # Dynamic import wrapper, ssr: false
+│   │   ├── news-timeline.tsx                  # News section on profile pages
+│   │   ├── organic-score-modal.tsx            # Organic score detail modal (signals + tier)
+│   │   ├── organic-score-pill.tsx             # Compact score badge for repo cards
+│   │   ├── repo-table.tsx                     # Community maps table (sortable, paginated)
+│   │   ├── sponsors-block.tsx                 # Sponsors section (Jawg + Neon logos)
+│   │   ├── star-nudge.tsx                     # "Star this repo?" popup nudge (dismissible)
+│   │   ├── stats-list.tsx                     # Generic key-value stats list component
+│   │   ├── theme-toggle.tsx                   # Dark/light mode toggle button
+│   │   ├── token-modal.tsx                    # GitHub token input modal (PAT override)
+│   │   ├── vitals-reporter.tsx                # Client component: sends Core Web Vitals to /api/vitals
+│   │   ├── devs/
+│   │   │   └── language-switcher.tsx          # Language combobox for /devs and /devs/[language]
+│   │   ├── map/
+│   │   │   ├── stargazer-map.tsx              # MapLibre GL map (client component, React.memo)
+│   │   │   ├── stargazer-map-dynamic.tsx      # Dynamic import wrapper, ssr: false
+│   │   │   ├── all-stargazers-modal.tsx        # Modal listing all scanned stargazers
+│   │   │   ├── badge-modal.tsx                # Badge + map image embed share modal
+│   │   │   ├── country-choropleth.tsx         # Choropleth map: stargazer density by country
+│   │   │   ├── country-choropleth-dynamic.tsx # Dynamic import wrapper, ssr: false
+│   │   │   ├── dock.tsx                       # Vertical Dock: view controls, stats/watch/share buttons
+│   │   │   ├── followers-dock.tsx             # Dock variant for the followers map page
+│   │   │   ├── followers-panel.tsx            # Side panel: followers sorted by influence, fly-to
+│   │   │   ├── growth-chart.tsx               # Weekly star bar chart (Recharts)
+│   │   │   ├── growth-modal.tsx               # Growth chart modal wrapper
+│   │   │   ├── jawg-badge.tsx                 # "Powered by Jawg" attribution badge on the map
+│   │   │   ├── language-choropleth.tsx        # Choropleth map: language dominance by country
+│   │   │   ├── language-choropleth-dynamic.tsx # Dynamic import wrapper, ssr: false
+│   │   │   ├── map-floating-nav.tsx           # Floating navigation controls on the map
+│   │   │   ├── not-found-modal.tsx            # Modal shown when a repo is not found
+│   │   │   ├── pre-scan-overlay.tsx           # Overlay shown before the first chunk is fetched
+│   │   │   ├── rate-limit-overlay.tsx         # Overlay shown while a rate limit delay is active
+│   │   │   ├── rate-limited-modal.tsx         # Modal for sustained rate limit blocks
+│   │   │   ├── share-modal.tsx                # Deep-link share modal (encodes all active filters)
+│   │   │   ├── stats-modal.tsx                # Stats panel modal (countries, companies, top stars)
+│   │   │   ├── timelapse-bar.tsx              # Timelapse controls (play/pause, speed, date label)
+│   │   │   └── top-panel.tsx                  # Top search bar on the map page
+│   │   └── tour/
+│   │       ├── tour-overlay.tsx               # Dimmed overlay behind tour tooltips
+│   │       ├── tour-provider.tsx              # Tour state machine + step management
+│   │       ├── tour-tooltip.tsx               # Individual tooltip bubble (step content + nav)
+│   │       └── tour-trigger.tsx               # Button to launch the product tour
 │   ├── schemas/
 │   │   ├── chunk.ts                           # Zod: POST /api/chunk
 │   │   ├── badge-update.ts                    # Zod: POST /api/badge-update
+│   │   ├── followers-chunk.ts                 # Zod: POST /api/followers-chunk
 │   │   ├── stargazer-cache.ts                 # Zod: POST /api/stargazer-cache
 │   │   ├── news.ts                            # Zod: POST /api/news
 │   │   ├── track.ts                           # Zod: POST /api/track
+│   │   ├── vitals.ts                          # Zod: POST /api/vitals
+│   │   ├── admin-delete-user.ts               # Zod: POST /api/admin/delete-user
+│   │   ├── admin-import-geocache.ts           # Zod: POST /api/admin/import-geocache
+│   │   ├── user-details.ts                    # Zod: POST /api/user-details
 │   │   └── recalculate-location.ts            # Zod: POST /api/recalculate-location
 │   ├── env.ts                                 # @t3-oss/env-nextjs — build-time validation of DATABASE_URL, GITHUB_TOKEN, NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN
 │   └── lib/
@@ -740,14 +1102,18 @@ Influential stargazers above a follower threshold. Public endpoint (no auth gate
 │   ├── tsconfig.json                          # CommonJS target (Node MCP runtime)
 │   ├── vitest.config.ts
 │   └── src/
-│       ├── index.ts                           # McpServer + StdioServerTransport, 5 tools wired
+│       ├── index.ts                           # McpServer + StdioServerTransport, 9 tools wired
 │       ├── client.ts                          # Typed fetch wrappers for all StarMapper API endpoints
 │       └── tools/
 │           ├── get_repo_stats.ts
 │           ├── get_organic_score.ts
 │           ├── get_velocity.ts
 │           ├── get_influential_stargazers.ts
-│           └── index_repo.ts                  # Drives chunk loop + saves to stargazer-cache
+│           ├── index_repo.ts                  # Drives chunk loop + saves to stargazer-cache
+│           ├── health_check.ts
+│           ├── get_cache_status.ts
+│           ├── get_trending.ts
+│           └── list_repos.ts
 ├── extension/                                 # Chrome Extension (Manifest V3, WXT framework)
 │   ├── wxt.config.ts                          # WXT manifest + permissions
 │   ├── entrypoints/

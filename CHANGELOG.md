@@ -5,6 +5,16 @@ Versioning: Semantic Versioning (MAJOR.MINOR.PATCH)
 
 ---
 
+## [0.6.2] (2026-06-09)
+
+### SEO and Progressive Web App
+
+StarMapper now ships full Open Graph metadata, a PWA web manifest, and JSON-LD structured data sitewide. Every page generates a dynamic `og:image` at `/api/og` via `@vercel/og`. The root `opengraph-image.tsx` handles all pages that don't define their own image, while the repo map page already had its own OG image since 0.5.x. A `manifest.ts` registers the app name, icons, and theme colors for "Add to Home Screen" on mobile. Structured data (JSON-LD `WebSite` + `SoftwareApplication` schemas) is injected in the root layout.
+
+New files: `src/app/manifest.ts`, `src/app/opengraph-image.tsx`, `src/app/sitemap.ts`, `src/app/robots.ts`, `src/app/icon.svg`.
+
+---
+
 ## [0.6.1] (2026-06-08)
 
 ### Followers Map: User Switcher
@@ -23,13 +33,17 @@ New files:
 
 `starmapper-mcp` is a standalone npm package that wraps StarMapper's API as an MCP (Model Context Protocol) server. Claude Code users can query any indexed repo's audience data from the terminal, trigger re-indexation, and get audience breakdowns directly in their AI conversations.
 
-Five tools:
+Nine tools:
 
 - **`get_repo_stats`**: total stars, geocoded count, top countries, top cities, organic score summary
 - **`get_organic_score`**: signal breakdown with weights, active signals, reasons, and 85.7% corpus accuracy label
 - **`get_velocity`**: per-country star velocity (last 30 days vs prior 60-day window) with rising / new / stable / declining labels
 - **`get_influential_stargazers`**: stargazers above a follower threshold (default 500, max 1,000,000), sorted by influence, capped at 50 results
 - **`index_repo`**: drives the full chunk loop from the MCP client, geocodes all stargazers, and saves the result to StarMapper's shared cache
+- **`health_check`**: pings the StarMapper API and returns status and latency
+- **`get_cache_status`**: returns cache metadata for a repo (scanned date, mapped count, total) without transferring the full stargazer blob
+- **`get_trending`**: returns the current trending repos from StarMapper's trending feed
+- **`list_repos`**: lists all repos indexed on StarMapper, ordered by last scan date
 
 ```json
 { "mcpServers": { "starmapper": { "command": "npx", "args": ["starmapper-mcp"] } } }

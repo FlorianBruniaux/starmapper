@@ -1,5 +1,7 @@
 # StarMapper — Product Reference
 
+**Version**: 0.6.2 | **Last updated**: 2026-06-09
+
 Free, open-source developer intelligence platform built around GitHub stargazer geography. No account required.
 
 → https://starmapper.bruniaux.com
@@ -105,11 +107,11 @@ Handles GitHub SPA navigation (Turbo + bfcache). Adapts to dark/light theme via 
 
 ### Integrations & embeds
 
-- **SVG shield badge** — `/api/badge/[owner]/[repo]`: star count + countries mapped. 6h CDN cache. Copy Markdown in one click from the map page.
-- **Map image embed** — `/api/map-image/[owner]/[repo]?theme=dark|light`: full 800×400 SVG scatter map. Use `<picture>` to serve dark/light variants. Embeddable in any README.
-- **Public GeoJSON API** — `GET /api/geo/[owner]/[repo]`: aggregate countries + cities (top 50 each), API key authenticated, rate-limited 60 req/min. GDPR-safe (no individual coordinates). For third-party tools and dashboards.
-- **RSS 2.0 + JSON Feed 1.1** — per-developer announcement feeds. Subscribable from any RSS reader.
-- **Organic Score** — `GET /api/organic-score/[owner]/[repo]`: 0–100 score estimating whether stars are organic or farmed. Three signals: fork/star ratio (40%), watcher/star ratio (5%), zero-follower stargazers (55%). 92% accuracy on calibration corpus. Displayed on the repos landing page with a detail modal.
+- **SVG shield badge** (`/api/badge/[owner]/[repo]`): star count + countries mapped. 6h CDN cache. Copy Markdown in one click from the map page.
+- **Map image embed** (`/api/map-image/[owner]/[repo]?theme=dark|light`): full 800×400 SVG scatter map. Use `<picture>` to serve dark/light variants. Embeddable in any README.
+- **Public GeoJSON API** (`GET /api/geo/[owner]/[repo]`): aggregate countries + cities (top 50 each), API key authenticated, rate-limited 60 req/min. GDPR-safe (no individual coordinates). For third-party tools and dashboards.
+- **RSS 2.0 + JSON Feed 1.1**: per-developer announcement feeds. Subscribable from any RSS reader.
+- **Organic Score** (`GET /api/organic-score/[owner]/[repo]`): 0–100 score estimating whether stars are organic or farmed. Three signals: fork/star ratio (40%), watcher/star ratio (5%), zero-follower stargazers (55%). 85.7% accuracy on calibration corpus. Displayed on the repos landing page with a detail modal.
 
 ---
 

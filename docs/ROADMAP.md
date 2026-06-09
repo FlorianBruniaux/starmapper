@@ -1,6 +1,6 @@
 # StarMapper Roadmap
 
-*Last updated: 2026-05-19 — v0.5.0*
+*Last updated: 2026-06-09, v0.6.2*
 
 ---
 
@@ -46,7 +46,10 @@
 - **Comparison page** — `/vs/star-history` with structured data and UTM tracking. (v0.4.9)
 - **Environment validation** — `src/env.ts` via `@t3-oss/env-nextjs`. Build fails fast if `DATABASE_URL`, `GITHUB_TOKEN`, or `NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN` are missing. (v0.5.0)
 - **Trending split endpoints** — `GET /api/trending/repos` and `GET /api/trending/map` replace the monolithic endpoint. Repos list renders before the map. `loading.tsx` skeleton. (v0.5.0)
-- **Claude Code / MCP integration**: `starmapper-mcp` npm package with 5 tools (`get_repo_stats`, `get_organic_score`, `get_velocity`, `get_influential_stargazers`, `index_repo`). New public endpoints `GET /api/mcp/organic-score` and `GET /api/mcp/influential`. (v0.6.0)
+- **Claude Code / MCP integration**: `starmapper-mcp` npm package with 9 tools (`get_repo_stats`, `get_organic_score`, `get_velocity`, `get_influential_stargazers`, `index_repo`, `health_check`, `get_cache_status`, `get_trending`, `list_repos`). New public endpoints `GET /api/mcp/organic-score`, `GET /api/mcp/influential`, and `GET /api/mcp/cache-status`. (v0.6.0)
+- **Followers Map** `/[owner]/followers`: interactive map of a GitHub user's followers, same geocoding cascade and cluster rendering as repo maps. Side panel with virtual scroll, fly-to on click, follower influence sort. Entry points on all profile pages. (v0.5.9)
+- **Followers user switcher** (v0.6.1): command-palette modal on the followers page to switch to any other GitHub user without leaving the page. Searches GitHub users with 200 ms debounce, keyboard navigation.
+- **SEO and PWA pass** (v0.6.2): og:image sitewide via `@vercel/og`, PWA web manifest, JSON-LD structured data in root layout, `sitemap.ts`, `robots.ts`, `icon.svg`.
 
 ---
 

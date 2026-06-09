@@ -30,7 +30,7 @@ Enter a GitHub repo URL and StarMapper maps every stargazer, identifies the infl
 - **Compare two audiences side by side**: overlay two repos on the same map, blue vs purple points, see instantly whether you share an audience or target different communities
 - **Watch stars arrive during a launch**: live mode polls GitHub every 60 seconds and shows "+N stars, India, Germany" with a pulsing indicator, built for Product Hunt and HN days
 - **Verify whether the count is real**: the Organic Score (0-100) flags suspicious patterns using fork/star ratios and zero-follower accounts, 85.7% accuracy on a calibrated corpus
-- **Query audience data from Claude Code**: `starmapper-mcp` exposes all five data surfaces as MCP tools so you can ask "who are my most influential stargazers?" or "which countries are accelerating?" directly in your terminal
+- **Query audience data from Claude Code**: `starmapper-mcp` exposes nine tools as an MCP server so you can ask "who are my most influential stargazers?" or "which countries are accelerating?" directly in your terminal
 
 Full feature list: [docs/FEATURES.md](docs/FEATURES.md) · Architecture: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
 
@@ -90,7 +90,7 @@ Install `starmapper-mcp` as an MCP server to query StarMapper data directly from
 { "mcpServers": { "starmapper": { "command": "npx", "args": ["starmapper-mcp"] } } }
 ```
 
-Five tools are available: `get_repo_stats`, `get_organic_score`, `get_velocity`, `get_influential_stargazers`, and `index_repo`. The last one drives the full indexation loop from the MCP client, so you can keep a repo's data fresh without opening a browser.
+Nine tools are available: `get_repo_stats`, `get_organic_score`, `get_velocity`, `get_influential_stargazers`, `index_repo`, `health_check`, `get_cache_status`, `get_trending`, and `list_repos`. `index_repo` drives the full indexation loop from the MCP client, so you can keep a repo's data fresh without opening a browser.
 
 Override the default endpoint with `STARMAPPER_BASE_URL` if you run a self-hosted instance. Full docs: [`mcp/README.md`](mcp/README.md)
 

@@ -25,7 +25,7 @@ Then restart Claude Code. The server auto-downloads on first use.
 Total stars, geocoding rate, top 10 countries and cities, organic score summary.
 
 ### `get_organic_score(owner, repo)`
-Score 0-100 with full signal breakdown: fork/star ratio (30%), watcher/star ratio (5%), zero-follower % (45%), releases count (20%). Corpus calibration accuracy: 85.7%.
+Score 0-100 with full signal breakdown: fork/star ratio (40%), watcher/star ratio (5%), zero-follower stargazers (55%). Corpus calibration accuracy: 85.7%.
 
 ### `get_velocity(owner, repo)`
 Per-country star velocity over the last 30 days vs the 31-90 day window. Classifies each country as rising, new, stable, or declining.
@@ -35,6 +35,18 @@ Stargazers above a follower threshold (500/1000/5000, default 500), sorted by in
 
 ### `index_repo(owner, repo)`
 Triggers a full re-indexation of the repository on StarMapper. Drives the chunk loop, geocodes all stargazers, and saves the result. For large repos this may take several minutes. Set `GITHUB_TOKEN` in the env config to use your own GitHub API quota instead of the shared server quota (strongly recommended for repos with more than 6k stars).
+
+### `health_check()`
+Pings the StarMapper API and returns server status and round-trip latency. Useful for verifying connectivity before running heavier tools.
+
+### `get_cache_status(owner, repo)`
+Returns cache metadata for a repo: whether it has been scanned, the scan date, mapped count, and total count. Does not transfer the full stargazer blob.
+
+### `get_trending()`
+Returns the current list of trending repositories from StarMapper's trending feed, ordered by star velocity (7-day window).
+
+### `list_repos()`
+Lists all repositories currently indexed on StarMapper, ordered by last scan date.
 
 ## Example prompts
 
