@@ -105,7 +105,7 @@ const TopPanelInner = ({
 
       {/* ── Header ────────────────────────────────────────────────────────── */}
       <div className="flex items-center gap-3">
-        {/* "Another repo" pill — ghost, discret, à gauche */}
+        {/* "Another repo" pill (ghost, discret, left) */}
         <a
           href="/"
           title="Map another repo"
@@ -117,7 +117,7 @@ const TopPanelInner = ({
           Search
         </a>
 
-        {/* Repo identity — centré naturellement avec flex-1 */}
+        {/* Repo identity, centred with flex-1 */}
         <div className="flex items-center gap-2 flex-1 justify-center min-w-0">
           {repoInfo?.avatar && (
             <Image src={repoInfo.avatar} alt="" width={20} height={20} className="size-5 rounded-full flex-shrink-0" />
@@ -132,7 +132,7 @@ const TopPanelInner = ({
           </a>
         </div>
 
-        {/* Collapse toggle — symétrique avec Search pill à gauche */}
+        {/* Collapse toggle, symmetric with Search pill */}
         <button
           onClick={() => setCollapsed((v) => !v)}
           aria-label={collapsed ? "Expand panel" : "Collapse panel"}
@@ -196,7 +196,7 @@ const TopPanelInner = ({
             <div className="text-2xs text-muted uppercase tracking-wide mt-0.5">Countries</div>
           </div>
 
-          {/* Organic score tile — pending pill when no data, score pill when computed */}
+          {/* Organic score tile: pending pill when no data, score pill when computed */}
           {showOrganic && (
             <div className="flex flex-col items-center py-2 px-3">
               {activeOrganic ? (
@@ -213,7 +213,7 @@ const TopPanelInner = ({
           )}
         </div>
 
-        {/* No location row — séparé, visuellement déprioritisé */}
+        {/* No location row (separate, de-prioritised visually) */}
         <button
           onClick={() => setDrawerOpen(true)}
           className="w-full flex items-center justify-between px-3 py-1.5
@@ -240,7 +240,7 @@ const TopPanelInner = ({
         </button>
       </div>
 
-      {/* ── Progress bar — during scan ────────────────────────────────────── */}
+      {/* ── Progress bar (during scan) ────────────────────────────────────── */}
       {(status === "loading" || status === "refreshing" || status === "waiting") && (
         <div className="mt-2.5">
           <div
@@ -270,7 +270,7 @@ const TopPanelInner = ({
         </div>
       )}
 
-      {/* ── Location coverage bar — after scan ──────────────────────────── */}
+      {/* ── Location coverage bar (after scan) ──────────────────────────── */}
       {(status === "cached" || status === "done") && total > 0 && points.length > 0 && (
         <div className="mt-2.5">
           <div
@@ -481,13 +481,15 @@ const TopPanelInner = ({
 
       {/* ── Dependents link ───────────────────────────────────────────────── */}
       {DEPENDENTS_ENABLED && (
-        <div className="mt-2 pt-2 border-t border-border-subtle flex items-center justify-center">
+        <div className="mt-2 pt-2 border-t border-border-subtle">
           <a
             href={`/${owner}/${repo}/dependents`}
-            className="text-2xs text-muted hover:text-foreground transition-colors flex items-center gap-1"
+            className="flex items-center justify-between w-full px-2 py-1.5 rounded-md
+                       bg-accent-blue/8 border border-accent-blue/20 text-accent-blue text-xs font-medium
+                       hover:bg-accent-blue/15 hover:border-accent-blue/40 transition-colors group"
           >
-            <ChevronRight size={9} aria-hidden="true" />
-            Who depends on this library?
+            <span>Who depends on this library?</span>
+            <ChevronRight size={12} className="opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 transition-transform" aria-hidden="true" />
           </a>
         </div>
       )}

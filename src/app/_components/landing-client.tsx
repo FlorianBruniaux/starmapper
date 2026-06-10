@@ -75,7 +75,7 @@ export const LandingClient = ({ initialRepos, initialTotal }: Props) => {
     setHasToken(!!getStoredToken());
   }, []);
 
-  // Merge bookmarks + examples, deduplicate, bookmarks first — cap at 4
+  // Merge bookmarks + examples, deduplicate, bookmarks first (cap at 4)
   const suggestions = useMemo<Suggestion[]>(() => {
     const seen = new Set<string>();
     const merged: Suggestion[] = [];
@@ -336,7 +336,7 @@ export const LandingClient = ({ initialRepos, initialTotal }: Props) => {
           </div>
         </section>
 
-        {/* ── Features — framed between borders ── */}
+        {/* ── Features, framed between borders ── */}
         <div className="border-y border-border-subtle">
         <section data-tour="landing-features" className="w-full max-w-7xl mx-auto px-4 lg:px-6 py-10">
           <h2 className="text-muted-subtle text-2xs uppercase tracking-widest mb-6 text-center">
@@ -387,7 +387,7 @@ export const LandingClient = ({ initialRepos, initialTotal }: Props) => {
               {
                 href: "/FlorianBruniaux/followers",
                 label: "Followers map",
-                desc: "See where your GitHub followers live. Map any user's followers — who follows you, and where in the world they are.",
+                desc: "See where your GitHub followers live. Map any user's followers: who follows you, and where in the world they are.",
                 colorClass: "text-accent-blue",
                 bgClass: "bg-accent-blue/8",
                 icon: <path d="M2 5.5a3.5 3.5 0 1 1 5.898 2.549 5.508 5.508 0 0 1 3.034 4.084.75.75 0 1 1-1.482.235 4 4 0 0 0-7.9 0 .75.75 0 0 1-1.482-.236A5.507 5.507 0 0 1 3.102 8.05 3.493 3.493 0 0 1 2 5.5ZM11 4a3.001 3.001 0 0 1 2.22 5.018 5.01 5.01 0 0 1 2.56 3.012.749.749 0 0 1-.885.628.75.75 0 0 1-.514-.637 3.499 3.499 0 0 0-6.651-.609.75.75 0 1 1-1.443-.389A5.011 5.011 0 0 1 8.9 8.92 3.001 3.001 0 0 1 11 4ZM5.5 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z" />,
@@ -411,21 +411,20 @@ export const LandingClient = ({ initialRepos, initialTotal }: Props) => {
             ))}
             <Link
               href="/vercel/next.js/dependents"
-              className="col-span-2 md:col-span-3 flex items-center gap-4 bg-surface border border-accent-green/30 rounded-lg p-4 hover:border-accent-green/60 transition-colors group"
+              className="flex flex-col gap-3 bg-surface border border-border-subtle rounded-lg p-4 hover:border-accent-blue/40 transition-colors group"
             >
               <div className="size-7 shrink-0 flex items-center justify-center rounded-md bg-accent-green/8">
                 <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" className="text-accent-green">
                   <path d="M2 1.75C2 .784 2.784 0 3.75 0h6.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v9.586A1.75 1.75 0 0 1 13.25 16h-9.5A1.75 1.75 0 0 1 2 14.25Zm1.75-.25a.25.25 0 0 0-.25.25v12.5c0 .138.112.25.25.25h9.5a.25.25 0 0 0 .25-.25V6h-2.75A1.75 1.75 0 0 1 8.75 4.25V1.5Zm6.75.062V4.25c0 .138.112.25.25.25h2.688l-.011-.013-2.914-2.914-.013-.011Z" />
                 </svg>
               </div>
-              <div className="flex-1 min-w-0">
+              <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-xs font-semibold text-foreground group-hover:underline">Dependents Explorer</span>
+                  <div className="text-xs font-semibold text-foreground group-hover:underline">Dependents Explorer</div>
                   <span className="text-2xs font-semibold bg-accent-green/15 text-accent-green px-1.5 py-0.5 rounded uppercase tracking-wide">New</span>
                 </div>
                 <div className="text-muted text-xs leading-relaxed">
-                  See every repo that depends on a library — sorted by stars or forks, with ecosystem badges (npm, PyPI, Go, Maven, Cargo, and more). Try it on{" "}
-                  <code className="font-mono bg-surface-alt px-1 rounded text-foreground">vercel/next.js</code>.
+                  See every repo that depends on a library, sorted by stars or forks, with ecosystem badges (npm, PyPI, Go, Maven, Cargo, and more).
                 </div>
               </div>
             </Link>
@@ -433,16 +432,16 @@ export const LandingClient = ({ initialRepos, initialTotal }: Props) => {
               href="https://www.npmjs.com/package/starmapper-mcp"
               target="_blank"
               rel="noopener noreferrer"
-              className="col-span-2 md:col-span-3 flex items-center gap-4 bg-surface border border-accent-purple/30 rounded-lg p-4 hover:border-accent-purple/60 transition-colors group"
+              className="flex flex-col gap-3 bg-surface border border-border-subtle rounded-lg p-4 hover:border-accent-blue/40 transition-colors group"
             >
               <div className="size-7 shrink-0 flex items-center justify-center rounded-md bg-accent-purple/8">
                 <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" className="text-accent-purple">
                   <path d="M0 2.75C0 1.784.784 1 1.75 1h12.5c.966 0 1.75.784 1.75 1.75v10.5A1.75 1.75 0 0 1 14.25 15H1.75A1.75 1.75 0 0 1 0 13.25Zm1.75-.25a.25.25 0 0 0-.25.25v10.5c0 .138.112.25.25.25h12.5a.25.25 0 0 0 .25-.25V2.75a.25.25 0 0 0-.25-.25Zm2.97 3.22a.75.75 0 0 1 1.06 0L7.53 7.47l-1.75 1.75a.75.75 0 1 1-1.06-1.06l1.22-1.22-1.22-1.22a.75.75 0 0 1 0-1.06Zm4.28 4.28a.75.75 0 0 1 0-1.5h2a.75.75 0 0 1 0 1.5h-2Z" />
                 </svg>
               </div>
-              <div className="flex-1 min-w-0">
+              <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-xs font-semibold text-foreground group-hover:underline">MCP Server</span>
+                  <div className="text-xs font-semibold text-foreground group-hover:underline">MCP Server</div>
                   <span className="text-2xs font-semibold bg-accent-purple/15 text-accent-purple px-1.5 py-0.5 rounded uppercase tracking-wide">New</span>
                 </div>
                 <div className="text-muted text-xs leading-relaxed">
@@ -450,9 +449,6 @@ export const LandingClient = ({ initialRepos, initialTotal }: Props) => {
                   <code className="font-mono bg-surface-alt px-1 rounded text-foreground">npx starmapper-mcp</code>.
                 </div>
               </div>
-              <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" className="text-muted-subtle shrink-0">
-                <path d="M3.75 2h3.5a.75.75 0 0 1 0 1.5h-3.5a.25.25 0 0 0-.25.25v8.5c0 .138.112.25.25.25h8.5a.25.25 0 0 0 .25-.25v-3.5a.75.75 0 0 1 1.5 0v3.5A1.75 1.75 0 0 1 12.25 14h-8.5A1.75 1.75 0 0 1 2 12.25v-8.5C2 2.784 2.784 2 3.75 2Zm6.854-1h4.146a.25.25 0 0 1 .25.25v4.146a.25.25 0 0 1-.427.177L13.03 4.03 9.28 7.78a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042l3.75-3.75-1.543-1.543A.25.25 0 0 1 10.604 1Z" />
-              </svg>
             </a>
           </div>
         </section>

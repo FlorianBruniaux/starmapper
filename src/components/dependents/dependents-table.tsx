@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 
 import Link from "next/link";
-import { Star, GitFork, ChevronDown, ChevronsUpDown, ChevronLeft, ChevronRight, ExternalLink } from "lucide-react";
+import { Star, GitFork, ChevronDown, ChevronsUpDown, ChevronLeft, ChevronRight, ExternalLink, Flag } from "lucide-react";
 import type { DependentsApiResponse } from "@/app/api/dependents/[owner]/[repo]/route";
 import type { SortBy } from "@/lib/dependents";
 
@@ -13,6 +13,14 @@ type Props = {
   onPage: (page: number) => void;
   owner: string;
   repo: string;
+};
+
+const STARMAPPER_ISSUES = "https://github.com/FlorianBruniaux/starmapper/issues/new";
+
+const buildReportUrl = (dep: { fullName: string; htmlUrl: string; ecosystem: string; packageName: string }, owner: string, repo: string): string => {
+  const title = `Incorrect dependent: ${dep.fullName} on ${owner}/${repo}`;
+  const body = `## Incorrect dependent report\n\n**Library:** \`${owner}/${repo}\`\n**Reported dependent:** [${dep.fullName}](${dep.htmlUrl})\n**Ecosystem:** ${dep.ecosystem} / \`${dep.packageName}\`\n\n**Why this is incorrect:**\n<!-- Please describe why this repo should not appear as a dependent -->\n\n_Data source: [ecosyste.ms](https://ecosyste.ms)_`;
+  return `${STARMAPPER_ISSUES}?title=${encodeURIComponent(title)}&body=${encodeURIComponent(body)}&labels=data-quality`;
 };
 
 const formatCount = (n: number): string => {
@@ -126,7 +134,7 @@ export const DependentsTable = ({ data, sortBy, onSort, onPage, owner, repo }: P
                     Forks
                   </button>
                 </th>
-                <th className="px-4 py-3 hidden md:table-cell" />
+                <th className="px-4 py-3 hidden md:table-cell" aria-label="Actions" />
               </tr>
             </thead>
             <tbody>
@@ -176,15 +184,26 @@ export const DependentsTable = ({ data, sortBy, onSort, onPage, owner, repo }: P
                     </span>
                   </td>
                   <td className="px-4 py-3 hidden md:table-cell">
-                    <a
-                      href={dep.htmlUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-muted hover:text-foreground transition-colors"
-                      title="Open on GitHub"
-                    >
-                      <ExternalLink className="size-3.5" />
-                    </a>
+                    <div className="flex items-center gap-2">
+                      <a
+                        href={dep.htmlUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-muted hover:text-foreground transition-colors"
+                        title="Open on GitHub"
+                      >
+                        <ExternalLink className="size-3.5" />
+                      </a>
+                      <a
+                        href={buildReportUrl(dep, owner, repo)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-muted-subtle hover:text-accent-red transition-colors"
+                        title="Report incorrect dependent"
+                      >
+                        <Flag className="size-3.5" />
+                      </a>
+                    </div>
                   </td>
                 </tr>
               ))}

@@ -20,7 +20,7 @@ type FetchState =
   | { status: "loading" }
   | { status: "refreshing" }
   | { status: "done"; data: DependentsApiResponse }
-  | { status: "no_package" }
+  | { status: "no_package"; hasPackages?: boolean }
   | { status: "error"; message: string };
 
 export default function DependentsPageClient({ params }: Props) {
@@ -48,7 +48,7 @@ export default function DependentsPageClient({ params }: Props) {
         }
 
         if (res.status === 404 && triggerRefreshOnMiss) {
-          // Cache miss — trigger a fresh fetch from ecosyste.ms, then reload
+          // Cache miss: trigger a fresh fetch from ecosyste.ms, then reload
           setState({ status: "refreshing" });
           const refreshRes = await fetch(`/api/dependents/${owner}/${repo}/refresh`, {
             method: "POST",
@@ -66,9 +66,9 @@ export default function DependentsPageClient({ params }: Props) {
             return;
           }
 
-          const refreshData = await refreshRes.json() as { totalCount: number };
+          const refreshData = await refreshRes.json() as { totalCount: number; packages: string[] };
           if (refreshData.totalCount === 0) {
-            setState({ status: "no_package" });
+            setState({ status: "no_package", hasPackages: refreshData.packages.length > 0 });
             return;
           }
 
@@ -107,7 +107,7 @@ export default function DependentsPageClient({ params }: Props) {
     try {
       const refreshRes = await fetch(`/api/dependents/${owner}/${repo}/refresh`, { method: "POST" });
       if (refreshRes.status === 429) {
-        // Still in cooldown — just reload from cache to show current data
+        // Still in cooldown, just reload from cache to show current data
         await loadDependents(sortBy, page, false);
         return;
       }
@@ -120,9 +120,9 @@ export default function DependentsPageClient({ params }: Props) {
         setState({ status: "no_package" });
         return;
       }
-      const refreshData = await refreshRes.json() as { totalCount: number };
+      const refreshData = await refreshRes.json() as { totalCount: number; packages: string[] };
       if (refreshData.totalCount === 0) {
-        setState({ status: "no_package" });
+        setState({ status: "no_package", hasPackages: refreshData.packages.length > 0 });
         return;
       }
       await loadDependents(sortBy, page, false);
@@ -199,15 +199,27 @@ export default function DependentsPageClient({ params }: Props) {
           </div>
         )}
 
-        {/* No package found */}
+        {/* No package / no dependents */}
         {state.status === "no_package" && (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <AlertCircle className="size-8 text-muted mb-3" />
-            <p className="text-foreground font-medium">No package found</p>
-            <p className="text-muted text-sm mt-1 max-w-sm">
-              This repo doesn&apos;t appear to publish a package tracked by ecosyste.ms.
-              Dependents are only available for published libraries.
-            </p>
+            {state.hasPackages ? (
+              <>
+                <p className="text-foreground font-medium">No dependent repos found</p>
+                <p className="text-muted text-sm mt-1 max-w-sm">
+                  This package is published but no repos declaring it as a dependency are tracked by ecosyste.ms.
+                  CLI tools and binary-only packages typically show 0 dependents.
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="text-foreground font-medium">No package found</p>
+                <p className="text-muted text-sm mt-1 max-w-sm">
+                  This repo doesn&apos;t appear to publish a package tracked by ecosyste.ms.
+                  Dependents are only available for published libraries.
+                </p>
+              </>
+            )}
             <Link
               href={`/${owner}/${repo}`}
               className="mt-4 flex items-center gap-1.5 text-sm text-accent-blue hover:underline"
