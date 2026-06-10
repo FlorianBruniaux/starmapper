@@ -42,6 +42,8 @@
     "backfill:user-top-repos:prod": "sh -c '[ \"$1\" = \"--\" ] && shift; tsx scripts/backfill/backfill-user-top-repos.ts --prod \"$@\"' _",
     "backfill:languages": "sh -c '[ \"$1\" = \"--\" ] && shift; tsx scripts/backfill/backfill-languages.ts \"$@\"' _",
     "backfill:languages:prod": "sh -c '[ \"$1\" = \"--\" ] && shift; tsx scripts/backfill/backfill-languages.ts --prod \"$@\"' _",
+    "backfill:dependents": "sh -c 'set -a && . .env.local && set +a && DATABASE_DRIVER=standard DATABASE_URL=$DATABASE_URL_LOCAL tsx scripts/backfill/backfill-dependents.ts \"$@\"' _",
+    "backfill:dependents:prod": "sh -c 'set -a && . .env.local && set +a && DATABASE_DRIVER=standard DATABASE_URL=$DATABASE_URL tsx scripts/backfill/backfill-dependents.ts \"$@\"' _",
     "index:repo": "sh -c '[ \"$1\" = \"--\" ] && shift; tsx scripts/ops/index-repo.ts \"$@\"' _",
     "index:repo:local": "sh -c '[ \"$1\" = \"--\" ] && shift; tsx scripts/ops/index-repo.ts --base-url http://localhost:3000 \"$@\"' _",
     "index:followers": "sh -c '[ \"$1\" = \"--\" ] && shift; tsx scripts/ops/index-followers.ts \"$@\"' _",
