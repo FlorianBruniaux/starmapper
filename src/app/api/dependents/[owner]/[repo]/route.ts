@@ -61,7 +61,13 @@ export const GET = async (
       result = decompressGzBase64<DependentsResult>(row.dataGz)[0]!;
     } catch (err) {
       logError("api/dependents GET decompress", err);
-      return jsonError("cache_corrupt", 500);
+      return jsonError("not_found", 404);
+    }
+
+    // Corrupted cache: packages found but no rows stored (likely a prior fetch failure).
+    // Return 404 so the client triggers a fresh refresh instead of displaying empty data.
+    if (result.packages.length > 0 && result.dependents.length === 0 && result.totalCount > 0) {
+      return jsonError("not_found", 404);
     }
 
     const sorted = sortDependents(result.dependents, sortBy);

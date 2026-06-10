@@ -102,9 +102,34 @@ export default function DependentsPageClient({ params }: Props) {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const handleRefresh = () => {
-    void loadDependents(sortBy, page, true);
-  };
+  const handleRefresh = useCallback(async () => {
+    setState({ status: "refreshing" });
+    try {
+      const refreshRes = await fetch(`/api/dependents/${owner}/${repo}/refresh`, { method: "POST" });
+      if (refreshRes.status === 429) {
+        // Still in cooldown — just reload from cache to show current data
+        await loadDependents(sortBy, page, false);
+        return;
+      }
+      if (!refreshRes.ok) {
+        const err = await refreshRes.json() as { error?: string };
+        if (err.error === "feature_disabled") {
+          setState({ status: "error", message: "feature_disabled" });
+          return;
+        }
+        setState({ status: "no_package" });
+        return;
+      }
+      const refreshData = await refreshRes.json() as { totalCount: number };
+      if (refreshData.totalCount === 0) {
+        setState({ status: "no_package" });
+        return;
+      }
+      await loadDependents(sortBy, page, false);
+    } catch {
+      setState({ status: "error", message: "network_error" });
+    }
+  }, [owner, repo, sortBy, page, loadDependents]);
 
   const isLoading = state.status === "loading" || state.status === "refreshing";
   const showRefreshing = state.status === "refreshing";

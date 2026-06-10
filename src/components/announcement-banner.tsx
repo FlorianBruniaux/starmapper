@@ -8,11 +8,12 @@ import Link from "next/link";
 import { ArrowRight, X } from "lucide-react";
 
 // Bump this ID whenever you want the banner to reappear for users who dismissed it.
-const BANNER_ID = "announce-mcp-v1";
+const BANNER_ID = "announce-dependents-v1";
 
 type LinkItem = { label: string; href: string; external?: boolean };
 
 const LINKS: LinkItem[] = [
+  { label: "Dependents Explorer", href: "/vercel/next.js/dependents" },
   { label: "Followers map", href: "/FlorianBruniaux/followers" },
   { label: "Chrome Extension", href: "https://chromewebstore.google.com/detail/starmapper/ejpbdhlaohhngpfbjjfadokgnndnnmmh", external: true },
   { label: "Trending repos", href: "/trending" },

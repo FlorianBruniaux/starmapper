@@ -13,8 +13,8 @@
 const PACKAGES_API = "https://packages.ecosyste.ms/api/v1";
 const REPOS_API = "https://repos.ecosyste.ms/api/v1";
 const USER_AGENT = "StarMapper/0.6 (https://starmapper.bruniaux.com)";
-export const DEPENDENTS_MAX_PAGES = 5; // 500 rows max; keeps fetch time < 5s
-const PER_PAGE = 100;
+export const DEPENDENTS_MAX_PAGES = 10; // 500 rows max (10 pages × 50); keeps fetch time < 5s
+const PER_PAGE = 50; // repos.ecosyste.ms usage endpoint returns 500 on per_page > 50
 
 // ---------------------------------------------------------------------------
 // Public types

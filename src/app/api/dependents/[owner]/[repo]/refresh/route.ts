@@ -30,13 +30,15 @@ export const POST = async (
   const key = normalizeOwnerRepo(rawOwner, rawRepo);
 
   try {
-    // Cooldown check — avoid re-fetching within 1 hour
+    // Cooldown check — avoid re-fetching within 1 hour, unless the cache is empty/corrupted
     const existing = await prisma.dependentsCache.findUnique({
       where: { owner_repo: key },
-      select: { fetchedAt: true },
+      select: { fetchedAt: true, dataGz: true },
     });
     if (existing?.fetchedAt && Date.now() - existing.fetchedAt.getTime() < COOLDOWN_MS) {
-      return jsonError("rate_limited", 429);
+      // Bypass cooldown if the cache is corrupted (has data string but likely empty dependents)
+      const isCacheCorrupt = existing.dataGz.length < 1000;
+      if (!isCacheCorrupt) return jsonError("rate_limited", 429);
     }
 
     const result = await fetchDependents(key.owner, key.repo);

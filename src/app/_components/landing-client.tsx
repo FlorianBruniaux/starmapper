@@ -175,7 +175,7 @@ export const LandingClient = ({ initialRepos, initialTotal }: Props) => {
                       <span className="text-foreground font-medium">
                         Organic Score
                       </span>
-                      {" "}detects inflated star counts at a glance
+                      {" "}flags fake stars before investors or users trust the count
                     </span>
                   </li>
                   <li className="flex items-start gap-2.5 text-sm">
@@ -187,7 +187,7 @@ export const LandingClient = ({ initialRepos, initialTotal }: Props) => {
                       <span className="text-foreground font-medium">
                         Influential stargazers
                       </span>
-                      {" "}surface the developers who actually matter
+                      {" "}filter by follower count to find the 10k-reach devs in your audience
                     </span>
                   </li>
                   <li className="flex items-start gap-2.5 text-sm">
@@ -197,9 +197,9 @@ export const LandingClient = ({ initialRepos, initialTotal }: Props) => {
                     </span>
                     <span className="text-muted">
                       <span className="text-foreground font-medium">
-                        Geographic velocity
+                        Dependent repos
                       </span>
-                      {" "}shows where adoption is spreading fastest
+                      {" "}shows every open-source project using your library, across npm, PyPI, Go, and more
                     </span>
                   </li>
                 </ul>
@@ -409,6 +409,26 @@ export const LandingClient = ({ initialRepos, initialTotal }: Props) => {
                 </div>
               </Link>
             ))}
+            <Link
+              href="/vercel/next.js/dependents"
+              className="col-span-2 md:col-span-3 flex items-center gap-4 bg-surface border border-accent-green/30 rounded-lg p-4 hover:border-accent-green/60 transition-colors group"
+            >
+              <div className="size-7 shrink-0 flex items-center justify-center rounded-md bg-accent-green/8">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" className="text-accent-green">
+                  <path d="M2 1.75C2 .784 2.784 0 3.75 0h6.586c.464 0 .909.184 1.237.513l2.914 2.914c.329.328.513.773.513 1.237v9.586A1.75 1.75 0 0 1 13.25 16h-9.5A1.75 1.75 0 0 1 2 14.25Zm1.75-.25a.25.25 0 0 0-.25.25v12.5c0 .138.112.25.25.25h9.5a.25.25 0 0 0 .25-.25V6h-2.75A1.75 1.75 0 0 1 8.75 4.25V1.5Zm6.75.062V4.25c0 .138.112.25.25.25h2.688l-.011-.013-2.914-2.914-.013-.011Z" />
+                </svg>
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xs font-semibold text-foreground group-hover:underline">Dependents Explorer</span>
+                  <span className="text-2xs font-semibold bg-accent-green/15 text-accent-green px-1.5 py-0.5 rounded uppercase tracking-wide">New</span>
+                </div>
+                <div className="text-muted text-xs leading-relaxed">
+                  See every repo that depends on a library — sorted by stars or forks, with ecosystem badges (npm, PyPI, Go, Maven, Cargo, and more). Try it on{" "}
+                  <code className="font-mono bg-surface-alt px-1 rounded text-foreground">vercel/next.js</code>.
+                </div>
+              </div>
+            </Link>
             <a
               href="https://www.npmjs.com/package/starmapper-mcp"
               target="_blank"
