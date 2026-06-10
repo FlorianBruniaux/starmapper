@@ -30,6 +30,13 @@ CREATE INDEX IF NOT EXISTS github_user_name_trgm_idx
 CREATE INDEX IF NOT EXISTS star_event_starred_at_idx
   ON star_event ("starredAt");
 
+-- Per-user star timeline: WHERE login ORDER BY starredAt DESC (profile page, /api/user star history).
+-- Created here (not via prisma db push) because building a btree on ~12M rows exceeds Neon's
+-- default statement_timeout — this file runs with SET statement_timeout = 0.
+-- Name MUST match Prisma's auto-generated name so `prisma db push` sees it as already-present.
+CREATE INDEX IF NOT EXISTS "star_event_login_starredAt_idx"
+  ON star_event (login, "starredAt" DESC);
+
 -- ============================================================
 -- 1. github_user_grid_mv
 -- ============================================================
