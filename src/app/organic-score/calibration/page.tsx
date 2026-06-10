@@ -135,11 +135,12 @@ export default function CalibrationPage() {
             </span>
           </div>
           <p className="text-muted text-sm">
-            Empirical validation of the 4 signals used to compute the Organic Score.
-            Corpus of 17 repos (11 healthy, 4 suspicious, 2 controls). Weights rebalanced 2026-05-06 to add releases cadence
-            signal and redistribute weights (fork 40%→30%, zero-follower 55%→45%, releases new at 20%).
+            Empirical validation of the 5 signals used to compute the Organic Score.
+            Corpus of 17 repos (11 healthy, 4 suspicious, 2 controls). Rebalanced twice: 2026-05-06 to add releases
+            cadence (fork 40%→30%, ZF 55%→45%, releases 0%→20%); 2026-06-10 to add contributors breadth
+            (fork 30%→25%, releases 20%→15%, contributors 0%→10%).
           </p>
-          <p className="text-muted text-xs mt-1">Last updated: May 2026</p>
+          <p className="text-muted text-xs mt-1">Last updated: June 2026</p>
         </div>
 
         {/* Signal mapping */}
@@ -160,7 +161,7 @@ export default function CalibrationPage() {
                   <td className="px-4 py-2.5 text-foreground font-medium">Fork / Star ratio</td>
                   <td className="px-4 py-2.5 text-muted">stars ≥ 5 000</td>
                   <td className="px-4 py-2.5 text-muted font-mono text-xs">≥ 10% → 100 · 7% → 50 · ≤ 2% → 0</td>
-                  <td className="px-4 py-2.5 text-right text-foreground font-semibold">30%</td>
+                  <td className="px-4 py-2.5 text-right text-foreground font-semibold">25%</td>
                 </tr>
                 <tr className="border-b border-border-subtle">
                   <td className="px-4 py-2.5 text-foreground font-medium">Watcher / Star ratio</td>
@@ -174,11 +175,17 @@ export default function CalibrationPage() {
                   <td className="px-4 py-2.5 text-muted font-mono text-xs">≤ 10% → 100 · 30% → 50 · ≥ 60% → 0</td>
                   <td className="px-4 py-2.5 text-right text-foreground font-semibold">45%</td>
                 </tr>
-                <tr>
+                <tr className="border-b border-border-subtle">
                   <td className="px-4 py-2.5 text-foreground font-medium">Releases cadence</td>
                   <td className="px-4 py-2.5 text-muted">always</td>
                   <td className="px-4 py-2.5 text-muted font-mono text-xs">≥ 100 → 100 · 20 → 60 · 5 → 30 · 0 → 0</td>
-                  <td className="px-4 py-2.5 text-right text-foreground font-semibold">20%</td>
+                  <td className="px-4 py-2.5 text-right text-foreground font-semibold">15%</td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-2.5 text-foreground font-medium">Contributors / 1k stars</td>
+                  <td className="px-4 py-2.5 text-muted">stars ≥ 5 000</td>
+                  <td className="px-4 py-2.5 text-muted font-mono text-xs">≥ 3/1k → 100 · 2/1k → 80 · 1/1k → 50 · 0.5/1k → 25 · ≤ 0.2/1k → 0</td>
+                  <td className="px-4 py-2.5 text-right text-foreground font-semibold">10%</td>
                 </tr>
               </tbody>
             </table>
@@ -257,9 +264,9 @@ export default function CalibrationPage() {
               <tbody>
                 <tr className="border-b border-border-subtle">
                   <td className="px-4 py-2.5 text-foreground">Fork / star ratio</td>
-                  <td className="px-4 py-2.5 text-center text-accent-green">✓ 30%</td>
+                  <td className="px-4 py-2.5 text-center text-accent-green">✓ 25%</td>
                   <td className="px-4 py-2.5 text-center text-accent-green">✓</td>
-                  <td className="px-4 py-2.5 text-muted text-xs">Reduced from 40%; fork/star penalises CLI tools with low fork rates by nature</td>
+                  <td className="px-4 py-2.5 text-muted text-xs">Reduced 40%→30%→25%; fork/star penalises CLI tools with low fork rates by nature</td>
                 </tr>
                 <tr className="border-b border-border-subtle">
                   <td className="px-4 py-2.5 text-foreground">% zero-follower stargazers</td>
@@ -275,9 +282,15 @@ export default function CalibrationPage() {
                 </tr>
                 <tr className="border-b border-border-subtle">
                   <td className="px-4 py-2.5 text-foreground">Releases cadence</td>
-                  <td className="px-4 py-2.5 text-center text-accent-green">✓ 20%</td>
+                  <td className="px-4 py-2.5 text-center text-accent-green">✓ 15%</td>
                   <td className="px-4 py-2.5 text-center text-muted">—</td>
-                  <td className="px-4 py-2.5 text-muted text-xs">New signal: total GitHub releases as proxy for active, maintained project</td>
+                  <td className="px-4 py-2.5 text-muted text-xs">Total GitHub releases as proxy for active, maintained project. Reduced 20%→15% to make room for contributors</td>
+                </tr>
+                <tr className="border-b border-border-subtle">
+                  <td className="px-4 py-2.5 text-foreground">Contributors / 1k stars</td>
+                  <td className="px-4 py-2.5 text-center text-accent-green">✓ 10%</td>
+                  <td className="px-4 py-2.5 text-center text-muted">—</td>
+                  <td className="px-4 py-2.5 text-muted text-xs">New signal (2026-06-10): community breadth proxy. Gated at ≥ 5 000 stars. Low ratio on large repos = engagement without real contributors</td>
                 </tr>
                 <tr className="border-b border-border-subtle">
                   <td className="px-4 py-2.5 text-foreground">Clustering (account overlap across repos)</td>
@@ -301,7 +314,7 @@ export default function CalibrationPage() {
             </table>
           </div>
           <p className="text-xs text-muted mt-2">
-            StarMapper reaches ~92% accuracy on labelled corpus (weights: fork 30%, ZF 45%, watcher 5%, releases 20%, 2026-05-06).
+            StarMapper reaches ~92% accuracy on labelled corpus (weights: fork 25%, ZF 45%, watcher 5%, releases 15%, contributors 10%, 2026-06-10).
             StarScout reaches 98% precision using the full signal set. The gap is structural, not a calibration issue.
           </p>
         </section>
