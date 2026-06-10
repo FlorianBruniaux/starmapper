@@ -1,6 +1,6 @@
 # StarMapper Architecture
 
-**Version**: 0.6.3
+**Version**: 0.6.4
 **Last updated**: 2026-06-10
 
 ---
@@ -376,9 +376,9 @@ Fetches repository metadata via GitHub REST API.
 
 Returns the list of already-mapped repositories for the landing page Community Maps table.
 
-**Response**: `{ repos: MappedRepo[] }`, up to 200 repos, ordered by `updatedAt` desc.
+**Response**: `{ repos: MappedRepo[] }`, up to 200 repos, ordered by `updatedAt` desc. Each `MappedRepo` includes `dependentsCount: number | null` from a LEFT JOIN on `dependents_cache` (non-expired rows only).
 
-`MappedRepo` is exported from `src/app/api/repos/route.ts`.
+`MappedRepo` is exported from `src/app/api/repos/route.ts`. Underlying data query is in `src/lib/repos-query.ts`.
 
 ---
 

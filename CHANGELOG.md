@@ -5,6 +5,26 @@ Versioning: Semantic Versioning (MAJOR.MINOR.PATCH)
 
 ---
 
+## [0.6.4] (2026-06-10)
+
+### Repos table
+
+The `/repos` community maps table gains a filter bar and a dependents column. The filter bar provides language chip toggles (computed from the top 8 languages by count), a "Has dependents" chip, and a "Has score" chip; chips are combinable and a count badge shows the filtered result set size. A "Deps" column (hidden below `lg` breakpoint) links to the dependents page for repos with data and is sortable alongside the existing stars, mapped %, countries, score, and last-scan columns. The underlying `GET /api/repos` response now includes `dependentsCount: number | null` via a LEFT JOIN on `dependents_cache` filtered to non-expired rows.
+
+### Dependents table
+
+Each row in `/[owner]/[repo]/dependents` gains a flag icon (red on hover) that opens a pre-filled GitHub issue for reporting an incorrect dependent. The issue template includes the library name, the reported dependent, its ecosystem, its package name, and a link to ecosyste.ms for reference.
+
+### Landing page
+
+The "Dependents Explorer" and "MCP Server" cards in the "More to Explore" section were converted from wide two-column cards to standard single-column grid cards, matching the layout of the other four cards in the section.
+
+### Bug Fixes
+
+- **`scripts/db/db-sync-from-neon.sh`**: `follower_cache` and `dependents_cache` were missing from the default `TABLES` list. Running `pnpm db:sync:from-neon` would silently skip both tables. Both are now included with correct column lists and `ON CONFLICT` upsert clauses.
+
+---
+
 ## [0.6.3] (2026-06-10)
 
 ### Dependents Explorer

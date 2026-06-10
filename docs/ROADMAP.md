@@ -1,6 +1,6 @@
 # StarMapper Roadmap
 
-*Last updated: 2026-06-10, v0.6.3-dev*
+*Last updated: 2026-06-10, v0.6.4*
 
 ---
 
@@ -51,6 +51,8 @@
 - **Followers Map** `/[owner]/followers`: interactive map of a GitHub user's followers, same geocoding cascade and cluster rendering as repo maps. Side panel with virtual scroll, fly-to on click, follower influence sort. Entry points on all profile pages. (v0.5.9)
 - **Followers user switcher** (v0.6.1): command-palette modal on the followers page to switch to any other GitHub user without leaving the page. Searches GitHub users with 200 ms debounce, keyboard navigation.
 - **SEO and PWA pass** (v0.6.2): og:image sitewide via `@vercel/og`, PWA web manifest, JSON-LD structured data in root layout, `sitemap.ts`, `robots.ts`, `icon.svg`.
+- **Repos table filter bar and dependents column** (v0.6.4): language chip toggles, "Has dependents" and "Has score" chips, sortable Deps column linking to the dependents page. `dependentsCount` added to `MappedRepo` via LEFT JOIN on `dependents_cache`.
+- **Dependents table report flag** (v0.6.4): flag button per row opens a pre-filled GitHub issue to report an incorrect dependent from ecosyste.ms.
 
 ---
 
