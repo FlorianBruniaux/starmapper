@@ -14,6 +14,7 @@ type RepoRow = {
   updatedAt: Date;
   organicScore: number | null;
   organicTier: string | null;
+  dependentsCount: number | null;
 };
 
 export type RepoItem = {
@@ -27,6 +28,7 @@ export type RepoItem = {
   updatedAt: string;
   organicScore: number | null;
   organicTier: string | null;
+  dependentsCount: number | null;
 };
 
 const MAX_PER_OWNER = 3;
@@ -45,8 +47,11 @@ export const fetchReposData = async (
   const [rows, [{ count: totalBigInt }]] = await Promise.all([
     prisma.$queryRaw<RepoRow[]>`
       SELECT bc.owner, bc.repo, bc."mappedCount", bc."countryCount", bc."totalCount",
-             bc.language, bc."updatedAt", bc."organicScore", bc."organicTier"
+             bc.language, bc."updatedAt", bc."organicScore", bc."organicTier",
+             dc."totalCount" AS "dependentsCount"
       FROM badge_cache bc
+      LEFT JOIN dependents_cache dc ON dc.owner = bc.owner AND dc.repo = bc.repo
+        AND dc."expiresAt" > NOW()
       WHERE EXISTS (
         SELECT 1 FROM stargazer_cache sc
         WHERE sc.owner = bc.owner AND sc.repo = bc.repo
@@ -90,6 +95,7 @@ export const fetchReposData = async (
       updatedAt: r.updatedAt.toISOString(),
       organicScore: r.organicScore ?? null,
       organicTier: r.organicTier ?? null,
+      dependentsCount: r.dependentsCount != null ? Number(r.dependentsCount) : null,
     })),
     total,
   };

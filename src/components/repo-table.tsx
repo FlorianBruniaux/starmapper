@@ -4,13 +4,13 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Star } from "lucide-react";
+import { Star, Network, X } from "lucide-react";
 import Link from "next/link";
 import type { MappedRepo } from "@/app/api/repos/route";
 
 const PAGE_SIZE = 20;
 
-type SortCol = "totalCount" | "mappedPercent" | "countryCount" | "updatedAt" | "organicScore";
+type SortCol = "totalCount" | "mappedPercent" | "countryCount" | "updatedAt" | "organicScore" | "dependentsCount";
 type SortDir = "asc" | "desc";
 
 const formatCount = (n: number) =>
@@ -80,6 +80,20 @@ export const RepoTable = ({ repos }: { repos: MappedRepo[] }) => {
   const [sortCol, setSortCol] = useState<SortCol>("updatedAt");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [page, setPage] = useState(0);
+  const [filterLanguage, setFilterLanguage] = useState<string | null>(null);
+  const [filterHasDeps, setFilterHasDeps] = useState(false);
+  const [filterHasScore, setFilterHasScore] = useState(false);
+
+  const topLanguages = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const r of repos) {
+      if (r.language) counts.set(r.language, (counts.get(r.language) ?? 0) + 1);
+    }
+    return [...counts.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 8)
+      .map(([lang]) => lang);
+  }, [repos]);
 
   const handleSort = (col: SortCol) => {
     if (col === sortCol) {
@@ -91,8 +105,24 @@ export const RepoTable = ({ repos }: { repos: MappedRepo[] }) => {
     setPage(0);
   };
 
+  const handleFilter = (key: "language" | "hasDeps" | "hasScore", value: string | boolean) => {
+    if (key === "language") setFilterLanguage(filterLanguage === value ? null : (value as string));
+    if (key === "hasDeps") setFilterHasDeps(!filterHasDeps);
+    if (key === "hasScore") setFilterHasScore(!filterHasScore);
+    setPage(0);
+  };
+
+  const filtered = useMemo(() => {
+    return repos.filter((r) => {
+      if (filterLanguage && r.language !== filterLanguage) return false;
+      if (filterHasDeps && !(r.dependentsCount != null && r.dependentsCount > 0)) return false;
+      if (filterHasScore && r.organicScore === null) return false;
+      return true;
+    });
+  }, [repos, filterLanguage, filterHasDeps, filterHasScore]);
+
   const sorted = useMemo(() => {
-    return [...repos].sort((a, b) => {
+    return [...filtered].sort((a, b) => {
       const va = a[sortCol];
       const vb = b[sortCol];
       if (va === null && vb === null) return 0;
@@ -101,13 +131,67 @@ export const RepoTable = ({ repos }: { repos: MappedRepo[] }) => {
       const cmp = typeof va === "string" ? va.localeCompare(vb as string) : (va as number) - (vb as number);
       return sortDir === "desc" ? -cmp : cmp;
     });
-  }, [repos, sortCol, sortDir]);
+  }, [filtered, sortCol, sortDir]);
 
+  const hasActiveFilters = filterLanguage !== null || filterHasDeps || filterHasScore;
   const totalPages = Math.ceil(sorted.length / PAGE_SIZE);
   const pageRows = sorted.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
   return (
-    <div className="w-full overflow-x-auto">
+    <div className="w-full space-y-3">
+      {/* Filter bar */}
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-xs text-muted-subtle uppercase tracking-wider">Filter:</span>
+        <button
+          onClick={() => handleFilter("hasDeps", true)}
+          className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
+            filterHasDeps
+              ? "border-accent-blue/60 bg-accent-blue/10 text-accent-blue"
+              : "border-border text-muted hover:border-border hover:text-foreground"
+          }`}
+        >
+          Has dependents
+        </button>
+        <button
+          onClick={() => handleFilter("hasScore", true)}
+          className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
+            filterHasScore
+              ? "border-accent-blue/60 bg-accent-blue/10 text-accent-blue"
+              : "border-border text-muted hover:border-border hover:text-foreground"
+          }`}
+        >
+          Has score
+        </button>
+        <div className="w-px h-4 bg-border-subtle mx-1 hidden sm:block" aria-hidden="true" />
+        {topLanguages.map((lang) => (
+          <button
+            key={lang}
+            onClick={() => handleFilter("language", lang)}
+            className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
+              filterLanguage === lang
+                ? "border-accent-blue/60 bg-accent-blue/10 text-accent-blue"
+                : "border-border text-muted hover:border-border hover:text-foreground"
+            }`}
+          >
+            {lang}
+          </button>
+        ))}
+        {hasActiveFilters && (
+          <button
+            onClick={() => { setFilterLanguage(null); setFilterHasDeps(false); setFilterHasScore(false); setPage(0); }}
+            className="ml-1 text-xs text-muted-subtle hover:text-foreground flex items-center gap-0.5 transition-colors"
+          >
+            <X size={12} aria-hidden="true" /> Clear
+          </button>
+        )}
+        {hasActiveFilters && (
+          <span className="text-xs text-muted-subtle ml-auto">
+            {sorted.length} / {repos.length}
+          </span>
+        )}
+      </div>
+
+      <div className="overflow-x-auto">
       <table className="w-full border-collapse text-sm">
         <caption className="sr-only">Community stargazer maps, sortable by column</caption>
         <thead>
@@ -126,6 +210,20 @@ export const RepoTable = ({ repos }: { repos: MappedRepo[] }) => {
               tooltip="Number of distinct countries represented in the stargazer base." />
             <ColHeader label="Score" col="organicScore" active={sortCol === "organicScore"} dir={sortDir} onSort={handleSort}
               tooltip="Organic Score (0–100). Experimental heuristic estimating whether the star count reflects real usage or was inflated. Based on fork ratio, watcher ratio, and % zero-follower accounts. Only computed for repos with 5 000+ stars." />
+            <th scope="col" className="py-2.5 px-4 text-xs uppercase tracking-wider text-muted-subtle font-medium text-right hidden lg:table-cell cursor-pointer select-none hover:text-muted transition-colors"
+              onClick={() => handleSort("dependentsCount")}
+              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleSort("dependentsCount"); } }}
+              tabIndex={0}
+              aria-sort={sortCol === "dependentsCount" ? (sortDir === "asc" ? "ascending" : "descending") : "none"}
+            >
+              <span className="relative inline-flex items-center gap-1 group/tip justify-end">
+                Deps
+                <SortIcon active={sortCol === "dependentsCount"} dir={sortDir} />
+                <span className="pointer-events-none absolute top-full right-0 mt-2 w-56 rounded-lg bg-surface border border-border px-3 py-2 text-xs text-foreground leading-relaxed shadow-xl opacity-0 group-hover/tip:opacity-100 transition-opacity duration-150 z-50 whitespace-normal font-normal normal-case tracking-normal">
+                  Number of open-source repos depending on this library, tracked by ecosyste.ms. Only shown for published packages.
+                </span>
+              </span>
+            </th>
             <ColHeader label="Last scan" col="updatedAt" active={sortCol === "updatedAt"} dir={sortDir} onSort={handleSort}
               tooltip="When StarMapper last fetched and geocoded this repo's stargazers." />
           </tr>
@@ -192,6 +290,21 @@ export const RepoTable = ({ repos }: { repos: MappedRepo[] }) => {
                   <span className="text-xs text-muted-subtle">—</span>
                 )}
               </td>
+              <td className="py-3 px-4 text-right hidden lg:table-cell">
+                {r.dependentsCount != null && r.dependentsCount > 0 ? (
+                  <Link
+                    href={`/${r.owner}/${r.repo}/dependents`}
+                    className="inline-flex items-center gap-1 text-xs text-accent-blue hover:underline"
+                    onClick={(e) => e.stopPropagation()}
+                    title={`${r.dependentsCount} dependent repos`}
+                  >
+                    <Network size={11} aria-hidden="true" />
+                    {formatCount(r.dependentsCount)}
+                  </Link>
+                ) : (
+                  <span className="text-xs text-muted-subtle">—</span>
+                )}
+              </td>
               <td className="py-3 px-4 text-right text-xs whitespace-nowrap text-muted-subtle" title={r.updatedAt}>
                 {timeAgo(r.updatedAt)}
               </td>
@@ -225,6 +338,7 @@ export const RepoTable = ({ repos }: { repos: MappedRepo[] }) => {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 };
