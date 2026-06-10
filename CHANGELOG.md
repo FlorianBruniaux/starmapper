@@ -5,6 +5,32 @@ Versioning: Semantic Versioning (MAJOR.MINOR.PATCH)
 
 ---
 
+## [0.6.3] (2026-06-10)
+
+### Dependents Explorer
+
+Library authors can now see which repos and packages depend on their project. A new page `/[owner]/[repo]/dependents` lists dependent repos sorted by stars, forks, or name, with ecosystem badges (npm, PyPI, Go, Maven, Cargo, RubyGems, NuGet, etc.) and direct links to each dependent's StarMapper map.
+
+Data source is [ecosyste.ms](https://ecosyste.ms): multi-ecosystem, no API key, ToS-clean. A lookup against `packages.ecosyste.ms` resolves the published package(s) for a repo; dependent repos are then fetched from `repos.ecosyste.ms`, capped at 500 rows (5 pages). Server-side `sort` returns HTTP 500 on ecosyste.ms, so sorting is done in-process via `sortDependents()`.
+
+Results are cached in Neon (`dependents_cache`, 7-day TTL, gzip+base64). A refresh route triggers a live fetch with a 1-hour cooldown. Repos with no published package store an empty result to avoid re-querying ecosyste.ms on every visit.
+
+Feature-flagged via `NEXT_PUBLIC_DEPENDENTS_ENABLED`.
+
+New files:
+- **`src/lib/dependents.ts`**: `resolvePackages()`, `fetchDependentPages()`, `fetchDependents()`, `sortDependents()`. Pure data layer, no framework coupling.
+- **`src/app/[owner]/[repo]/dependents/page.tsx`** + **`page.client.tsx`**: dedicated page with `generateMetadata`, canonical URL, OG tags.
+- **`src/components/dependents/dependents-table.tsx`**: sortable table, paginated, ecosystem badges, 1h refresh cooldown indicator.
+- **`src/app/api/dependents/[owner]/[repo]/route.ts`**: `GET`, cache-first read with `sort`, `page`, `per_page` query params. 5-min CDN cache.
+- **`src/app/api/dependents/[owner]/[repo]/refresh/route.ts`**: `POST`, live fetch + cache upsert, 1h cooldown.
+- **`src/app/api/mcp/dependents/[owner]/[repo]/route.ts`**: MCP-facing endpoint returning top dependents by stars.
+- **`mcp/src/tools/get_dependents.ts`**: 10th MCP tool. Returns a markdown table of top dependent repos.
+- **`scripts/backfill/backfill-dependents.ts`**: backfills all repos in `badge_cache` with dependents data. Flags: `--dry-run`, `--force`, `--limit`, `--delay-ms`, `--min-stars`. Run: `pnpm backfill:dependents:prod`.
+
+Schema change: `DependentsCache` model added to `prisma/schema.prisma`.
+
+---
+
 ## [0.6.2] (2026-06-09)
 
 ### SEO and Progressive Web App

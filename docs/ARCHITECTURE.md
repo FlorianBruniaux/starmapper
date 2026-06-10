@@ -1,7 +1,7 @@
 # StarMapper Architecture
 
-**Version**: 0.6.2
-**Last updated**: 2026-06-09
+**Version**: 0.6.3
+**Last updated**: 2026-06-10
 
 ---
 
@@ -307,6 +307,27 @@ model StarEvent {
 ```
 
 **Purpose**: Track which user starred which repo. Enables aggregated stats per repo (`/api/stats`) and future features (star history, trending). Written via `bulkUpsertStarEvents()` in `src/lib/user-cache.ts`.
+
+---
+
+### DependentsCache
+
+```prisma
+model DependentsCache {
+  owner      String
+  repo       String
+  dataGz     String   @db.Text   // JSON DependentsResult gzip+base64
+  totalCount Int
+  fetchedAt  DateTime @default(now())
+  expiresAt  DateTime @default(dbgenerated("NOW() + INTERVAL '7 days'"))
+
+  @@id([owner, repo])
+  @@index([expiresAt])
+  @@map("dependents_cache")
+}
+```
+
+**Purpose**: Cache dependents data per repo, sourced from [ecosyste.ms](https://ecosyste.ms). `dataGz` is a gzip+base64 `DependentsResult` (packages, dependent rows, totalCount, truncated flag). TTL 7 days via `expiresAt`. Repos with no published package store an empty result to prevent repeated API calls.
 
 ---
 
@@ -704,6 +725,40 @@ Returns a developer's full profile data from DB. Auto-fetches from GitHub if not
 
 ---
 
+### `GET /api/dependents/[owner]/[repo]`
+
+Returns paginated dependents list from the `DependentsCache`. Cache-first: 404 if cache is missing or expired (client triggers `POST .../refresh`).
+
+**Query params**: `?sort=stars|forks|name` (default `stars`), `?page=` (default 1), `?per_page=` (default 50, max 200)
+
+**Response**: `DependentsApiResponse { packages, dependents, totalCount, page, perPage, totalPages, sortedBy, truncated, fetchedAt }`
+
+`DependentsApiResponse`, `DependentRow`, and `ResolvedPackage` are exported from `src/app/api/dependents/[owner]/[repo]/route.ts`.
+
+**Cache**: `public, s-maxage=300, stale-while-revalidate=600`
+
+---
+
+### `POST /api/dependents/[owner]/[repo]/refresh`
+
+Triggers a live fetch from ecosyste.ms and updates `DependentsCache`. Rate-limited to once per hour per repo (checked via `fetchedAt`).
+
+**Response**: `{ ok: true, totalCount: number }` or `{ error: "cooldown", retryAfterSec: number }` (429).
+
+Requires `NEXT_PUBLIC_DEPENDENTS_ENABLED=true`.
+
+---
+
+### `GET /api/mcp/dependents/[owner]/[repo]`
+
+MCP-facing endpoint returning top 20 dependent repos sorted by stars. Designed for the `get_dependents` MCP tool.
+
+**Response**: `{ packages, dependents: top20, totalCount, truncated, fetchedAt }`
+
+**Cache**: `public, s-maxage=300, stale-while-revalidate=600`
+
+---
+
 ### `GET /api/organic-score/[owner]/[repo]`
 
 Lightweight organic score endpoint that reads directly from `badge_cache`. Works even when the stats API returns 404 (repo not deeply indexed).
@@ -1001,6 +1056,9 @@ Returns aggregate statistics on the organic score corpus: distribution of tiers,
 │   │       ├── badge-update/route.ts          # POST: upsert BadgeCache
 │   │       ├── badge/[owner]/[repo]/route.ts  # GET:  SVG shield badge
 │   │       ├── track/route.ts                 # POST: fire-and-forget daily page view upsert
+│   │       ├── dependents/[owner]/[repo]/
+│   │       │   ├── route.ts                   # GET:  dependent repos from cache (DependentsApiResponse)
+│   │       │   └── refresh/route.ts           # POST: live fetch from ecosyste.ms (1h cooldown)
 │   │       └── admin/
 │   │           ├── clear-geocache/route.ts    # GET:  truncate geocache (admin)
 │   │           ├── import-geocache/route.ts   # POST: bulk import geocache (admin)
@@ -1035,6 +1093,8 @@ Returns aggregate statistics on the organic score corpus: distribution of tiers,
 │   │   ├── theme-toggle.tsx                   # Dark/light mode toggle button
 │   │   ├── token-modal.tsx                    # GitHub token input modal (PAT override)
 │   │   ├── vitals-reporter.tsx                # Client component: sends Core Web Vitals to /api/vitals
+│   │   ├── dependents/
+│   │   │   └── dependents-table.tsx           # Sortable + paginated table of dependent repos
 │   │   ├── devs/
 │   │   │   └── language-switcher.tsx          # Language combobox for /devs and /devs/[language]
 │   │   ├── map/
@@ -1080,6 +1140,7 @@ Returns aggregate statistics on the organic score corpus: distribution of tiers,
 │   │   └── recalculate-location.ts            # Zod: POST /api/recalculate-location
 │   ├── env.ts                                 # @t3-oss/env-nextjs — build-time validation of DATABASE_URL, GITHUB_TOKEN, NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN
 │   └── lib/
+│       ├── dependents.ts                      # resolvePackages(), fetchDependents(), sortDependents(): ecosyste.ms data layer
 │       ├── define-route.ts                    # defineRoute(schema, handler) — Zod parse wrapper for POST routes
 │       ├── api-helpers.ts                     # jsonError(), logError(), getIP()
 │       ├── api-validation.ts                  # validateOwnerRepo(), OWNER_REPO_RE, LOGIN_RE
@@ -1102,7 +1163,7 @@ Returns aggregate statistics on the organic score corpus: distribution of tiers,
 │   ├── tsconfig.json                          # CommonJS target (Node MCP runtime)
 │   ├── vitest.config.ts
 │   └── src/
-│       ├── index.ts                           # McpServer + StdioServerTransport, 9 tools wired
+│       ├── index.ts                           # McpServer + StdioServerTransport, 10 tools wired
 │       ├── client.ts                          # Typed fetch wrappers for all StarMapper API endpoints
 │       └── tools/
 │           ├── get_repo_stats.ts
@@ -1113,7 +1174,8 @@ Returns aggregate statistics on the organic score corpus: distribution of tiers,
 │           ├── health_check.ts
 │           ├── get_cache_status.ts
 │           ├── get_trending.ts
-│           └── list_repos.ts
+│           ├── list_repos.ts
+│           └── get_dependents.ts              # 10th tool: top dependent repos as markdown table
 ├── extension/                                 # Chrome Extension (Manifest V3, WXT framework)
 │   ├── wxt.config.ts                          # WXT manifest + permissions
 │   ├── entrypoints/
