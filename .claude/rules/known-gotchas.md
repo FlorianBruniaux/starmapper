@@ -49,15 +49,15 @@ Toujours envoyer `pointsGz`/`unmappedGz` (gzip+base64), jamais les arrays bruts.
 
 ---
 
-## 7 Materialized Views + GIN indexes
+## 9 Materialized Views + GIN indexes
 
-Non gérés par Prisma — doivent être créés une fois par instance DB :
+Non gérés par Prisma. À créer une fois par instance DB :
 
 ```bash
-pnpm db:setup   # applique prisma db push + crée les 7 MVs + pg_trgm indexes
+pnpm db:setup   # applique prisma db push + crée les 9 MVs + pg_trgm indexes
 ```
 
-MVs : `github_user_grid_mv`, `country_stats_mv`, `power_users_mv`, `company_stats_mv`, `country_language_stats_mv`, `user_repo_count_mv`, `trending_repos_mv`
+MVs : `github_user_grid_mv`, `country_stats_mv`, `power_users_mv`, `company_stats_mv`, `country_language_stats_mv`, `user_repo_count_mv`, `language_grid_mv`, `trending_repos_mv`, `city_stats_mv`
 
 Routes qui tombent silencieusement si les MVs manquent : `/trending` (503), `/devs/atlas` (vide), `/explore` (timeout search).
 
