@@ -58,7 +58,7 @@
     "batch:scan": "sh -c '[ \"$1\" = \"--\" ] && shift; tsx scripts/ops/batch-scan.ts --local \"$@\"' _",
     "batch:scan:prod": "sh -c '[ \"$1\" = \"--\" ] && shift; tsx scripts/ops/batch-scan.ts --allow-neon \"$@\"' _",
     "setup:mvs": "sh -c 'set -a && . .env.local && set +a && DATABASE_URL=$DATABASE_URL_LOCAL tsx scripts/db/setup-mvs.ts'",
-    "setup:mvs:prod": "tsx scripts/db/setup-mvs.ts"
+    "setup:mvs:prod": "sh -c 'set -a && . .env.local && set +a && tsx scripts/db/setup-mvs.ts'"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",
