@@ -66,6 +66,12 @@ No new items currently queued. See Medium term for backlog.
 
 - **Dependents geo map** (Phase 3): geocode the owners of dependent repos and render them on a StarMapper map. Toggle between table and map on `/[owner]/[repo]/dependents`. Cap 200 owners to bound Nominatim cost.
 
+- **GitHub traffic metrics**: page views (total + 14-day uniques) and clone count (total + 14-day uniques) via `GET /repos/{owner}/{repo}/traffic/views` and `/clones`. Requires a token with push access on the target repo (not available for arbitrary public repos; user provides their own PAT). Display in Stats modal. `GET /api/stats/[owner]/[repo]/traffic`. TTL 24h in Neon.
+
+- **Contributor count**: `GET /repos/{owner}/{repo}/contributors?per_page=1` + `Link` header gives total contributors. Simple addition to `repo-info` response and Stats modal. Also feeds Organic Score as a direct signal (currently derived indirectly from forks).
+
+- **Search mentions / adoption breadth**: GitHub Search API counts for issues, PRs, and discussions that mention a package or repo name (`GET /search/issues?q={name}+in:body`). Shows adoption across third-party projects. Candidate additional signal for Organic Score. `GET /api/stats/[owner]/[repo]/mentions`.
+
 ---
 
 ## If monetization ever

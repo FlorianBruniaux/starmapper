@@ -1,6 +1,6 @@
 # StarMapper — Product Reference
 
-**Version**: 0.6.2 | **Last updated**: 2026-06-09
+**Version**: 0.6.3 | **Last updated**: 2026-06-10
 
 Free, open-source developer intelligence platform built around GitHub stargazer geography. No account required.
 
@@ -105,6 +105,17 @@ Two injection points depending on the GitHub page:
 
 Handles GitHub SPA navigation (Turbo + bfcache). Adapts to dark/light theme via GitHub CSS variables.
 
+### Dependents Explorer `/[owner]/[repo]/dependents`
+
+For library authors: a table of repos that depend on a published package, across all ecosystems.
+
+- **Multi-ecosystem coverage**: npm, PyPI, Go, Maven, Cargo, RubyGems, NuGet, and more. Data from [ecosyste.ms](https://ecosyste.ms) (no API key, ToS-clean).
+- **Sortable table**: sort by stars, forks, or name. Paginated (50 per page, up to 200). Ecosystem badge per row.
+- **Deep links**: each dependent repo links to its own StarMapper map if indexed.
+- **7-day Neon cache**: results cached in `dependents_cache`, gzip+base64. A "Refresh" button triggers a live fetch with a 1-hour cooldown per repo.
+- **No published package**: repos without a package on any registry show a clean empty state (no crash, no spinner loop).
+- **Feature-flagged**: `NEXT_PUBLIC_DEPENDENTS_ENABLED` gates the page and table entry point.
+
 ### Integrations & embeds
 
 - **SVG shield badge** (`/api/badge/[owner]/[repo]`): star count + countries mapped. 6h CDN cache. Copy Markdown in one click from the map page.
@@ -112,6 +123,7 @@ Handles GitHub SPA navigation (Turbo + bfcache). Adapts to dark/light theme via 
 - **Public GeoJSON API** (`GET /api/geo/[owner]/[repo]`): aggregate countries + cities (top 50 each), API key authenticated, rate-limited 60 req/min. GDPR-safe (no individual coordinates). For third-party tools and dashboards.
 - **RSS 2.0 + JSON Feed 1.1**: per-developer announcement feeds. Subscribable from any RSS reader.
 - **Organic Score** (`GET /api/organic-score/[owner]/[repo]`): 0–100 score estimating whether stars are organic or farmed. Three signals: fork/star ratio (40%), watcher/star ratio (5%), zero-follower stargazers (55%). 85.7% accuracy on calibration corpus. Displayed on the repos landing page with a detail modal.
+- **Dependents API** (`GET /api/dependents/[owner]/[repo]`): paginated list of dependent repos from ecosyste.ms cache. Supports `?sort=stars|forks|name&page=&per_page=`. Public, 5-min CDN cache. `POST .../refresh` triggers a live fetch (1h cooldown).
 
 ---
 

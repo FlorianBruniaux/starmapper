@@ -126,7 +126,7 @@ export default function DependentsPageClient({ params }: Props) {
         showNav
       />
 
-      <main className="flex-1 max-w-4xl mx-auto w-full px-4 py-8">
+      <main className="flex-1 max-w-7xl mx-auto w-full px-4 py-8">
         {/* Page header */}
         <div className="flex items-center justify-between mb-6">
           <div>
