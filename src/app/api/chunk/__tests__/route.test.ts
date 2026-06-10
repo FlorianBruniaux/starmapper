@@ -478,18 +478,21 @@ describe("POST /api/chunk", () => {
 
   describe("error handling", () => {
     it("returns 429 when the IP rate limiter rejects the request", async () => {
+      vi.stubEnv("NODE_ENV", "production");
       mockRateLimit.mockResolvedValueOnce({ success: false });
 
       const req = makeRequest({ owner: "octocat", repo: "starmapper" });
       const res = await POST(req);
       const body = await res.json();
 
+      vi.unstubAllEnvs();
       expect(res.status).toBe(429);
       expect(body.error).toBe("Rate limit exceeded. Retry in a few seconds.");
       expect(mockFetchStargazers).not.toHaveBeenCalled();
     });
 
     it("returns 429 when the per-PAT limiter rejects the request", async () => {
+      vi.stubEnv("NODE_ENV", "production");
       mockRateLimit
         .mockResolvedValueOnce({ success: true })
         .mockResolvedValueOnce({ success: false });
@@ -501,6 +504,7 @@ describe("POST /api/chunk", () => {
       const res = await POST(req);
       const body = await res.json();
 
+      vi.unstubAllEnvs();
       expect(res.status).toBe(429);
       expect(body.error).toBe("Rate limit exceeded. Retry in a few minutes.");
       expect(mockFetchStargazers).not.toHaveBeenCalled();

@@ -77,10 +77,8 @@ const getPatLimiter = (): Ratelimit | null => {
 let activeSessions = 0;
 const MAX_CONCURRENT = 3;
 
-const isDev = process.env.NODE_ENV !== "production";
-
 export const POST = async (req: NextRequest) => {
-  if (!isDev) {
+  if (process.env.NODE_ENV === "production") {
     const limiter = getLimiter();
     if (limiter) {
       const { success } = await limiter.limit(getIP(req));

@@ -275,11 +275,13 @@ describe("POST /api/followers-chunk", () => {
     });
 
     it("returns 429 when IP rate limiter rejects the request", async () => {
+      vi.stubEnv("NODE_ENV", "production");
       mockRateLimit.mockResolvedValueOnce({ success: false });
 
       const req = makeRequest({ login: "octocat" });
       const res = await POST(req);
 
+      vi.unstubAllEnvs();
       expect(res.status).toBe(429);
       expect(mockFetchFollowersPage).not.toHaveBeenCalled();
     });

@@ -1,4 +1,3 @@
-// src/hooks/use-repo-cache-loader.test.ts
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 
@@ -16,6 +15,7 @@ const mockFetch = vi.fn();
 vi.mock("@/lib/repo-cache", () => ({
   loadCache: (...a: unknown[]) => mockLoadCache(...a),
   saveCache: (...a: unknown[]) => mockSaveCache(...a),
+  clearCache: vi.fn(),
 }));
 vi.mock("@/lib/bookmarks", () => ({
   saveBookmark: (...a: unknown[]) => mockSaveBookmark(...a),
@@ -69,9 +69,15 @@ describe("useRepoCacheLoader", () => {
     mockLoadCache.mockReturnValue(null);
     mockCompressToBase64.mockResolvedValue("gz==");
     vi.stubGlobal("fetch", mockFetch);
+    // LOCAL_CACHE.scannedAt=1000 (epoch). Make Date.now() return 1000+60s so the
+    // cache appears fresh (60s old << MAX_LOCAL_AGE_MS 7d).
+    vi.spyOn(Date, "now").mockReturnValue(LOCAL_CACHE.scannedAt + 60_000);
     mockFetch.mockResolvedValue(new Response(null, { status: 404 }));
   });
-  afterEach(() => { vi.unstubAllGlobals(); });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
 
   // ── localStorage hit ──────────────────────────────────────────────────────
 
