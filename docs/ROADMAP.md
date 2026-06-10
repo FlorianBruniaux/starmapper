@@ -1,6 +1,6 @@
 # StarMapper Roadmap
 
-*Last updated: 2026-06-09, v0.6.2*
+*Last updated: 2026-06-10, v0.6.3-dev*
 
 ---
 
@@ -47,6 +47,7 @@
 - **Environment validation** — `src/env.ts` via `@t3-oss/env-nextjs`. Build fails fast if `DATABASE_URL`, `GITHUB_TOKEN`, or `NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN` are missing. (v0.5.0)
 - **Trending split endpoints** — `GET /api/trending/repos` and `GET /api/trending/map` replace the monolithic endpoint. Repos list renders before the map. `loading.tsx` skeleton. (v0.5.0)
 - **Claude Code / MCP integration**: `starmapper-mcp` npm package with 9 tools (`get_repo_stats`, `get_organic_score`, `get_velocity`, `get_influential_stargazers`, `index_repo`, `health_check`, `get_cache_status`, `get_trending`, `list_repos`). New public endpoints `GET /api/mcp/organic-score`, `GET /api/mcp/influential`, and `GET /api/mcp/cache-status`. (v0.6.0)
+- **Dependents Explorer** `/[owner]/[repo]/dependents`: table of repos depending on a library, sorted by stars/forks/name. Data source flipped to ecosyste.ms (multi-ecosystem, no API key, 7-day Neon cache). `DependentsCache` model. Refresh route with 1h cooldown. MCP tool `get_dependents` (10th tool). Feature-flagged via `NEXT_PUBLIC_DEPENDENTS_ENABLED`. (v0.6.3)
 - **Followers Map** `/[owner]/followers`: interactive map of a GitHub user's followers, same geocoding cascade and cluster rendering as repo maps. Side panel with virtual scroll, fly-to on click, follower influence sort. Entry points on all profile pages. (v0.5.9)
 - **Followers user switcher** (v0.6.1): command-palette modal on the followers page to switch to any other GitHub user without leaving the page. Searches GitHub users with 200 ms debounce, keyboard navigation.
 - **SEO and PWA pass** (v0.6.2): og:image sitewide via `@vercel/og`, PWA web manifest, JSON-LD structured data in root layout, `sitemap.ts`, `robots.ts`, `icon.svg`.
@@ -63,7 +64,7 @@ No new items currently queued. See Medium term for backlog.
 
 - **Starred-by-user map** — From `/profile/[login]`, aggregate map of stargazers from ALL repos starred by that user (already indexed in StarMapper). Route `GET /api/profile/[login]/starred-map`. "Where do people who like what I like live?" No existing tool crosses user-stars × geography.
 
-- **Dependents explorer**: for library authors, lists the repos that depend on a given package, sorted by stars or forks. GitHub has a `/network/dependents` page but no public API. Viable data sources: Libraries.io API (npm, pip, gem, go; 60 req/min free tier) and deps.dev (Google, no rate limit, good npm/go/maven coverage). Only useful for published packages, not apps; shows ecosystem reach at a glance. Potential "Repo Intelligence" section alongside the map. Implementation: Libraries.io fetch cached in Neon with 24h TTL, fallback to deps.dev. Scraping the GitHub dependents HTML page is a last resort (fragile, ToS risk).
+- **Dependents geo map** (Phase 3): geocode the owners of dependent repos and render them on a StarMapper map. Toggle between table and map on `/[owner]/[repo]/dependents`. Cap 200 owners to bound Nominatim cost.
 
 ---
 

@@ -67,6 +67,19 @@ model FollowerCache {
   @@map("follower_cache")
 }
 
+model DependentsCache {
+  owner      String
+  repo       String
+  dataGz     String   @db.Text
+  totalCount Int
+  fetchedAt  DateTime @default(now())
+  expiresAt  DateTime @default(dbgenerated("NOW() + INTERVAL '7 days'"))
+
+  @@id([owner, repo])
+  @@index([expiresAt])
+  @@map("dependents_cache")
+}
+
 model GitHubUser {
   login            String      @id
   name             String?

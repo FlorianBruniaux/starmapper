@@ -15,6 +15,7 @@ import { OrganicScorePill } from "@/components/organic-score-pill";
 import { OrganicScoreModal } from "@/components/organic-score-modal";
 
 const ORGANIC_ENABLED = process.env.NEXT_PUBLIC_ORGANIC_SCORE_ENABLED === "true";
+const DEPENDENTS_ENABLED = process.env.NEXT_PUBLIC_DEPENDENTS_ENABLED === "true";
 
 type RepoInfo = {
   name: string;
@@ -477,6 +478,19 @@ const TopPanelInner = ({
           )}
         </div>
       </div>
+
+      {/* ── Dependents link ───────────────────────────────────────────────── */}
+      {DEPENDENTS_ENABLED && (
+        <div className="mt-2 pt-2 border-t border-border-subtle flex items-center justify-center">
+          <a
+            href={`/${owner}/${repo}/dependents`}
+            className="text-2xs text-muted hover:text-foreground transition-colors flex items-center gap-1"
+          >
+            <ChevronRight size={9} aria-hidden="true" />
+            Who depends on this library?
+          </a>
+        </div>
+      )}
 
       </>)}
     </div>

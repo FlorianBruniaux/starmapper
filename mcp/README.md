@@ -1,6 +1,6 @@
 # starmapper-mcp
 
-MCP server for [StarMapper](https://starmapper.bruniaux.com) -- query GitHub repository audience data directly from Claude Code.
+MCP server for [StarMapper](https://starmapper.bruniaux.com). Query GitHub repository audience data directly from Claude Code.
 
 ## Install
 
@@ -47,6 +47,9 @@ Returns the current list of trending repositories from StarMapper's trending fee
 
 ### `list_repos()`
 Lists all repositories currently indexed on StarMapper, ordered by last scan date.
+
+### `get_dependents(owner, repo)`
+Lists the open-source repos that depend on a given library, sorted by stars. Returns up to 50 dependent repos with star/fork counts, language, and ecosystem. Useful for discovering who uses a library and how prominent those users are. Data is sourced from ecosyste.ms and cached for 7 days. Returns a 404 if the repo hasn't been fetched yet — call the dependents page on StarMapper first to trigger a fetch.
 
 ## Example prompts
 

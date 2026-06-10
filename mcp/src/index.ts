@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
-// StarMapper MCP server - stdio transport, exposes 9 tools.
+// StarMapper MCP server - stdio transport, exposes 10 tools.
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
@@ -16,6 +16,7 @@ import { getCacheStatus } from "./tools/get_cache_status.js";
 import { getTrending } from "./tools/get_trending.js";
 import { listRepos } from "./tools/list_repos.js";
 import { healthCheck } from "./tools/health_check.js";
+import { getDependents } from "./tools/get_dependents.js";
 
 const server = new McpServer({ name: "starmapper", version: "0.1.0" });
 
@@ -113,6 +114,17 @@ server.registerTool(
   },
   async ({ limit }) => ({
     content: [{ type: "text" as const, text: await listRepos({ limit }) }],
+  }),
+);
+
+server.registerTool(
+  "get_dependents",
+  {
+    description: "List the open-source repos that depend on a given GitHub library, sorted by stars. Useful for discovering who uses a library and how prominent those users are. Returns top 50 dependent repos with star/fork counts, language, and ecosystem. Data is sourced from ecosyste.ms and cached for 7 days.",
+    inputSchema: ownerRepo,
+  },
+  async ({ owner, repo }) => ({
+    content: [{ type: "text" as const, text: await getDependents({ owner, repo }) }],
   }),
 );
 

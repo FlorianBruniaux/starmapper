@@ -150,6 +150,27 @@ export const fetchTrending = (): Promise<{ repos: TrendingRepo[]; meta: { total:
 export const fetchListRepos = (limit: number): Promise<{ repos: RepoItem[]; total: number }> =>
   get(`/api/repos?limit=${limit}`);
 
+export type McpDependentsResponse = {
+  packages: Array<{ name: string; ecosystem: string; dependentReposCount: number }>;
+  topDependents: Array<{
+    fullName: string;
+    stars: number;
+    forks: number;
+    language: string | null;
+    ecosystem: string;
+    packageName: string;
+    htmlUrl: string;
+  }>;
+  totalCount: number;
+  shownCount: number;
+  truncated: boolean;
+  fetchedAt: string;
+  mapUrl: string;
+};
+
+export const fetchDependentsMcp = (owner: string, repo: string): Promise<McpDependentsResponse> =>
+  get<McpDependentsResponse>(`/api/mcp/dependents/${owner}/${repo}`);
+
 export const triggerChunk = async (
   owner: string,
   repo: string,
