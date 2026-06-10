@@ -2,7 +2,8 @@
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 
 // Refreshes all materialized views: github_user_grid_mv, country_stats_mv,
-// power_users_mv, company_stats_mv, trending_repos_mv.
+// power_users_mv, company_stats_mv, country_language_stats_mv, user_repo_count_mv,
+// trending_repos_mv, city_stats_mv.
 // Runs 1x/day via Vercel Cron (see vercel.json). Also callable manually via admin auth.
 // CONCURRENTLY = does not block reads during refresh.
 // Sequential loop — parallel refresh exhausts Neon's connection pool and causes cascading failures.
@@ -53,6 +54,7 @@ const MV_NAMES = [
   "country_language_stats_mv",
   "user_repo_count_mv",
   "trending_repos_mv",
+  "city_stats_mv",
 ] as const;
 
 const runRefresh = async () => {

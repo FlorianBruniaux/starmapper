@@ -33,7 +33,7 @@ fi
 
 # ── Parse options ─────────────────────────────────────────────────────────────
 LIMIT=""
-TABLES="github_user,star_event,badge_cache,stargazer_cache,api_key,news"
+TABLES="github_user,star_event,badge_cache,stargazer_cache,follower_cache,dependents_cache,api_key,news"
 REPO=""
 
 shift || true
@@ -178,6 +178,20 @@ else
   has_table "api_key" && import_table "api_key" \
     "SELECT key,\"keyHash\",email,name,note,\"createdAt\",\"revokedAt\",\"lastUsedAt\" FROM api_key ORDER BY \"createdAt\" DESC" \
     'ON CONFLICT (key) DO UPDATE SET "lastUsedAt"=EXCLUDED."lastUsedAt", "revokedAt"=EXCLUDED."revokedAt"'
+
+  # follower_cache — no FK deps
+  has_table "follower_cache" && import_table "follower_cache" \
+    "SELECT login,\"pointsGz\",\"unmappedGz\",\"totalCount\",\"scannedAt\",\"expiresAt\" FROM follower_cache ORDER BY \"scannedAt\" DESC $LIMIT_CLAUSE" \
+    'ON CONFLICT (login) DO UPDATE SET
+      "pointsGz"=EXCLUDED."pointsGz", "unmappedGz"=EXCLUDED."unmappedGz",
+      "totalCount"=EXCLUDED."totalCount", "scannedAt"=EXCLUDED."scannedAt", "expiresAt"=EXCLUDED."expiresAt"'
+
+  # dependents_cache — no FK deps
+  has_table "dependents_cache" && import_table "dependents_cache" \
+    "SELECT owner,repo,\"dataGz\",\"totalCount\",\"fetchedAt\",\"expiresAt\" FROM dependents_cache ORDER BY \"fetchedAt\" DESC $LIMIT_CLAUSE" \
+    'ON CONFLICT (owner, repo) DO UPDATE SET
+      "dataGz"=EXCLUDED."dataGz", "totalCount"=EXCLUDED."totalCount",
+      "fetchedAt"=EXCLUDED."fetchedAt", "expiresAt"=EXCLUDED."expiresAt"'
 fi
 
 echo ""

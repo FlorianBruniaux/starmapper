@@ -129,20 +129,20 @@ export const GET = async (req: NextRequest) => {
         total AS (SELECT COUNT(*)::bigint AS total_count FROM nearby)
         SELECT p.*, t.total_count FROM page_rows p CROSS JOIN total t
       `,
-      // City aggregates — same bounding box, independent scan, runs in parallel
+      // City aggregates — read pre-computed centroids from city_stats_mv instead of
+      // a live GROUP BY + Haversine over millions of github_user rows. The MV holds one
+      // row per (city, 1° bucket); we bbox-prefilter on its (lat, lng) index, then keep
+      // cities whose centroid is within the radius. cnt is the global city size.
       prisma.$queryRaw<CityRow[]>`
         SELECT
-          "cityNormalized" AS city,
-          COUNT(*) AS cnt,
-          ROUND(AVG(lat)::numeric, 1)::float AS clat,
-          ROUND(AVG(lng)::numeric, 1)::float AS clng
-        FROM github_user
+          city,
+          cnt,
+          lat AS clat,
+          lng AS clng
+        FROM city_stats_mv
         WHERE
           lat BETWEEN ${minLat} AND ${maxLat}
           AND lng BETWEEN ${minLng} AND ${maxLng}
-          AND lat IS NOT NULL
-          AND lng IS NOT NULL
-          AND "cityNormalized" IS NOT NULL
           AND (
             6371 * acos(
               LEAST(1.0, cos(radians(${lat})) * cos(radians(lat))
@@ -150,7 +150,6 @@ export const GET = async (req: NextRequest) => {
               + sin(radians(${lat})) * sin(radians(lat)))
             )
           ) <= ${radius}
-        GROUP BY "cityNormalized"
         ORDER BY cnt DESC
         LIMIT 50
       `,

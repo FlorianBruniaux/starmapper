@@ -192,3 +192,36 @@ CREATE UNIQUE INDEX IF NOT EXISTS trending_repos_mv_owner_repo_idx
 
 CREATE INDEX IF NOT EXISTS trending_repos_mv_stars_7d_idx
   ON trending_repos_mv (stars_7d DESC);
+
+-- ============================================================
+-- 9. city_stats_mv
+-- ============================================================
+-- Per-city counts + centroid for the "nearby cities" panel (/api/explore/nearby).
+-- Replaces a live GROUP BY + Haversine over millions of github_user rows (~1s) with
+-- a scan of distinct city buckets (~tens of thousands of rows).
+--
+-- Grouped by (city, 1° lat bucket, 1° lng bucket) so same-named cities far apart
+-- (Paris FR vs Paris TX) stay separate. Country is intentionally NOT in the key —
+-- inconsistent countryNormalized would otherwise split a single physical city.
+-- cnt is the global city size (cities are point-like at 1-decimal precision, so for
+-- a radius ≥ 25km a city is effectively all-in or all-out of the search circle).
+
+CREATE MATERIALIZED VIEW IF NOT EXISTS city_stats_mv AS
+  SELECT
+    "cityNormalized"                    AS city,
+    ROUND(lat::numeric, 0)::float       AS lat_bucket,
+    ROUND(lng::numeric, 0)::float       AS lng_bucket,
+    ROUND(AVG(lat)::numeric, 1)::float  AS lat,
+    ROUND(AVG(lng)::numeric, 1)::float  AS lng,
+    COUNT(*)::int                       AS cnt
+  FROM github_user
+  WHERE lat IS NOT NULL
+    AND lng IS NOT NULL
+    AND "cityNormalized" IS NOT NULL
+  GROUP BY "cityNormalized", ROUND(lat::numeric, 0), ROUND(lng::numeric, 0);
+
+CREATE UNIQUE INDEX IF NOT EXISTS city_stats_mv_pk_idx
+  ON city_stats_mv (city, lat_bucket, lng_bucket);
+
+CREATE INDEX IF NOT EXISTS city_stats_mv_lat_lng_idx
+  ON city_stats_mv (lat, lng);
