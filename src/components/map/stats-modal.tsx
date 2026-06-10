@@ -17,9 +17,10 @@ type StatsModalProps = {
   repo: string;
   displayStats: RepoStats;
   starsThisMonth: number;
+  contributorsCount?: number | null;
 };
 
-export const StatsModal = ({ open, onClose, owner, repo, displayStats, starsThisMonth }: StatsModalProps) => {
+export const StatsModal = ({ open, onClose, owner, repo, displayStats, starsThisMonth, contributorsCount }: StatsModalProps) => {
   const [statsTab, setStatsTab] = useState<"countries" | "cities" | "top" | "companies" | "power" | "rising">("top");
   const [geoVelocity, setGeoVelocity] = useState<GeoVelocityItem[] | null>(null);
   const [geoVelocityLoading, setGeoVelocityLoading] = useState(false);
@@ -42,7 +43,7 @@ export const StatsModal = ({ open, onClose, owner, repo, displayStats, starsThis
   }, [open, statsTab, geoVelocity, geoVelocityLoading, owner, repo]);
 
   return (
-    <Modal open={open} onClose={onClose} maxWidth="max-w-lg" innerClassName="flex flex-col max-h-[80vh]">
+    <Modal open={open} onClose={onClose} maxWidth="max-w-5xl" innerClassName="flex flex-col max-h-[85vh]">
       {/* Header */}
       <div className="flex items-center justify-between px-5 py-4 border-b border-border-subtle flex-shrink-0">
         <h2 className="text-foreground font-semibold text-sm">Stargazer Stats</h2>
@@ -84,317 +85,345 @@ export const StatsModal = ({ open, onClose, owner, repo, displayStats, starsThis
         </div>
       </div>
 
-      {/* Summary cards */}
-      <div className="grid grid-cols-6 gap-2 px-5 py-4 border-b border-border-subtle flex-shrink-0">
-        <div className="bg-background rounded-lg px-2 py-2 text-center">
-          <div className="text-xl font-bold text-foreground">
-            {displayStats.totalStars >= 1000 ? `${(displayStats.totalStars / 1000).toFixed(1)}k` : displayStats.totalStars}
+      {/* Body: 2-column layout */}
+      <div className="flex flex-1 min-h-0">
+
+        {/* Left pane: summary cards + notables */}
+        <div className="w-72 flex-shrink-0 border-r border-border-subtle flex flex-col overflow-y-auto">
+          {/* Summary cards — 2-col grid */}
+          <div className="grid grid-cols-2 gap-2 px-4 py-4">
+            <div className="bg-background rounded-lg px-2 py-2 text-center">
+              <div className="text-xl font-bold text-foreground">
+                {displayStats.totalStars >= 1000 ? `${(displayStats.totalStars / 1000).toFixed(1)}k` : displayStats.totalStars}
+              </div>
+              <div className="text-2xs text-muted uppercase tracking-wide mt-0.5">stars</div>
+              {starsThisMonth > 0 && (
+                <div className="text-2xs text-accent-green mt-0.5">+{starsThisMonth >= 1000 ? `${(starsThisMonth / 1000).toFixed(1)}k` : starsThisMonth}/mo</div>
+              )}
+            </div>
+            <div className="bg-background rounded-lg px-2 py-2 text-center">
+              <div className="text-xl font-bold text-accent-green">{displayStats.mappingRate}%</div>
+              <div className="text-2xs text-muted uppercase tracking-wide mt-0.5">mapped</div>
+            </div>
+            <div className="bg-background rounded-lg px-2 py-2 text-center">
+              <div className="text-xl font-bold text-foreground">{displayStats.countryCount}</div>
+              <div className="text-2xs text-muted uppercase tracking-wide mt-0.5">countries</div>
+            </div>
+            <div className="bg-background rounded-lg px-2 py-2 text-center">
+              <div className="text-xl font-bold text-foreground">{displayStats.topCities.length}</div>
+              <div className="text-2xs text-muted uppercase tracking-wide mt-0.5">cities</div>
+            </div>
+            <div className="bg-background rounded-lg px-2 py-2 text-center">
+              <div className="text-xl font-bold text-accent-orange">
+                {displayStats.avgFollowers >= 1000 ? `${(displayStats.avgFollowers / 1000).toFixed(1)}k` : displayStats.avgFollowers}
+              </div>
+              <div className="text-2xs text-muted uppercase tracking-wide mt-0.5">avg flw</div>
+            </div>
+            <div className="bg-background rounded-lg px-2 py-2 text-center">
+              {(() => {
+                const { botCount, enrichedUserCount } = displayStats;
+                const pct = enrichedUserCount > 0 ? Math.round((botCount / enrichedUserCount) * 100) : null;
+                return (
+                  <>
+                    <div className={`text-xl font-bold ${pct !== null && pct > 20 ? "text-accent-red" : "text-muted"}`}>
+                      {pct !== null ? `${pct}%` : "—"}
+                    </div>
+                    <div className="text-2xs text-muted uppercase tracking-wide mt-0.5">suspect</div>
+                  </>
+                );
+              })()}
+            </div>
+            <div className="col-span-2 bg-background rounded-lg px-2 py-2 text-center">
+              <div className="text-xl font-bold text-foreground">
+                {contributorsCount != null
+                  ? contributorsCount >= 1000
+                    ? `${(contributorsCount / 1000).toFixed(1)}k`
+                    : contributorsCount
+                  : "—"}
+              </div>
+              <div className="text-2xs text-muted uppercase tracking-wide mt-0.5">contributors</div>
+            </div>
           </div>
-          <div className="text-2xs text-muted uppercase tracking-wide mt-0.5">stars</div>
-          {starsThisMonth > 0 && (
-            <div className="text-2xs text-accent-green mt-0.5">+{starsThisMonth >= 1000 ? `${(starsThisMonth / 1000).toFixed(1)}k` : starsThisMonth}/mo</div>
-          )}
-        </div>
-        <div className="bg-background rounded-lg px-2 py-2 text-center">
-          <div className="text-xl font-bold text-accent-green">{displayStats.mappingRate}%</div>
-          <div className="text-2xs text-muted uppercase tracking-wide mt-0.5">mapped</div>
-        </div>
-        <div className="bg-background rounded-lg px-2 py-2 text-center">
-          <div className="text-xl font-bold text-foreground">{displayStats.countryCount}</div>
-          <div className="text-2xs text-muted uppercase tracking-wide mt-0.5">countries</div>
-        </div>
-        <div className="bg-background rounded-lg px-2 py-2 text-center">
-          <div className="text-xl font-bold text-foreground">{displayStats.topCities.length}</div>
-          <div className="text-2xs text-muted uppercase tracking-wide mt-0.5">cities</div>
-        </div>
-        <div className="bg-background rounded-lg px-2 py-2 text-center">
-          <div className="text-xl font-bold text-accent-orange">
-            {displayStats.avgFollowers >= 1000 ? `${(displayStats.avgFollowers / 1000).toFixed(1)}k` : displayStats.avgFollowers}
-          </div>
-          <div className="text-2xs text-muted uppercase tracking-wide mt-0.5">avg flw</div>
-        </div>
-        <div className="bg-background rounded-lg px-2 py-2 text-center">
-          {(() => {
-            const { botCount, enrichedUserCount } = displayStats;
-            const pct = enrichedUserCount > 0 ? Math.round((botCount / enrichedUserCount) * 100) : null;
-            return (
-              <>
-                <div className={`text-xl font-bold ${pct !== null && pct > 20 ? "text-accent-red" : "text-muted"}`}>
-                  {pct !== null ? `${pct}%` : "—"}
-                </div>
-                <div className="text-2xs text-muted uppercase tracking-wide mt-0.5">suspect</div>
-              </>
-            );
-          })()}
-        </div>
-      </div>
 
-      {/* Notable stargazers — top 5 by followers, visible without clicking Top Stars tab */}
-      {displayStats.topUsers.length > 0 && (
-        <div className="flex items-center gap-2.5 px-5 py-2.5 border-b border-border-subtle flex-shrink-0">
-          <span className="text-2xs text-muted uppercase tracking-wide flex-shrink-0">Notables</span>
-          <div className="flex items-center gap-2 flex-1 overflow-hidden">
-            {displayStats.topUsers.slice(0, 5).map((u) => (
-              <a
-                key={u.login}
-                href={`/profile/${u.login}`}
-                title={`@${u.login} (${u.followers.toLocaleString()} followers)`}
-                aria-label={`@${u.login}, ${u.followers.toLocaleString()} followers`}
-                className="flex items-center gap-1 hover:opacity-75 transition-opacity flex-shrink-0"
-              >
-                {u.avatarUrl
-                  ? <NextImage src={u.avatarUrl} alt="" width={20} height={20} sizes="20px" className="w-5 h-5 rounded-full ring-1 ring-border" />
-                  : <div className="w-5 h-5 rounded-full bg-surface-alt ring-1 ring-border flex-shrink-0" />
-                }
-                <span className="text-2xs text-muted-subtle tabular-nums" aria-hidden="true">
-                  {u.followers >= 1000 ? `${(u.followers / 1000).toFixed(1)}k` : u.followers}
-                </span>
-              </a>
-            ))}
-          </div>
-          <button
-            onClick={() => { setStatsTab("top"); setStatsFilter(""); }}
-            className="text-2xs text-accent-blue hover:underline flex-shrink-0"
-          >
-            Top {displayStats.topUsers.length} →
-          </button>
-        </div>
-      )}
-
-      {/* Tabs */}
-      <div role="tablist" aria-label="Stats view" className="flex border-b border-border-subtle flex-shrink-0">
-        {(["top", "countries", "cities", "companies", "power", "rising"] as const).map((tab, idx, arr) => (
-          <button
-            key={tab}
-            role="tab"
-            id={`stats-tab-${tab}`}
-            aria-selected={statsTab === tab}
-            aria-controls={`stats-panel-${tab}`}
-            tabIndex={statsTab === tab ? 0 : -1}
-            onClick={() => { setStatsTab(tab); setStatsFilter(""); }}
-            onKeyDown={(e) => {
-              if (e.key === "ArrowRight") { const next = arr[(idx + 1) % arr.length]; setStatsTab(next); setStatsFilter(""); }
-              if (e.key === "ArrowLeft") { const prev = arr[(idx - 1 + arr.length) % arr.length]; setStatsTab(prev); setStatsFilter(""); }
-            }}
-            className={`flex-1 py-2.5 text-xs font-medium transition-colors ${
-              statsTab === tab
-                ? "text-accent-blue border-b-2 border-accent-blue -mb-px"
-                : "text-muted hover:text-foreground"
-            }`}
-          >
-            {tab === "top" ? "Top Stars" : tab === "countries" ? "Countries" : tab === "cities" ? "Cities" : tab === "companies" ? "Companies" : tab === "power" ? <><span aria-hidden="true">⚡</span> Power</> : <><span aria-hidden="true">📈</span> Rising</>}
-          </button>
-        ))}
-      </div>
-
-      {/* Filter input for countries/cities/companies */}
-      {(statsTab === "countries" || statsTab === "cities" || statsTab === "companies") && (
-        <div className="px-5 pt-3 flex-shrink-0">
-          <input
-            value={statsFilter}
-            onChange={(e) => setStatsFilter(e.target.value)}
-            placeholder={`Filter ${statsTab}…`}
-            aria-label={`Filter ${statsTab}`}
-            className="w-full bg-background border border-border rounded-lg px-3 py-1.5 text-xs text-foreground placeholder-muted-subtle focus:outline-none focus:border-accent-blue"
-          />
-        </div>
-      )}
-
-      {/* List — tabpanel */}
-      <div
-        role="tabpanel"
-        id={`stats-panel-${statsTab}`}
-        aria-labelledby={`stats-tab-${statsTab}`}
-        className="overflow-y-auto flex-1 px-5 py-3"
-      >
-        {statsTab === "top" && (
-          <div>
-            {/* Sort toggle */}
-            <div className="flex items-center gap-1 mb-3">
-              <span id="stats-sort-label" className="text-muted-subtle text-2xs uppercase tracking-wide mr-1">Sort:</span>
-              <div role="radiogroup" aria-labelledby="stats-sort-label" className="flex gap-1">
-                {(["followers", "repos"] as const).map((s) => (
-                  <button
-                    key={s}
-                    role="radio"
-                    aria-checked={statsTopSort === s}
-                    onClick={() => setStatsTopSort(s)}
-                    className={`px-2 py-0.5 rounded text-2xs font-medium transition-colors ${
-                      statsTopSort === s
-                        ? "bg-accent-blue/20 text-accent-blue"
-                        : "text-muted hover:text-foreground"
-                    }`}
+          {/* Notables — vertical list */}
+          {displayStats.topUsers.length > 0 && (
+            <div className="border-t border-border-subtle px-4 py-3 flex flex-col flex-1">
+              <div className="flex items-center justify-between mb-2.5">
+                <span className="text-2xs text-muted uppercase tracking-wide">Notables</span>
+                <button
+                  onClick={() => { setStatsTab("top"); setStatsFilter(""); }}
+                  className="text-2xs text-accent-blue hover:underline"
+                >
+                  Top {displayStats.topUsers.length} →
+                </button>
+              </div>
+              <div className="space-y-2">
+                {displayStats.topUsers.slice(0, 10).map((u) => (
+                  <a
+                    key={u.login}
+                    href={`/profile/${u.login}`}
+                    title={`@${u.login} (${u.followers.toLocaleString()} followers)`}
+                    aria-label={`@${u.login}, ${u.followers.toLocaleString()} followers`}
+                    className="flex items-center gap-2 hover:opacity-75 transition-opacity"
                   >
-                    {s === "followers" ? "Followers" : "Public repos"}
-                  </button>
+                    {u.avatarUrl
+                      ? <NextImage src={u.avatarUrl} alt="" width={24} height={24} sizes="24px" className="w-6 h-6 rounded-full ring-1 ring-border flex-shrink-0" />
+                      : <div className="w-6 h-6 rounded-full bg-surface-alt ring-1 ring-border flex-shrink-0" />
+                    }
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs text-accent-blue truncate">@{u.login}</div>
+                      {u.name && u.name !== u.login && (
+                        <div className="text-2xs text-muted-subtle truncate">{u.name}</div>
+                      )}
+                    </div>
+                    <span className="text-2xs text-muted tabular-nums flex-shrink-0">
+                      {u.followers >= 1000 ? `${(u.followers / 1000).toFixed(1)}k` : u.followers}
+                    </span>
+                  </a>
                 ))}
               </div>
             </div>
-            <div className="space-y-2.5">
-              {[...displayStats.topUsers]
-                .sort((a, b) => statsTopSort === "followers" ? b.followers - a.followers : b.publicRepos - a.publicRepos)
-                .map((u, i) => (
-                <div key={u.login} className="flex items-center gap-3 py-0.5">
-                  <span className="text-muted-subtle text-xs w-5 text-right flex-shrink-0">{i + 1}</span>
-                  {u.avatarUrl
-                    ? <NextImage src={u.avatarUrl} alt="" width={32} height={32} sizes="32px" className="w-8 h-8 rounded-full flex-shrink-0 ring-1 ring-border" />
-                    : <div className="w-8 h-8 rounded-full bg-surface-alt flex-shrink-0 ring-1 ring-border" />
-                  }
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5 flex-wrap">
+          )}
+        </div>
+
+        {/* Right pane: tabs + content */}
+        <div className="flex-1 flex flex-col min-h-0 min-w-0">
+          {/* Tabs */}
+          <div role="tablist" aria-label="Stats view" className="flex border-b border-border-subtle flex-shrink-0">
+            {(["top", "countries", "cities", "companies", "power", "rising"] as const).map((tab, idx, arr) => (
+              <button
+                key={tab}
+                role="tab"
+                id={`stats-tab-${tab}`}
+                aria-selected={statsTab === tab}
+                aria-controls={`stats-panel-${tab}`}
+                tabIndex={statsTab === tab ? 0 : -1}
+                onClick={() => { setStatsTab(tab); setStatsFilter(""); }}
+                onKeyDown={(e) => {
+                  if (e.key === "ArrowRight") { const next = arr[(idx + 1) % arr.length]; setStatsTab(next); setStatsFilter(""); }
+                  if (e.key === "ArrowLeft") { const prev = arr[(idx - 1 + arr.length) % arr.length]; setStatsTab(prev); setStatsFilter(""); }
+                }}
+                className={`flex-1 py-2.5 text-xs font-medium transition-colors ${
+                  statsTab === tab
+                    ? "text-accent-blue border-b-2 border-accent-blue -mb-px"
+                    : "text-muted hover:text-foreground"
+                }`}
+              >
+                {tab === "top" ? "Top Stars" : tab === "countries" ? "Countries" : tab === "cities" ? "Cities" : tab === "companies" ? "Companies" : tab === "power" ? <><span aria-hidden="true">⚡</span> Power</> : <><span aria-hidden="true">📈</span> Rising</>}
+              </button>
+            ))}
+          </div>
+
+          {/* Filter input for countries/cities/companies */}
+          {(statsTab === "countries" || statsTab === "cities" || statsTab === "companies") && (
+            <div className="px-5 pt-3 flex-shrink-0">
+              <input
+                value={statsFilter}
+                onChange={(e) => setStatsFilter(e.target.value)}
+                placeholder={`Filter ${statsTab}…`}
+                aria-label={`Filter ${statsTab}`}
+                className="w-full bg-background border border-border rounded-lg px-3 py-1.5 text-xs text-foreground placeholder-muted-subtle focus:outline-none focus:border-accent-blue"
+              />
+            </div>
+          )}
+
+          {/* List — tabpanel */}
+          <div
+            role="tabpanel"
+            id={`stats-panel-${statsTab}`}
+            aria-labelledby={`stats-tab-${statsTab}`}
+            className="overflow-y-auto flex-1 px-5 py-3"
+          >
+            {statsTab === "top" && (
+              <div>
+                {/* Sort toggle */}
+                <div className="flex items-center gap-1 mb-3">
+                  <span id="stats-sort-label" className="text-muted-subtle text-2xs uppercase tracking-wide mr-1">Sort:</span>
+                  <div role="radiogroup" aria-labelledby="stats-sort-label" className="flex gap-1">
+                    {(["followers", "repos"] as const).map((s) => (
+                      <button
+                        key={s}
+                        role="radio"
+                        aria-checked={statsTopSort === s}
+                        onClick={() => setStatsTopSort(s)}
+                        className={`px-2 py-0.5 rounded text-2xs font-medium transition-colors ${
+                          statsTopSort === s
+                            ? "bg-accent-blue/20 text-accent-blue"
+                            : "text-muted hover:text-foreground"
+                        }`}
+                      >
+                        {s === "followers" ? "Followers" : "Public repos"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="space-y-2.5">
+                  {[...displayStats.topUsers]
+                    .sort((a, b) => statsTopSort === "followers" ? b.followers - a.followers : b.publicRepos - a.publicRepos)
+                    .map((u, i) => (
+                    <div key={u.login} className="flex items-center gap-3 py-0.5">
+                      <span className="text-muted-subtle text-xs w-5 text-right flex-shrink-0">{i + 1}</span>
+                      {u.avatarUrl
+                        ? <NextImage src={u.avatarUrl} alt="" width={32} height={32} sizes="32px" className="w-8 h-8 rounded-full flex-shrink-0 ring-1 ring-border" />
+                        : <div className="w-8 h-8 rounded-full bg-surface-alt flex-shrink-0 ring-1 ring-border" />
+                      }
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <a
+                            href={`/profile/${u.login}`}
+                            className="text-accent-blue text-xs font-medium hover:underline"
+                          >
+                            @{u.login}
+                          </a>
+                          {u.company && (
+                            <span className="text-2xs text-muted bg-surface-alt border border-border-subtle rounded px-1.5 py-px truncate max-w-24">
+                              {u.company.replace(/^@/, "")}
+                            </span>
+                          )}
+                        </div>
+                        {u.name && u.name !== u.login && (
+                          <div className="text-muted-subtle text-2xs truncate">{u.name}</div>
+                        )}
+                        {!u.name && u.location && (
+                          <div className="text-muted-subtle text-2xs truncate">{u.location}</div>
+                        )}
+                      </div>
+                      {statsTopSort === "repos" && u.publicRepos > 0 ? (
+                        <a
+                          href={`https://github.com/${u.login}?tab=repositories`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-accent-blue text-xs flex-shrink-0 tabular-nums hover:underline"
+                          title="View public repos"
+                        >
+                          <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor" className="inline mr-1 mb-0.5"><path d="M2 2.5A2.5 2.5 0 0 1 4.5 0h8.75a.75.75 0 0 1 .75.75v12.5a.75.75 0 0 1-.75.75h-2.5a.75.75 0 0 1 0-1.5h1.75v-2h-8a1 1 0 0 0-.714 1.7.75.75 0 1 1-1.072 1.05A2.495 2.495 0 0 1 2 11.5Zm10.5-1h-8a1 1 0 0 0-1 1v6.708A2.486 2.486 0 0 1 4.5 9h8Z"/></svg>
+                          {u.publicRepos.toLocaleString()}
+                        </a>
+                      ) : (
+                        <span className="text-muted text-xs flex-shrink-0 tabular-nums">
+                          <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor" className="inline mr-1 mb-0.5 text-muted"><path d="M3 8a1 1 0 1 1 0-2 1 1 0 0 1 0 2Zm3 0a1 1 0 1 1 0-2 1 1 0 0 1 0 2Zm3 0a1 1 0 1 1 0-2 1 1 0 0 1 0 2ZM1.5 3A1.5 1.5 0 0 0 0 4.5v7A1.5 1.5 0 0 0 1.5 13h13a1.5 1.5 0 0 0 1.5-1.5v-7A1.5 1.5 0 0 0 14.5 3Z"/></svg>
+                          {u.followers.toLocaleString()}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {statsTab === "countries" && (
+              <StatsList
+                items={displayStats.topCountries.filter(([name]) => !statsFilter || name.toLowerCase().includes(statsFilter.toLowerCase()))}
+                max={displayStats.topCountries[0]?.[1] ?? 1}
+              />
+            )}
+            {statsTab === "cities" && (
+              <StatsList
+                items={displayStats.topCities.filter(([name]) => !statsFilter || name.toLowerCase().includes(statsFilter.toLowerCase()))}
+                max={displayStats.topCities[0]?.[1] ?? 1}
+              />
+            )}
+            {statsTab === "companies" && (
+              <div className="space-y-2">
+                {displayStats.topCompanies
+                  .filter(([company]) => !statsFilter || company.toLowerCase().includes(statsFilter.toLowerCase()))
+                  .map(([company, count], idx) => (
+                  <div key={company} className="flex items-center gap-3">
+                    <div className="text-muted-subtle text-xs w-4 text-right flex-shrink-0">{idx + 1}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-foreground text-xs truncate">{company}</span>
+                        <span className="text-muted text-xs ml-2 flex-shrink-0">{count}</span>
+                      </div>
+                      <div className="h-1 bg-surface-alt rounded-full">
+                        <div className="h-1 bg-accent-blue rounded-full" style={{ width: `${(count / (displayStats.topCompanies[0]?.[1] ?? 1)) * 100}%` }} />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {displayStats.topCompanies.length === 0 && (
+                  <div className="text-center text-muted-subtle text-xs py-8">No company data available</div>
+                )}
+              </div>
+            )}
+            {statsTab === "rising" && (
+              <div>
+                {geoVelocityLoading && (
+                  <div className="text-center text-muted-subtle text-xs py-8">Loading…</div>
+                )}
+                {!geoVelocityLoading && geoVelocity !== null && geoVelocity.length === 0 && (
+                  <div className="text-center text-muted-subtle text-xs py-8">
+                    <div className="text-2xl mb-2" aria-hidden="true">📈</div>
+                    <div>Not enough timestamp data yet.</div>
+                    <div className="mt-1 text-2xs">Needs repos with starredAt data from the last 90 days.</div>
+                  </div>
+                )}
+                {!geoVelocityLoading && geoVelocity !== null && geoVelocity.length > 0 && (
+                  <div className="space-y-2.5">
+                    <p className="text-2xs text-muted-subtle mb-3">
+                      New stars in the last 30 days vs. the prior 60-day rate. Shows which countries are discovering this repo.
+                    </p>
+                    {geoVelocity.map((item) => {
+                      const trendColor =
+                        item.trend === "rising" ? "text-accent-green" :
+                        item.trend === "new"     ? "text-accent-blue" :
+                        item.trend === "declining" ? "text-accent-red" : "text-muted";
+                      const trendLabel =
+                        item.trend === "rising"   ? `↑ ${item.ratio}×` :
+                        item.trend === "new"      ? "✦ new" :
+                        item.trend === "declining" ? "↓ slowing" : "→ stable";
+                      return (
+                        <div key={item.country} className="flex items-center gap-3">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5 mb-0.5">
+                              <span className="text-xs text-foreground font-medium truncate">{item.country}</span>
+                              <span className={`text-2xs font-semibold flex-shrink-0 ${trendColor}`}>{trendLabel}</span>
+                            </div>
+                            <div className="flex items-center gap-1 text-2xs text-muted-subtle">
+                              <span>{item.stars30d} this month</span>
+                              <span>·</span>
+                              <span>{item.total.toLocaleString()} total</span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+            {statsTab === "power" && (
+              <div className="space-y-2.5">
+                {displayStats.powerStargazers.length === 0 && (
+                  <div className="text-center text-muted-subtle text-xs py-8">
+                    <div className="text-2xl mb-2" aria-hidden="true">⚡</div>
+                    <div>No power stargazers yet.</div>
+                    <div className="mt-1 text-2xs">Appears after multiple repos are scanned.</div>
+                  </div>
+                )}
+                {displayStats.powerStargazers.map((u, i) => (
+                  <div key={u.login} className="flex items-center gap-3 py-0.5">
+                    <span className="text-muted-subtle text-xs w-5 text-right flex-shrink-0">{i + 1}</span>
+                    <NextImage src={u.avatarUrl} alt="" width={32} height={32} sizes="32px" className="w-8 h-8 rounded-full flex-shrink-0 ring-1 ring-border" />
+                    <div className="flex-1 min-w-0">
                       <a
                         href={`/profile/${u.login}`}
                         className="text-accent-blue text-xs font-medium hover:underline"
                       >
                         @{u.login}
                       </a>
-                      {u.company && (
-                        <span className="text-2xs text-muted bg-surface-alt border border-border-subtle rounded px-1.5 py-px truncate max-w-24">
-                          {u.company.replace(/^@/, "")}
-                        </span>
+                      {u.name && u.name !== u.login && (
+                        <div className="text-muted-subtle text-2xs truncate">{u.name}</div>
                       )}
                     </div>
-                    {u.name && u.name !== u.login && (
-                      <div className="text-muted-subtle text-2xs truncate">{u.name}</div>
-                    )}
-                    {!u.name && u.location && (
-                      <div className="text-muted-subtle text-2xs truncate">{u.location}</div>
-                    )}
-                  </div>
-                  {statsTopSort === "repos" && u.publicRepos > 0 ? (
-                    <a
-                      href={`https://github.com/${u.login}?tab=repositories`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-accent-blue text-xs flex-shrink-0 tabular-nums hover:underline"
-                      title="View public repos"
-                    >
-                      <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor" className="inline mr-1 mb-0.5"><path d="M2 2.5A2.5 2.5 0 0 1 4.5 0h8.75a.75.75 0 0 1 .75.75v12.5a.75.75 0 0 1-.75.75h-2.5a.75.75 0 0 1 0-1.5h1.75v-2h-8a1 1 0 0 0-.714 1.7.75.75 0 1 1-1.072 1.05A2.495 2.495 0 0 1 2 11.5Zm10.5-1h-8a1 1 0 0 0-1 1v6.708A2.486 2.486 0 0 1 4.5 9h8Z"/></svg>
-                      {u.publicRepos.toLocaleString()}
-                    </a>
-                  ) : (
-                    <span className="text-muted text-xs flex-shrink-0 tabular-nums">
-                      <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor" className="inline mr-1 mb-0.5 text-muted"><path d="M3 8a1 1 0 1 1 0-2 1 1 0 0 1 0 2Zm3 0a1 1 0 1 1 0-2 1 1 0 0 1 0 2Zm3 0a1 1 0 1 1 0-2 1 1 0 0 1 0 2ZM1.5 3A1.5 1.5 0 0 0 0 4.5v7A1.5 1.5 0 0 0 1.5 13h13a1.5 1.5 0 0 0 1.5-1.5v-7A1.5 1.5 0 0 0 14.5 3Z"/></svg>
-                      {u.followers.toLocaleString()}
+                    <span className="text-accent-orange text-xs flex-shrink-0 tabular-nums font-medium">
+                      {u.trackedRepos} repos
                     </span>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-        {statsTab === "countries" && (
-          <StatsList
-            items={displayStats.topCountries.filter(([name]) => !statsFilter || name.toLowerCase().includes(statsFilter.toLowerCase()))}
-            max={displayStats.topCountries[0]?.[1] ?? 1}
-          />
-        )}
-        {statsTab === "cities" && (
-          <StatsList
-            items={displayStats.topCities.filter(([name]) => !statsFilter || name.toLowerCase().includes(statsFilter.toLowerCase()))}
-            max={displayStats.topCities[0]?.[1] ?? 1}
-          />
-        )}
-        {statsTab === "companies" && (
-          <div className="space-y-2">
-            {displayStats.topCompanies
-              .filter(([company]) => !statsFilter || company.toLowerCase().includes(statsFilter.toLowerCase()))
-              .map(([company, count], idx) => (
-              <div key={company} className="flex items-center gap-3">
-                <div className="text-muted-subtle text-xs w-4 text-right flex-shrink-0">{idx + 1}</div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-foreground text-xs truncate">{company}</span>
-                    <span className="text-muted text-xs ml-2 flex-shrink-0">{count}</span>
                   </div>
-                  <div className="h-1 bg-surface-alt rounded-full">
-                    <div className="h-1 bg-accent-blue rounded-full" style={{ width: `${(count / (displayStats.topCompanies[0]?.[1] ?? 1)) * 100}%` }} />
-                  </div>
-                </div>
-              </div>
-            ))}
-            {displayStats.topCompanies.length === 0 && (
-              <div className="text-center text-muted-subtle text-xs py-8">No company data available</div>
-            )}
-          </div>
-        )}
-        {statsTab === "rising" && (
-          <div>
-            {geoVelocityLoading && (
-              <div className="text-center text-muted-subtle text-xs py-8">Loading…</div>
-            )}
-            {!geoVelocityLoading && geoVelocity !== null && geoVelocity.length === 0 && (
-              <div className="text-center text-muted-subtle text-xs py-8">
-                <div className="text-2xl mb-2" aria-hidden="true">📈</div>
-                <div>Not enough timestamp data yet.</div>
-                <div className="mt-1 text-2xs">Needs repos with starredAt data from the last 90 days.</div>
-              </div>
-            )}
-            {!geoVelocityLoading && geoVelocity !== null && geoVelocity.length > 0 && (
-              <div className="space-y-2.5">
-                <p className="text-2xs text-muted-subtle mb-3">
-                  New stars in the last 30 days vs. the prior 60-day rate. Shows which countries are discovering this repo.
-                </p>
-                {geoVelocity.map((item) => {
-                  const trendColor =
-                    item.trend === "rising" ? "text-accent-green" :
-                    item.trend === "new"     ? "text-accent-blue" :
-                    item.trend === "declining" ? "text-accent-red" : "text-muted";
-                  const trendLabel =
-                    item.trend === "rising"   ? `↑ ${item.ratio}×` :
-                    item.trend === "new"      ? "✦ new" :
-                    item.trend === "declining" ? "↓ slowing" : "→ stable";
-                  return (
-                    <div key={item.country} className="flex items-center gap-3">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5 mb-0.5">
-                          <span className="text-xs text-foreground font-medium truncate">{item.country}</span>
-                          <span className={`text-2xs font-semibold flex-shrink-0 ${trendColor}`}>{trendLabel}</span>
-                        </div>
-                        <div className="flex items-center gap-1 text-2xs text-muted-subtle">
-                          <span>{item.stars30d} this month</span>
-                          <span>·</span>
-                          <span>{item.total.toLocaleString()} total</span>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
+                ))}
               </div>
             )}
           </div>
-        )}
-        {statsTab === "power" && (
-          <div className="space-y-2.5">
-            {displayStats.powerStargazers.length === 0 && (
-              <div className="text-center text-muted-subtle text-xs py-8">
-                <div className="text-2xl mb-2" aria-hidden="true">⚡</div>
-                <div>No power stargazers yet.</div>
-                <div className="mt-1 text-2xs">Appears after multiple repos are scanned.</div>
-              </div>
-            )}
-            {displayStats.powerStargazers.map((u, i) => (
-              <div key={u.login} className="flex items-center gap-3 py-0.5">
-                <span className="text-muted-subtle text-xs w-5 text-right flex-shrink-0">{i + 1}</span>
-                <NextImage src={u.avatarUrl} alt="" width={32} height={32} sizes="32px" className="w-8 h-8 rounded-full flex-shrink-0 ring-1 ring-border" />
-                <div className="flex-1 min-w-0">
-                  <a
-                    href={`/profile/${u.login}`}
-                    className="text-accent-blue text-xs font-medium hover:underline"
-                  >
-                    @{u.login}
-                  </a>
-                  {u.name && u.name !== u.login && (
-                    <div className="text-muted-subtle text-2xs truncate">{u.name}</div>
-                  )}
-                </div>
-                <span className="text-accent-orange text-xs flex-shrink-0 tabular-nums font-medium">
-                  {u.trackedRepos} repos
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
+        </div>
       </div>
     </Modal>
   );

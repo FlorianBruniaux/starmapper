@@ -102,3 +102,30 @@ export const logError = (tag: string, err: unknown): void => {
   const name = err instanceof Error ? err.constructor.name : "Error";
   console.error(`[${tag}] ${name}: ${sanitizeError(err)}`);
 };
+
+/**
+ * Parses the total item count from a GitHub pagination Link header.
+ *
+ * GitHub uses `?per_page=1` + `rel="last"` to expose total counts without
+ * fetching all pages. Already used in refresh/route.ts and user-repos/route.ts.
+ *
+ * Returns null on any non-200 response (202 = stats computing, 403 = forbidden)
+ * so callers can treat it as "data unavailable" rather than 0.
+ */
+export const parseGitHubCountFromLink = async (res: Response): Promise<number | null> => {
+  if (!res.ok) return null;
+  const link = res.headers.get("link");
+  if (link) {
+    const match = link.match(/[?&]page=(\d+)>;\s*rel="last"/);
+    if (match) return parseInt(match[1], 10);
+    // Link header present but no "last" page → exactly 1 page of results
+    return 1;
+  }
+  // No Link header → all items fit on this page; parse the array length
+  try {
+    const items = await res.json() as unknown[];
+    return Array.isArray(items) ? items.length : null;
+  } catch {
+    return null;
+  }
+};

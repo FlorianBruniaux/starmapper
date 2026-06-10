@@ -36,11 +36,48 @@ const mockFetchOk = (body: unknown = GITHUB_PAYLOAD) =>
 const mockFetchStatus = (status: number) =>
   new Response(JSON.stringify({ message: "error" }), { status });
 
+/**
+ * Simulates the GitHub /contributors?per_page=1 response with a Link header
+ * indicating N total contributors (using pagination last page = N).
+ */
+const mockContributorsOk = (total: number) =>
+  new Response(JSON.stringify([{ login: "user1", contributions: 42 }]), {
+    status: 200,
+    headers: {
+      "Content-Type": "application/json",
+      Link: `<https://api.github.com/repos/x/y/contributors?per_page=1&page=2>; rel="next", <https://api.github.com/repos/x/y/contributors?per_page=1&page=${total}>; rel="last"`,
+    },
+  });
+
+/** Small repo — no Link header because all contributors fit on one page. */
+const mockContributorsSmall = (count: number) =>
+  new Response(JSON.stringify(Array.from({ length: count }, (_, i) => ({ login: `user${i}` }))), {
+    status: 200,
+    headers: { "Content-Type": "application/json" },
+  });
+
+/**
+ * Creates a fetch mock that dispatches by URL:
+ *   - /contributors → contribResponse (default: 42 contributors)
+ *   - anything else → repoResponse (default: GITHUB_PAYLOAD 200)
+ *
+ * This avoids ordering issues with mockResolvedValueOnce queues when
+ * individual tests override the mock for error status codes.
+ */
+const makeFetchMock = (
+  repoResponse: Response = mockFetchOk(),
+  contribResponse: Response = mockContributorsOk(42),
+) =>
+  vi.fn().mockImplementation((url: string) => {
+    if (url.includes("/contributors")) return Promise.resolve(contribResponse);
+    return Promise.resolve(repoResponse);
+  });
+
 // ─── Tests ───────────────────────────────────────────────────────────────────
 
 describe("GET /api/repo-info", () => {
   beforeEach(() => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(mockFetchOk()));
+    vi.stubGlobal("fetch", makeFetchMock());
   });
 
   // ── Input validation ───────────────────────────────────────────────────────
@@ -66,37 +103,37 @@ describe("GET /api/repo-info", () => {
 
   describe("GitHub status code mapping", () => {
     it("returns 404 when GitHub returns 404", async () => {
-      vi.mocked(fetch).mockResolvedValue(mockFetchStatus(404));
+      vi.stubGlobal("fetch", makeFetchMock(mockFetchStatus(404)));
       const res = await GET(makeReq("octocat", "hello-world"));
       expect(res.status).toBe(404);
     });
 
     it("returns 429 when GitHub returns 403 (rate limited)", async () => {
-      vi.mocked(fetch).mockResolvedValue(mockFetchStatus(403));
+      vi.stubGlobal("fetch", makeFetchMock(mockFetchStatus(403)));
       const res = await GET(makeReq("octocat", "hello-world"));
       expect(res.status).toBe(429);
     });
 
     it("returns 429 when GitHub returns 429", async () => {
-      vi.mocked(fetch).mockResolvedValue(mockFetchStatus(429));
+      vi.stubGlobal("fetch", makeFetchMock(mockFetchStatus(429)));
       const res = await GET(makeReq("octocat", "hello-world"));
       expect(res.status).toBe(429);
     });
 
     it("returns 401 when GitHub returns 401 (bad token)", async () => {
-      vi.mocked(fetch).mockResolvedValue(mockFetchStatus(401));
+      vi.stubGlobal("fetch", makeFetchMock(mockFetchStatus(401)));
       const res = await GET(makeReq("octocat", "hello-world"));
       expect(res.status).toBe(401);
     });
 
     it("returns 502 for unexpected GitHub error status", async () => {
-      vi.mocked(fetch).mockResolvedValue(mockFetchStatus(500));
+      vi.stubGlobal("fetch", makeFetchMock(mockFetchStatus(500)));
       const res = await GET(makeReq("octocat", "hello-world"));
       expect(res.status).toBe(502);
     });
 
     it("returns 502 when fetch throws (network error)", async () => {
-      vi.mocked(fetch).mockRejectedValue(new Error("ECONNREFUSED"));
+      vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("ECONNREFUSED")));
       const res = await GET(makeReq("octocat", "hello-world"));
       expect(res.status).toBe(502);
     });
@@ -120,6 +157,57 @@ describe("GET /api/repo-info", () => {
     it("includes Cache-Control header for CDN caching", async () => {
       const res = await GET(makeReq("octocat", "hello-world"));
       expect(res.headers.get("cache-control")).toContain("s-maxage=300");
+    });
+  });
+
+  // ── contributors count ─────────────────────────────────────────────────────
+
+  describe("contributorsCount", () => {
+    it("returns contributorsCount from Link header last page", async () => {
+      vi.stubGlobal("fetch", makeFetchMock(mockFetchOk(), mockContributorsOk(127)));
+      const res = await GET(makeReq("octocat", "hello-world"));
+      expect(res.status).toBe(200);
+      const json = await res.json();
+      expect(json.contributorsCount).toBe(127);
+    });
+
+    it("returns contributorsCount = array length when no Link header (small repo)", async () => {
+      vi.stubGlobal("fetch", makeFetchMock(mockFetchOk(), mockContributorsSmall(7)));
+      const res = await GET(makeReq("octocat", "hello-world"));
+      expect(res.status).toBe(200);
+      const json = await res.json();
+      expect(json.contributorsCount).toBe(7);
+    });
+
+    it("returns contributorsCount = null when contributors fetch fails (network error)", async () => {
+      // Contributors fetch rejects — repo-info must still respond with 200.
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockImplementation((url: string) => {
+          if (url.includes("/contributors")) return Promise.reject(new Error("timeout"));
+          return Promise.resolve(mockFetchOk());
+        }),
+      );
+      const res = await GET(makeReq("octocat", "hello-world"));
+      expect(res.status).toBe(200);
+      const json = await res.json();
+      expect(json.contributorsCount).toBeNull();
+    });
+
+    it("returns contributorsCount = null when GitHub returns 202 (stats computing)", async () => {
+      vi.stubGlobal("fetch", makeFetchMock(mockFetchOk(), mockFetchStatus(202)));
+      const res = await GET(makeReq("octocat", "hello-world"));
+      expect(res.status).toBe(200);
+      const json = await res.json();
+      expect(json.contributorsCount).toBeNull();
+    });
+
+    it("returns contributorsCount = null when GitHub returns 403 on contributors endpoint", async () => {
+      vi.stubGlobal("fetch", makeFetchMock(mockFetchOk(), mockFetchStatus(403)));
+      const res = await GET(makeReq("octocat", "hello-world"));
+      expect(res.status).toBe(200);
+      const json = await res.json();
+      expect(json.contributorsCount).toBeNull();
     });
   });
 });

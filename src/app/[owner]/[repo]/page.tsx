@@ -13,6 +13,7 @@ type RepoInfo = {
   avatar: string | null;
   forksCount: number;
   watchersCount: number;
+  contributorsCount: number | null;
 };
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://starmapper.bruniaux.com";

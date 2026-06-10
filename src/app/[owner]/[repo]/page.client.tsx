@@ -45,6 +45,7 @@ type RepoInfo = {
   avatar: string | null;
   forksCount: number;
   watchersCount: number;
+  contributorsCount: number | null;
 };
 
 type Props = {
@@ -372,10 +373,14 @@ export default function MapPageClient({ owner, repo, initialRepoInfo }: Props) {
   const newStarsCount = repoInfo && total > 0 ? Math.max(0, repoInfo.stars - total) : 0;
   const displayStats = stats ?? serverStats;
 
+  // Captured once on mount: Date.now() is impure, so it cannot run inside the useMemo
+  // render computation (react-hooks/purity). A 30-day window does not shift meaningfully
+  // within a single session, so a mount-time "now" is fine.
+  const [nowMs] = useState(() => Date.now());
   const starsThisMonth = useMemo(() => {
-    const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    const cutoff = nowMs - 30 * 24 * 60 * 60 * 1000;
     return points.filter((p) => p.starredAt && new Date(p.starredAt).getTime() >= cutoff).length;
-  }, [points]);
+  }, [points, nowMs]);
 
   const buildFilteredUrl = useCallback((): string => {
     const params = new URLSearchParams();
@@ -751,6 +756,7 @@ export default function MapPageClient({ owner, repo, initialRepoInfo }: Props) {
           repo={repo}
           displayStats={displayStats}
           starsThisMonth={starsThisMonth}
+          contributorsCount={repoInfo?.contributorsCount ?? null}
         />
       )}
     </main>
