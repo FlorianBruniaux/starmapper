@@ -23,6 +23,7 @@ export type McpOrganicScoreResponse = {
     watcherRatio: number | null;
     zeroFollowerPct: number | null;
     releasesCount: number | null;
+    contributorsCount: number | null;
     sampleSize: number;
   };
   weights: {
@@ -30,6 +31,7 @@ export type McpOrganicScoreResponse = {
     watcher_ratio: number;
     zero_follower_pct: number;
     releases_count: number;
+    contributors_count: number;
   };
   activeSignals: string[];
   reasons: string[];
@@ -51,6 +53,7 @@ export const GET = async (
         organicScore: true, organicTier: true, organicComputedAt: true,
         forksCount: true, watchersCount: true, totalCount: true,
         releasesCount: true,
+        contributorsCount: true,
       },
     });
 
@@ -82,6 +85,7 @@ export const GET = async (
       zeroFollowerCount,
       sampleSize,
       releasesCount:     row.releasesCount ?? null,
+      contributorsCount: row.contributorsCount ?? null,
     });
 
     const response: McpOrganicScoreResponse = {

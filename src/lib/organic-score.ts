@@ -7,6 +7,8 @@
 // Weights and paliers calibrated empirically on 2026-04-21 — see docs/organic-score-calibration.md
 // 2026-05-06: added releases_count signal (20%) — active maintenance proxy. Redistributed:
 //   fork 40%→30%, ZF 55%→45%, releases 0%→20%. CLI tools with high release cadence no longer penalised.
+// 2026-06-10: added contributors_count signal (10%) — community breadth proxy. Redistributed:
+//   fork 30%→25%, releases 20%→15%, contributors 0%→10%. Gated at ≥5000 stars (same as fork_ratio).
 
 export type OrganicTier = "healthy" | "moderate" | "suspicious" | "insufficient";
 
@@ -17,6 +19,7 @@ export type OrganicSignals = {
   zeroFollowerCount: number | null;  // users with followers=0, from github_user WHERE dataVersion >= 1
   sampleSize: number | null;         // enriched users in our DB who starred this repo
   releasesCount?: number | null;     // total published releases — proxy for active maintenance
+  contributorsCount?: number | null; // total contributors — community breadth proxy
 };
 
 export type OrganicResult = {
@@ -27,6 +30,7 @@ export type OrganicResult = {
     watcherRatio: number | null;
     zeroFollowerPct: number | null;
     releasesCount: number | null;
+    contributorsCount: number | null;
     sampleSize: number;
   };
   activeSignals: string[];
@@ -34,10 +38,11 @@ export type OrganicResult = {
 };
 
 // Calibrated paliers — see docs/organic-score-calibration.md
-// Fork/star (w=30%): ≥0.10 → 100, 0.07 → 50, ≤0.02 → 0
+// Fork/star (w=25%): ≥0.10 → 100, 0.07 → 50, ≤0.02 → 0
 // Watcher/star (w=5%): ≥0.005 → 100, 0.001 → 50, ≤0.0001 → 0
 // Zero-follower % (w=45%): ≤10 → 100, 30 → 50, ≥60 → 0
-// Releases count (w=20%): ≥100 → 100, 20 → 60, 5 → 30, 1 → ~6. 0 = N/A (excluded — courses/scripts are not libraries)
+// Releases count (w=15%): ≥100 → 100, 20 → 60, 5 → 30, 1 → ~6. 0 = N/A (excluded — courses/scripts are not libraries)
+// Contributors/1k stars (w=10%): ≥3.0 → 100, 2.0 → 80, 1.0 → 50, 0.5 → 25, ≤0.2 → 0. Gated at ≥5000 stars.
 
 const lerp = (v: number, lo: number, hi: number, outLo: number, outHi: number): number =>
   outLo + ((v - lo) / (hi - lo)) * (outHi - outLo);
@@ -73,16 +78,29 @@ const normReleasesCount = (v: number): number => {
   return clamp(lerp(v, 0, 5, 0, 30));
 };
 
-const WEIGHT_FORK     = 30;  // reduced from 40 — makes room for releases signal
-const WEIGHT_WATCH    = 5;
-const WEIGHT_ZF       = 45;  // reduced from 55 — still strongest discriminator
-const WEIGHT_RELEASES = 20;  // new — active maintenance proxy, corrects CLI tool bias
+// ratio = contributorsCount / starsCount * 1000 (contributors per 1000 stars)
+const normContributorsRatio = (count: number, stars: number): number => {
+  const ratio = (count / stars) * 1000;
+  if (ratio >= 3.0) return 100;
+  if (ratio <= 0.2) return 0;
+  if (ratio >= 2.0) return clamp(lerp(ratio, 2.0, 3.0, 80, 100));
+  if (ratio >= 1.0) return clamp(lerp(ratio, 1.0, 2.0, 50, 80));
+  if (ratio >= 0.5) return clamp(lerp(ratio, 0.5, 1.0, 25, 50));
+  return clamp(lerp(ratio, 0.2, 0.5, 0, 25));
+};
+
+const WEIGHT_FORK         = 25;  // reduced from 30 — makes room for contributors signal
+const WEIGHT_WATCH        = 5;
+const WEIGHT_ZF           = 45;  // still strongest discriminator
+const WEIGHT_RELEASES     = 15;  // reduced from 20 — makes room for contributors signal
+const WEIGHT_CONTRIBUTORS = 10;  // new — community breadth proxy, gated at ≥5000 stars
 
 export const ORGANIC_WEIGHTS = {
-  fork_ratio:       WEIGHT_FORK,
-  watcher_ratio:    WEIGHT_WATCH,
+  fork_ratio:        WEIGHT_FORK,
+  watcher_ratio:     WEIGHT_WATCH,
   zero_follower_pct: WEIGHT_ZF,
-  releases_count:   WEIGHT_RELEASES,
+  releases_count:    WEIGHT_RELEASES,
+  contributors_count: WEIGHT_CONTRIBUTORS,
 } as const;
 
 export const ORGANIC_CORPUS_ACCURACY = 85.7;
@@ -92,13 +110,13 @@ const GATE_FORK_MIN_STARS = 5000;
 const GATE_ZF_MIN_SAMPLE  = 30;
 
 export const computeOrganicScore = (input: OrganicSignals): OrganicResult => {
-  const { starsCount, forksCount, watchersCount, zeroFollowerCount, sampleSize, releasesCount = null } = input;
+  const { starsCount, forksCount, watchersCount, zeroFollowerCount, sampleSize, releasesCount = null, contributorsCount = null } = input;
 
   if (starsCount < GATE_MIN_STARS) {
     return {
       score: null,
       tier: "insufficient",
-      signals: { forkRatio: null, watcherRatio: null, zeroFollowerPct: null, releasesCount: null, sampleSize: 0 },
+      signals: { forkRatio: null, watcherRatio: null, zeroFollowerPct: null, releasesCount: null, contributorsCount: null, sampleSize: 0 },
       activeSignals: [],
       reasons: [starsCount === 0 ? "Repo has 0 stars" : `Repo too small for reliable signals (${starsCount.toLocaleString()} stars < ${GATE_MIN_STARS.toLocaleString()})`],
     };
@@ -111,11 +129,13 @@ export const computeOrganicScore = (input: OrganicSignals): OrganicResult => {
       ? (zeroFollowerCount / sampleSize) * 100
       : null;
 
-  const forkActive     = starsCount >= GATE_FORK_MIN_STARS;
-  const watchActive    = true;
-  const zfActive       = zeroFollowerPct !== null;
+  const forkActive         = starsCount >= GATE_FORK_MIN_STARS;
+  const watchActive        = true;
+  const zfActive           = zeroFollowerPct !== null;
   // releasesCount === 0 is excluded: absence of releases is neutral (courses, scripts, one-shot tools)
-  const releasesActive = releasesCount !== null && releasesCount > 0;
+  const releasesActive     = releasesCount !== null && releasesCount > 0;
+  // contributors signal gated at same threshold as fork — too noisy on small repos
+  const contribActive      = contributorsCount !== null && contributorsCount > 0 && starsCount >= GATE_FORK_MIN_STARS;
 
   type WeightedPair = [number, number]; // [normalizedScore, weight]
   const active: WeightedPair[] = [];
@@ -152,11 +172,18 @@ export const computeOrganicScore = (input: OrganicSignals): OrganicResult => {
     reasons.push("Releases signal excluded (0 releases; could be a course, script, or one-shot project)");
   }
 
+  if (contribActive) {
+    active.push([normContributorsRatio(contributorsCount!, starsCount), WEIGHT_CONTRIBUTORS]);
+    activeSignals.push("contributors_count");
+  } else if (contributorsCount !== null && starsCount < GATE_FORK_MIN_STARS) {
+    reasons.push(`Contributors signal gated (stars ${starsCount.toLocaleString()} < ${GATE_FORK_MIN_STARS.toLocaleString()})`);
+  }
+
   if (active.length === 0) {
     return {
       score: null,
       tier: "insufficient",
-      signals: { forkRatio: null, watcherRatio: null, zeroFollowerPct: null, releasesCount: null, sampleSize: 0 },
+      signals: { forkRatio: null, watcherRatio: null, zeroFollowerPct: null, releasesCount: null, contributorsCount: null, sampleSize: 0 },
       activeSignals: [],
       reasons: [...reasons, "No signals available"],
     };
@@ -175,11 +202,12 @@ export const computeOrganicScore = (input: OrganicSignals): OrganicResult => {
     score,
     tier,
     signals: {
-      forkRatio:       forkActive     ? forkRatio        : null,
-      watcherRatio:    watchActive    ? watcherRatio      : null,
-      zeroFollowerPct: zfActive       ? zeroFollowerPct! : null,
-      releasesCount:   releasesActive ? releasesCount!    : null,
-      sampleSize:      sampleSize ?? 0,
+      forkRatio:        forkActive     ? forkRatio         : null,
+      watcherRatio:     watchActive    ? watcherRatio       : null,
+      zeroFollowerPct:  zfActive       ? zeroFollowerPct!  : null,
+      releasesCount:    releasesActive ? releasesCount!     : null,
+      contributorsCount: contribActive ? contributorsCount! : null,
+      sampleSize:       sampleSize ?? 0,
     },
     activeSignals,
     reasons,

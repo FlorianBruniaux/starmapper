@@ -36,7 +36,7 @@ export const POST = defineRoute(badgeUpdateSchema, async (req: NextRequest, body
     const shouldComputeOrganic = ORGANIC_ENABLED && forks !== null && watchers !== null && body.totalCount > 0;
 
     const [existing, sample] = await Promise.all([
-      prisma.badgeCache.findUnique({ where: { owner_repo: key }, select: { totalCount: true } }),
+      prisma.badgeCache.findUnique({ where: { owner_repo: key }, select: { totalCount: true, releasesCount: true, contributorsCount: true } }),
       shouldComputeOrganic
         ? prisma.$queryRaw<Array<{ zero_count: bigint; sample_size: bigint }>>`
             SELECT
@@ -70,7 +70,8 @@ export const POST = defineRoute(badgeUpdateSchema, async (req: NextRequest, body
         watchersCount: watchers,
         zeroFollowerCount: sample ? Number(sample.zero_count) : null,
         sampleSize: sample ? Number(sample.sample_size) : null,
-        releasesCount: null,
+        releasesCount: existing?.releasesCount ?? null,
+        contributorsCount: existing?.contributorsCount ?? null,
       });
       organicScore = result.score;
       organicTier = result.tier;

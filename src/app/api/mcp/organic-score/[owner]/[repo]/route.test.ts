@@ -84,7 +84,7 @@ describe("GET /api/mcp/organic-score/[owner]/[repo]", () => {
     expect(body.signals.watcherRatio).toBeCloseTo(0.01875); // 150 / 8000
     expect(body.signals.zeroFollowerPct).toBeCloseTo(20);  // 320 / 1600 * 100
     expect(body.signals.sampleSize).toBe(1600);
-    expect(body.weights).toEqual({ fork_ratio: 30, watcher_ratio: 5, zero_follower_pct: 45, releases_count: 20 });
+    expect(body.weights).toEqual({ fork_ratio: 25, watcher_ratio: 5, zero_follower_pct: 45, releases_count: 15, contributors_count: 10 });
     expect(Array.isArray(body.activeSignals)).toBe(true);
   });
 

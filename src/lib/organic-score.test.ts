@@ -176,6 +176,64 @@ describe("computeOrganicScore", () => {
     expect(withZero.reasons.some(r => r.includes("0 releases"))).toBe(true);
   });
 
+  // ── Contributors signal ───────────────────────────────────────────────────
+
+  it("large repo with high contributors count — signal active and raises score", () => {
+    const withContrib = computeOrganicScore({
+      starsCount:        50_000,
+      forksCount:        3_000,    // fork/★ = 0.060 — borderline
+      watchersCount:     200,
+      zeroFollowerCount: null,
+      sampleSize:        null,
+      contributorsCount: 150,      // 150/50k * 1000 = 3.0/1k → norm = 100
+    });
+    const withoutContrib = computeOrganicScore({
+      starsCount:        50_000,
+      forksCount:        3_000,
+      watchersCount:     200,
+      zeroFollowerCount: null,
+      sampleSize:        null,
+      contributorsCount: null,
+    });
+    expect(withContrib.activeSignals).toContain("contributors_count");
+    expect(withContrib.score!).toBeGreaterThan(withoutContrib.score!);
+  });
+
+  it("repo with < 5000 stars — contributors signal gated even with data", () => {
+    const result = computeOrganicScore({
+      starsCount:        1_000,
+      forksCount:        50,
+      watchersCount:     10,
+      zeroFollowerCount: null,
+      sampleSize:        null,
+      contributorsCount: 200,
+    });
+    expect(result.activeSignals).not.toContain("contributors_count");
+    expect(result.reasons.some(r => r.includes("Contributors signal gated"))).toBe(true);
+  });
+
+  it("contributors null or 0 — signal excluded, no penalty, same score as null", () => {
+    const withNull = computeOrganicScore({
+      starsCount:        10_000,
+      forksCount:        500,
+      watchersCount:     100,
+      zeroFollowerCount: null,
+      sampleSize:        null,
+      contributorsCount: null,
+    });
+    const withZero = computeOrganicScore({
+      starsCount:        10_000,
+      forksCount:        500,
+      watchersCount:     100,
+      zeroFollowerCount: null,
+      sampleSize:        null,
+      contributorsCount: 0,
+    });
+    expect(withNull.activeSignals).not.toContain("contributors_count");
+    expect(withZero.activeSignals).not.toContain("contributors_count");
+    expect(withNull.score).toEqual(withZero.score);
+  });
+
   it("large sample with healthy zero-follower % raises score", () => {
     const low = computeOrganicScore({
       starsCount:         50_000,

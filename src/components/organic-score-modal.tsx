@@ -55,8 +55,18 @@ const normReleasesCount = (v: number): number => {
   return clamp(lerp(v, 0, 5, 0, 30));
 };
 
+const normContributorsRatio = (count: number, stars: number): number => {
+  const ratio = (count / stars) * 1000;
+  if (ratio >= 3.0) return 100;
+  if (ratio <= 0.2) return 0;
+  if (ratio >= 2.0) return clamp(lerp(ratio, 2.0, 3.0, 80, 100));
+  if (ratio >= 1.0) return clamp(lerp(ratio, 1.0, 2.0, 50, 80));
+  if (ratio >= 0.5) return clamp(lerp(ratio, 0.5, 1.0, 25, 50));
+  return clamp(lerp(ratio, 0.2, 0.5, 0, 25));
+};
+
 const buildSignals = (organic: RepoOrganic): SignalRow[] => {
-  const { totalCount, forksCount, watchersCount, releasesCount } = organic;
+  const { totalCount, forksCount, watchersCount, releasesCount, contributorsCount } = organic;
 
   const FORK_TOOLTIP =
     "Repos with organic traction accumulate forks as developers build on them. " +
@@ -87,7 +97,7 @@ const buildSignals = (organic: RepoOrganic): SignalRow[] => {
       label: "Fork / star ratio",
       tooltip: FORK_TOOLTIP,
       rawValue: `${fmtPct(ratio)} · ${forksCount.toLocaleString()} forks / ${totalCount.toLocaleString()} ★`,
-      weight: "30%",
+      weight: "25%",
       signalScore: score,
       status: totalCount < 5000 ? "na" : ratio >= 0.07 ? "ok" : "warn",
     });
@@ -96,7 +106,7 @@ const buildSignals = (organic: RepoOrganic): SignalRow[] => {
       label: "Fork / star ratio",
       tooltip: FORK_TOOLTIP,
       rawValue: totalCount < 5000 ? "Gated (repo has < 5 000 stars)" : "No data",
-      weight: "30%",
+      weight: "25%",
       signalScore: null,
       status: "na",
     });
@@ -138,16 +148,47 @@ const buildSignals = (organic: RepoOrganic): SignalRow[] => {
       label: "Releases cadence",
       tooltip: RELEASES_TOOLTIP,
       rawValue: `${releasesCount.toLocaleString()} total releases`,
-      weight: "20%",
+      weight: "15%",
       signalScore: score,
-      status: score >= 60 ? "ok" : score >= 30 ? "warn" : "warn",
+      status: score >= 60 ? "ok" : "warn",
     });
   } else {
     rows.push({
       label: "Releases cadence",
       tooltip: RELEASES_TOOLTIP,
       rawValue: "No data. Click Recompute to fetch.",
-      weight: "20%",
+      weight: "15%",
+      signalScore: null,
+      status: "na",
+    });
+  }
+
+  const CONTRIBUTORS_TOOLTIP =
+    "Repos with broad community adoption accumulate contributors over time. " +
+    "Measured as contributors per 1 000 stars — normalises for repo size. " +
+    "A very low ratio on a large repo suggests star farming without genuine engagement. " +
+    "Gated below 5 000 stars (signal too noisy on small repos).";
+
+  if (contributorsCount !== null && contributorsCount > 0 && totalCount >= 5000) {
+    const score = normContributorsRatio(contributorsCount, totalCount);
+    rows.push({
+      label: "Contributors / 1k stars",
+      tooltip: CONTRIBUTORS_TOOLTIP,
+      rawValue: `${contributorsCount.toLocaleString()} contributors · ${((contributorsCount / totalCount) * 1000).toFixed(1)}/1k ★`,
+      weight: "10%",
+      signalScore: score,
+      status: score >= 50 ? "ok" : "warn",
+    });
+  } else {
+    rows.push({
+      label: "Contributors / 1k stars",
+      tooltip: CONTRIBUTORS_TOOLTIP,
+      rawValue: contributorsCount === null
+        ? "No data. Click Recompute to fetch."
+        : totalCount < 5000
+          ? "Gated (repo has < 5 000 stars)"
+          : "No contributors data",
+      weight: "10%",
       signalScore: null,
       status: "na",
     });
@@ -348,7 +389,7 @@ export const OrganicScoreModal = ({ open, onClose, organic, owner, repo, onRecal
 
         {/* Disclaimer */}
         <p className="text-xs text-muted/80 leading-relaxed border-t border-border-subtle pt-3">
-          Heuristic based on 4 public signals, not an accusation of fraud.
+          Heuristic based on 5 public signals, not an accusation of fraud.
           Repos with viral growth or niche communities may score lower despite being organic.
           {organic.computedAt && (
             <>{" "}<span className="text-muted/60">Computed {new Date(organic.computedAt).toLocaleDateString()}.</span></>

@@ -36,7 +36,7 @@ export const POST = async (
   try {
     const badge = await prisma.badgeCache.findUnique({
       where: { owner_repo: key },
-      select: { totalCount: true, organicComputedAt: true },
+      select: { totalCount: true, organicComputedAt: true, releasesCount: true, contributorsCount: true },
     });
     if (!badge) return jsonError("not_found", 404);
 
@@ -103,9 +103,10 @@ export const POST = async (
       starsCount:        meta.stargazers_count,
       forksCount:        meta.forks_count,
       watchersCount:     meta.subscribers_count,
-      zeroFollowerCount: sampleSize && sampleSize > 0 ? zeroFollowerCount : null,
-      sampleSize:        sampleSize ?? null,
+      zeroFollowerCount:  sampleSize && sampleSize > 0 ? zeroFollowerCount : null,
+      sampleSize:         sampleSize ?? null,
       releasesCount,
+      contributorsCount:  badge.contributorsCount ?? null,
     });
 
     const now = new Date();
@@ -142,6 +143,7 @@ export const POST = async (
       latestReleaseUrl: release?.html_url ?? null,
       latestReleaseAt:  latestReleaseAt?.toISOString() ?? null,
       releasesCount,
+      contributorsCount: badge.contributorsCount ?? null,
     };
 
     return NextResponse.json({ organic });
