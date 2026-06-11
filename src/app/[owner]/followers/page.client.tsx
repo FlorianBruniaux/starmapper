@@ -181,7 +181,7 @@ export default function FollowersPageClient({ params }: Props) {
               <button
                 onClick={() => setPanelOpen(true)}
                 className="flex items-center gap-1 bg-surface-alt border border-border rounded-md px-2 py-1 text-xs text-foreground hover:border-accent-blue/50 hover:text-accent-blue transition-colors whitespace-nowrap"
-                aria-label={`${points.length.toLocaleString()} followers mapped — open list`}
+                aria-label={`${points.length.toLocaleString()} followers mapped, open list`}
               >
                 <Users size={12} aria-hidden="true" />
                 <span className="tabular-nums">{points.length.toLocaleString()}</span>

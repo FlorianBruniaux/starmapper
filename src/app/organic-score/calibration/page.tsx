@@ -129,7 +129,7 @@ export default function CalibrationPage() {
             ← StarMapper
           </Link>
           <div className="flex items-center gap-3 mb-2">
-            <h1 className="text-2xl font-bold">Organic Score — Calibration Data</h1>
+            <h1 className="text-2xl font-bold">Organic Score: Calibration Data</h1>
             <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-accent-orange-bg text-accent-orange border border-accent-orange-border text-xs font-medium uppercase tracking-wide">
               Experimental
             </span>
@@ -337,12 +337,12 @@ export default function CalibrationPage() {
           <ul className="space-y-1.5 text-sm">
             <li>
               <a href="https://arxiv.org/abs/2412.13459" target="_blank" rel="noopener noreferrer" className="text-accent-blue hover:underline">
-                StarScout: Detecting Fake Stars in GitHub — CMU / ICSE 2026 (arXiv 2412.13459)
+                StarScout: Detecting Fake Stars in GitHub, CMU/ICSE 2026 (arXiv 2412.13459)
               </a>
             </li>
             <li>
               <a href="https://dagster.io/blog/fake-stars" target="_blank" rel="noopener noreferrer" className="text-accent-blue hover:underline">
-                GitHub's Fake Star Problem — Dagster investigation (2023)
+                GitHub's Fake Star Problem, Dagster investigation (2023)
               </a>
             </li>
           </ul>

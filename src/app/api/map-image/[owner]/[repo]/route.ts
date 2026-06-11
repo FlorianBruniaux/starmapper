@@ -120,8 +120,8 @@ const makeSvg = (
 
   const hasData = points.length > 0;
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="StarMapper — ${repoLabel}">
-  <title>StarMapper — ${repoLabel}</title>
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="StarMapper: ${repoLabel}">
+  <title>StarMapper: ${repoLabel}</title>
   <!-- Card background -->
   <rect width="${W}" height="${H}" fill="${bg}" rx="10"/>
   <!-- Header bar -->

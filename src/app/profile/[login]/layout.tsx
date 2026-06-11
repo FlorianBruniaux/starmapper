@@ -17,7 +17,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { login } = await params;
   if (!LOGIN_RE.test(login)) notFound();
 
-  const title = `${login} on StarMapper — repos, location & starred projects`;
+  const title = `${login} on StarMapper | repos, location & starred projects`;
   const description = `See the GitHub repositories, location, and starred projects of ${login} on StarMapper's interactive world map.`;
   const url = `${APP_URL}/profile/${login}`;
 

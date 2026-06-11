@@ -76,7 +76,7 @@ const runDigest = async () => {
 <html>
 <head><meta charset="utf-8"></head>
 <body style="background:#0d1117;color:#f0f6fc;font-family:-apple-system,sans-serif;max-width:600px;margin:0 auto;padding:24px">
-  <h1 style="color:#58a6ff;font-size:20px;margin-bottom:4px">StarMapper — Digest quotidien</h1>
+  <h1 style="color:#58a6ff;font-size:20px;margin-bottom:4px">StarMapper, Digest quotidien</h1>
   <p style="color:#8b949e;margin-top:0;margin-bottom:24px">${dateStr}</p>
 
   <table style="width:100%;border-collapse:collapse;margin-bottom:24px">
@@ -99,7 +99,7 @@ const runDigest = async () => {
     </tr>
   </table>
 
-  <h2 style="font-size:14px;color:#8b949e;text-transform:uppercase;letter-spacing:1px">Top repos — 7 derniers jours</h2>
+  <h2 style="font-size:14px;color:#8b949e;text-transform:uppercase;letter-spacing:1px">Top repos, 7 derniers jours</h2>
   <table style="width:100%;border-collapse:collapse;margin-bottom:24px">
     ${topReposHtml}
   </table>
@@ -114,7 +114,7 @@ const runDigest = async () => {
   const { error } = await resend.emails.send({
     from: process.env.DIGEST_FROM ?? "StarMapper <onboarding@resend.dev>",
     to: digestTo,
-    subject: `StarMapper digest — ${new Date().toLocaleDateString("fr-FR")}`,
+    subject: `StarMapper digest, ${new Date().toLocaleDateString("fr-FR")}`,
     html,
   });
 

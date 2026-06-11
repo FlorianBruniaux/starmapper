@@ -7,7 +7,7 @@ import { Footer } from "@/components/footer";
 import { FeedsPageClient } from "@/app/feeds/page.client";
 
 export const metadata: Metadata = {
-  title: "Your feeds — StarMapper",
+  title: "Your feeds | StarMapper",
   description: "Latest announcements from developers you follow on StarMapper.",
   robots: { index: false, follow: false },
 };

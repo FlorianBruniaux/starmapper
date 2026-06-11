@@ -36,7 +36,7 @@ const FAQS = [
   },
   {
     q: "Do I need to create an account?",
-    a: "No. StarMapper has no accounts, no login, no signup. Everything works immediately. Adding a GitHub token is optional and free — it just raises the GitHub API rate limit from 60 to 5,000 requests per hour so large repos scan faster. The token requires zero permissions, stays in your browser's session memory, and auto-deletes after 30 minutes.",
+    a: "No. StarMapper has no accounts, no login, no signup. Everything works immediately. Adding a GitHub token is optional and free, raising the GitHub API rate limit from 60 to 5,000 requests per hour so large repos scan faster. The token requires zero permissions, stays in your browser's session memory, and auto-deletes after 30 minutes.",
   },
   {
     q: "How long does a scan take?",
@@ -44,7 +44,7 @@ const FAQS = [
   },
   {
     q: "Is the data real-time?",
-    a: "No. StarMapper shows the last scan result, not a live feed. When you or anyone else clicks Refresh or Full rescan, the data is updated and shared with all future visitors. Think of it as a community-maintained snapshot: one person's refresh benefits everyone. Watch Mode is the exception — it polls GitHub every 60 seconds to surface new stars as they arrive, useful during a launch.",
+    a: "No. StarMapper shows the last scan result, not a live feed. When you or anyone else clicks Refresh or Full rescan, the data is updated and shared with all future visitors. Think of it as a community-maintained snapshot: one person's refresh benefits everyone. Watch Mode is the exception: it polls GitHub every 60 seconds to surface new stars as they arrive, useful during a launch.",
   },
   {
     q: "Will my GitHub token be stored?",
@@ -84,11 +84,11 @@ const FAQS = [
   },
   {
     q: "Can I compare two GitHub repos on the same map?",
-    a: "Yes. Use the Compare feature to overlay two repositories simultaneously. Each repo's stargazers appear as distinct colored points — blue vs. purple — so you can see at a glance whether the two audiences overlap geographically or target entirely different communities. Useful for understanding competitive positioning or measuring the reach of cross-promotion between projects.",
+    a: "Yes. Use the Compare feature to overlay two repositories simultaneously. Each repo's stargazers appear as distinct colored points (blue vs. purple), so you can see at a glance whether the two audiences overlap geographically or target entirely different communities. Useful for understanding competitive positioning or measuring the reach of cross-promotion between projects.",
   },
   {
     q: "How do I track new stars live during a product launch?",
-    a: "Enable Watch Mode after scanning a repo. StarMapper polls GitHub every 60 seconds and displays new stars as they arrive, with a count and breakdown by country — for example, '+3 stars from India, Germany'. The indicator pulses while active and auto-stops after 10 minutes without new activity. Watch Mode is designed for Product Hunt launches, Hacker News posts, and conference announcements where geographic traction matters in real time.",
+    a: "Enable Watch Mode after scanning a repo. StarMapper polls GitHub every 60 seconds and displays new stars as they arrive, with a count and breakdown by country, for example '+3 stars from India, Germany'. The indicator pulses while active and auto-stops after 10 minutes without new activity. Watch Mode is designed for Product Hunt launches, Hacker News posts, and conference announcements where geographic traction matters in real time.",
   },
   {
     q: "What is Geographic Velocity?",
