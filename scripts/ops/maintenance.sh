@@ -10,11 +10,11 @@
 #   bash scripts/ops/maintenance.sh --skip-backfills   # sync + MV refresh only
 #
 # Granular skip flags (combinable):
-#   --skip-repo-metrics    skip step 1/5 (stars, forks, watchers, release)
-#   --skip-repo-languages  skip step 2/5 (primary language per repo)
-#   --skip-organic         skip step 3/5 (organic score + tier)
-#   --skip-top-repos       skip step 4/5 (topRepos[] for devs ≥ 100 followers)
-#   --skip-languages       skip step 5/5 (languages[] from GitHub GraphQL — slowest)
+#   --skip-repo-metrics    skip step 1/6 (stars, forks, watchers, release)
+#   --skip-repo-languages  skip step 2/6 (primary language per repo)
+#   --skip-organic         skip steps 3+4/6 (contributors backfill + organic score + tier)
+#   --skip-top-repos       skip step 5/6 (topRepos[] for devs ≥ 100 followers)
+#   --skip-languages       skip step 6/6 (languages[] from GitHub GraphQL — slowest)
 
 set -euo pipefail
 
@@ -71,43 +71,48 @@ $SKIP_BACKFILLS && echo "  mode: --skip-backfills"
 if ! $SKIP_BACKFILLS; then
 
   if ! $SKIP_REPO_METRICS; then
-    step "1/5 — Repo metrics (stars, forks, watchers, release)"
+    step "1/6 — Repo metrics (stars, forks, watchers, release)"
     pnpm backfill:repo-metrics:local -- --force $DRYARG
     ok "repo metrics done"
   else
-    skip "1/5 — Repo metrics"
+    skip "1/6 — Repo metrics"
   fi
 
   if ! $SKIP_REPO_LANGUAGES; then
-    step "2/5 — Repo languages"
+    step "2/6 — Repo languages"
     pnpm backfill:repo-languages:local -- $DRYARG
     ok "repo languages done"
   else
-    skip "2/5 — Repo languages"
+    skip "2/6 — Repo languages"
   fi
 
   if ! $SKIP_ORGANIC; then
-    step "3/5 — Organic scores"
+    step "3/6 — Contributors / 1k stars (must run before organic recompute)"
+    pnpm backfill:contributors:local -- $DRYARG
+    ok "contributors done"
+
+    step "4/6 — Organic scores (uses fresh contributors data)"
     pnpm backfill:organic-score:local -- --force $DRYARG
     ok "organic scores done"
   else
-    skip "3/5 — Organic scores"
+    skip "3/6 — Contributors"
+    skip "4/6 — Organic scores"
   fi
 
   if ! $SKIP_TOP_REPOS; then
-    step "4/5 — Developer top repos (followers ≥ 100)"
+    step "5/6 — Developer top repos (followers ≥ 100)"
     pnpm backfill:user-top-repos:local -- --force $DRYARG
     ok "user top repos done"
   else
-    skip "4/5 — Developer top repos"
+    skip "5/6 — Developer top repos"
   fi
 
   if ! $SKIP_LANGUAGES; then
-    step "5/5 — Developer languages (new users only + refresh >30d)"
+    step "6/6 — Developer languages (new users only + refresh >30d)"
     pnpm backfill:languages:local -- --since 30 $DRYARG
     ok "dev languages done"
   else
-    skip "5/5 — Developer languages"
+    skip "6/6 — Developer languages"
   fi
 
 fi
@@ -123,10 +128,13 @@ if ! $SKIP_SYNC && ! $DRY_RUN; then
     REFRESH MATERIALIZED VIEW CONCURRENTLY country_stats_mv;
     REFRESH MATERIALIZED VIEW CONCURRENTLY power_users_mv;
     REFRESH MATERIALIZED VIEW CONCURRENTLY company_stats_mv;
+    REFRESH MATERIALIZED VIEW CONCURRENTLY country_language_stats_mv;
     REFRESH MATERIALIZED VIEW CONCURRENTLY user_repo_count_mv;
+    REFRESH MATERIALIZED VIEW CONCURRENTLY language_grid_mv;
     REFRESH MATERIALIZED VIEW CONCURRENTLY trending_repos_mv;
-    REFRESH MATERIALIZED VIEW CONCURRENTLY city_stats_mv;"
-  ok "materialized views refreshed"
+    REFRESH MATERIALIZED VIEW CONCURRENTLY city_stats_mv;
+    REFRESH MATERIALIZED VIEW CONCURRENTLY github_user_grid_mv;"
+  ok "materialized views refreshed (9/9)"
 
 elif $DRY_RUN; then
   echo
