@@ -1,4 +1,6 @@
 #!/usr/bin/env tsx
+// SPDX-License-Identifier: AGPL-3.0-only
+// Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 // maintenance-wizard.ts
 //
 // Interactive wizard for running StarMapper maintenance steps.
