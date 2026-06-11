@@ -190,7 +190,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS trending_repos_mv AS
   JOIN badge_cache bc ON bc.owner = se.owner AND bc.repo = se.repo
   WHERE bc."totalCount" >= 50
   GROUP BY se.owner, se.repo, bc.language, bc."totalCount"
-  HAVING COUNT(*) FILTER (WHERE se."starredAt" > NOW() - INTERVAL '7 days') > 0
+  HAVING COUNT(*) FILTER (WHERE se."starredAt" > NOW() - INTERVAL '30 days') > 0
   ORDER BY stars_7d DESC
   LIMIT 200;
 

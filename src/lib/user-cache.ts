@@ -128,6 +128,65 @@ export const bulkUpsertStarEvents = async (
   }
 };
 
+export type MinimalUserInput = {
+  login: string;
+  name: string | null;
+  company: string | null;
+  location: string | null;
+  followers: number;
+  following: number;
+  publicRepos: number;
+  accountCreatedAt: string | null;
+};
+
+// Bulk-insert FK-satisfying user rows WITHOUT geocoding (no lat/lng/country).
+// ON CONFLICT DO NOTHING: never clobbers users already enriched by a full scan —
+// it only materializes rows for logins we have not seen yet, so star_event FKs hold.
+// Used by the trending rescan, which needs star_events but must not geocode.
+export const bulkInsertUsersMinimal = async (
+  users: MinimalUserInput[],
+  health?: Awaited<ReturnType<typeof checkDbHealth>>,
+): Promise<boolean> => {
+  if (!users.length) return true;
+  const h = health ?? (await checkDbHealth());
+  if (!h.ok || (h.ok && h.usagePct >= DB_CRITICAL_PCT)) return false;
+
+  try {
+    const logins      = users.map((u) => u.login);
+    const names       = users.map((u) => u.name);
+    const companies   = users.map((u) => u.company);
+    const locations   = users.map((u) => u.location);
+    const followers   = users.map((u) => u.followers);
+    const followings  = users.map((u) => u.following);
+    const publicRepos = users.map((u) => u.publicRepos);
+    const createdAts  = users.map((u) => u.accountCreatedAt);
+    const now         = new Date();
+
+    await prisma.$queryRaw`
+      INSERT INTO github_user
+        (login, name, company, location, followers, following,
+         "publicRepos", "accountCreatedAt", "dataVersion", source, "fetchedAt")
+      SELECT
+        unnest(${logins}::text[]),
+        unnest(${names}::text[]),
+        unnest(${companies}::text[]),
+        unnest(${locations}::text[]),
+        unnest(${followers}::int4[]),
+        unnest(${followings}::int4[]),
+        unnest(${publicRepos}::int4[]),
+        unnest(${createdAts}::text[])::timestamp,
+        0,
+        'stargazer',
+        ${now}
+      ON CONFLICT (login) DO NOTHING
+    `;
+    return true;
+  } catch (err) {
+    logError("user-cache/bulkInsertUsersMinimal", err);
+    return false;
+  }
+};
+
 export const getOrCreateGitHubUserMinimal = async (login: string): Promise<void> => {
   try {
     await prisma.gitHubUser.upsert({

@@ -145,6 +145,31 @@ model StarEvent {
   @@map("star_event")
 }
 
+// Curated seed of repos to keep fresh in Trending, independent of organic traffic.
+// Seeded via scripts/db/seed-trending-watchlist.ts. Read by the refresh-trending cron.
+model TrendingWatchlist {
+  owner   String
+  repo    String
+  note    String?
+  addedAt DateTime @default(now())
+
+  @@id([owner, repo])
+  @@map("trending_watchlist")
+}
+
+// Refresh ledger for the trending star-event rescan. One row per repo the cron has
+// touched; lastRefreshedAt drives least-recently-refreshed rotation across runs.
+model TrendingRefresh {
+  owner           String
+  repo            String
+  lastRefreshedAt DateTime
+  eventsAdded     Int      @default(0)
+
+  @@id([owner, repo])
+  @@index([lastRefreshedAt])
+  @@map("trending_refresh")
+}
+
 model DeletionLog {
   id          Int       @id @default(autoincrement())
   login       String

@@ -28,8 +28,8 @@ vi.mock("@/lib/api-helpers", () => ({
   logError: (...args: unknown[]) => mockLogError(...args),
 }));
 
-import { bulkUpsertUsers, bulkUpsertStarEvents } from "@/lib/user-cache";
-import type { UserWritePayload } from "@/lib/user-cache";
+import { bulkUpsertUsers, bulkUpsertStarEvents, bulkInsertUsersMinimal } from "@/lib/user-cache";
+import type { UserWritePayload, MinimalUserInput } from "@/lib/user-cache";
 
 // ─── Fixtures ────────────────────────────────────────────────────────────────
 
@@ -98,6 +98,62 @@ describe("bulkUpsertUsers()", () => {
   it("returns false and calls logError when prisma throws", async () => {
     mockQueryRaw.mockRejectedValue(new Error("DB timeout"));
     const result = await bulkUpsertUsers([makeUser()]);
+    expect(result).toBe(false);
+    expect(mockLogError).toHaveBeenCalledOnce();
+  });
+});
+
+// ─── bulkInsertUsersMinimal ──────────────────────────────────────────────────
+
+const makeMinimalUser = (overrides: Partial<MinimalUserInput> = {}): MinimalUserInput => ({
+  login: "octocat",
+  name: "The Octocat",
+  company: null,
+  location: "Paris",
+  followers: 1,
+  following: 0,
+  publicRepos: 2,
+  accountCreatedAt: "2020-01-01T00:00:00Z",
+  ...overrides,
+});
+
+describe("bulkInsertUsersMinimal()", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockQueryRaw.mockResolvedValue(undefined);
+    mockCheckDbHealth.mockResolvedValue(healthOk);
+  });
+
+  it("returns true immediately for empty array without DB call", async () => {
+    const result = await bulkInsertUsersMinimal([]);
+    expect(result).toBe(true);
+    expect(mockQueryRaw).not.toHaveBeenCalled();
+  });
+
+  it("returns false when DB health reports ok=false", async () => {
+    mockCheckDbHealth.mockResolvedValue(healthDown);
+    const result = await bulkInsertUsersMinimal([makeMinimalUser()]);
+    expect(result).toBe(false);
+    expect(mockQueryRaw).not.toHaveBeenCalled();
+  });
+
+  it("skips when usagePct >= DB_CRITICAL_PCT", async () => {
+    mockCheckDbHealth.mockResolvedValue(healthFull);
+    const result = await bulkInsertUsersMinimal([makeMinimalUser()]);
+    expect(result).toBe(false);
+    expect(mockQueryRaw).not.toHaveBeenCalled();
+  });
+
+  it("inserts via $queryRaw when health is ok", async () => {
+    const result = await bulkInsertUsersMinimal([makeMinimalUser()], healthOk);
+    expect(result).toBe(true);
+    expect(mockCheckDbHealth).not.toHaveBeenCalled();
+    expect(mockQueryRaw).toHaveBeenCalledOnce();
+  });
+
+  it("returns false and logs when prisma throws", async () => {
+    mockQueryRaw.mockRejectedValue(new Error("DB timeout"));
+    const result = await bulkInsertUsersMinimal([makeMinimalUser()]);
     expect(result).toBe(false);
     expect(mockLogError).toHaveBeenCalledOnce();
   });
