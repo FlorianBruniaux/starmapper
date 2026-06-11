@@ -78,8 +78,16 @@ const fetchContributorsCount = async (
     }
 
     if (res.status === 403 || res.status === 429) {
-      console.warn(`[rate-limit] ${owner}/${repo} — pausing 60s`);
-      await new Promise((r) => setTimeout(r, 60_000));
+      // 403 is ambiguous: real quota exhaustion (x-ratelimit-remaining: 0) vs the
+      // "contributor list too large" forbidden that huge repos (torvalds/linux) return.
+      // Only pause for the former — the latter never succeeds, so skip it immediately.
+      const remaining = res.headers.get("x-ratelimit-remaining");
+      if (remaining === "0" || res.status === 429) {
+        console.warn(`[rate-limit] ${owner}/${repo} — pausing 60s`);
+        await new Promise((r) => setTimeout(r, 60_000));
+      } else {
+        console.warn(`[skip] ${owner}/${repo} — 403 (contributor list too large)`);
+      }
       return null;
     }
 
