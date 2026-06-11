@@ -135,6 +135,12 @@ index-followers-all: ## make index-followers-all [MIN_FOLLOWERS=100] [LIMIT=n]
 index-followers-all-local: ## make index-followers-all-local [MIN_FOLLOWERS=100] [LIMIT=n]
 	$(ENV) caffeinate -i tsx scripts/ops/batch-index-followers.ts --min-followers $(or $(MIN_FOLLOWERS),100) $(if $(LIMIT),--limit $(LIMIT))'
 
+refresh-follower-cache: ## make refresh-follower-cache LOGINS=FlorianBruniaux[,other]
+	$(ENV) caffeinate -i tsx scripts/ops/batch-index-followers.ts --prod --logins $(LOGINS)'
+
+refresh-follower-cache-local: ## make refresh-follower-cache-local LOGINS=FlorianBruniaux[,other]
+	$(ENV) caffeinate -i tsx scripts/ops/batch-index-followers.ts --logins $(LOGINS)'
+
 # ─── Calibration + probes ──────────────────────────────────────────────────────
 
 calibrate-organic-score:
@@ -146,7 +152,7 @@ probe-star-burst:
 # ─── Maintenance (full pipeline) ──────────────────────────────────────────────
 
 maintenance:
-	bash scripts/ops/maintenance.sh
+	pnpm maintenance
 
 maintenance-dry:
 	bash scripts/ops/maintenance.sh --dry-run
@@ -167,4 +173,5 @@ maintenance-sync-only:
         backfill-languages backfill-languages-prod \
         maintenance maintenance-dry maintenance-sync-only \
         collect-repos collect-trending collect-trending-no-ts collect-merge batch-scan batch-scan-dry \
-        calibrate-organic-score probe-star-burst
+        calibrate-organic-score probe-star-burst \
+        refresh-follower-cache refresh-follower-cache-local
