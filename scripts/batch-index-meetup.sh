@@ -161,50 +161,37 @@ index_repo() {
 
   echo "    ✓ $mapped mapped, $unmapped unmapped | https://starmapper.bruniaux.com/$OWNER/$REPO"
 
-  # --- POST /api/stargazer-cache ---
-  # Envoie les arrays bruts (legacy format) — le serveur compresse lui-même.
-  # ts = timestamp ms requis par le freshness check (±5 min).
+  # --- Écriture directe en DB (contourne HTTP + rate limits) ---
+  # Fusionne les arrays de chunks en un seul JSON plat, puis appelle le script TS.
   if [ "$((mapped + unmapped))" -gt 0 ]; then
     [ ! -s "$POINTS_FILE_REPO" ] && echo '[]' > "$POINTS_FILE_REPO"
     [ ! -s "$UNMAPPED_FILE_REPO" ] && echo '[]' > "$UNMAPPED_FILE_REPO"
 
-    local TS
-    TS=$(( $(date +%s) * 1000 ))
+    local MERGED_POINTS MERGED_UNMAPPED
+    MERGED_POINTS=$(mktemp /tmp/sm-merged-pts-XXXXXX.json)
+    MERGED_UNMAPPED=$(mktemp /tmp/sm-merged-unm-XXXXXX.json)
 
-    # --slurpfile lit chaque valeur JSON dans un array externe → $p = [[chunk1...],[chunk2...],...]
-    # [$p[][]] aplatit l'ensemble en un seul array plat
-    jq -n \
-      --arg o "$OWNER" --arg r "$REPO" \
-      --slurpfile p "$POINTS_FILE_REPO" \
-      --slurpfile u "$UNMAPPED_FILE_REPO" \
-      --argjson total "$((mapped + unmapped))" \
-      --argjson ts "$TS" \
-      '{"owner":$o,"repo":$r,"points":[$p[][]],"unmapped":[$u[][]],"totalCount":$total,"ts":$ts}' \
-      > "$CACHE_BODY_FILE"
+    # --slurp lit les N arrays de chunks → [$p[][]] les aplatit en un seul array
+    jq -s '[.[][]]' "$POINTS_FILE_REPO"  > "$MERGED_POINTS"
+    jq -s '[.[][]]' "$UNMAPPED_FILE_REPO" > "$MERGED_UNMAPPED"
 
-    local cache_resp cache_ok cache_err cache_attempt=0
-    while true; do
-      cache_attempt=$((cache_attempt + 1))
-      cache_resp=$(curl -s --max-time 30 \
-        -b "$COOKIE_JAR" \
-        -H "Origin: $PROD_API" \
-        -X POST "$PROD_API/api/stargazer-cache" \
-        -H "Content-Type: application/json" \
-        -d "@$CACHE_BODY_FILE")
-      cache_ok=$(echo "$cache_resp" | jq -r '.ok // empty' 2>/dev/null)
-      cache_err=$(echo "$cache_resp" | jq -r '.error // "unknown"' 2>/dev/null)
+    # Fetch forks + watchers pour l'organic score (l'appel GitHub reste nécessaire)
+    local gh_meta forks_count=0 watchers_count=0 language=""
+    gh_meta=$(curl -s --max-time 10 "${GH_AUTH[@]}" "https://api.github.com/repos/$OWNER/$REPO")
+    forks_count=$(echo "$gh_meta" | jq -r '.forks_count // 0' 2>/dev/null || echo 0)
+    watchers_count=$(echo "$gh_meta" | jq -r '.subscribers_count // 0' 2>/dev/null || echo 0)
+    language=$(echo "$gh_meta" | jq -r '.language // empty' 2>/dev/null || echo "")
 
-      if [ "$cache_ok" = "true" ]; then
-        echo "    💾 stargazer-cache sauvegardé"
-        break
-      elif [[ "$cache_err" == *"rate"* ]] && [ "$cache_attempt" -lt 4 ]; then
-        echo "    ⏳ cache rate limit — attente 12s (tentative $cache_attempt/3)"
-        sleep 12
-      else
-        echo "    ⚠ stargazer-cache échoué: $cache_err"
-        break
-      fi
-    done
+    pnpm tsx --env-file=.env.local scripts/save-repo-cache.ts \
+      --owner "$OWNER" --repo "$REPO" \
+      --points-file "$MERGED_POINTS" \
+      --unmapped-file "$MERGED_UNMAPPED" \
+      --total "$((mapped + unmapped))" \
+      --forks "$forks_count" \
+      --watchers "$watchers_count" \
+      ${language:+--language "$language"}
+
+    rm -f "$MERGED_POINTS" "$MERGED_UNMAPPED"
   fi
 
   rm -f "$POINTS_FILE_REPO" "$UNMAPPED_FILE_REPO" "$CACHE_BODY_FILE" "$RESP_FILE"
@@ -254,7 +241,7 @@ indexed=0
 while IFS=' ' read -r repo stars; do
   [ -z "$repo" ] && continue
   index_repo "$repo" "$stars"
-  [ "$DRY_RUN" = false ] && { indexed=$((indexed + 1)); sleep 3; }
+  [ "$DRY_RUN" = false ] && { indexed=$((indexed + 1)); sleep 5; }
 done <<< "$SORTED"
 
 echo ""
