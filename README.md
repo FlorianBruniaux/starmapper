@@ -29,7 +29,7 @@ Enter a GitHub repo URL and StarMapper maps every stargazer, identifies the infl
 - **See which countries are discovering you**: geographic velocity compares the last 30 days against the prior window, four statuses per country: rising, new, stable, declining
 - **Compare two audiences side by side**: overlay two repos on the same map, blue vs purple points, see instantly whether you share an audience or target different communities
 - **Watch stars arrive during a launch**: live mode polls GitHub every 60 seconds and shows "+N stars, India, Germany" with a pulsing indicator, built for Product Hunt and HN days
-- **Verify whether the count is real**: the Organic Score (0-100) flags suspicious patterns using fork/star ratios and zero-follower accounts, 85.7% accuracy on a calibrated corpus
+- **Verify whether the count is real**: the Organic Score (0-100) flags suspicious patterns using five signals (fork ratio, watcher ratio, zero-follower accounts, releases cadence, contributors per 1k stars), calibrated on a 19-repo corpus
 - **Explore who depends on your library**: `/[owner]/[repo]/dependents` lists every repo that uses your package, sorted by stars or forks, with ecosystem badges (npm, PyPI, Go, Maven, Cargo, and more). Data from ecosyste.ms, cached 7 days.
 - **Query audience data from Claude Code**: `starmapper-mcp` exposes ten tools as an MCP server so you can ask "who are my most influential stargazers?", "which countries are accelerating?", or "who depends on this library?" directly in your terminal
 
