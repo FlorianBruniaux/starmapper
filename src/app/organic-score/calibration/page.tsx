@@ -6,7 +6,7 @@ import Link from "next/link";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://starmapper.bruniaux.com";
 
-const TITLE = "Organic Score — Calibration Data";
+const TITLE = "Organic Score: Calibration Data";
 const DESC =
   "Empirical calibration of StarMapper's Organic Score: 19 repositories tested, 85.7% classification accuracy. Fork/star ratio (40%), watcher ratio (5%), and zero-follower percentage (55%) as signals.";
 

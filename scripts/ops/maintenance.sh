@@ -72,7 +72,7 @@ if ! $SKIP_BACKFILLS; then
 
   if ! $SKIP_REPO_METRICS; then
     step "1/5 — Repo metrics (stars, forks, watchers, release)"
-    pnpm backfill:repo-metrics --force $DRYARG
+    pnpm backfill:repo-metrics:local -- --force $DRYARG
     ok "repo metrics done"
   else
     skip "1/5 — Repo metrics"
@@ -80,7 +80,7 @@ if ! $SKIP_BACKFILLS; then
 
   if ! $SKIP_REPO_LANGUAGES; then
     step "2/5 — Repo languages"
-    pnpm backfill:repo-languages $DRYARG
+    pnpm backfill:repo-languages:local -- $DRYARG
     ok "repo languages done"
   else
     skip "2/5 — Repo languages"
@@ -88,7 +88,7 @@ if ! $SKIP_BACKFILLS; then
 
   if ! $SKIP_ORGANIC; then
     step "3/5 — Organic scores"
-    pnpm backfill:organic-score -- --force $DRYARG
+    pnpm backfill:organic-score:local -- --force $DRYARG
     ok "organic scores done"
   else
     skip "3/5 — Organic scores"
@@ -96,7 +96,7 @@ if ! $SKIP_BACKFILLS; then
 
   if ! $SKIP_TOP_REPOS; then
     step "4/5 — Developer top repos (followers ≥ 100)"
-    pnpm backfill:user-top-repos -- --force $DRYARG
+    pnpm backfill:user-top-repos:local -- --force $DRYARG
     ok "user top repos done"
   else
     skip "4/5 — Developer top repos"
@@ -104,7 +104,7 @@ if ! $SKIP_BACKFILLS; then
 
   if ! $SKIP_LANGUAGES; then
     step "5/5 — Developer languages (new users only + refresh >30d)"
-    pnpm backfill:languages -- --since 30 $DRYARG
+    pnpm backfill:languages:local -- --since 30 $DRYARG
     ok "dev languages done"
   else
     skip "5/5 — Developer languages"

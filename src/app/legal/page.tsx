@@ -5,12 +5,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Legal — StarMapper",
+  title: "Legal | StarMapper",
   description: "Legal information for StarMapper: Privacy Policy, Terms of Service, and contact details.",
   robots: { index: true, follow: true },
   alternates: { canonical: "/legal" },
   openGraph: {
-    title: "Legal — StarMapper",
+    title: "Legal | StarMapper",
     description: "Legal information for StarMapper: Privacy Policy, Terms of Service, and contact details.",
     type: "website",
   },

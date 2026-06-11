@@ -9,12 +9,12 @@ import { Footer } from "@/components/footer";
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://starmapper.bruniaux.com";
 
 export const metadata: Metadata = {
-  title: "FAQ — StarMapper",
+  title: "FAQ | StarMapper",
   description:
     "Frequently asked questions about StarMapper: scan speed, data privacy, GitHub token storage, open source license, badge embeds, and how stargazer geocoding works.",
   alternates: { canonical: "/faq" },
   openGraph: {
-    title: "FAQ — StarMapper",
+    title: "FAQ | StarMapper",
     description:
       "Frequently asked questions about StarMapper: scan speed, data privacy, GitHub token storage, open source license, badge embeds, and how stargazer geocoding works.",
     url: `${APP_URL}/faq`,
@@ -23,7 +23,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "FAQ — StarMapper",
+    title: "FAQ | StarMapper",
     description:
       "Frequently asked questions about StarMapper: scan speed, data privacy, GitHub token storage, open source license, badge embeds, and how stargazer geocoding works.",
   },

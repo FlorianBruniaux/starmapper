@@ -7,13 +7,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Changelog — StarMapper",
-  description: "All notable changes to StarMapper — new features, fixes, and improvements.",
+  title: "Changelog | StarMapper",
+  description: "All notable changes to StarMapper: new features, fixes, and improvements.",
   robots: { index: true, follow: true },
   alternates: { canonical: "/changelog" },
   openGraph: {
-    title: "Changelog — StarMapper",
-    description: "All notable changes to StarMapper — new features, fixes, and improvements.",
+    title: "Changelog | StarMapper",
+    description: "All notable changes to StarMapper: new features, fixes, and improvements.",
     type: "website",
   },
   twitter: { card: "summary_large_image" },
@@ -212,7 +212,7 @@ export default function ChangelogPage() {
             >
               Semantic Versioning
             </a>
-            {" "}— format inspired by{" "}
+            {", format inspired by "}
             <a
               href="https://keepachangelog.com"
               target="_blank"

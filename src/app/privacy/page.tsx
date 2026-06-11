@@ -5,12 +5,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy — StarMapper",
+  title: "Privacy Policy | StarMapper",
   description: "How StarMapper collects, stores, and processes public GitHub stargazer data. Your GDPR rights and how to exercise them.",
   robots: { index: true, follow: true },
   alternates: { canonical: "/privacy" },
   openGraph: {
-    title: "Privacy Policy — StarMapper",
+    title: "Privacy Policy | StarMapper",
     description: "How StarMapper collects, stores, and processes public GitHub stargazer data. Your GDPR rights and how to exercise them.",
     type: "website",
   },

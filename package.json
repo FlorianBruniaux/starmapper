@@ -40,7 +40,7 @@
     "backfill:organic-score:local": "sh -c 'set -a && . .env.local && set +a && DATABASE_DRIVER=standard DATABASE_URL=$DATABASE_URL_LOCAL tsx scripts/backfill/backfill-organic-score.ts \"$@\"' _",
     "backfill:organic-score:prod": "sh -c 'set -a && . .env.local && set +a && DATABASE_DRIVER=standard DATABASE_URL=$DATABASE_URL tsx scripts/backfill/backfill-organic-score.ts \"$@\"' _",
     "backfill:repo-metrics": "echo 'Target required: pnpm backfill:repo-metrics:local OR :prod' && exit 1",
-    "backfill:repo-metrics:local": "sh -c 'set -a && . .env.local && set +a && DATABASE_URL_LOCAL=$DATABASE_URL_LOCAL tsx scripts/backfill/backfill-repo-metrics.ts \"$@\"' _",
+    "backfill:repo-metrics:local": "sh -c 'set -a && . .env.local && set +a && DATABASE_URL=$DATABASE_URL_LOCAL tsx scripts/backfill/backfill-repo-metrics.ts \"$@\"' _",
     "backfill:repo-metrics:prod": "sh -c 'set -a && . .env.local && set +a && DATABASE_URL_LOCAL= NEXT_PUBLIC_ORGANIC_SCORE_ENABLED=true tsx scripts/backfill/backfill-repo-metrics.ts \"$@\"' _",
     "backfill:repo-languages": "echo 'Target required: pnpm backfill:repo-languages:local OR :prod' && exit 1",
     "backfill:repo-languages:local": "sh -c '[ \"$1\" = \"--\" ] && shift; tsx scripts/backfill/backfill-repo-languages.ts \"$@\"' _",

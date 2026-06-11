@@ -245,209 +245,232 @@ export const OrganicScoreModal = ({ open, onClose, organic, owner, repo, onRecal
   const scoreVal = organic.score ?? 0;
   const scorePct = Math.min(100, Math.max(0, scoreVal));
 
+  const issuesOnlyCount =
+    organic.openIssuesCount !== null && organic.openPRsCount !== null
+      ? organic.openIssuesCount - organic.openPRsCount
+      : organic.openIssuesCount;
+
+  const hasActivity = organic.openIssuesCount !== null || organic.latestReleaseTag;
+
   return (
-    <Modal open={open} onClose={onClose} title="Organic Score" maxWidth="max-w-lg">
-      <div className="px-5 py-4 space-y-4">
+    <Modal open={open} onClose={onClose} title="Organic Score" maxWidth="max-w-2xl">
+      <div className="px-6 py-5">
 
-        {/* Score header */}
-        <div className={`rounded-xl p-4 ${cfg.bg} border border-border-subtle`}>
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-baseline gap-2">
-              <span className={`text-5xl font-bold tabular-nums leading-none ${cfg.color}`}>
-                {organic.score !== null ? organic.score : "—"}
-              </span>
-              <div>
-                <div className={`text-base font-semibold ${cfg.color}`}>{cfg.label}</div>
-                <div className="text-xs text-muted">out of 100</div>
-              </div>
-            </div>
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-accent-orange-bg text-accent-orange border border-accent-orange-border text-2xs font-semibold uppercase tracking-wide">
-              Experimental
-            </span>
-          </div>
-          {/* Score bar */}
-          <div className="h-1.5 w-full bg-border rounded-full overflow-hidden">
-            <div
-              className={`h-full rounded-full transition-all duration-500 ${cfg.bar}`}
-              style={{ width: `${scorePct}%` }}
-            />
-          </div>
-        </div>
+        {/* Two-column layout: signals on left, sidebar on right */}
+        <div className="flex flex-col sm:flex-row gap-5">
 
-        {/* Signals */}
-        <div className="space-y-3">
-          {signals.map((s) => (
-            <div key={s.label} className="group">
-              <div className="flex items-center justify-between gap-2 mb-1">
-                <div className="flex items-center gap-1.5 min-w-0">
-                  <span className={`size-1.5 rounded-full flex-shrink-0 ${STATUS_COLOR[s.status]}`} />
-                  <span className="text-sm font-medium text-foreground truncate">{s.label}</span>
-                  {/* Tooltip */}
-                  <span className="relative inline-flex flex-shrink-0 group/tip">
-                    <span className="text-muted hover:text-foreground cursor-help text-xs leading-none">ⓘ</span>
-                    <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 rounded-lg bg-surface border border-border px-3 py-2 text-xs text-foreground leading-relaxed shadow-xl opacity-0 group-hover/tip:opacity-100 transition-opacity duration-150 z-50 whitespace-normal">
-                      {s.tooltip}
-                    </span>
+          {/* ── Left column: score header + signals ── */}
+          <div className="flex-1 min-w-0 space-y-4">
+
+            {/* Score header */}
+            <div className={`rounded-xl p-4 ${cfg.bg} border border-border-subtle`}>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-baseline gap-3">
+                  <span className={`text-5xl font-bold tabular-nums leading-none ${cfg.color}`}>
+                    {organic.score !== null ? organic.score : "—"}
                   </span>
+                  <div>
+                    <div className={`text-base font-semibold ${cfg.color}`}>{cfg.label}</div>
+                    <div className="text-xs text-muted">out of 100</div>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  {s.signalScore !== null && (
-                    <span className={`text-xs font-semibold tabular-nums ${s.status === "ok" ? "text-accent-green" : s.status === "warn" ? "text-accent-orange" : "text-muted"}`}>
-                      {Math.round(s.signalScore)}/100
-                    </span>
-                  )}
-                  <span className="text-2xs text-muted border border-border-subtle rounded px-1.5 py-0.5 tabular-nums font-medium">
-                    w {s.weight}
-                  </span>
-                </div>
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-accent-orange-bg text-accent-orange border border-accent-orange-border text-2xs font-semibold uppercase tracking-wide">
+                  Experimental
+                </span>
               </div>
-              {/* Signal bar */}
-              <div className="ml-3 mb-1 h-1 w-full bg-border rounded-full overflow-hidden">
+              <div className="h-1.5 w-full bg-border rounded-full overflow-hidden">
                 <div
-                  className={`h-full rounded-full transition-all duration-500 ${SIGNAL_BAR_COLOR[s.status]}`}
-                  style={{ width: s.signalScore !== null ? `${s.signalScore}%` : s.status === "na" ? "0%" : "50%" }}
+                  className={`h-full rounded-full transition-all duration-500 ${cfg.bar}`}
+                  style={{ width: `${scorePct}%` }}
                 />
               </div>
-              <p className="ml-3 text-xs text-muted">{s.rawValue}</p>
             </div>
-          ))}
-        </div>
 
-        {/* Activity + Release row */}
-        {(organic.openIssuesCount !== null || organic.latestReleaseTag) && (() => {
-          const issuesOnlyCount =
-            organic.openIssuesCount !== null && organic.openPRsCount !== null
-              ? organic.openIssuesCount - organic.openPRsCount
-              : organic.openIssuesCount;
-          return (
-            <div className="flex flex-wrap gap-2 border-t border-border-subtle pt-3">
-              {/* Issues counter — split view */}
-              {issuesOnlyCount !== null && organic.openPRsCount !== null && (
-                <a
-                  href={`https://github.com/${owner}/${repo}/issues`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 bg-surface-alt rounded-md px-2.5 py-1.5 border border-border-subtle hover:border-accent-blue/40 transition-colors"
-                >
-                  <AlertCircle className="size-3.5 text-muted flex-shrink-0" aria-hidden="true" />
-                  <span className="text-sm font-semibold text-foreground tabular-nums">
-                    {issuesOnlyCount.toLocaleString()}
-                  </span>
-                  <span className="text-xs text-muted">issues</span>
-                </a>
-              )}
-              {/* PRs counter */}
-              {organic.openPRsCount !== null && (
-                <a
-                  href={`https://github.com/${owner}/${repo}/pulls`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 bg-surface-alt rounded-md px-2.5 py-1.5 border border-border-subtle hover:border-accent-blue/40 transition-colors"
-                >
-                  <GitPullRequest className="size-3.5 text-muted flex-shrink-0" aria-hidden="true" />
-                  <span className="text-sm font-semibold text-foreground tabular-nums">
-                    {organic.openPRsCount.toLocaleString()}
-                  </span>
-                  <span className="text-xs text-muted">open PRs</span>
-                </a>
-              )}
-              {/* Fallback combiné si pas de split */}
-              {organic.openIssuesCount !== null && organic.openPRsCount === null && (
-                <a
-                  href={`https://github.com/${owner}/${repo}/issues`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 bg-surface-alt rounded-md px-2.5 py-1.5 border border-border-subtle hover:border-accent-blue/40 transition-colors"
-                >
-                  <AlertCircle className="size-3.5 text-muted flex-shrink-0" aria-hidden="true" />
-                  <span className="text-sm font-semibold text-foreground tabular-nums">
-                    {organic.openIssuesCount.toLocaleString()}
-                  </span>
-                  <span className="text-xs text-muted">issues & PRs</span>
-                </a>
-              )}
-              {/* Version + date */}
-              {organic.latestReleaseTag && organic.latestReleaseUrl && (
-                <a
-                  href={organic.latestReleaseUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 bg-surface-alt rounded-md px-2.5 py-1.5 border border-border-subtle hover:border-accent-blue/40 transition-colors"
-                >
-                  <Star className="size-3.5 text-muted flex-shrink-0" aria-hidden="true" />
-                  <span className="text-sm font-semibold text-foreground">{organic.latestReleaseTag}</span>
-                  {organic.latestReleaseAt && (
-                    <span className="text-xs text-muted">
-                      ({new Date(organic.latestReleaseAt).toLocaleDateString()})
-                    </span>
-                  )}
-                </a>
-              )}
+            {/* Signal rows */}
+            <div className="space-y-2.5">
+              {signals.map((s) => (
+                <div key={s.label} className="group rounded-lg bg-surface-alt px-3 py-2.5 border border-border-subtle">
+
+                  {/* Row 1: label + tooltip | score + weight */}
+                  <div className="flex items-center justify-between gap-3 mb-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className={`size-1.5 rounded-full flex-shrink-0 ${STATUS_COLOR[s.status]}`} />
+                      <span className="text-sm font-medium text-foreground">{s.label}</span>
+                      <span className="relative inline-flex flex-shrink-0 group/tip">
+                        <span className="text-muted hover:text-foreground cursor-help text-xs leading-none">ⓘ</span>
+                        <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 rounded-lg bg-surface border border-border px-3 py-2 text-xs text-foreground leading-relaxed shadow-xl opacity-0 group-hover/tip:opacity-100 transition-opacity duration-150 z-50 whitespace-normal">
+                          {s.tooltip}
+                        </span>
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {s.signalScore !== null ? (
+                        <span className={`text-xs font-semibold tabular-nums w-12 text-right ${s.status === "ok" ? "text-accent-green" : s.status === "warn" ? "text-accent-orange" : "text-muted"}`}>
+                          {Math.round(s.signalScore)}/100
+                        </span>
+                      ) : (
+                        <span className="text-xs text-muted/50 tabular-nums w-12 text-right">—/100</span>
+                      )}
+                      <span className="text-2xs text-muted border border-border-subtle rounded px-1.5 py-0.5 tabular-nums font-medium w-14 text-center">
+                        w {s.weight}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Row 2: bar + rawValue side by side */}
+                  <div className="flex items-center gap-3 pl-3.5">
+                    <div className="flex-1 h-1 bg-border rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all duration-500 ${SIGNAL_BAR_COLOR[s.status]}`}
+                        style={{ width: s.signalScore !== null ? `${s.signalScore}%` : s.status === "na" ? "0%" : "50%" }}
+                      />
+                    </div>
+                    <p className="text-xs text-muted min-w-0 truncate" title={s.rawValue}>
+                      {s.rawValue}
+                    </p>
+                  </div>
+
+                </div>
+              ))}
             </div>
-          );
-        })()}
-
-        {/* Disclaimer */}
-        <p className="text-xs text-muted/80 leading-relaxed border-t border-border-subtle pt-3">
-          Heuristic based on 5 public signals, not an accusation of fraud.
-          Repos with viral growth or niche communities may score lower despite being organic.
-          {organic.computedAt && (
-            <>{" "}<span className="text-muted/60">Computed {new Date(organic.computedAt).toLocaleDateString()}.</span></>
-          )}
-        </p>
-
-        {/* Footer: actions + links */}
-        <div className="border-t border-border-subtle pt-3 space-y-2.5">
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
-            <button
-              onClick={handleRecalculate}
-              disabled={recalculating}
-              title="Re-fetch live data from GitHub and recompute (1× per hour)"
-              className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md border border-border text-muted hover:text-foreground hover:border-accent-blue/50 transition-colors disabled:opacity-50"
-            >
-              {recalculating ? (
-                <>
-                  <RefreshCw className="size-3 animate-spin" aria-hidden="true" />
-                  Recalculating…
-                </>
-              ) : (
-                <>
-                  <RefreshCw className="size-3" aria-hidden="true" />
-                  Recompute
-                </>
-              )}
-            </button>
-            <span className="text-border-subtle select-none">·</span>
-            <a
-              href={disputeUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs text-muted hover:text-foreground transition-colors"
-            >
-              Dispute or request removal →
-            </a>
-            {recalcError && (
-              <span className="text-xs text-accent-red">{recalcError}</span>
-            )}
           </div>
-          <div className="flex items-center gap-2 text-xs">
-            <a
-              href="https://arxiv.org/abs/2412.13459"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-accent-blue/70 hover:text-accent-blue transition-colors"
-            >
-              CMU/StarScout paper
-            </a>
-            <span className="text-muted/40">·</span>
-            <a
-              href="/organic-score/calibration"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-accent-blue/70 hover:text-accent-blue transition-colors"
-            >
-              Calibration data
-            </a>
+
+          {/* ── Right column: activity + disclaimer + footer ── */}
+          <div className="sm:w-52 flex flex-col gap-4 flex-shrink-0">
+
+            {/* Activity pills */}
+            {hasActivity && (
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-muted uppercase tracking-wide">Activity</p>
+                <div className="flex flex-col gap-1.5">
+                  {issuesOnlyCount !== null && organic.openPRsCount !== null && (
+                    <a
+                      href={`https://github.com/${owner}/${repo}/issues`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 bg-surface-alt rounded-md px-2.5 py-2 border border-border-subtle hover:border-accent-blue/40 transition-colors"
+                    >
+                      <AlertCircle className="size-3.5 text-muted flex-shrink-0" aria-hidden="true" />
+                      <span className="text-sm font-semibold text-foreground tabular-nums">
+                        {issuesOnlyCount.toLocaleString()}
+                      </span>
+                      <span className="text-xs text-muted">issues</span>
+                    </a>
+                  )}
+                  {organic.openPRsCount !== null && (
+                    <a
+                      href={`https://github.com/${owner}/${repo}/pulls`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 bg-surface-alt rounded-md px-2.5 py-2 border border-border-subtle hover:border-accent-blue/40 transition-colors"
+                    >
+                      <GitPullRequest className="size-3.5 text-muted flex-shrink-0" aria-hidden="true" />
+                      <span className="text-sm font-semibold text-foreground tabular-nums">
+                        {organic.openPRsCount.toLocaleString()}
+                      </span>
+                      <span className="text-xs text-muted">open PRs</span>
+                    </a>
+                  )}
+                  {organic.openIssuesCount !== null && organic.openPRsCount === null && (
+                    <a
+                      href={`https://github.com/${owner}/${repo}/issues`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 bg-surface-alt rounded-md px-2.5 py-2 border border-border-subtle hover:border-accent-blue/40 transition-colors"
+                    >
+                      <AlertCircle className="size-3.5 text-muted flex-shrink-0" aria-hidden="true" />
+                      <span className="text-sm font-semibold text-foreground tabular-nums">
+                        {organic.openIssuesCount.toLocaleString()}
+                      </span>
+                      <span className="text-xs text-muted">issues & PRs</span>
+                    </a>
+                  )}
+                  {organic.latestReleaseTag && organic.latestReleaseUrl && (
+                    <a
+                      href={organic.latestReleaseUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 bg-surface-alt rounded-md px-2.5 py-2 border border-border-subtle hover:border-accent-blue/40 transition-colors"
+                    >
+                      <Star className="size-3.5 text-muted flex-shrink-0" aria-hidden="true" />
+                      <div className="min-w-0">
+                        <div className="text-sm font-semibold text-foreground truncate">
+                          {organic.latestReleaseTag}
+                        </div>
+                        {organic.latestReleaseAt && (
+                          <div className="text-xs text-muted">
+                            {new Date(organic.latestReleaseAt).toLocaleDateString()}
+                          </div>
+                        )}
+                      </div>
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Disclaimer */}
+            <p className="text-xs text-muted/80 leading-relaxed">
+              Heuristic based on 5 public signals, not an accusation of fraud. Repos with viral
+              growth or niche communities may score lower despite being organic.
+              {organic.computedAt && (
+                <>{" "}<span className="text-muted/60">
+                  Computed {new Date(organic.computedAt).toLocaleDateString()}.
+                </span></>
+              )}
+            </p>
+
+            {/* Actions + links */}
+            <div className="mt-auto space-y-2.5">
+              <button
+                onClick={handleRecalculate}
+                disabled={recalculating}
+                title="Re-fetch live data from GitHub and recompute (1× per hour)"
+                className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md border border-border text-muted hover:text-foreground hover:border-accent-blue/50 transition-colors disabled:opacity-50 w-full justify-center"
+              >
+                {recalculating ? (
+                  <>
+                    <RefreshCw className="size-3 animate-spin" aria-hidden="true" />
+                    Recalculating…
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="size-3" aria-hidden="true" />
+                    Recompute
+                  </>
+                )}
+              </button>
+              {recalcError && (
+                <p className="text-xs text-accent-red text-center">{recalcError}</p>
+              )}
+              <div className="flex flex-col gap-1 text-xs">
+                <a
+                  href={disputeUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-muted hover:text-foreground transition-colors"
+                >
+                  Dispute or request removal →
+                </a>
+                <a
+                  href="https://arxiv.org/abs/2412.13459"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-accent-blue/70 hover:text-accent-blue transition-colors"
+                >
+                  CMU/StarScout paper
+                </a>
+                <a
+                  href="/organic-score/calibration"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-accent-blue/70 hover:text-accent-blue transition-colors"
+                >
+                  Calibration data
+                </a>
+              </div>
+            </div>
+
           </div>
         </div>
       </div>

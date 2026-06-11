@@ -10,7 +10,7 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://starmapper.bruniaux.
 
 const TITLE = "StarMapper vs GitHub Star History";
 const DESC =
-  "star-history.com answers when your GitHub repo gained stars. StarMapper answers where your stargazers live. Two complementary tools — most open-source maintainers use both.";
+  "star-history.com answers when your GitHub repo gained stars. StarMapper answers where your stargazers live. Two complementary tools; most open-source maintainers end up using both.";
 
 export const metadata: Metadata = {
   title: `${TITLE} | StarMapper`,
