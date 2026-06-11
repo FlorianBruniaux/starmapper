@@ -37,6 +37,12 @@ SKIP_REPO_LANGUAGES=false
 SKIP_ORGANIC=false
 SKIP_TOP_REPOS=false
 SKIP_LANGUAGES=false
+SKIP_FOLLOWERS=false
+
+# REFRESH_FOLLOWERS: space- or comma-separated list of GitHub logins whose
+# follower_cache should be refreshed. E.g. REFRESH_FOLLOWERS=FlorianBruniaux
+# Can be set in .env.local or passed inline: REFRESH_FOLLOWERS=X make maintenance
+REFRESH_FOLLOWERS="${REFRESH_FOLLOWERS:-}"
 
 for arg in "$@"; do
   case "$arg" in
@@ -47,6 +53,7 @@ for arg in "$@"; do
     --skip-repo-languages) SKIP_REPO_LANGUAGES=true ;;
     --skip-organic)        SKIP_ORGANIC=true ;;
     --skip-top-repos)      SKIP_TOP_REPOS=true ;;
+    --skip-followers)      SKIP_FOLLOWERS=true ;;
     --skip-languages|--skip-language) SKIP_LANGUAGES=true ;;
   esac
 done
@@ -88,7 +95,7 @@ if ! $SKIP_BACKFILLS; then
 
   if ! $SKIP_ORGANIC; then
     step "3/6 — Contributors / 1k stars (must run before organic recompute)"
-    pnpm backfill:contributors:local -- $DRYARG
+    pnpm backfill:contributors:local -- --force $DRYARG
     ok "contributors done"
 
     step "4/6 — Organic scores (uses fresh contributors data)"
@@ -113,6 +120,19 @@ if ! $SKIP_BACKFILLS; then
     ok "dev languages done"
   else
     skip "6/6 — Developer languages"
+  fi
+
+  if ! $SKIP_FOLLOWERS && [ -n "$REFRESH_FOLLOWERS" ]; then
+    LOGINS_CSV=$(echo "$REFRESH_FOLLOWERS" | tr ' ' ',')
+    step "7/7 — Follower cache refresh ($LOGINS_CSV)"
+    if ! $DRY_RUN; then
+      caffeinate -i tsx scripts/ops/batch-index-followers.ts --logins "$LOGINS_CSV" $DRYARG
+      ok "follower cache done"
+    else
+      echo "[dry-run] Would run: batch-index-followers --logins $LOGINS_CSV"
+    fi
+  elif ! $SKIP_FOLLOWERS && [ -z "$REFRESH_FOLLOWERS" ]; then
+    skip "7/7 — Follower cache refresh (set REFRESH_FOLLOWERS=login1,login2 to enable)"
   fi
 
 fi

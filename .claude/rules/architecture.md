@@ -63,7 +63,7 @@ fetchStargazersPage(
 - Uses `@prisma/adapter-neon` — connection string passed via adapter, NOT via `url` in schema
 - `schema.prisma` datasource has NO `url` field — intentional with adapter pattern
 - `db.ts`: `new PrismaNeon({ connectionString: process.env.DATABASE_URL })` → `new PrismaClient({ adapter })`
-- No `prisma.config.ts` — deleted, not needed
+- `prisma.config.ts` présent (Prisma 7) : `defineConfig` avec `datasource.url = process.env.DATABASE_URL`. La CLI (`prisma db push`) le charge pour résoudre la connection string ; le runtime applicatif passe toujours par l'adapter dans `db.ts`
 - Never use `prisma migrate dev` — use `prisma db push` (no migration history needed)
 - Geocache key = `location.toLowerCase().trim()` (consistent normalization)
 
