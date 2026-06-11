@@ -35,55 +35,64 @@ export default function DependentsPageClient({ params }: Props) {
       setState((prev) => (prev.status === "done" ? { status: "refreshing" } : { status: "loading" }));
       const ac = new AbortController();
 
-      try {
+      // GET dependents from cache. "hit" → state set to done; "miss" → 404 with no state set;
+      // "handled" → a non-404 error state was already set. Extracted so the post-refresh reload
+      // can reuse it without loadDependents referencing itself (react-hooks/immutability).
+      const loadFromCache = async (): Promise<"hit" | "miss" | "handled"> => {
         const res = await fetch(
           `/api/dependents/${owner}/${repo}?sort=${sort}&page=${p}&per_page=50`,
           { signal: ac.signal },
         );
-
         if (res.ok) {
           const data = await res.json() as DependentsApiResponse;
           setState({ status: "done", data });
-          return;
+          return "hit";
         }
-
-        if (res.status === 404 && triggerRefreshOnMiss) {
-          // Cache miss: trigger a fresh fetch from ecosyste.ms, then reload
-          setState({ status: "refreshing" });
-          const refreshRes = await fetch(`/api/dependents/${owner}/${repo}/refresh`, {
-            method: "POST",
-            signal: ac.signal,
-          });
-
-          if (!refreshRes.ok) {
-            const err = await refreshRes.json() as { error?: string };
-            if (err.error === "feature_disabled") {
-              setState({ status: "error", message: "feature_disabled" });
-              return;
-            }
-            // No packages found for this repo
-            setState({ status: "no_package" });
-            return;
-          }
-
-          const refreshData = await refreshRes.json() as { totalCount: number; packages: string[] };
-          if (refreshData.totalCount === 0) {
-            setState({ status: "no_package", hasPackages: refreshData.packages.length > 0 });
-            return;
-          }
-
-          // Now reload from cache
-          await loadDependents(sort, p, false);
-          return;
-        }
-
+        if (res.status === 404) return "miss";
         setState({ status: "error", message: `HTTP ${res.status}` });
+        return "handled";
+      };
+
+      try {
+        const result = await loadFromCache();
+        if (result !== "miss") return;
+
+        if (!triggerRefreshOnMiss) {
+          setState({ status: "error", message: "HTTP 404" });
+          return;
+        }
+
+        // Cache miss: trigger a fresh fetch from ecosyste.ms, then reload once.
+        setState({ status: "refreshing" });
+        const refreshRes = await fetch(`/api/dependents/${owner}/${repo}/refresh`, {
+          method: "POST",
+          signal: ac.signal,
+        });
+
+        if (!refreshRes.ok) {
+          const err = await refreshRes.json() as { error?: string };
+          if (err.error === "feature_disabled") {
+            setState({ status: "error", message: "feature_disabled" });
+            return;
+          }
+          // No packages found for this repo
+          setState({ status: "no_package" });
+          return;
+        }
+
+        const refreshData = await refreshRes.json() as { totalCount: number; packages: string[] };
+        if (refreshData.totalCount === 0) {
+          setState({ status: "no_package", hasPackages: refreshData.packages.length > 0 });
+          return;
+        }
+
+        // Reload from cache after the refresh (no further refresh on a repeated miss).
+        const reloaded = await loadFromCache();
+        if (reloaded === "miss") setState({ status: "error", message: "HTTP 404" });
       } catch (err) {
         if (err instanceof DOMException && err.name === "AbortError") return;
         setState({ status: "error", message: "network_error" });
       }
-
-      return () => ac.abort();
     },
     [owner, repo],
   );
