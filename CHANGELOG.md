@@ -5,6 +5,51 @@ Versioning: Semantic Versioning (MAJOR.MINOR.PATCH)
 
 ---
 
+## [0.6.6] (2026-06-11)
+
+### Organic Score: 5th signal (Contributors / 1k stars)
+
+The Organic Score gains a fifth signal measuring the number of unique contributors relative to stars. Repositories with many stars but very few contributors are a known pattern in artificially inflated repos: star farming services produce accounts that star but never commit.
+
+The signal is gated at 5,000 stars, matching the existing fork/star ratio gate. Below that threshold, contributor counts swing too widely on small projects, a solo CLI tool and a fake repo look statistically identical. Above the gate, the signal normalizes on a fixed scale: 50 or more contributors maps to 100, 20 to 70, 5 to 40, and 1 to roughly 10.
+
+Contributors are fetched via `GET /repos/{owner}/{repo}/contributors?per_page=1` using the `Link` header `rel="last"` page-number technique. One API call per repo, no pagination loop.
+
+Adding the signal required redistributing weights across all five:
+
+| Signal | Old weight | New weight |
+|---|---|---|
+| Fork/Star ratio | 40% | 25% |
+| Watcher/Star ratio | 5% | 5% |
+| Zero-follower stargazers | 55% | 45% |
+| Releases cadence | 15% | 15% |
+| Contributors / 1k stars | n/a | 10% |
+
+`contributorsCount` is stored in `badge_cache` and populated by `scripts/backfill/backfill-contributors.ts`. Without `--force`, the script only processes NULL rows; passing `--force` re-fetches all rows regardless of existing values.
+
+### Organic Score modal: 2-column layout
+
+The modal was widened from `max-w-lg` to `max-w-2xl` and restructured into two columns. The left side shows the five signal rows; the right side groups activity pills (open issues, open PRs, latest release) and the Recompute button in a sidebar. Each signal row is now a card with a colored progress bar and the raw value displayed inline. Gated signals with insufficient data show a clear dash instead of an empty bar.
+
+### DB sync fixes
+
+Four silent data-loss bugs were found and fixed in `db-sync-to-neon.sh` and `db-sync-from-neon.sh`:
+
+- `github_user` (to-neon): `topRepos`, `topReposFetchedAt`, and `source` were missing from the explicit column list. Syncing to prod silently dropped those values for every user row.
+- `badge_cache` (to-neon): `contributorsCount` was absent from the `ON CONFLICT DO UPDATE SET` clause. Data written locally by `backfill-contributors.ts` was never propagated to prod.
+- `badge_cache` (from-neon): the conflict clause only updated three fields (`mappedCount`, `countryCount`, `totalCount`). All other fields (`organicScore`, `contributorsCount`, the release fields, etc.) were silently discarded on every reverse sync.
+- `follower_cache` and `dependents_cache` were completely absent from `db-sync-to-neon.sh`. Both tables are now included with staleness-guard `WHERE EXCLUDED.x > table.x` conflict clauses.
+
+### Maintenance pipeline
+
+`scripts/ops/maintenance.sh` gains a step 3/6 for contributors backfill, which runs before organic score recomputation so the scorer always works with fresh contributor data. The MV refresh at the end of the pipeline now covers all 9 materialized views (`country_language_stats_mv`, `language_grid_mv`, and `github_user_grid_mv` were previously missing). The contributors step always passes `--force` so re-runs refresh existing counts rather than skipping already-populated rows.
+
+### Interactive maintenance wizard
+
+`make maintenance` now launches an interactive CLI wizard built with `@inquirer/prompts`. A checkbox list presents the six maintenance steps and the sync+MV target with sensible defaults (all backfills on, sync off). After selection, the wizard asks for dry-run mode, prints a summary, waits for confirmation, then calls `maintenance.sh` with the appropriate `--skip-*` flags. `make maintenance-dry` and `make maintenance-sync-only` still bypass the wizard and invoke `maintenance.sh` directly.
+
+---
+
 ## [0.6.5] (2026-06-11)
 
 ### Followers map: Rescan button

@@ -82,7 +82,7 @@ pnpm db:sync:from-prod           # Neon prod → local Docker
 pnpm db:sync:to-prod             # local Docker → Neon prod  ⚠️ WRITES TO PROD
 pnpm db:pull                     # Full dump + restore: prod → local
 
-make maintenance                 # Backfill + sync + MV refresh pipeline
+make maintenance                 # Interactive wizard: checkboxes per step, dry-run prompt, then calls maintenance.sh
 pnpm stats:views                 # Analytics overview (last 7 days, top 20)
 ```
 
