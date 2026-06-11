@@ -310,6 +310,43 @@ model StarEvent {
 
 ---
 
+### TrendingWatchlist
+
+```prisma
+model TrendingWatchlist {
+  owner   String
+  repo    String
+  note    String?
+  addedAt DateTime @default(now())
+
+  @@id([owner, repo])
+  @@map("trending_watchlist")
+}
+```
+
+**Purpose**: Curated repos always eligible for the trending rescan, even if never organically scanned. Seeded from `src/lib/trending-watchlist-seed.ts` via `pnpm db:seed:trending-watchlist:{local,prod}` (idempotent, `skipDuplicates`). `selectRefreshTargets` unions this with the top 300 scanned repos.
+
+---
+
+### TrendingRefresh
+
+```prisma
+model TrendingRefresh {
+  owner           String
+  repo            String
+  lastRefreshedAt DateTime
+  eventsAdded     Int      @default(0)
+
+  @@id([owner, repo])
+  @@index([lastRefreshedAt])
+  @@map("trending_refresh")
+}
+```
+
+**Purpose**: Rotation ledger for the trending rescan. The `@@index([lastRefreshedAt])` lets `/api/admin/refresh-trending` pick the least-recently-refreshed repos each run (`ORDER BY lastRefreshedAt ASC NULLS FIRST`), so the candidate universe cycles over a handful of runs. Stamped via `recordRefresh()` after each repo is processed, including on permanent failure (404/renamed) so a broken repo never blocks rotation.
+
+---
+
 ### DependentsCache
 
 ```prisma
@@ -525,12 +562,28 @@ Bulk-inserts geocache entries. Used to seed the cache from an external dataset.
 
 ### `GET /api/admin/refresh-grid-mv`
 
-Refreshes all materialized views (cron endpoint, runs daily at 03:00 UTC):
+Refreshes all materialized views (cron endpoint, runs every 4h):
 - `github_user_grid_mv`
 - `country_stats_mv`
 - `power_users_mv`
 - `company_stats_mv`
 - `country_language_stats_mv`
+
+---
+
+### `GET|POST /api/admin/refresh-trending`
+
+Keeps the Trending feed alive independent of organic scan traffic. Runs every 6h via Vercel Cron (`30 */6 * * *`). Each run picks the least-recently-refreshed repos from the candidate universe (`trending_watchlist` ∪ top 300 scanned repos by `totalCount`), fetches their stars from the last 30 days (no geocoding), upserts `star_event` rows, then `REFRESH MATERIALIZED VIEW CONCURRENTLY trending_repos_mv` so the new velocity surfaces.
+
+**Auth**: `GET` requires `Authorization: Bearer ${CRON_SECRET}` (Vercel Cron). If `CRON_SECRET` is unset the route returns 404, so the cron is a safe no-op until configured. `POST` uses standard admin auth for manual triggers.
+
+**Query params**: `?limit=N` (default 50, max 200), repos refreshed per run. Rotation by `trending_refresh.lastRefreshedAt` cycles the full candidate set over a handful of runs.
+
+**Response**: `{ ok, durationMs, candidates, reposRefreshed, eventsAdded, rateLimited, timeBudgetHit }`. Returns 503 `skipped:"db_critical"` if DB usage ≥ critical threshold. Stops early on `GitHubRateLimitError` (leaves the rest for next run) or at a 240s internal deadline (under the 300s `maxDuration`).
+
+Logic lives in `src/lib/trending-refresh.ts`: `selectRefreshTargets`, `refreshRepoStarEvents`, `recordRefresh`. Watchlist seed in `src/lib/trending-watchlist-seed.ts`, applied via `pnpm db:seed:trending-watchlist:{local,prod}`.
+
+> **Local gotcha**: the in-route MV refresh opens its own `pg.Pool`. SSL is gated on `NODE_ENV === "production"` (same as `db.ts`). Without the gate, refreshing the MV locally throws `server does not support SSL connections`.
 
 ---
 
@@ -571,6 +624,8 @@ Returns trending GitHub repos ordered by star velocity.
 **Response**: `{ repos: TrendingRepo[], meta: { total } }`
 
 **Cache**: `public, s-maxage=3600` (1h CDN). Reads `trending_repos_mv`. Returns 503 with `error:"trending_mv_empty"` if MV is missing.
+
+> The MV entry gate is a 30-day window (`HAVING COUNT(*) FILTER (starredAt > NOW() - 30 days) > 0`), widened from the original 7-day gate so slower-moving repos stay visible. Still ordered by `stars_7d DESC`, top 200. Recreate the MV from `scripts/db/sql/create-trending-mv.sql` (idempotent: `DROP` then `CREATE`).
 
 ---
 
@@ -1062,7 +1117,8 @@ Returns aggregate statistics on the organic score corpus: distribution of tiers,
 │   │       └── admin/
 │   │           ├── clear-geocache/route.ts    # GET:  truncate geocache (admin)
 │   │           ├── import-geocache/route.ts   # POST: bulk import geocache (admin)
-│   │           ├── refresh-grid-mv/route.ts   # GET:  refresh all MVs (Vercel Cron 03:00 UTC)
+│   │           ├── refresh-grid-mv/route.ts   # GET:  refresh all MVs (Vercel Cron, every 4h)
+│   │           ├── refresh-trending/route.ts  # GET:  rescan star_events + refresh trending MV (Vercel Cron, every 6h)
 │   │           ├── cleanup/route.ts           # GET:  purge stale/orphaned DB data
 │   │           ├── daily-digest/route.ts      # POST: platform stats digest (Vercel Cron)
 │   │           ├── delete-user/route.ts       # POST: GDPR user deletion across all tables
@@ -1149,6 +1205,8 @@ Returns aggregate statistics on the organic score corpus: distribution of tiers,
 │       ├── db-health.ts                       # DB storage check: checkDbHealth(), warns at 80%, skips at 95%
 │       ├── geocoder.ts                        # geocode() + geocodeBatch(): 3-level cascade
 │       ├── github.ts                          # fetchStargazersPage(): GitHub GraphQL
+│       ├── trending-refresh.ts                # selectRefreshTargets(), refreshRepoStarEvents(), recordRefresh(): trending rescan
+│       ├── trending-watchlist-seed.ts         # TRENDING_WATCHLIST_SEED: curated repos for the rescan candidate universe
 │       ├── github-auth.ts                     # verifyPat(), isValidLogin(), normalizeLogin()
 │       ├── feed-builders.ts                   # buildRss20() + buildJsonFeed() — RSS 2.0 + JSON Feed 1.1
 │       ├── map-style.ts                       # fetchAndPatchStyle(): Jawg tile style
@@ -1274,9 +1332,18 @@ Each `/api/chunk` call processes exactly 100 users. At that batch size, GitHub G
 
 Neon sponsors StarMapper with a 100GB plan. `db-health.ts` still monitors usage in real-time and exposes configurable thresholds via `DB_STORAGE_LIMIT_MB` (default: 512 for self-hosters). When usage exceeds 80%, a warning is logged; at 95%, user cache writes (`GitHubUser`/`StarEvent`) are skipped. The `geocache` and `stargazer_cache` tables are the primary consumers.
 
-### No background jobs
+### Background jobs (Vercel Cron)
 
-There is no cron, queue, or webhook infrastructure. Everything is request-driven. The browser is the scheduler.
+The stargazer scan itself is fully request-driven: the browser is the scheduler, no queue or webhook. Four Vercel Cron jobs (declared in `vercel.json`) handle periodic maintenance:
+
+| Path | Schedule | Job |
+|---|---|---|
+| `/api/admin/cleanup` | `0 3 1 * *` (monthly) | Purge stale/orphaned DB data |
+| `/api/admin/refresh-grid-mv` | `0 */4 * * *` (every 4h) | Refresh all materialized views |
+| `/api/admin/refresh-trending` | `30 */6 * * *` (every 6h) | Rescan recent star_events for watchlist ∪ top repos, refresh `trending_repos_mv` |
+| `/api/admin/daily-digest` | `0 6 * * *` (daily) | Platform stats digest |
+
+Cron auth: each GET checks `Authorization: Bearer ${CRON_SECRET}`. If `CRON_SECRET` is unset the routes 404 (safe no-op).
 
 ### Rate limit table
 

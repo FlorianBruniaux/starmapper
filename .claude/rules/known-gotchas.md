@@ -49,6 +49,28 @@ Toujours envoyer `pointsGz`/`unmappedGz` (gzip+base64), jamais les arrays bruts.
 
 ---
 
+## Pool SSL local : gate sur NODE_ENV
+
+Toute route qui ouvre son propre `pg.Pool` (hors singleton `db.ts`) doit gater le SSL sur l'env, sinon ça crash en local :
+
+```ts
+// ✅ Neon (prod) exige SSL, Postgres local ne le supporte pas
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : undefined,
+});
+```
+
+Sans le gate : `error: The server does not support SSL connections` au premier `connect()` local. Concerné : `refresh-trending/route.ts` (corrigé), `refresh-grid-mv/route.ts` (SSL hardcodé mais ne tourne qu'en prod).
+
+---
+
+## Cron trending : migrer la DB avant que le code parte en prod
+
+Le cron `30 */6 * * *` (`/api/admin/refresh-trending`) appelle `selectRefreshTargets` qui lit `trending_watchlist` + `trending_refresh`. Si le code est déployé avant le `prisma db push` sur Neon, le cron throw toutes les 6h (tables inexistantes). Inoffensif si `CRON_SECRET` non défini (route → 404). Pas de corruption : `/trending` continue sur le MV existant. Migration prod = push schema + recréer le MV 30j (`scripts/db/sql/create-trending-mv.sql`) + seed watchlist.
+
+---
+
 ## 9 Materialized Views + GIN indexes
 
 Non gérés par Prisma. À créer une fois par instance DB :
