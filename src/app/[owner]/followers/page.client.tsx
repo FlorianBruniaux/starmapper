@@ -168,6 +168,17 @@ export default function FollowersPageClient({ params }: Props) {
               </button>
             )}
 
+            {/* Rescan button (cache loaded, not yet scanning) */}
+            {status === "done" && (
+              <button
+                onClick={handleStartScan}
+                className="flex items-center gap-1.5 border border-border text-muted text-xs px-2.5 py-1.5 rounded-md hover:text-foreground hover:border-accent-blue/50 transition-colors whitespace-nowrap"
+                title="Refresh follower data from GitHub"
+              >
+                Rescan
+              </button>
+            )}
+
             {/* Scanning progress */}
             {isScanning && (
               <div className="flex items-center gap-1.5 text-muted text-xs whitespace-nowrap">

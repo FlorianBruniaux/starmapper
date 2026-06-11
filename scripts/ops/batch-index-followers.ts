@@ -40,6 +40,7 @@ const { values } = parseArgs({
   options: {
     "min-followers": { type: "string",  default: "100" },
     "limit":         { type: "string" },
+    "logins":        { type: "string" },
     "dry-run":       { type: "boolean", default: false },
     "prod":          { type: "boolean", default: false },
     // --gh-token forces a single PAT; otherwise reads GITHUB_TOKEN, GITHUB_TOKEN_2, …
@@ -51,6 +52,7 @@ const { values } = parseArgs({
 
 const minFollowers    = parseInt(values["min-followers"] as string, 10);
 const limit           = values["limit"] ? parseInt(values["limit"] as string, 10) : undefined;
+const loginsFilter    = values["logins"] ? (values["logins"] as string).split(",").map((l) => l.trim()).filter(Boolean) : null;
 const dryRun          = values["dry-run"] as boolean;
 const useProd         = values["prod"] as boolean;
 const ghTokenOverride = values["gh-token"] as string | undefined;
@@ -234,15 +236,22 @@ const indexLoginFollowers = async (login: string): Promise<ChunkResult> => {
 const main = async () => {
   const startMs = Date.now();
 
-  const users = await prisma.gitHubUser.findMany({
-    where:   { followers: { gte: minFollowers } },
-    select:  { login: true, followers: true },
-    orderBy: { followers: "desc" },
-    ...(limit !== undefined ? { take: limit } : {}),
-  });
+  let users: { login: string; followers: number }[];
 
-  const filterDesc = minFollowers > 0 ? ` with followers >= ${minFollowers}` : "";
-  console.log(`Found ${users.length} users${filterDesc} (ordered by followers desc)`);
+  if (loginsFilter && loginsFilter.length > 0) {
+    // Direct mode: bypass DB query, process the given logins
+    users = loginsFilter.map((login) => ({ login, followers: 0 }));
+    console.log(`Direct mode: refreshing follower cache for ${users.map((u) => `@${u.login}`).join(", ")}`);
+  } else {
+    users = await prisma.gitHubUser.findMany({
+      where:   { followers: { gte: minFollowers } },
+      select:  { login: true, followers: true },
+      orderBy: { followers: "desc" },
+      ...(limit !== undefined ? { take: limit } : {}),
+    });
+    const filterDesc = minFollowers > 0 ? ` with followers >= ${minFollowers}` : "";
+    console.log(`Found ${users.length} users${filterDesc} (ordered by followers desc)`);
+  }
 
   if (dryRun) {
     console.log("\nDry run — would index:\n");

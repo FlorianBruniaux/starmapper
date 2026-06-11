@@ -5,6 +5,33 @@ Versioning: Semantic Versioning (MAJOR.MINOR.PATCH)
 
 ---
 
+## [0.6.5] (2026-06-11)
+
+### Followers map: Rescan button
+
+The followers map page now shows a "Rescan" button when a cached result is loaded. Previously the map auto-loaded from `follower_cache` and there was no way to refresh without clearing the cache manually. The button appears next to the followers count pill and triggers a full re-scan from GitHub, updating both the map and the cache on completion.
+
+The cache write plausibility check was relaxed from 1.1x to 5x the stored follower count. The old limit blocked browser rescans for accounts whose actual follower count had grown more than 10% since the last maintenance run.
+
+### Maintenance: follower cache refresh
+
+`make maintenance` now supports an optional step 7 to refresh `follower_cache` for a configurable list of GitHub logins. Set `REFRESH_FOLLOWERS` in `.env.local` or inline to activate it:
+
+```bash
+REFRESH_FOLLOWERS=FlorianBruniaux make maintenance
+```
+
+A dedicated target is also available for one-off refreshes:
+
+```bash
+make refresh-follower-cache LOGINS=FlorianBruniaux        # prod DB
+make refresh-follower-cache-local LOGINS=FlorianBruniaux  # local Docker
+```
+
+`batch-index-followers.ts` gains a `--logins` flag that bypasses the `github_user` DB query and processes a comma-separated list of logins directly, writing compressed results to `follower_cache` via Prisma.
+
+---
+
 ## [0.6.4] (2026-06-10)
 
 ### Repos table

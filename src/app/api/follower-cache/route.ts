@@ -40,8 +40,9 @@ export const POST = async (req: NextRequest) => {
       select: { followers: true },
     });
     if (knownUser && knownUser.followers > 0) {
-      // Allow up to 110% of known follower count (some followers may not be in DB yet)
-      if (totalCount > knownUser.followers * 1.1) {
+      // Allow up to 5x known follower count — prevents cache poisoning while tolerating
+      // significant organic growth between maintenance runs (stale github_user.followers).
+      if (totalCount > knownUser.followers * 5) {
         return jsonError("totalCount_mismatch", 400);
       }
     }

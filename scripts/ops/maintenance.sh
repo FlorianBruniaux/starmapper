@@ -15,6 +15,12 @@
 #   --skip-organic         skip steps 3+4/6 (contributors backfill + organic score + tier)
 #   --skip-top-repos       skip step 5/6 (topRepos[] for devs ≥ 100 followers)
 #   --skip-languages       skip step 6/6 (languages[] from GitHub GraphQL — slowest)
+#   --skip-followers       skip step 7/7 (follower_cache refresh, noop if REFRESH_FOLLOWERS unset)
+#
+# Environment variable:
+#   REFRESH_FOLLOWERS      comma- or space-separated GitHub logins to refresh follower_cache for.
+#                          E.g.: REFRESH_FOLLOWERS=FlorianBruniaux make maintenance
+#                          Or set in .env.local: REFRESH_FOLLOWERS=FlorianBruniaux
 
 set -euo pipefail
 
