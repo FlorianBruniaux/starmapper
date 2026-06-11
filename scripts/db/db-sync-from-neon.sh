@@ -100,7 +100,7 @@ if [[ -n "$REPO" ]]; then
   REPONAME="${REPO##*/}"
 
   has_table "github_user" && import_table "github_user" \
-    "SELECT u.login,u.name,u.company,u.location,u.followers,u.following,u.\"publicRepos\",u.lat,u.lng,u.\"linkedinUrl\",u.\"cityNormalized\",u.\"countryNormalized\",u.languages,u.\"languagesFetchedAt\",u.\"accountCreatedAt\",u.\"dataVersion\",u.\"fetchedAt\"
+    "SELECT u.login,u.name,u.company,u.location,u.followers,u.following,u.\"publicRepos\",u.lat,u.lng,u.\"linkedinUrl\",u.\"cityNormalized\",u.\"countryNormalized\",u.languages,u.\"languagesFetchedAt\",u.\"accountCreatedAt\",u.\"dataVersion\",u.\"fetchedAt\",u.\"topRepos\",u.\"topReposFetchedAt\",u.source
      FROM github_user u
      WHERE u.login IN (SELECT login FROM star_event WHERE owner='$OWNER' AND repo='$REPONAME')
      ORDER BY u.followers DESC $LIMIT_CLAUSE" \
@@ -113,6 +113,9 @@ if [[ -n "$REPO" ]]; then
       "linkedinUrl"=COALESCE(EXCLUDED."linkedinUrl", github_user."linkedinUrl"),
       languages=COALESCE(EXCLUDED.languages, github_user.languages),
       "languagesFetchedAt"=COALESCE(EXCLUDED."languagesFetchedAt", github_user."languagesFetchedAt"),
+      "topRepos"=COALESCE(EXCLUDED."topRepos", github_user."topRepos"),
+      "topReposFetchedAt"=COALESCE(EXCLUDED."topReposFetchedAt", github_user."topReposFetchedAt"),
+      source=EXCLUDED.source,
       "fetchedAt"=EXCLUDED."fetchedAt"'
 
   has_table "star_event" && import_table "star_event" \
@@ -124,7 +127,21 @@ if [[ -n "$REPO" ]]; then
     "SELECT * FROM badge_cache WHERE owner='$OWNER' AND repo='$REPONAME'" \
     'ON CONFLICT (owner, repo) DO UPDATE SET
       "mappedCount"=EXCLUDED."mappedCount", "countryCount"=EXCLUDED."countryCount",
-      "totalCount"=EXCLUDED."totalCount", "updatedAt"=EXCLUDED."updatedAt"'
+      "totalCount"=EXCLUDED."totalCount",
+      language=COALESCE(EXCLUDED.language, badge_cache.language),
+      "forksCount"=COALESCE(EXCLUDED."forksCount", badge_cache."forksCount"),
+      "watchersCount"=COALESCE(EXCLUDED."watchersCount", badge_cache."watchersCount"),
+      "organicScore"=COALESCE(EXCLUDED."organicScore", badge_cache."organicScore"),
+      "organicTier"=COALESCE(EXCLUDED."organicTier", badge_cache."organicTier"),
+      "organicComputedAt"=COALESCE(EXCLUDED."organicComputedAt", badge_cache."organicComputedAt"),
+      "openIssuesCount"=COALESCE(EXCLUDED."openIssuesCount", badge_cache."openIssuesCount"),
+      "openPRsCount"=COALESCE(EXCLUDED."openPRsCount", badge_cache."openPRsCount"),
+      "latestReleaseTag"=COALESCE(EXCLUDED."latestReleaseTag", badge_cache."latestReleaseTag"),
+      "latestReleaseUrl"=COALESCE(EXCLUDED."latestReleaseUrl", badge_cache."latestReleaseUrl"),
+      "latestReleaseAt"=COALESCE(EXCLUDED."latestReleaseAt", badge_cache."latestReleaseAt"),
+      "releasesCount"=COALESCE(EXCLUDED."releasesCount", badge_cache."releasesCount"),
+      "contributorsCount"=COALESCE(EXCLUDED."contributorsCount", badge_cache."contributorsCount"),
+      "updatedAt"=EXCLUDED."updatedAt"'
 
   has_table "stargazer_cache" && import_table "stargazer_cache" \
     "SELECT * FROM stargazer_cache WHERE owner='$OWNER' AND repo='$REPONAME'" \
@@ -135,7 +152,7 @@ if [[ -n "$REPO" ]]; then
 else
   # Full sync mode (respects FK order: github_user before star_event)
   has_table "github_user" && import_table "github_user" \
-    "SELECT login,name,company,location,followers,following,\"publicRepos\",lat,lng,\"linkedinUrl\",\"cityNormalized\",\"countryNormalized\",languages,\"languagesFetchedAt\",\"accountCreatedAt\",\"dataVersion\",\"fetchedAt\"
+    "SELECT login,name,company,location,followers,following,\"publicRepos\",lat,lng,\"linkedinUrl\",\"cityNormalized\",\"countryNormalized\",languages,\"languagesFetchedAt\",\"accountCreatedAt\",\"dataVersion\",\"fetchedAt\",\"topRepos\",\"topReposFetchedAt\",source
      FROM github_user ORDER BY followers DESC $LIMIT_CLAUSE" \
     'ON CONFLICT (login) DO UPDATE SET
       name=EXCLUDED.name, company=EXCLUDED.company, location=EXCLUDED.location,
@@ -146,13 +163,30 @@ else
       "linkedinUrl"=COALESCE(EXCLUDED."linkedinUrl", github_user."linkedinUrl"),
       languages=COALESCE(EXCLUDED.languages, github_user.languages),
       "languagesFetchedAt"=COALESCE(EXCLUDED."languagesFetchedAt", github_user."languagesFetchedAt"),
+      "topRepos"=COALESCE(EXCLUDED."topRepos", github_user."topRepos"),
+      "topReposFetchedAt"=COALESCE(EXCLUDED."topReposFetchedAt", github_user."topReposFetchedAt"),
+      source=EXCLUDED.source,
       "fetchedAt"=EXCLUDED."fetchedAt"'
 
   has_table "badge_cache" && import_table "badge_cache" \
     "SELECT * FROM badge_cache ORDER BY \"updatedAt\" DESC $LIMIT_CLAUSE" \
     'ON CONFLICT (owner, repo) DO UPDATE SET
       "mappedCount"=EXCLUDED."mappedCount", "countryCount"=EXCLUDED."countryCount",
-      "totalCount"=EXCLUDED."totalCount", "updatedAt"=EXCLUDED."updatedAt"' &
+      "totalCount"=EXCLUDED."totalCount",
+      language=COALESCE(EXCLUDED.language, badge_cache.language),
+      "forksCount"=COALESCE(EXCLUDED."forksCount", badge_cache."forksCount"),
+      "watchersCount"=COALESCE(EXCLUDED."watchersCount", badge_cache."watchersCount"),
+      "organicScore"=COALESCE(EXCLUDED."organicScore", badge_cache."organicScore"),
+      "organicTier"=COALESCE(EXCLUDED."organicTier", badge_cache."organicTier"),
+      "organicComputedAt"=COALESCE(EXCLUDED."organicComputedAt", badge_cache."organicComputedAt"),
+      "openIssuesCount"=COALESCE(EXCLUDED."openIssuesCount", badge_cache."openIssuesCount"),
+      "openPRsCount"=COALESCE(EXCLUDED."openPRsCount", badge_cache."openPRsCount"),
+      "latestReleaseTag"=COALESCE(EXCLUDED."latestReleaseTag", badge_cache."latestReleaseTag"),
+      "latestReleaseUrl"=COALESCE(EXCLUDED."latestReleaseUrl", badge_cache."latestReleaseUrl"),
+      "latestReleaseAt"=COALESCE(EXCLUDED."latestReleaseAt", badge_cache."latestReleaseAt"),
+      "releasesCount"=COALESCE(EXCLUDED."releasesCount", badge_cache."releasesCount"),
+      "contributorsCount"=COALESCE(EXCLUDED."contributorsCount", badge_cache."contributorsCount"),
+      "updatedAt"=EXCLUDED."updatedAt"' &
 
   has_table "stargazer_cache" && import_table "stargazer_cache" \
     "SELECT * FROM stargazer_cache ORDER BY \"scannedAt\" DESC $LIMIT_CLAUSE" \

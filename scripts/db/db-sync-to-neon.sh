@@ -45,7 +45,7 @@ sync_table() {
 
   # Export from local — explicit column list for github_user to be immune to schema drift
   if [[ "$TABLE" == "github_user" ]]; then
-    psql "$LOCAL_URL" -c "\copy (SELECT login,name,company,location,followers,lat,lng,\"fetchedAt\",\"accountCreatedAt\",\"dataVersion\",following,\"publicRepos\",\"linkedinUrl\",\"cityNormalized\",\"countryNormalized\",languages,\"languagesFetchedAt\" FROM github_user) TO '$TMPDIR/$TABLE.csv' CSV HEADER"
+    psql "$LOCAL_URL" -c "\copy (SELECT login,name,company,location,followers,lat,lng,\"fetchedAt\",\"accountCreatedAt\",\"dataVersion\",following,\"publicRepos\",\"linkedinUrl\",\"cityNormalized\",\"countryNormalized\",languages,\"languagesFetchedAt\",\"topRepos\",\"topReposFetchedAt\",source FROM github_user) TO '$TMPDIR/$TABLE.csv' CSV HEADER"
   else
     psql "$LOCAL_URL" -c "\copy $TABLE TO '$TMPDIR/$TABLE.csv' CSV HEADER"
   fi
@@ -99,6 +99,9 @@ sync_table "github_user" 'ON CONFLICT (login) DO UPDATE SET
   "linkedinUrl"=COALESCE(EXCLUDED."linkedinUrl", github_user."linkedinUrl"),
   languages=COALESCE(EXCLUDED.languages, github_user.languages),
   "languagesFetchedAt"=COALESCE(EXCLUDED."languagesFetchedAt", github_user."languagesFetchedAt"),
+  "topRepos"=COALESCE(EXCLUDED."topRepos", github_user."topRepos"),
+  "topReposFetchedAt"=COALESCE(EXCLUDED."topReposFetchedAt", github_user."topReposFetchedAt"),
+  source=EXCLUDED.source,
   "fetchedAt"=EXCLUDED."fetchedAt"'
 
 sync_table "badge_cache"     'ON CONFLICT (owner, repo) DO UPDATE SET
@@ -117,6 +120,7 @@ sync_table "badge_cache"     'ON CONFLICT (owner, repo) DO UPDATE SET
   "latestReleaseUrl"=COALESCE(EXCLUDED."latestReleaseUrl", badge_cache."latestReleaseUrl"),
   "latestReleaseAt"=COALESCE(EXCLUDED."latestReleaseAt", badge_cache."latestReleaseAt"),
   "releasesCount"=COALESCE(EXCLUDED."releasesCount", badge_cache."releasesCount"),
+  "contributorsCount"=COALESCE(EXCLUDED."contributorsCount", badge_cache."contributorsCount"),
   "updatedAt"=EXCLUDED."updatedAt"
   WHERE EXCLUDED."updatedAt" > badge_cache."updatedAt"' &
 sync_table "stargazer_cache" 'ON CONFLICT (owner, repo) DO UPDATE SET points=EXCLUDED.points, unmapped=EXCLUDED.unmapped, "totalCount"=EXCLUDED."totalCount", "scannedAt"=EXCLUDED."scannedAt" WHERE EXCLUDED."scannedAt" > stargazer_cache."scannedAt"' &
@@ -129,6 +133,19 @@ sync_table "news" 'WHERE "authorLogin" IN (SELECT login FROM github_user) ON CON
 
 # api_key — no FK deps
 sync_table "api_key" 'ON CONFLICT (key) DO UPDATE SET "lastUsedAt"=EXCLUDED."lastUsedAt", "revokedAt"=EXCLUDED."revokedAt"'
+
+# follower_cache — no FK deps
+sync_table "follower_cache" 'ON CONFLICT (login) DO UPDATE SET
+  "pointsGz"=EXCLUDED."pointsGz", "unmappedGz"=EXCLUDED."unmappedGz",
+  "totalCount"=EXCLUDED."totalCount", "scannedAt"=EXCLUDED."scannedAt",
+  "expiresAt"=EXCLUDED."expiresAt"
+  WHERE EXCLUDED."scannedAt" > follower_cache."scannedAt"'
+
+# dependents_cache — no FK deps
+sync_table "dependents_cache" 'ON CONFLICT (owner, repo) DO UPDATE SET
+  "dataGz"=EXCLUDED."dataGz", "totalCount"=EXCLUDED."totalCount",
+  "fetchedAt"=EXCLUDED."fetchedAt", "expiresAt"=EXCLUDED."expiresAt"
+  WHERE EXCLUDED."fetchedAt" > dependents_cache."fetchedAt"'
 
 echo ""
 echo "Creating/refreshing materialized views on Neon..."
