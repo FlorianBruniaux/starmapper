@@ -46,6 +46,7 @@ export const POST = async (
     // dataGz stores [result] (array-wrapped) to match decompressGzBase64 convention
     const dataGz = compressToGzBase64([result]);
     const now = new Date();
+    const expiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
     await prisma.dependentsCache.upsert({
       where: { owner_repo: key },
@@ -54,11 +55,13 @@ export const POST = async (
         dataGz,
         totalCount: result.totalCount,
         fetchedAt: now,
+        expiresAt,
       },
       update: {
         dataGz,
         totalCount: result.totalCount,
         fetchedAt: now,
+        expiresAt,
       },
     });
 
