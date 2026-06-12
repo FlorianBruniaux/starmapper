@@ -187,15 +187,16 @@ const indexRepo = async (entry: RepoEntry): Promise<void> => {
           accountCreatedAt: sg.accountCreatedAt, lat, lng, linkedinUrl: sg.linkedinUrl,
           countryNormalized: country, cityNormalized: city,
         });
+        // star_event has FK on github_user.login — only insert for mapped users
+        if (sg.starredAt) {
+          starEvents.push({ login: sg.login, owner, repo, starredAt: sg.starredAt });
+        }
       } else {
         unmapped.push({ login: sg.login, name: sg.name, followers: sg.followers, starredAt: sg.starredAt });
       }
 
       if (sg.starredAt && (!latestStarredAt || sg.starredAt > latestStarredAt)) {
         latestStarredAt = sg.starredAt;
-      }
-      if (sg.starredAt) {
-        starEvents.push({ login: sg.login, owner, repo, starredAt: sg.starredAt });
       }
     }
 
