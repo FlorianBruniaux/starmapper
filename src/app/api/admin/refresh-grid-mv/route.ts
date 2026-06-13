@@ -62,7 +62,11 @@ const runRefresh = async () => {
   const results: { mv: string; durationMs: number; error?: string }[] = [];
 
   // TCP mode (pg): persistent session so SET statement_timeout = 0 applies to all queries.
-  const pool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
+  // SSL gate: Neon (prod) requires SSL with cert validation; local Postgres has no SSL.
+  const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: process.env.NODE_ENV === "production" ? true : undefined,
+  });
   const client = await pool.connect();
 
   try {

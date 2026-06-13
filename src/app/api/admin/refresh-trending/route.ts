@@ -117,7 +117,7 @@ const refreshTrendingMv = async () => {
   // otherwise the MV refresh throws "server does not support SSL connections" locally.
   const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : undefined,
+    ssl: process.env.NODE_ENV === "production" ? true : undefined,
   });
   const client = await pool.connect();
   try {
