@@ -29,7 +29,8 @@ Browser                     /api/chunk (Server)
 geocode(location: string): Promise<{ lat: number; lng: number } | null>
 
 // Batch with rate limiting (1100ms between Nominatim calls)
-geocodeBatch(locations: string[]): Promise<Map<string, { lat: number; lng: number } | null>>
+// Result Map keyed by the RAW location string, values are [lat, lng] tuples.
+geocodeBatch(locations: string[]): Promise<Map<string, [number, number] | null>>
 ```
 
 **Rules:**
@@ -37,6 +38,7 @@ geocodeBatch(locations: string[]): Promise<Map<string, { lat: number; lng: numbe
 - Cache hit: return immediately, no Nominatim call
 - Cache miss: call Nominatim, store result (even null = "not found" = valid cache entry)
 - Empty/null location: return null immediately, don't call Nominatim
+- **`geocodeBatch` key = raw `sg.location` string, NOT normalized.** Internally the geocache is read/written lowercased+trimmed, but the returned Map is keyed by the unmodified input (`result.set(loc, ...)`). Consumers must look up with the verbatim location (see `/api/chunk/route.ts:174`). Looking up with a lowercased key silently misses every location that wasn't already lowercase. This bug broke 122/123 batch caches before `e7fb64c`.
 
 ## github.ts Contract
 

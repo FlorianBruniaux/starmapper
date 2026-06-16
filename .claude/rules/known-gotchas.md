@@ -103,6 +103,29 @@ Ne jamais passer `cursor: null` comme variable GraphQL — omettre la variable o
 
 ---
 
+## geocodeBatch : clé du Map = location brute
+
+`geocodeBatch(locations)` retourne un `Map<string, [number, number] | null>` indexé par la chaîne de location **brute** (`result.set(loc, ...)`), pas par la version normalisée. Le geocache interne, lui, est lu et écrit en `loc.trim().toLowerCase()`. Cette asymétrie est le piège : tout consommateur qui fait `geoMap.get(sg.location.trim().toLowerCase())` rate tout sauf les locations déjà en minuscules.
+
+```ts
+// ❌ rate 98% des entrées
+const coords = geoMap.get(sg.location.trim().toLowerCase()) ?? null;
+
+// ✅ clé brute, comme /api/chunk/route.ts:174
+const loc = sg.location ?? "";
+const coords = loc ? geoMap.get(loc) ?? null : null;
+```
+
+Ce bug a cassé 122/123 caches du batch indexer (nosia : 2/208 mappés au lieu de 102/208) avant le commit `e7fb64c`. Le seul consommateur de référence correct est `/api/chunk/route.ts`.
+
+---
+
+## Organic score : gate à 500 stars
+
+`computeOrganicScore` (`src/lib/organic-score.ts:108`) gate sur `GATE_MIN_STARS = 500`. Tout repo sous 500 stars retourne `tier: "insufficient"` et `score: null`, peu importe la qualité des signaux. Les ratios fork et zero-follower sont trop bruités en dessous pour un score fiable. Conséquence concrète : sur StarMapper, un repo à 200 ou 400 stars n'affiche aucun score, c'est volontaire, pas un bug.
+
+---
+
 ## DB Health Guard
 
 `src/lib/user-cache.ts` appelle `checkDbHealth()` avant chaque write. Si le DB est > 95% capacité, les writes `GitHubUser`/`StarEvent` sont silencieusement ignorés. Intentionnel.
