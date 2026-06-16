@@ -195,6 +195,12 @@ sync_star_events() {
 # badge_cache + stargazer_cache have no FK deps → run in parallel
 # star_event references github_user → must run after github_user completes
 
+# SKIP_HEAVY=1 skips the two expensive tables (github_user upsert of ~7M rows,
+# star_event anti-join merge over 12GB). Use it to RESUME a sync that died after
+# those completed but before the tail tables + MV refresh ran.
+if [[ "${SKIP_HEAVY:-0}" == "1" ]]; then
+  echo "[github_user] skipped (SKIP_HEAVY=1)"
+else
 sync_table "github_user" 'ON CONFLICT (login) DO UPDATE SET
   name=EXCLUDED.name, company=EXCLUDED.company, location=EXCLUDED.location,
   followers=EXCLUDED.followers, following=EXCLUDED.following,
@@ -208,6 +214,7 @@ sync_table "github_user" 'ON CONFLICT (login) DO UPDATE SET
   "topReposFetchedAt"=COALESCE(EXCLUDED."topReposFetchedAt", github_user."topReposFetchedAt"),
   source=EXCLUDED.source,
   "fetchedAt"=EXCLUDED."fetchedAt"'
+fi
 
 sync_table "badge_cache"     'ON CONFLICT (owner, repo) DO UPDATE SET
   "mappedCount"=EXCLUDED."mappedCount",
@@ -236,7 +243,11 @@ PID_STARGAZER=$!
 wait "$PID_BADGE"
 wait "$PID_STARGAZER"
 
-sync_star_events
+if [[ "${SKIP_HEAVY:-0}" == "1" ]]; then
+  echo "[star_event] skipped (SKIP_HEAVY=1)"
+else
+  sync_star_events
+fi
 
 # news after github_user (FK constraint)
 sync_table "news" 'WHERE "authorLogin" IN (SELECT login FROM github_user) ON CONFLICT (id) DO UPDATE SET body=EXCLUDED.body, url=EXCLUDED.url, "deletedAt"=EXCLUDED."deletedAt"'
