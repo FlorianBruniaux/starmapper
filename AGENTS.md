@@ -111,3 +111,40 @@ grepai trace graph "ValidateToken" --depth 3 --json
 3. Use `Read` tool to examine files from results
 4. Only use Grep for exact string searches if needed
 
+<claude-mem-context>
+# Memory Context
+
+# [starmapper] recent context, 2026-06-11 5:09pm GMT+2
+
+Legend: 🎯session 🔴bugfix 🟣feature 🔄refactor ✅change 🔵discovery ⚖️decision
+Format: ID TIME TYPE TITLE
+Fetch details: get_observations([IDs]) | Search: mem-search skill
+
+Stats: 21 obs (3,540t read) | 193,482t work | 98% savings
+
+### May 17, 2026
+20816 11:48a 🔴 Fixes in agent.md file
+20818 11:49a 🔴 Debugging pwd command execution
+20820 " 🔴 Debugging ls command execution
+20821 " 🔴 Skill check for using-superpowers skill
+20822 " 🔴 Skill check for source-command-tech-audit-codebase skill
+20823 " 🔴 Updating plan for StarMapper project
+20824 " 🔴 Checking if rtk command exists in the system
+20825 " 🔴 Skill check for AGENTS.md file
+20826 " 🔴 Skill check for package.json file
+20827 " 🔴 Skill check for README.md file
+20828 " 🔴 Skill check for docs/ARCHITECTURE.md file
+20829 " 🔴 Skill check for src/test.ts file
+### Jun 11, 2026
+27405 3:42p ✅ Updated local repository to the latest version
+27416 3:43p 🔵 Security Vulnerabilities Found in Package.json
+27417 " 🔴 Updated `setup:mvs:prod` Script to Include Environment Variable Check
+27418 " 🔴 Untitled
+27419 " 🔄 Refactored `setup:mvs:prod` Script to Use Environment Variables Instead of Command Line Arguments
+27420 " 🔴 Updated `setup:mvs:prod` Script to Use Environment Variables Instead of Command Line Arguments
+27421 3:44p 🔵 Security Vulnerabilities Identified in package.json
+27422 " 🔄 Security Vulnerabilities Fixed in package.json
+27423 " ⚖️ Security Vulnerabilities Addressed in package.json
+
+Access 193k tokens of past work via get_observations([IDs]) or mem-search skill.
+</claude-mem-context>
