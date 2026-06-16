@@ -161,17 +161,34 @@ sync_star_events() {
     echo "  copied chunk $n ($(wc -l < "$chunk") rows)"
   done
 
-  # FK guard on github_user, idempotent on the unique key (login, owner, repo).
-  # Omit id: prod assigns its own via the serial sequence. Inserting the local id
-  # collides with rows the live app created under the same id ("duplicate key ...
-  # star_event_pkey"); ON CONFLICT (login, owner, repo) does not cover the id PK.
+  # Merge into prod. The naive "INSERT ... ON CONFLICT (login,owner,repo) DO NOTHING"
+  # probes the unique index ONCE PER ROW: 29.7M random index lookups on a 12GB table.
+  # On Neon's remote pages each cache miss is a network round-trip → the INSERT ran
+  # 1.5h+ stuck on Neon/PS_ReadIO. Fix:
+  #   1. NOT EXISTS anti-join cuts the 29.7M down to only the genuinely-new rows
+  #      (~6M) with a single sequential, prefetchable pass over star_event instead
+  #      of 29.7M random seeks. ON CONFLICT stays as a cheap safety net: the live
+  #      app (bulkUpsertStarEvents) can insert a matching key during our run, so the
+  #      anti-join alone would risk a unique violation that aborts the whole INSERT.
+  #   2. ANALYZE _sync_star first: CREATE TABLE AS ... LIMIT 0 + COPY leaves zero
+  #      stats, so the planner sizes the joins blind and can pick a nested loop.
+  #   3. work_mem bump keeps the hash anti-join in memory (tune down if Neon OOMs).
+  # Omit id: prod assigns its own via the serial sequence (the local id collides
+  # with rows the live app created under the same id, star_event_pkey).
   psql_retry -v ON_ERROR_STOP=1 "$NEON_URL" -c "SET statement_timeout = 0;
+    SET work_mem = '512MB';
+    ANALYZE _sync_star;
     INSERT INTO star_event (login, owner, repo, \"starredAt\", \"createdAt\")
-    SELECT login, owner, repo, \"starredAt\", \"createdAt\" FROM _sync_star
-    WHERE login IN (SELECT login FROM github_user)
+    SELECT s.login, s.owner, s.repo, s.\"starredAt\", s.\"createdAt\"
+    FROM _sync_star s
+    WHERE EXISTS (SELECT 1 FROM github_user g WHERE g.login = s.login)
+      AND NOT EXISTS (
+        SELECT 1 FROM star_event e
+        WHERE e.login = s.login AND e.owner = s.owner AND e.repo = s.repo
+      )
     ON CONFLICT (login, owner, repo) DO NOTHING;
     DROP TABLE _sync_star;"
-  echo "  synced OK ($ROWS rows staged, conflicts skipped)"
+  echo "  synced OK ($ROWS rows staged, anti-join + conflict guard)"
 }
 
 # ── Sync order respects FK constraints (github_user before star_event) ────────
