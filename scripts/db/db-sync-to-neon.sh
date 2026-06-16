@@ -162,8 +162,12 @@ sync_star_events() {
   done
 
   # FK guard on github_user, idempotent on the unique key (login, owner, repo).
+  # Omit id: prod assigns its own via the serial sequence. Inserting the local id
+  # collides with rows the live app created under the same id ("duplicate key ...
+  # star_event_pkey"); ON CONFLICT (login, owner, repo) does not cover the id PK.
   psql_retry -v ON_ERROR_STOP=1 "$NEON_URL" -c "SET statement_timeout = 0;
-    INSERT INTO star_event SELECT * FROM _sync_star
+    INSERT INTO star_event (login, owner, repo, \"starredAt\", \"createdAt\")
+    SELECT login, owner, repo, \"starredAt\", \"createdAt\" FROM _sync_star
     WHERE login IN (SELECT login FROM github_user)
     ON CONFLICT (login, owner, repo) DO NOTHING;
     DROP TABLE _sync_star;"
