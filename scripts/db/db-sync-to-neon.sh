@@ -270,7 +270,10 @@ sync_table "dependents_cache" 'ON CONFLICT (owner, repo) DO UPDATE SET
 
 echo ""
 echo "Creating/refreshing materialized views on Neon..."
-psql -v ON_ERROR_STOP=1 "$NEON_URL" <<'EOSQL'
+# statement_timeout=0 at connection level: a SET inside the DO block below does not
+# reliably cover REFRESH MATERIALIZED VIEW CONCURRENTLY, which on 30M+ star_events
+# blows past Neon's default timeout ("canceling statement due to statement timeout").
+PGOPTIONS='-c statement_timeout=0' psql -v ON_ERROR_STOP=1 "$NEON_URL" <<'EOSQL'
 -- country_language_stats_mv (Language Atlas)
 DO $$
 BEGIN
