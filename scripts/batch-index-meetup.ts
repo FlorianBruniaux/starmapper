@@ -168,11 +168,16 @@ const indexRepo = async (entry: RepoEntry): Promise<void> => {
 
     const geoMap = locations.length > 0 ? await geocodeBatch(locations) : new Map<string, [number, number] | null>();
 
+    let chunkMapped = 0;
     for (const sg of page.stargazers) {
-      const locKey = sg.location?.trim().toLowerCase() ?? "";
-      const coords = locKey ? geoMap.get(locKey) ?? null : null;
+      // geocodeBatch keys its result Map by the RAW location string (matching
+      // the production /api/chunk consumer). Looking up with a normalized key
+      // misses everything except already-lowercase locations.
+      const loc = sg.location ?? "";
+      const coords = loc ? geoMap.get(loc) ?? null : null;
 
       if (coords) {
+        chunkMapped++;
         const [lat, lng] = coords;
         points.push({
           login: sg.login, name: sg.name, bio: sg.bio, company: sg.company,
@@ -201,10 +206,7 @@ const indexRepo = async (entry: RepoEntry): Promise<void> => {
     }
 
     console.log(
-      `    chunk ${chunkNum} | +${points.length - (points.length - page.stargazers.filter(sg => {
-        const k = sg.location?.trim().toLowerCase() ?? "";
-        return k && (geoMap.get(k) ?? null);
-      }).length)} mapped | total ${points.length}/${points.length + unmapped.length}`,
+      `    chunk ${chunkNum} | +${chunkMapped} mapped | total ${points.length}/${points.length + unmapped.length}`,
     );
 
     cursor = page.nextCursor;
@@ -332,11 +334,19 @@ const main = async () => {
   // Phase 2: index each repo
   console.log("\n--- Phase 2: indexation ---");
   let indexed = 0;
+  let failed = 0;
   for (const entry of repos) {
-    await indexRepo(entry);
-    indexed++;
+    // A transient network error on one repo must not abort the whole batch.
+    try {
+      await indexRepo(entry);
+      indexed++;
+    } catch (err) {
+      failed++;
+      console.error(`  ⚠ ${entry.owner}/${entry.repo} failed: ${(err as Error).message}`);
+    }
     if (!DRY_RUN) await new Promise(r => setTimeout(r, 1000)); // polite delay between repos
   }
+  if (failed > 0) console.log(`\n⚠ ${failed} repo(s) échoué(s) — relancer le script les reprendra (idempotent).`);
 
   console.log(`\n==============================`);
   console.log(` ${DRY_RUN ? "Dry-run terminé" : "Terminé"}. ${indexed} repos indexés.`);
