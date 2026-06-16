@@ -36,6 +36,15 @@ echo "  Local: $LOCAL_URL"
 echo "  Neon:  ${NEON_URL:0:50}..."
 echo ""
 
+# github_user column list — single source of truth shared by the local export AND
+# the Neon \copy. Both MUST use the same order: \copy ... CSV HEADER imports
+# POSITIONALLY (HEADER only skips the first line, it does not match by name), so a
+# drift between the export order and the staging table's physical order silently
+# shifts columns. The crash "invalid input syntax for type timestamp" on
+# topReposFetchedAt was exactly that: source ("stargazer") landing in a timestamp
+# column. Keeping one list for export + import makes the two sides impossible to drift.
+GH_COLS='login,name,company,location,followers,lat,lng,"fetchedAt","accountCreatedAt","dataVersion",following,"publicRepos","linkedinUrl","cityNormalized","countryNormalized",languages,"languagesFetchedAt","topRepos","topReposFetchedAt",source'
+
 # ── Helper: sync one table ────────────────────────────────────────────────────
 sync_table() {
   local TABLE="$1"
@@ -45,9 +54,9 @@ sync_table() {
 
   # Export from local — explicit column list for github_user to be immune to schema drift
   if [[ "$TABLE" == "github_user" ]]; then
-    psql "$LOCAL_URL" -c "\copy (SELECT login,name,company,location,followers,lat,lng,\"fetchedAt\",\"accountCreatedAt\",\"dataVersion\",following,\"publicRepos\",\"linkedinUrl\",\"cityNormalized\",\"countryNormalized\",languages,\"languagesFetchedAt\",\"topRepos\",\"topReposFetchedAt\",source FROM github_user) TO '$TMPDIR/$TABLE.csv' CSV HEADER"
+    psql -v ON_ERROR_STOP=1 "$LOCAL_URL" -c "\copy (SELECT $GH_COLS FROM github_user) TO '$TMPDIR/$TABLE.csv' CSV HEADER"
   else
-    psql "$LOCAL_URL" -c "\copy $TABLE TO '$TMPDIR/$TABLE.csv' CSV HEADER"
+    psql -v ON_ERROR_STOP=1 "$LOCAL_URL" -c "\copy $TABLE TO '$TMPDIR/$TABLE.csv' CSV HEADER"
   fi
   local ROWS
   ROWS=$(( $(wc -l < "$TMPDIR/$TABLE.csv") - 1 ))
@@ -66,7 +75,13 @@ SET statement_timeout = 0;
 DROP TABLE IF EXISTS _sync;
 CREATE TABLE _sync AS SELECT * FROM $TABLE LIMIT 0;
 EOF
-  echo "\copy _sync FROM '$TMPDIR/$TABLE.csv' CSV HEADER" >> "$TMPDIR/import_$TABLE.sql"
+  # github_user: import by explicit column list so CSV columns map by NAME, not by
+  # the staging table's physical order (CSV HEADER does not match by name).
+  if [[ "$TABLE" == "github_user" ]]; then
+    echo "\copy _sync ($GH_COLS) FROM '$TMPDIR/$TABLE.csv' CSV HEADER" >> "$TMPDIR/import_$TABLE.sql"
+  else
+    echo "\copy _sync FROM '$TMPDIR/$TABLE.csv' CSV HEADER" >> "$TMPDIR/import_$TABLE.sql"
+  fi
   # github_user: coalesce integer columns that are NOT NULL in prod but may be NULL in local
   if [[ "$TABLE" == "github_user" ]]; then
     cat >> "$TMPDIR/import_$TABLE.sql" <<EOF
@@ -82,8 +97,56 @@ INSERT INTO $TABLE SELECT * FROM _sync $ON_CONFLICT;
 DROP TABLE _sync;
 EOF
 
-  psql "$NEON_URL" -f "$TMPDIR/import_$TABLE.sql"
+  # ON_ERROR_STOP=1 → a SQL error aborts psql (non-zero exit), and set -e aborts the
+  # script. Without it psql -f keeps going and prints "synced OK" on a failed import,
+  # which is exactly how the github_user column-misalignment crash stayed hidden.
+  psql -v ON_ERROR_STOP=1 "$NEON_URL" -f "$TMPDIR/import_$TABLE.sql"
   echo "  synced OK"
+}
+
+# ── star_event: chunked COPY (29.6M+ rows) ────────────────────────────────────
+# A single \copy of the full table over SSL times out ("SSL SYSCALL error:
+# Operation timed out"). We cannot use a createdAt watermark to ship only a delta:
+# the prod app writes star_events directly (bulkUpsertStarEvents in user-cache.ts),
+# so prod's max(createdAt) is driven by live traffic, and past failed syncs leave
+# gaps below it — an incremental cutoff would skip rows permanently. Full COPY +
+# ON CONFLICT DO NOTHING is idempotent, heals gaps, and is correct regardless of
+# what prod wrote on its own. Chunking keeps each COPY (one connection) short
+# enough to never hit the transfer timeout.
+# id/login/owner/repo/timestamps never contain newlines → safe to split by line.
+sync_star_events() {
+  local CHUNK_ROWS=1000000
+  echo "[star_event]"
+
+  psql -v ON_ERROR_STOP=1 "$LOCAL_URL" -c "\copy (SELECT id,login,owner,repo,\"starredAt\",\"createdAt\" FROM star_event) TO '$TMPDIR/star_event.csv' CSV HEADER"
+  local ROWS
+  ROWS=$(( $(wc -l < "$TMPDIR/star_event.csv") - 1 ))
+  echo "  exported $ROWS rows"
+  if [[ "$ROWS" -le 0 ]]; then
+    echo "  (empty — skipping)"
+    return
+  fi
+
+  # Staging table WITHOUT constraints (AS SELECT ... LIMIT 0) so \copy never fails
+  # on FK/PK in transit data.
+  psql -v ON_ERROR_STOP=1 "$NEON_URL" -c "SET statement_timeout = 0; DROP TABLE IF EXISTS _sync_star; CREATE TABLE _sync_star AS SELECT * FROM star_event LIMIT 0;"
+
+  # Strip the header, split the data into chunks, one COPY (one connection) each.
+  tail -n +2 "$TMPDIR/star_event.csv" | split -l "$CHUNK_ROWS" - "$TMPDIR/star_event_chunk_"
+  local n=0
+  for chunk in "$TMPDIR"/star_event_chunk_*; do
+    n=$((n + 1))
+    psql -v ON_ERROR_STOP=1 "$NEON_URL" -c "SET statement_timeout = 0; \copy _sync_star (id,login,owner,repo,\"starredAt\",\"createdAt\") FROM '$chunk' CSV"
+    echo "  copied chunk $n ($(wc -l < "$chunk") rows)"
+  done
+
+  # FK guard on github_user, idempotent on the unique key (login, owner, repo).
+  psql -v ON_ERROR_STOP=1 "$NEON_URL" -c "SET statement_timeout = 0;
+    INSERT INTO star_event SELECT * FROM _sync_star
+    WHERE login IN (SELECT login FROM github_user)
+    ON CONFLICT (login, owner, repo) DO NOTHING;
+    DROP TABLE _sync_star;"
+  echo "  synced OK ($ROWS rows staged, conflicts skipped)"
 }
 
 # ── Sync order respects FK constraints (github_user before star_event) ────────
@@ -123,10 +186,15 @@ sync_table "badge_cache"     'ON CONFLICT (owner, repo) DO UPDATE SET
   "contributorsCount"=COALESCE(EXCLUDED."contributorsCount", badge_cache."contributorsCount"),
   "updatedAt"=EXCLUDED."updatedAt"
   WHERE EXCLUDED."updatedAt" > badge_cache."updatedAt"' &
+PID_BADGE=$!
 sync_table "stargazer_cache" 'ON CONFLICT (owner, repo) DO UPDATE SET points=EXCLUDED.points, unmapped=EXCLUDED.unmapped, "totalCount"=EXCLUDED."totalCount", "scannedAt"=EXCLUDED."scannedAt" WHERE EXCLUDED."scannedAt" > stargazer_cache."scannedAt"' &
-wait
+PID_STARGAZER=$!
+# wait per-PID (not bare `wait`, which always returns 0): under set -e a failed
+# parallel sync now aborts the script instead of being swallowed.
+wait "$PID_BADGE"
+wait "$PID_STARGAZER"
 
-sync_table "star_event" "WHERE login IN (SELECT login FROM github_user) ON CONFLICT (login, owner, repo) DO NOTHING"
+sync_star_events
 
 # news after github_user (FK constraint)
 sync_table "news" 'WHERE "authorLogin" IN (SELECT login FROM github_user) ON CONFLICT (id) DO UPDATE SET body=EXCLUDED.body, url=EXCLUDED.url, "deletedAt"=EXCLUDED."deletedAt"'
@@ -149,7 +217,7 @@ sync_table "dependents_cache" 'ON CONFLICT (owner, repo) DO UPDATE SET
 
 echo ""
 echo "Creating/refreshing materialized views on Neon..."
-psql "$NEON_URL" <<'EOSQL'
+psql -v ON_ERROR_STOP=1 "$NEON_URL" <<'EOSQL'
 -- country_language_stats_mv (Language Atlas)
 DO $$
 BEGIN
