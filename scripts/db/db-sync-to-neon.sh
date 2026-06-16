@@ -45,6 +45,25 @@ echo ""
 # column. Keeping one list for export + import makes the two sides impossible to drift.
 GH_COLS='login,name,company,location,followers,lat,lng,"fetchedAt","accountCreatedAt","dataVersion",following,"publicRepos","linkedinUrl","cityNormalized","countryNormalized",languages,"languagesFetchedAt","topRepos","topReposFetchedAt",source'
 
+# ── Helper: retry a psql call on transient failure ────────────────────────────
+# The live prod app writes github_user / star_event concurrently
+# (bulkInsertUsersMinimal, bulkUpsertStarEvents), so a bulk upsert here can hit
+# "deadlock detected". Postgres aborts one side; since every import is idempotent
+# (ON CONFLICT), simply re-running wins. Also covers dropped connections.
+psql_retry() {
+  local attempt=1 max=4
+  while true; do
+    if psql "$@"; then return 0; fi
+    if [[ "$attempt" -ge "$max" ]]; then
+      echo "  ✗ psql failed after $max attempts" >&2
+      return 1
+    fi
+    echo "  ↻ retry $attempt/$max after failure (deadlock?), waiting ${attempt}s..." >&2
+    sleep "$attempt"
+    attempt=$((attempt + 1))
+  done
+}
+
 # ── Helper: sync one table ────────────────────────────────────────────────────
 sync_table() {
   local TABLE="$1"
@@ -100,7 +119,7 @@ EOF
   # ON_ERROR_STOP=1 → a SQL error aborts psql (non-zero exit), and set -e aborts the
   # script. Without it psql -f keeps going and prints "synced OK" on a failed import,
   # which is exactly how the github_user column-misalignment crash stayed hidden.
-  psql -v ON_ERROR_STOP=1 "$NEON_URL" -f "$TMPDIR/import_$TABLE.sql"
+  psql_retry -v ON_ERROR_STOP=1 "$NEON_URL" -f "$TMPDIR/import_$TABLE.sql"
   echo "  synced OK"
 }
 
@@ -136,12 +155,14 @@ sync_star_events() {
   local n=0
   for chunk in "$TMPDIR"/star_event_chunk_*; do
     n=$((n + 1))
-    psql -v ON_ERROR_STOP=1 "$NEON_URL" -c "SET statement_timeout = 0; \copy _sync_star (id,login,owner,repo,\"starredAt\",\"createdAt\") FROM '$chunk' CSV"
+    # \copy is a psql meta-command — it cannot share a -c string with SQL like
+    # "SET ...;". Pass statement_timeout via PGOPTIONS (connection level) instead.
+    PGOPTIONS='-c statement_timeout=0' psql -v ON_ERROR_STOP=1 "$NEON_URL" -c "\copy _sync_star (id,login,owner,repo,\"starredAt\",\"createdAt\") FROM '$chunk' CSV"
     echo "  copied chunk $n ($(wc -l < "$chunk") rows)"
   done
 
   # FK guard on github_user, idempotent on the unique key (login, owner, repo).
-  psql -v ON_ERROR_STOP=1 "$NEON_URL" -c "SET statement_timeout = 0;
+  psql_retry -v ON_ERROR_STOP=1 "$NEON_URL" -c "SET statement_timeout = 0;
     INSERT INTO star_event SELECT * FROM _sync_star
     WHERE login IN (SELECT login FROM github_user)
     ON CONFLICT (login, owner, repo) DO NOTHING;
