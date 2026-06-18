@@ -239,7 +239,6 @@ export const ContributorsPanel = ({
                 <button
                   onClick={() => {
                     setFlyTarget({ lat: pt.lat, lng: pt.lng, login: pt.login });
-                    onClose();
                   }}
                   aria-label={`Fly to ${c.login} on map`}
                   className="opacity-0 group-hover:opacity-100 flex-shrink-0 text-muted hover:text-accent-blue transition-all p-1 -mr-1"
