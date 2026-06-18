@@ -295,17 +295,6 @@ export const RepoTable = ({ repos }: { repos: MappedRepo[] }) => {
                   <span className="text-xs text-muted-subtle">—</span>
                 )}
               </td>
-              <td className="py-3 px-4 text-right hidden md:table-cell">
-                <Link
-                  href={`/${r.owner}/${r.repo}/contributors`}
-                  onClick={(e) => e.stopPropagation()}
-                  className="inline-flex items-center gap-1 text-xs text-accent-blue hover:underline"
-                  title="Contributors map"
-                >
-                  <GitCommit size={11} aria-hidden="true" />
-                  {r.contributorsCount != null ? formatCount(r.contributorsCount) : "Map"}
-                </Link>
-              </td>
               <td className="py-3 px-4 text-right hidden lg:table-cell">
                 {r.dependentsCount != null && r.dependentsCount > 0 ? (
                   <Link
@@ -320,6 +309,17 @@ export const RepoTable = ({ repos }: { repos: MappedRepo[] }) => {
                 ) : (
                   <span className="text-xs text-muted-subtle">—</span>
                 )}
+              </td>
+              <td className="py-3 px-4 text-right hidden md:table-cell">
+                <Link
+                  href={`/${r.owner}/${r.repo}/contributors`}
+                  onClick={(e) => e.stopPropagation()}
+                  className="inline-flex items-center gap-1 text-xs text-accent-blue hover:underline"
+                  title="Contributors map"
+                >
+                  <GitCommit size={11} aria-hidden="true" />
+                  {r.contributorsCount != null ? formatCount(r.contributorsCount) : "Map"}
+                </Link>
               </td>
               <td className="py-3 px-4 text-right text-xs whitespace-nowrap text-muted-subtle" title={r.updatedAt}>
                 {timeAgo(r.updatedAt)}
