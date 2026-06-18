@@ -5,13 +5,15 @@ import type { Metadata } from "next";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://starmapper.bruniaux.com";
 
+const DESC = "Most-starred GitHub repositories this week, mapped by where the stargazers live. See which countries are driving trending open-source projects.";
+
 export const metadata: Metadata = {
-  title: "Trending GitHub Repos | StarMapper",
-  description: "Most-starred GitHub repositories mapped in the last 7 days. See where your community's attention is going, by country.",
+  title: "Trending GitHub Repos — Mapped by Country | StarMapper",
+  description: DESC,
   alternates: { canonical: "/trending" },
   openGraph: {
-    title: "Trending GitHub Repos | StarMapper",
-    description: "Most-starred GitHub repositories mapped in the last 7 days. See where your community's attention is going, by country.",
+    title: "Trending GitHub Repos — Mapped by Country | StarMapper",
+    description: DESC,
     url: `${APP_URL}/trending`,
     siteName: "StarMapper",
     type: "website",
@@ -21,8 +23,8 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     site: "@FlorianBruniaux",
     creator: "@FlorianBruniaux",
-    title: "Trending GitHub Repos | StarMapper",
-    description: "Most-starred GitHub repositories mapped in the last 7 days. See where your community's attention is going, by country.",
+    title: "Trending GitHub Repos — Mapped by Country | StarMapper",
+    description: DESC,
     images: [`${APP_URL}/opengraph-image`],
   },
 };

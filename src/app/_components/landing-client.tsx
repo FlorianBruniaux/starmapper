@@ -154,6 +154,9 @@ export const LandingClient = ({ initialRepos, initialTotal }: Props) => {
               {/* Left: headline + form */}
               <div className="flex flex-col gap-6">
                 <div className="flex flex-col gap-4">
+                  <p className="text-xs font-semibold text-muted uppercase tracking-widest">
+                    GitHub Stargazers Map
+                  </p>
                   <h1 className="text-4xl lg:text-5xl font-bold text-foreground leading-tight">
                     Where in the world does your repo shine?
                   </h1>

@@ -16,7 +16,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const language = displayLanguage(slugToLanguage(slug) ?? slug);
 
   const title = `${language} Developers World Map | StarMapper`;
-  const description = `See where ${language} developers are located worldwide. Interactive map of GitHub users who code in ${language}.`;
+  const description = `See where ${language} developers are located worldwide. Interactive map of GitHub contributors who code in ${language}, filtered by country, city, and company.`;
   const url = `${APP_URL}/devs/${slug}`;
 
   return {

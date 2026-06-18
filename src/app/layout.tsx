@@ -24,12 +24,15 @@ export const metadata: Metadata = {
   alternates: { canonical: "/" },
   keywords: [
     "GitHub stargazers map",
-    "GitHub stars geographic distribution",
+    "GitHub stars by country",
+    "who starred my GitHub repo",
     "open source audience analytics",
     "fake GitHub stars detector",
+    "detect fake GitHub stars",
     "organic score GitHub",
     "GitHub repository analytics",
-    "developer map",
+    "github contributor map",
+    "github stars geographic distribution",
   ],
   icons: {
     icon: "/icon.svg",

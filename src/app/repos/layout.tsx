@@ -5,15 +5,15 @@ import type { Metadata } from "next";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://starmapper.bruniaux.com";
 
+const DESC = "Browse GitHub repositories already mapped on StarMapper. See geographic distribution of stars, top countries, and audience analytics for open-source projects.";
+
 export const metadata: Metadata = {
-  title: "Community Maps: Mapped GitHub Repos | StarMapper",
-  description:
-    "Browse repos already mapped on StarMapper. Discover where open-source projects have their most fans, sorted by star count.",
+  title: "GitHub Repos — Stargazer Maps & Geographic Data | StarMapper",
+  description: DESC,
   alternates: { canonical: "/repos" },
   openGraph: {
-    title: "Community Maps: Mapped GitHub Repos | StarMapper",
-    description:
-      "Browse repos already mapped on StarMapper. Discover where open-source projects have their most fans.",
+    title: "GitHub Repos — Stargazer Maps & Geographic Data | StarMapper",
+    description: DESC,
     url: `${APP_URL}/repos`,
     siteName: "StarMapper",
     type: "website",
@@ -23,9 +23,8 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     site: "@FlorianBruniaux",
     creator: "@FlorianBruniaux",
-    title: "Community Maps: Mapped GitHub Repos | StarMapper",
-    description:
-      "Browse repos already mapped on StarMapper.",
+    title: "GitHub Repos — Stargazer Maps & Geographic Data | StarMapper",
+    description: DESC,
     images: [`${APP_URL}/opengraph-image`],
   },
 };

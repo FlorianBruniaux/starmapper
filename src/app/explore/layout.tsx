@@ -5,14 +5,14 @@ import type { Metadata } from "next";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://starmapper.bruniaux.com";
 
-const DESC = "Explore a heatmap of GitHub developers across the world. Discover where open-source contributors are most concentrated.";
+const DESC = "Discover which GitHub users have the most followers worldwide. Filter by country, programming language, or company. Top stargazers ranked by followers and activity.";
 
 export const metadata: Metadata = {
-  title: "Explore GitHub Developers Worldwide | StarMapper",
+  title: "Most Influential GitHub Developers by Country | StarMapper",
   description: DESC,
   alternates: { canonical: "/explore" },
   openGraph: {
-    title: "Explore GitHub Developers Worldwide | StarMapper",
+    title: "Most Influential GitHub Developers by Country | StarMapper",
     description: DESC,
     url: `${APP_URL}/explore`,
     siteName: "StarMapper",
@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     site: "@FlorianBruniaux",
     creator: "@FlorianBruniaux",
-    title: "Explore GitHub Developers Worldwide | StarMapper",
+    title: "Most Influential GitHub Developers by Country | StarMapper",
     description: DESC,
     images: [`${APP_URL}/opengraph-image`],
   },
