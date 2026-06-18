@@ -7,8 +7,8 @@
 const TOKEN_KEY = "gh_token";
 const USERNAME_KEY = "gh_username";
 
-// 30-minute TTL — matches token-modal.tsx
-const TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+// 15-day rolling TTL — reset on each active read
+const TOKEN_TTL_MS = 15 * 24 * 60 * 60 * 1000;
 
 type StoredValue = { v: string; exp: number };
 
