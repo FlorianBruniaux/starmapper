@@ -431,6 +431,25 @@ export const LandingClient = ({ initialRepos, initialTotal }: Props) => {
                 </div>
               </div>
             </Link>
+            <Link
+              href="/rtk-ai/rtk/contributors"
+              className="flex flex-col gap-3 bg-surface border border-border-subtle rounded-lg p-4 hover:border-accent-blue/40 transition-colors group"
+            >
+              <div className="size-7 shrink-0 flex items-center justify-center rounded-md bg-accent-blue/8">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" className="text-accent-blue">
+                  <path d="M11.93 8.5a4.002 4.002 0 0 1-7.86 0H.75a.75.75 0 0 1 0-1.5h3.32a4.002 4.002 0 0 1 7.86 0h3.32a.75.75 0 0 1 0 1.5Zm-1.43-.75a2.5 2.5 0 1 0-5 0 2.5 2.5 0 0 0 5 0Z" />
+                </svg>
+              </div>
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="text-xs font-semibold text-foreground group-hover:underline">Contributors Map</div>
+                  <span className="text-2xs font-semibold bg-accent-blue/15 text-accent-blue px-1.5 py-0.5 rounded uppercase tracking-wide">New</span>
+                </div>
+                <div className="text-muted text-xs leading-relaxed">
+                  Who built this? Map the contributors of any repo, see commit distribution across countries, and explore builder profiles.
+                </div>
+              </div>
+            </Link>
             <a
               href="https://www.npmjs.com/package/starmapper-mcp"
               target="_blank"
