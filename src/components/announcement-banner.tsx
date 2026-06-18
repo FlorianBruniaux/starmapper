@@ -19,7 +19,6 @@ const LINKS: LinkItem[] = [
   { label: "Trending repos", href: "/trending" },
   { label: "MCP Server", href: "https://www.npmjs.com/package/starmapper-mcp", external: true },
   { label: "Dev Maps", href: "/devs" },
-  { label: "Language Atlas", href: "/devs/atlas" },
 ];
 
 export const AnnouncementBanner = () => {
