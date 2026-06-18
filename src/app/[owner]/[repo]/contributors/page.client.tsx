@@ -7,6 +7,7 @@ import { use, useCallback, useEffect, useMemo, useReducer, useRef, useState } fr
 import dynamic from "next/dynamic";
 import { GitCommit, Loader2 } from "lucide-react";
 import { Header } from "@/components/header";
+import { TourTrigger } from "@/components/tour/tour-trigger";
 import { ContributorsPanel } from "@/components/map/contributors-panel";
 import { StargazerMapDynamic } from "@/components/map/stargazer-map-dynamic";
 import { CLUSTER_RADIUS } from "@/components/map/stargazer-map";
@@ -141,7 +142,7 @@ export default function ContributorsPageClient({ params }: Props) {
 
         {/* Floating top bar */}
         <div className="absolute top-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2 max-w-[90vw]">
-          <div className="flex items-center gap-2 bg-surface border border-border rounded-lg px-3 py-2 shadow-lg">
+          <div data-tour="contributors-controls" className="flex items-center gap-2 bg-surface border border-border rounded-lg px-3 py-2 shadow-lg">
             <span className="text-foreground text-sm font-medium whitespace-nowrap">
               {owner}/{repo} contributors
             </span>
@@ -183,6 +184,7 @@ export default function ContributorsPageClient({ params }: Props) {
             {/* Contributors count pill */}
             {(isDone || points.length > 0) && total > 0 && (
               <button
+                data-tour="contributors-count"
                 onClick={() => setPanelOpen(true)}
                 className="flex items-center gap-1 bg-surface-alt border border-border rounded-md px-2 py-1 text-xs text-foreground hover:border-accent-blue/50 hover:text-accent-blue transition-colors whitespace-nowrap"
                 aria-label={`${points.length.toLocaleString()} contributors mapped, open list`}
@@ -203,13 +205,24 @@ export default function ContributorsPageClient({ params }: Props) {
         </div>
 
         {/* Contributors side panel */}
-        <ContributorsPanel
-          open={panelOpen}
-          onClose={() => setPanelOpen(false)}
-          points={points}
-          unmapped={unmapped}
-          setFlyTarget={setFlyTarget}
-        />
+        <div data-tour="contributors-panel">
+          <ContributorsPanel
+            open={panelOpen}
+            onClose={() => setPanelOpen(false)}
+            points={points}
+            unmapped={unmapped}
+            setFlyTarget={setFlyTarget}
+          />
+        </div>
+
+        {/* Tour trigger */}
+        <div className="absolute bottom-4 right-4 z-20">
+          <TourTrigger
+            tourId="contributors"
+            label="Tour"
+            className="flex items-center gap-1.5 text-xs text-muted hover:text-foreground transition-colors px-2 py-1 rounded border border-border bg-surface/80 hover:border-accent-blue/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-blue/40 shadow"
+          />
+        </div>
       </main>
 
       {tokenOpen && <TokenModal onClose={handleTokenClose} />}

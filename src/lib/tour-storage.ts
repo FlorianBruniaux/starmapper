@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 
-export type TourId = "landing" | "map" | "explore" | "feeds" | "profile";
+export type TourId = "landing" | "map" | "explore" | "feeds" | "profile" | "contributors";
 
 const KEY = (id: TourId) => `starmapper:tour:${id}:done`;
 

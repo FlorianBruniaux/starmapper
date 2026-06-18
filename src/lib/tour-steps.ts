@@ -232,10 +232,40 @@ const PROFILE_STEPS: TourStep[] = [
   },
 ];
 
+const CONTRIBUTORS_STEPS: TourStep[] = [
+  {
+    selector: "body",
+    title: "Contributors map",
+    description: "This page maps the people who built this repo. Each dot is a contributor placed at their location. Dot size reflects commit count — bigger means more commits.",
+    placement: "center",
+  },
+  {
+    selector: "[data-tour='contributors-controls']",
+    title: "Run the scan",
+    description: "Click Map contributors to fetch contributor data from GitHub and geocode their locations. A GitHub token speeds things up significantly for large repos.",
+    placement: "bottom",
+  },
+  {
+    selector: "[data-tour='contributors-count']",
+    title: "Mapping progress",
+    description: "Shows mapped contributors vs total. Only contributors who filled in a location on GitHub can be placed on the map — the rest appear in the Unmapped tab of the panel.",
+    placement: "bottom",
+    optional: true,
+  },
+  {
+    selector: "[data-tour='contributors-panel']",
+    title: "Contributor list",
+    description: "Browse all contributors sorted by commit count. Click the pin icon next to any name to fly the map to their location. Switch to Unmapped to see who couldn't be geocoded.",
+    placement: "right",
+    optional: true,
+  },
+];
+
 export const TOUR_DEFINITIONS: Record<TourId, TourDefinition> = {
   landing: { id: "landing", steps: LANDING_STEPS },
   map: { id: "map", steps: MAP_STEPS },
   explore: { id: "explore", steps: EXPLORE_STEPS },
   feeds: { id: "feeds", steps: FEEDS_STEPS },
   profile: { id: "profile", steps: PROFILE_STEPS },
+  contributors: { id: "contributors", steps: CONTRIBUTORS_STEPS },
 };
