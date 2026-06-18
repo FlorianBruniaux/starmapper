@@ -4,6 +4,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, useDeferredValue } from "react";
+import Link from "next/link";
 import { X, Search, MapPin } from "lucide-react";
 import type { ContributorPoint } from "@/app/api/contributors-chunk/route";
 
@@ -216,14 +217,12 @@ export const ContributorsPanel = ({
 
               {/* Info */}
               <div className="flex-1 min-w-0">
-                <a
-                  href={`https://github.com/${c.login}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <Link
+                  href={`/profile/${c.login}`}
                   className="text-accent-blue text-xs font-medium hover:underline leading-tight block truncate"
                 >
                   @{c.login}
-                </a>
+                </Link>
                 {c.location && (
                   <div className="text-muted text-xs truncate leading-tight">{c.location}</div>
                 )}
