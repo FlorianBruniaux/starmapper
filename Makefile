@@ -9,6 +9,32 @@ ENV = sh -c 'set -a && . .env.local && set +a &&
 db-sync-to-prod:
 	$(ENV) ./scripts/db/db-sync-to-neon.sh "$$DATABASE_URL"'
 
+# Fast incremental sync: only star_events from the last 60 days.
+# After the first full sync, Neon has historical data — only the recent delta matters.
+# ~80% faster than full sync. ON CONFLICT DO NOTHING handles any gaps safely.
+db-sync-fast:
+	$(ENV) DAYS=60 ./scripts/db/db-sync-to-neon.sh "$$DATABASE_URL"'
+
+# Resume after a mid-star_event timeout: skips github_user (already synced),
+# drops leftover _sync_star staging table, re-runs star_event + tail tables + MV.
+db-sync-star-only:
+	$(ENV) SKIP_USERS=1 ./scripts/db/db-sync-to-neon.sh "$$DATABASE_URL"'
+
+# Drop 3 unused local star_event indexes (-4.4 GB). They exist on Neon for prod
+# queries; locally the DB only does bulk inserts + full-table exports for sync.
+# Safe to run at any time — Neon schema is NOT touched.
+db-compact-local:
+	@echo "Dropping unused local star_event indexes (~4.4 GB)..."
+	$(ENV) psql "$$DATABASE_URL_LOCAL" -c "DROP INDEX CONCURRENTLY IF EXISTS star_event_owner_repo_login_starredAt_idx;"'
+	$(ENV) psql "$$DATABASE_URL_LOCAL" -c "DROP INDEX CONCURRENTLY IF EXISTS star_event_owner_repo_login_idx;"'
+	$(ENV) psql "$$DATABASE_URL_LOCAL" -c "DROP INDEX CONCURRENTLY IF EXISTS star_event_login_starredAt_idx;"'
+	@echo "Running VACUUM ANALYZE on dirty tables..."
+	$(ENV) psql "$$DATABASE_URL_LOCAL" -c "VACUUM ANALYZE star_event; VACUUM ANALYZE follower_cache; VACUUM ANALYZE news;"'
+	@echo "Done. Run: make db-compact-local-check"
+
+db-compact-local-check:
+	$(ENV) psql "$$DATABASE_URL_LOCAL" -c "SELECT c.relname, pg_size_pretty(pg_total_relation_size(c.oid)) AS total, pg_size_pretty(pg_relation_size(c.oid)) AS table_only FROM pg_class c JOIN pg_stat_user_tables s ON s.relid = c.oid WHERE c.relkind = 'r' ORDER BY pg_total_relation_size(c.oid) DESC;"'
+
 db-sync-from-prod:
 	$(ENV) ./scripts/db/db-sync-from-neon.sh "$$DATABASE_URL"'
 
@@ -156,11 +182,17 @@ index-contributors: ## make index-contributors REPO=owner/repo [GH_TOKEN=ghp_xxx
 index-contributors-local: ## make index-contributors-local REPO=owner/repo
 	$(ENV) caffeinate -i tsx scripts/ops/index-contributors.ts --base-url http://localhost:3000 $(if $(GH_TOKEN),--gh-token $(GH_TOKEN)) $(REPO)'
 
-batch-index-contributors: ## make batch-index-contributors [MIN_STARS=100] [LIMIT=n] — geocache warm-up, local DB
-	$(ENV) DATABASE_DRIVER=standard DATABASE_URL=$$DATABASE_URL_LOCAL caffeinate -i node_modules/.bin/tsx scripts/ops/batch-index-contributors.ts $(if $(MIN_STARS),--min-stars $(MIN_STARS)) $(if $(LIMIT),--limit $(LIMIT))'
+batch-index-contributors: ## make batch-index-contributors [MIN_STARS=100] [LIMIT=n] [CONCURRENCY=2] [REPOS=owner/repo] — geocache warm-up, local DB
+	$(ENV) DATABASE_DRIVER=standard DATABASE_URL=$$DATABASE_URL_LOCAL $(if $(CONCURRENCY),CONCURRENCY=$(CONCURRENCY)) caffeinate -i node_modules/.bin/tsx scripts/ops/batch-index-contributors.ts $(if $(MIN_STARS),--min-stars $(MIN_STARS)) $(if $(LIMIT),--limit $(LIMIT)) $(if $(REPOS),--repos $(REPOS))'
+
+batch-index-contributors-resume: ## make batch-index-contributors-resume [CONCURRENCY=2] — resume from last checkpoint (local DB)
+	$(ENV) DATABASE_DRIVER=standard DATABASE_URL=$$DATABASE_URL_LOCAL $(if $(CONCURRENCY),CONCURRENCY=$(CONCURRENCY)) caffeinate -i node_modules/.bin/tsx scripts/ops/batch-index-contributors.ts --resume $(if $(MIN_STARS),--min-stars $(MIN_STARS))'
 
 batch-index-contributors-prod: ## make batch-index-contributors-prod [MIN_STARS=100] [LIMIT=n] — Neon prod
 	$(ENV) DATABASE_DRIVER=standard caffeinate -i node_modules/.bin/tsx scripts/ops/batch-index-contributors.ts --prod $(if $(MIN_STARS),--min-stars $(MIN_STARS)) $(if $(LIMIT),--limit $(LIMIT))'
+
+batch-index-contributors-prod-resume: ## make batch-index-contributors-prod-resume — resume from last checkpoint (Neon prod)
+	$(ENV) DATABASE_DRIVER=standard caffeinate -i node_modules/.bin/tsx scripts/ops/batch-index-contributors.ts --prod --resume $(if $(MIN_STARS),--min-stars $(MIN_STARS))'
 
 # ─── Calibration + probes ──────────────────────────────────────────────────────
 
@@ -182,7 +214,8 @@ maintenance-sync-only:
 	bash scripts/ops/maintenance.sh --skip-backfills
 
 .PHONY: auto-index auto-index-local auto-index-dry \
-        db-sync-to-prod db-sync-from-prod db-dump db-restore db-pull \
+        db-sync-to-prod db-sync-fast db-sync-star-only db-sync-from-prod db-dump db-restore db-pull \
+        db-compact-local db-compact-local-check \
         mv-country-stats mv-country-stats-prod mv-country-language mv-country-language-prod \
         mv-user-repo-count mv-user-repo-count-prod mv-trending mv-trending-prod \
         mv-language-grid mv-language-grid-prod \
@@ -196,4 +229,5 @@ maintenance-sync-only:
         maintenance maintenance-dry maintenance-sync-only \
         collect-repos collect-trending collect-trending-no-ts collect-merge batch-scan batch-scan-dry \
         calibrate-organic-score probe-star-burst \
-        refresh-follower-cache refresh-follower-cache-local
+        refresh-follower-cache refresh-follower-cache-local \
+        batch-index-contributors-resume batch-index-contributors-prod-resume

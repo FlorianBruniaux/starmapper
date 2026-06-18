@@ -2,8 +2,9 @@
 # db-sync-to-neon.sh
 #
 # Syncs local batch-scanned data to Neon production DB.
-# Tables synced: github_user, star_event, badge_cache, stargazer_cache, news, api_key
-# NOT synced: geocache (already in prod with 51k entries — do not overwrite)
+# Tables synced: github_user, star_event, badge_cache, stargazer_cache, news, api_key,
+#                follower_cache, dependents_cache, geocache
+# geocache uses ON CONFLICT (key) DO NOTHING — new local entries added, Neon entries kept.
 #
 # Usage:
 #   NEON_URL="postgresql://..." ./scripts/db/db-sync-to-neon.sh
@@ -125,19 +126,30 @@ EOF
 
 # ── star_event: chunked COPY (29.6M+ rows) ────────────────────────────────────
 # A single \copy of the full table over SSL times out ("SSL SYSCALL error:
-# Operation timed out"). We cannot use a createdAt watermark to ship only a delta:
-# the prod app writes star_events directly (bulkUpsertStarEvents in user-cache.ts),
-# so prod's max(createdAt) is driven by live traffic, and past failed syncs leave
-# gaps below it — an incremental cutoff would skip rows permanently. Full COPY +
-# ON CONFLICT DO NOTHING is idempotent, heals gaps, and is correct regardless of
-# what prod wrote on its own. Chunking keeps each COPY (one connection) short
-# enough to never hit the transfer timeout.
+# Operation timed out"). Chunking keeps each COPY short enough to avoid timeouts.
+#
+# DAYS= filter (default: export all rows):
+#   DAYS=60 exports only rows with createdAt >= NOW() - 60 days.
+#   After the first full sync, subsequent syncs only need the recent delta since
+#   Neon already has the historical data. The anti-join INSERT (NOT EXISTS) is the
+#   safety net for any gaps — rows already in Neon are silently skipped.
+#   If DAYS is unset or 0, the full table is exported (legacy behavior, slowest).
+#
 # id/login/owner/repo/timestamps never contain newlines → safe to split by line.
 sync_star_events() {
   local CHUNK_ROWS=1000000
+  local DAYS_FILTER="${DAYS:-0}"
   echo "[star_event]"
 
-  psql -v ON_ERROR_STOP=1 "$LOCAL_URL" -c "\copy (SELECT id,login,owner,repo,\"starredAt\",\"createdAt\" FROM star_event) TO '$TMPDIR/star_event.csv' CSV HEADER"
+  local STAR_QUERY
+  if [[ "$DAYS_FILTER" -gt 0 ]]; then
+    STAR_QUERY="SELECT id,login,owner,repo,\"starredAt\",\"createdAt\" FROM star_event WHERE \"createdAt\" >= NOW() - INTERVAL '${DAYS_FILTER} days'"
+    echo "  filter: last ${DAYS_FILTER} days"
+  else
+    STAR_QUERY="SELECT id,login,owner,repo,\"starredAt\",\"createdAt\" FROM star_event"
+  fi
+
+  psql -v ON_ERROR_STOP=1 "$LOCAL_URL" -c "\copy ($STAR_QUERY) TO '$TMPDIR/star_event.csv' CSV HEADER"
   local ROWS
   ROWS=$(( $(wc -l < "$TMPDIR/star_event.csv") - 1 ))
   echo "  exported $ROWS rows"
@@ -152,12 +164,26 @@ sync_star_events() {
 
   # Strip the header, split the data into chunks, one COPY (one connection) each.
   tail -n +2 "$TMPDIR/star_event.csv" | split -l "$CHUNK_ROWS" - "$TMPDIR/star_event_chunk_"
+  # TCP keepalives prevent the SSL "Operation timed out" error that occurs between
+  # chunks on long runs. PGOPTIONS is set as an env prefix so it is passed to the
+  # psql process (not the shell function wrapper).
+  local CHUNK_PGOPTS='-c statement_timeout=0 -c tcp_keepalives_idle=30 -c tcp_keepalives_interval=10'
   local n=0
   for chunk in "$TMPDIR"/star_event_chunk_*; do
     n=$((n + 1))
-    # \copy is a psql meta-command — it cannot share a -c string with SQL like
-    # "SET ...;". Pass statement_timeout via PGOPTIONS (connection level) instead.
-    PGOPTIONS='-c statement_timeout=0' psql -v ON_ERROR_STOP=1 "$NEON_URL" -c "\copy _sync_star (id,login,owner,repo,\"starredAt\",\"createdAt\") FROM '$chunk' CSV"
+    # Inline retry — psql_retry wraps psql "$@" and can't inherit env prefixes.
+    local attempt=1 max=4
+    while true; do
+      if PGOPTIONS="$CHUNK_PGOPTS" psql -v ON_ERROR_STOP=1 "$NEON_URL" -c "\copy _sync_star (id,login,owner,repo,\"starredAt\",\"createdAt\") FROM '$chunk' CSV"; then
+        break
+      fi
+      if [[ "$attempt" -ge "$max" ]]; then
+        echo "  ✗ chunk $n failed after $max attempts" >&2; exit 1
+      fi
+      echo "  ↻ retry $attempt/$max for chunk $n, waiting ${attempt}s..." >&2
+      sleep "$attempt"
+      attempt=$((attempt + 1))
+    done
     echo "  copied chunk $n ($(wc -l < "$chunk") rows)"
   done
 
@@ -195,11 +221,13 @@ sync_star_events() {
 # badge_cache + stargazer_cache have no FK deps → run in parallel
 # star_event references github_user → must run after github_user completes
 
-# SKIP_HEAVY=1 skips the two expensive tables (github_user upsert of ~7M rows,
-# star_event anti-join merge over 12GB). Use it to RESUME a sync that died after
-# those completed but before the tail tables + MV refresh ran.
-if [[ "${SKIP_HEAVY:-0}" == "1" ]]; then
-  echo "[github_user] skipped (SKIP_HEAVY=1)"
+# SKIP_HEAVY=1 skips both expensive tables (github_user + star_event). Use when
+# the sync died after both completed but before the tail tables + MV refresh ran.
+#
+# SKIP_USERS=1 skips only github_user — use to resume a sync that died mid-
+# star_event copy. badge_cache / stargazer_cache will re-run (idempotent, fast).
+if [[ "${SKIP_HEAVY:-0}" == "1" || "${SKIP_USERS:-0}" == "1" ]]; then
+  echo "[github_user] skipped (SKIP_HEAVY/SKIP_USERS=1)"
 else
 sync_table "github_user" 'ON CONFLICT (login) DO UPDATE SET
   name=EXCLUDED.name, company=EXCLUDED.company, location=EXCLUDED.location,
@@ -246,6 +274,8 @@ wait "$PID_STARGAZER"
 if [[ "${SKIP_HEAVY:-0}" == "1" ]]; then
   echo "[star_event] skipped (SKIP_HEAVY=1)"
 else
+  # SKIP_USERS drops any leftover _sync_star staging table before re-running,
+  # so resuming after a mid-copy timeout is safe and idempotent.
   sync_star_events
 fi
 
@@ -267,6 +297,12 @@ sync_table "dependents_cache" 'ON CONFLICT (owner, repo) DO UPDATE SET
   "dataGz"=EXCLUDED."dataGz", "totalCount"=EXCLUDED."totalCount",
   "fetchedAt"=EXCLUDED."fetchedAt", "expiresAt"=EXCLUDED."expiresAt"
   WHERE EXCLUDED."fetchedAt" > dependents_cache."fetchedAt"'
+
+# geocache — additive only: new local entries (from batch-index-contributors +
+# stargazer scans) are pushed; existing Neon entries are never overwritten.
+# DO NOTHING because both sides are ground truth — null entries (location not found)
+# are also valid and should not be replaced by a different provider's result.
+sync_table "geocache" 'ON CONFLICT (key) DO NOTHING'
 
 echo ""
 echo "Creating/refreshing materialized views on Neon..."

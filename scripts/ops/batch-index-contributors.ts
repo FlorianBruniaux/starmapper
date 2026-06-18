@@ -30,6 +30,7 @@
  */
 
 import { parseArgs } from "node:util";
+import { writeFileSync, readFileSync, existsSync } from "node:fs";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import pg from "pg";
@@ -39,6 +40,7 @@ import {
   GitHubRateLimitError,
 } from "@/lib/github";
 import { geocodeBatch } from "@/lib/geocoder";
+import { bulkReadUsers } from "@/lib/user-cache";
 
 // ─── CLI args ─────────────────────────────────────────────────────────────────
 
@@ -50,6 +52,7 @@ const { values } = parseArgs({
     "dry-run":   { type: "boolean", default: false },
     "prod":      { type: "boolean", default: false },
     "gh-token":  { type: "string" },
+    "resume":    { type: "boolean", default: false },
   },
   strict: true,
   args: process.argv.slice(2),
@@ -58,9 +61,12 @@ const { values } = parseArgs({
 const minStars       = parseInt(values["min-stars"] as string, 10);
 const limit          = values["limit"] ? parseInt(values["limit"] as string, 10) : undefined;
 const reposFilter    = values["repos"] ? (values["repos"] as string).split(",").map((r) => r.trim()).filter(Boolean) : null;
-const dryRun         = values["dry-run"] as boolean;
-const useProd        = values["prod"] as boolean;
+const dryRun          = values["dry-run"] as boolean;
+const useProd         = values["prod"] as boolean;
 const ghTokenOverride = values["gh-token"] as string | undefined;
+const resume          = values["resume"] as boolean;
+
+const CHECKPOINT_PATH = ".contributors-checkpoint.json";
 
 const DB_URL = useProd
   ? (process.env.DATABASE_URL ?? "")
@@ -121,6 +127,18 @@ const fmtCount = (n: number): string =>
 const COMPUTING_WAIT_MS = 30_000;
 const MAX_COMPUTING_RETRIES = 6;
 
+// Pause between pages to stay well below GitHub secondary rate limits.
+// Secondary limits fire on rapid-fire bursts regardless of hourly quota —
+// 1 page = 1 REST + 1 GraphQL call. 1 500ms gap prevents "too many requests
+// per second" 429s that are different from the primary 5000pts/hr limit.
+const PAGE_DELAY_MS = 1_500;
+
+// Proactively park a token before it hits 429 — avoids burning the request
+// on a doomed call. The reset time is unknown without a failed request, so
+// we use 1h from now (conservative). The token becomes available again once
+// acquireToken() finds a better option.
+const LOW_QUOTA_THRESHOLD = 150;
+
 // ─── Per-repo chunk loop ──────────────────────────────────────────────────────
 
 type RepoResult = { mapped: number; unmapped: number; pages: number; ok: boolean };
@@ -169,18 +187,54 @@ const indexRepoContributors = async (owner: string, repo: string): Promise<RepoR
 
     if (result.contributors.length === 0) break;
 
-    // Fetch locations for all contributors in this page (GitHub API doesn't include location)
-    const logins = result.contributors.map((c) => c.login);
-    let locationMap = new Map<string, string | null>();
-    try {
-      locationMap = await fetchContributorLocations(logins, token);
-    } catch (err) {
-      if (err instanceof GitHubRateLimitError && tok) {
-        tok.exhaustedUntil = err.resetAt + 2_000;
-      }
-      // Non-fatal: skip geocoding for this page, count as unmapped
-      process.stdout.write(`    Locations fetch failed for page ${page}, skipping geocoding\n`);
+    // Proactively park token if quota is low — avoids burning a doomed REST call.
+    if (result.quotaRemaining !== null && result.quotaRemaining < LOW_QUOTA_THRESHOLD && tok) {
+      tok.exhaustedUntil = Date.now() + 3_600_000; // conservative 1h; reset when a fresh token arrives
+      const avail = TOKEN_POOL.filter((t) => t.exhaustedUntil <= Date.now()).length;
+      process.stdout.write(`\n    Low quota (${result.quotaRemaining} remaining) — token parked (${avail}/${TOKEN_POOL.length} available)\n`);
     }
+
+    const logins = result.contributors.map((c) => c.login);
+
+    // Pre-check github_user — skip GitHub API for logins we already have coords for.
+    // With 6.8M users locally, 40-60% of top-repo contributors are likely stargazers
+    // we've already geocoded → skip both GraphQL + Nominatim for them.
+    const knownUsers = await bulkReadUsers(logins);
+    const unknownLogins = logins.filter((l) => {
+      const u = knownUsers.get(l);
+      return !u || (u.lat === null && u.lng === null && !u.location);
+    });
+    const skipCount = logins.length - unknownLogins.length;
+
+    // Build location map from DB cache first, then fetch only the unknowns from GitHub.
+    let locationMap = new Map<string, string | null>();
+    for (const [login, u] of knownUsers.entries()) {
+      locationMap.set(login, u.location ?? null);
+    }
+
+    if (unknownLogins.length > 0) {
+      const locTok = await acquireToken();
+      try {
+        const fetched = await fetchContributorLocations(unknownLogins, locTok?.token);
+        for (const [login, loc] of fetched.entries()) locationMap.set(login, loc);
+      } catch (err) {
+        if (err instanceof GitHubRateLimitError && locTok) {
+          locTok.exhaustedUntil = err.resetAt + 2_000;
+          const avail = TOKEN_POOL.filter((t) => t.exhaustedUntil <= Date.now()).length;
+          process.stdout.write(`\n    Locations rate limited — token parked (${avail}/${TOKEN_POOL.length} available)\n`);
+        }
+        process.stdout.write(`    Locations fetch failed for page ${page}, skipping geocoding\n`);
+      }
+    }
+
+    if (skipCount > 0) {
+      process.stdout.write(`    (${skipCount}/${logins.length} already in DB — skipped GitHub)\n`);
+    }
+
+    // Inter-page delay — prevents GitHub secondary rate limits ("too many requests
+    // per second"). Each page = 2 API calls (REST + GraphQL); bursting all 2008
+    // repos back-to-back triggers secondary limits well before the 5000pts/hr cap.
+    await new Promise((r) => setTimeout(r, PAGE_DELAY_MS));
 
     // Collect non-empty raw locations
     const locationsToGeocode = logins
@@ -239,6 +293,26 @@ const main = async () => {
     console.log(`Found ${repos.length} repos${filterDesc} (ordered by stars desc)`);
   }
 
+  // Load checkpoint — tracks which repos were successfully completed across runs.
+  // Written after every batch; read on --resume to skip already-done repos.
+  const doneSet = new Set<string>();
+  if (existsSync(CHECKPOINT_PATH)) {
+    try {
+      const prev = JSON.parse(readFileSync(CHECKPOINT_PATH, "utf-8")) as string[];
+      for (const r of prev) doneSet.add(r);
+    } catch {
+      // corrupt checkpoint — ignore, start fresh
+    }
+  }
+
+  if (resume && doneSet.size > 0) {
+    const before = repos.length;
+    repos = repos.filter((r) => !doneSet.has(`${r.owner}/${r.repo}`));
+    console.log(`Resuming: ${doneSet.size} already done → skipping, ${repos.length} / ${before} remaining`);
+  } else if (doneSet.size > 0 && !resume) {
+    console.log(`Checkpoint: ${doneSet.size} repos done in a previous run (use --resume to skip them)`);
+  }
+
   if (dryRun) {
     console.log("\nDry run — would index:\n");
     repos.forEach((r, i) => {
@@ -249,37 +323,62 @@ const main = async () => {
     return;
   }
 
+  // Concurrency = number of repos processed in parallel.
+  // Default: min(tokens, 2) — conservative to avoid burning hourly quota on dense repos
+  // (torvalds/linux type repos have few DB hits, each page costs a full REST+GraphQL call).
+  // Override: CONCURRENCY=4 env var for repos with high DB-skip rates.
+  const concurrencyEnv = process.env.CONCURRENCY ? parseInt(process.env.CONCURRENCY, 10) : undefined;
+  const CONCURRENCY = concurrencyEnv ?? Math.min(TOKEN_POOL.length || 1, 2);
+
   if (TOKEN_POOL.length > 0) {
     console.log(`GitHub tokens: ${TOKEN_POOL.length} (rotation ${TOKEN_POOL.length > 1 ? "enabled" : "disabled"})`);
   } else {
     console.log("No GitHub token — rate limited to 60 req/hr.");
   }
   console.log(`DB: ${useProd ? "Neon prod" : "local Docker"}`);
-  console.log(`Repos to process: ${repos.length}\n`);
+  console.log(`Repos to process: ${repos.length} (concurrency: ${CONCURRENCY})\n`);
 
   let totalMapped   = 0;
   let totalUnmapped = 0;
   let totalErrors   = 0;
+  let done = 0;
 
-  for (let i = 0; i < repos.length; i++) {
-    const r = repos[i];
-    if (!r) continue;
-    console.log(`\n[${i + 1}/${repos.length}] ${r.owner}/${r.repo} (${fmtCount(r.totalCount)} stars)`);
+  // Process repos in parallel batches of CONCURRENCY.
+  for (let i = 0; i < repos.length; i += CONCURRENCY) {
+    const batch = repos.slice(i, i + CONCURRENCY).filter(Boolean);
 
-    const result = await indexRepoContributors(r.owner, r.repo);
-
-    const pct = result.mapped + result.unmapped > 0
-      ? Math.round((result.mapped * 100) / (result.mapped + result.unmapped))
-      : 0;
-
-    console.log(
-      `  Done: ${result.mapped} mapped (${pct}%), ${result.unmapped} unmapped` +
-      (result.ok ? "" : " [ERROR]"),
+    const results = await Promise.all(
+      batch.map(async (r, batchIdx) => {
+        const globalIdx = i + batchIdx + 1;
+        console.log(`\n[${globalIdx}/${repos.length}] ${r.owner}/${r.repo} (${fmtCount(r.totalCount)} stars)`);
+        return { r, result: await indexRepoContributors(r.owner, r.repo) };
+      }),
     );
 
-    totalMapped   += result.mapped;
-    totalUnmapped += result.unmapped;
-    if (!result.ok) totalErrors++;
+    for (const { r, result } of results) {
+      const pct = result.mapped + result.unmapped > 0
+        ? Math.round((result.mapped * 100) / (result.mapped + result.unmapped))
+        : 0;
+      console.log(
+        `  ${r.owner}/${r.repo}: ${result.mapped} mapped (${pct}%), ${result.unmapped} unmapped` +
+        (result.ok ? "" : " [ERROR]"),
+      );
+      totalMapped   += result.mapped;
+      totalUnmapped += result.unmapped;
+      if (!result.ok) totalErrors++;
+      else doneSet.add(`${r.owner}/${r.repo}`);
+      done++;
+    }
+
+    // Persist checkpoint after every batch — if the script crashes, next run
+    // with --resume skips everything already completed.
+    if (!dryRun) {
+      try {
+        writeFileSync(CHECKPOINT_PATH, JSON.stringify([...doneSet], null, 2));
+      } catch {
+        // non-fatal — checkpoint is best-effort
+      }
+    }
   }
 
   const elapsed = Math.round((Date.now() - startMs) / 1000);
@@ -293,7 +392,7 @@ const main = async () => {
   console.log(`  Errors          : ${totalErrors}`);
   console.log(`  Total mapped    : ${totalMapped} (${totalPct}%)`);
   console.log(`  Total unmapped  : ${totalUnmapped}`);
-  console.log(`\nGeocache is now warm. Run 'make maintenance --skip-backfills' to sync to Neon.`);
+  console.log(`\nGeocache is now warm. Run 'make maintenance-sync-only' to sync to Neon.`);
 
   await prisma.$disconnect();
 };

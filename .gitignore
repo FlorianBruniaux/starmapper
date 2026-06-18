@@ -113,3 +113,4 @@ graphify-out/
 .codex/
 .code-review-graph/
 .grepai/
+.contributors-checkpoint.json
