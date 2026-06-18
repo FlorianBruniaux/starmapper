@@ -42,7 +42,8 @@ const parseChangelog = (raw: string): VersionEntry[] => {
   let currentSection: Section | null = null;
 
   for (const line of lines) {
-    const versionMatch = line.match(/^## \[(.+?)\] — (.+)/);
+    // Accept both `## [x.y.z] — date` and `## [x.y.z] (date)` formats
+    const versionMatch = line.match(/^## \[(.+?)\]\s*(?:—\s*|\()(.+?)\)?$/);
     if (versionMatch) {
       if (current) entries.push(current);
       current = { version: versionMatch[1], date: versionMatch[2], sections: [] };

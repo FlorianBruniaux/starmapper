@@ -83,6 +83,10 @@ const FAQS = [
     a: "StarMapper computes an Organic Score (0 to 100) using three public signals: the fork/star ratio (40% weight, since real developers fork repos they use), the watcher/star ratio (5% weight, watchers are a deliberate opt-in since GitHub changed the default in 2020), and the percentage of zero-follower stargazers (55% weight, star-farming services use newly created accounts with no followers). The score was calibrated against 19 repositories, including cases documented in the Dagster investigation (2023) and the CMU/StarScout research paper (ICSE 2026), reaching 85.7% classification accuracy. Scores of 75 or above are Healthy, 50–74 are Moderate, and below 50 are Suspicious. The full methodology and calibration corpus are published on the site.",
   },
   {
+    q: "Can I explore GitHub developers by country or programming language?",
+    a: "Yes. The Developer Maps section at /devs lets you browse developers geographically. The \"By country\" tab lists every country with at least 100 mapped developers, each linking to a full globe view at /devs/in/{country}. The \"By language\" tab lists all tracked languages, each linking to a globe showing developers who list that language on GitHub. Both views show developer counts and cross-link to each other.",
+  },
+  {
     q: "Can I compare two GitHub repos on the same map?",
     a: "Yes. Use the Compare feature to overlay two repositories simultaneously. Each repo's stargazers appear as distinct colored points (blue vs. purple), so you can see at a glance whether the two audiences overlap geographically or target entirely different communities. Useful for understanding competitive positioning or measuring the reach of cross-promotion between projects.",
   },

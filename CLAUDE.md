@@ -84,6 +84,13 @@ pnpm db:pull                     # Full dump + restore: prod → local
 
 make maintenance                 # Interactive wizard: checkboxes per step, dry-run prompt, then calls maintenance.sh
 pnpm stats:views                 # Analytics overview (last 7 days, top 20)
+
+# ─── Indexing new repos ───────────────────────────────────────────────────────
+make auto-index                  # Discover + scan 100 new trending repos → Neon prod (default)
+make auto-index LIMIT=50 MIN_STARS=1000  # Custom params
+make auto-index-dry              # Preview discovery only, no scan, no writes
+make auto-index-local            # Same but targets local Docker (sync to Neon after)
+make index-repo REPO=owner/repo  # Index a single specific repo
 ```
 
 `pnpm` for scripts that need `--flag` passthrough. `make` for multi-step shell workflows with target dependencies.
@@ -144,4 +151,4 @@ pnpm stats:views                 # Analytics overview (last 7 days, top 20)
 ---
 
 *Last updated: 2026-06-18*
-*Version: 0.6.7*
+*Version: 0.6.8*

@@ -93,7 +93,7 @@ export const fetchTopCountries = async (): Promise<CountryListData> => {
   cacheLife({ revalidate: 3600, stale: 86400 });
 
   const rows = await prisma.$queryRaw<{ country: string; cnt: number }[]>`
-    SELECT country, cnt::int FROM country_stats_mv WHERE cnt >= 100 ORDER BY cnt DESC LIMIT 24
+    SELECT country, cnt::int FROM country_stats_mv WHERE cnt >= 100 ORDER BY cnt DESC LIMIT 200
   `;
 
   return {

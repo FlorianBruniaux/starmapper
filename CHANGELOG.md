@@ -5,6 +5,42 @@ Versioning: Semantic Versioning (MAJOR.MINOR.PATCH)
 
 ---
 
+## [0.6.8] (2026-06-18)
+
+### Developer maps by country `/devs/in/[country]`
+
+A new programmatic SEO dimension exposes developer concentration data per country. Each page at `/devs/in/[country]` (e.g. `/devs/in/germany`) renders an interactive globe with all geocoded developers from that country, pulled from `github_user` via the `countryNormalized` index, grouped into grid cells to stay within Vercel's function limit.
+
+The sidebar lists the top programming languages for that country with relative bar widths, each linking back to its language map at `/devs/{language}`. The header breadcrumb connects back to the `/devs` hub. Pages include JSON-LD (`Dataset` + `BreadcrumbList`), full `generateMetadata`, and Next.js `"use cache"` with `cacheTag("explore-mvs")`.
+
+Sitemap is updated: `country_stats_mv` rows with at least 100 mapped developers are included with `priority: 0.6`.
+
+### `/devs` hub: tab layout with flags and language colors
+
+The developer hub at `/devs` is reorganized as two tabs: "By country" (default) and "By language". Both show count badges in the tab bar. A shared search input clears on tab switch.
+
+Country cards now display emoji flags computed dynamically from ISO 3166-1 alpha-2 codes (no static map, every country covered). The computation uses Unicode regional indicator characters: `isoToFlagEmoji("DE")` → 🇩🇪. Country fallback: 🌍.
+
+Language cards display a colored dot using GitHub's canonical language palette. TypeScript gets `#3178c6`, Rust `#dea584`, JavaScript `#f1e05a`, and so on for all 54 languages. Fallback: neutral gray `#6e7681`.
+
+The country limit was raised from 24 to 200. New helper module `src/lib/devs-display.ts` holds `countryFlag()` and `LANGUAGE_COLOR` to keep the client component under the 300-line threshold.
+
+### Misc
+
+- Search input gains a clear (×) button when non-empty
+- Empty state shows "No country matching «X»" with a "Clear search" link
+
+### Features
+
+- New route `/devs/in/[country]`: interactive globe per country with top languages sidebar, JSON-LD, and sitemap entries
+- `/devs` hub redesigned as tabs ("By country" default, "By language" second), with count badges
+- Country cards: emoji flags computed dynamically from ISO 3166-1 alpha-2 codes, covers all countries
+- Language cards: colored dots using GitHub canonical language colors for all 54 tracked languages
+- Country limit raised from 24 to 200; `src/lib/devs-display.ts` extracted for display constants
+- Search clear button (×) on the search input
+
+---
+
 ## [0.6.7] (2026-06-18)
 
 ### Contributors Map `/[owner]/[repo]/contributors`
