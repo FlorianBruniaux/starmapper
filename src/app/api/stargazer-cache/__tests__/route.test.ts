@@ -192,14 +192,13 @@ describe("POST /api/stargazer-cache", () => {
       expect(await res.json()).toMatchObject({ error: "totalCount_mismatch" });
     });
 
-    it("returns 400 totalCount_mismatch when ratio exceeds 1.2", async () => {
+    it("accepts totalCount above badge count (viral growth)", async () => {
       mockFindUnique.mockResolvedValue({ totalCount: 1000 });
-      const res = await POST(makeReq({ ...validBodyGz(), totalCount: 1201 }));
-      expect(res.status).toBe(400);
-      expect(await res.json()).toMatchObject({ error: "totalCount_mismatch" });
+      const res = await POST(makeReq({ ...validBodyGz(), totalCount: 3500 }));
+      expect(res.status).toBe(200);
     });
 
-    it("accepts totalCount within ±20% of existing badge", async () => {
+    it("accepts totalCount at 20% above badge count", async () => {
       mockFindUnique.mockResolvedValue({ totalCount: 1000 });
       const res = await POST(makeReq({ ...validBodyGz(), totalCount: 1100 }));
       expect(res.status).toBe(200);

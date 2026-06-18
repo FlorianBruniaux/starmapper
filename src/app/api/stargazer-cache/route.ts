@@ -56,11 +56,12 @@ export const POST = defineRoute(stargazerCacheEnvelopeSchema, async (req, body) 
       checkDbHealth(),
     ]);
 
-    // Plausibility check — if badge data exists, totalCount must be within ±20%
-    // Prevents overwriting a 50k-star repo cache with fabricated data
+    // Plausibility check — if badge data exists, new totalCount must not be <80% of known count.
+    // This catches fabricated/stripped-star submissions. The upper bound is intentionally absent:
+    // fast-growing repos can legitimately 2x–5x between scans (e.g. a viral week).
     if (existingBadge && existingBadge.totalCount > 0) {
       const ratio = body.totalCount / existingBadge.totalCount;
-      if (ratio < 0.8 || ratio > 1.2) {
+      if (ratio < 0.8) {
         return jsonError("totalCount_mismatch", 400);
       }
     }
