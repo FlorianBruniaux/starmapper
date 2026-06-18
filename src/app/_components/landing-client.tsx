@@ -31,6 +31,12 @@ const SponsorsBlock = dynamic(
 
 type Suggestion = { owner: string; repo: string };
 
+const fmtCount = (n: number): string => {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}k`;
+  return String(n);
+};
+
 const EXAMPLES: Suggestion[] = [
   { owner: "FlorianBruniaux", repo: "claude-code-ultimate-guide" },
   { owner: "rtk-ai", repo: "rtk" },
@@ -531,6 +537,12 @@ export const LandingClient = ({ initialRepos, initialTotal }: Props) => {
                       {repo.mappedPercent}% mapped
                     </span>
                     <span>{repo.countryCount === 1 ? "1 country" : `${repo.countryCount} countries`}</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-xs text-muted-subtle">
+                    <span>⭐ {fmtCount(repo.totalCount)}</span>
+                    {repo.contributorsCount != null && (
+                      <span>{fmtCount(repo.contributorsCount)} contributors</span>
+                    )}
                   </div>
                 </Link>
               ))}
