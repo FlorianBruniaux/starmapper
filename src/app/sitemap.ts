@@ -4,6 +4,7 @@
 import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/db";
 import { LANGUAGE_SLUG_MAP } from "@/lib/languages";
+import { countryToSlug } from "@/lib/countries";
 
 export const revalidate = 3600;
 
@@ -18,9 +19,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   let profileEntries: MetadataRoute.Sitemap = [];
   // Feed pages for users who have published news
   let feedEntries: MetadataRoute.Sitemap = [];
+  // Country dev map pages (threshold-gated at 100 devs)
+  let countryEntries: MetadataRoute.Sitemap = [];
 
   try {
-    const [repos, topUsers, newsAuthors] = await Promise.all([
+    const [repos, topUsers, newsAuthors, topCountries] = await Promise.all([
       prisma.badgeCache.findMany({
         select: { owner: true, repo: true, updatedAt: true },
         orderBy: { totalCount: "desc" },
@@ -38,6 +41,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         orderBy: { publishedAt: "desc" },
         take: 50,
       }),
+      prisma.$queryRaw<{ country: string }[]>`
+        SELECT country FROM country_stats_mv WHERE cnt >= 100 ORDER BY cnt DESC LIMIT 200
+      `,
     ]);
 
     repoEntries = repos.map((r) => ({
@@ -59,6 +65,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: n.publishedAt,
       changeFrequency: "weekly" as const,
       priority: 0.4,
+    }));
+
+    countryEntries = topCountries.map((c) => ({
+      url: `${BASE}/devs/in/${countryToSlug(c.country)}`,
+      lastModified: now,
+      changeFrequency: "monthly" as const,
+      priority: 0.6,
     }));
   } catch {
     // DB unavailable — skip dynamic entries
@@ -90,6 +103,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE}/terms`, lastModified: new Date("2026-04-06"), changeFrequency: "yearly", priority: 0.3 },
     { url: `${BASE}/legal`, lastModified: new Date("2026-04-06"), changeFrequency: "yearly", priority: 0.3 },
     ...languageEntries,
+    ...countryEntries,
     ...repoEntries,
     ...profileEntries,
     ...feedEntries,
