@@ -187,8 +187,10 @@ const buildGeoJSON = (pts: StargazerPoint[]) => {
         followers: p.followers,
         avatarUrl: p.avatarUrl,
         linkedinUrl: p.linkedinUrl,
-        // context is passed through for popup rendering (e.g. "contributors" → "N commits")
-        context: (p as unknown as { context?: string }).context ?? null,
+        // context + repo coords passed through for contributors popup
+        context: (p as unknown as { context?: string; repoOwner?: string; repoRepo?: string }).context ?? null,
+        repoOwner: (p as unknown as { repoOwner?: string }).repoOwner ?? null,
+        repoRepo: (p as unknown as { repoRepo?: string }).repoRepo ?? null,
       },
     })),
   };
@@ -403,18 +405,25 @@ const makePopupElement = (props: Record<string, unknown>): HTMLElement => {
   if (location) metaParts.push(location);
   if (props.followers) {
     const isContributors = props.context === "contributors";
+    const commitCount = Number(props.followers);
+    const repoOwner = props.repoOwner ? String(props.repoOwner) : null;
+    const repoRepo = props.repoRepo ? String(props.repoRepo) : null;
     const countLink = document.createElement("a");
-    countLink.href = isContributors
-      ? `https://github.com/${login}`
-      : `/${login}/followers`;
+    if (isContributors && repoOwner && repoRepo) {
+      countLink.href = `https://github.com/${repoOwner}/${repoRepo}/commits?author=${login}`;
+    } else if (isContributors) {
+      countLink.href = `https://github.com/${login}`;
+    } else {
+      countLink.href = `/${login}/followers`;
+    }
     if (isContributors) {
       countLink.target = "_blank";
       countLink.rel = "noopener noreferrer";
     }
     countLink.style.cssText = "color:var(--color-muted);text-decoration:none;border-bottom:1px dotted currentColor;cursor:pointer";
     countLink.textContent = isContributors
-      ? `${Number(props.followers).toLocaleString()} commits`
-      : `${Number(props.followers).toLocaleString()} followers`;
+      ? `${commitCount.toLocaleString()} ${commitCount === 1 ? "commit" : "commits"}`
+      : `${commitCount.toLocaleString()} followers`;
     countLink.addEventListener("mouseenter", () => {
       countLink.style.color = "var(--color-accent-blue)";
     });
@@ -441,10 +450,11 @@ const makePopupElement = (props: Record<string, unknown>): HTMLElement => {
     el.appendChild(liLink);
   }
 
-  // View profile button
-  const profileBtn = document.createElement("a");
-  profileBtn.href = `/profile/${login}`;
-  profileBtn.style.cssText = [
+  // View profile / contributors button
+  const isContributorsCtx = props.context === "contributors";
+  const ctxRepoOwner = props.repoOwner ? String(props.repoOwner) : null;
+  const ctxRepoRepo = props.repoRepo ? String(props.repoRepo) : null;
+  const btnStyle = [
     "display:block",
     "margin-top:10px",
     "padding:5px 10px",
@@ -458,16 +468,56 @@ const makePopupElement = (props: Record<string, unknown>): HTMLElement => {
     "text-align:center",
     "transition:border-color 0.15s,background 0.15s",
   ].join(";");
-  profileBtn.textContent = "View StarMapper profile →";
-  profileBtn.addEventListener("mouseenter", () => {
-    profileBtn.style.borderColor = "var(--color-accent-blue)";
-    profileBtn.style.background = "var(--color-surface)";
-  });
-  profileBtn.addEventListener("mouseleave", () => {
-    profileBtn.style.borderColor = "var(--color-border)";
-    profileBtn.style.background = "var(--color-surface-alt)";
-  });
-  el.appendChild(profileBtn);
+
+  if (isContributorsCtx && ctxRepoOwner && ctxRepoRepo) {
+    // Primary: view their commits to this repo
+    const commitsBtn = document.createElement("a");
+    commitsBtn.href = `https://github.com/${ctxRepoOwner}/${ctxRepoRepo}/commits?author=${login}`;
+    commitsBtn.target = "_blank";
+    commitsBtn.rel = "noopener noreferrer";
+    commitsBtn.style.cssText = btnStyle;
+    commitsBtn.textContent = "View commits →";
+    commitsBtn.addEventListener("mouseenter", () => {
+      commitsBtn.style.borderColor = "var(--color-accent-blue)";
+      commitsBtn.style.background = "var(--color-surface)";
+    });
+    commitsBtn.addEventListener("mouseleave", () => {
+      commitsBtn.style.borderColor = "var(--color-border)";
+      commitsBtn.style.background = "var(--color-surface-alt)";
+    });
+    el.appendChild(commitsBtn);
+
+    // Secondary: contributor graph
+    const graphBtn = document.createElement("a");
+    graphBtn.href = `https://github.com/${ctxRepoOwner}/${ctxRepoRepo}/graphs/contributors`;
+    graphBtn.target = "_blank";
+    graphBtn.rel = "noopener noreferrer";
+    graphBtn.style.cssText = btnStyle + ";margin-top:4px;color:var(--color-muted)";
+    graphBtn.textContent = "Contributor graph →";
+    graphBtn.addEventListener("mouseenter", () => {
+      graphBtn.style.borderColor = "var(--color-accent-blue)";
+      graphBtn.style.color = "var(--color-foreground)";
+    });
+    graphBtn.addEventListener("mouseleave", () => {
+      graphBtn.style.borderColor = "var(--color-border)";
+      graphBtn.style.color = "var(--color-muted)";
+    });
+    el.appendChild(graphBtn);
+  } else {
+    const profileBtn = document.createElement("a");
+    profileBtn.href = `/profile/${login}`;
+    profileBtn.style.cssText = btnStyle;
+    profileBtn.textContent = "View StarMapper profile →";
+    profileBtn.addEventListener("mouseenter", () => {
+      profileBtn.style.borderColor = "var(--color-accent-blue)";
+      profileBtn.style.background = "var(--color-surface)";
+    });
+    profileBtn.addEventListener("mouseleave", () => {
+      profileBtn.style.borderColor = "var(--color-border)";
+      profileBtn.style.background = "var(--color-surface-alt)";
+    });
+    el.appendChild(profileBtn);
+  }
 
   // Tracked repos — lazy-loaded
   const reposSection = document.createElement("div");

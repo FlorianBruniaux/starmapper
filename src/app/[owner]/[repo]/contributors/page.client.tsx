@@ -94,12 +94,23 @@ export default function ContributorsPageClient({ params }: Props) {
         lat: p.lat,
         lng: p.lng,
         context: "contributors",
+        repoOwner: owner,
+        repoRepo: repo,
       })) as unknown as StargazerPoint[],
     [points],
   );
 
   const isScanning = status === "loading" || status === "waiting" || status === "computing";
   const isDone = status === "done";
+
+  // Open the panel the first time points arrive (points.length going 0→N)
+  const panelAutoOpenedRef = useRef(false);
+  useEffect(() => {
+    if (points.length > 0 && !panelAutoOpenedRef.current) {
+      panelAutoOpenedRef.current = true;
+      setPanelOpen(true);
+    }
+  }, [points.length]);
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-background">
@@ -119,6 +130,7 @@ export default function ContributorsPageClient({ params }: Props) {
           onReady={handleMapReady}
           clusterRadius={clusterRadius}
           styleUrl={mapStyleUrl}
+          showProjectionToggle
         />
 
         {/* Floating top bar */}
