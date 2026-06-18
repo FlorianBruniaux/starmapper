@@ -153,8 +153,17 @@ export const useContributorsScanController = ({
         page = chunk!.nextPage;
       }
 
-      setTotal(allPoints.length + allUnmapped.length);
+      const finalTotal = allPoints.length + allUnmapped.length;
+      setTotal(finalTotal);
       setStatus("done");
+
+      // Persist contributors count to badge_cache so /repos can show it.
+      // Fire-and-forget: failure doesn't affect the scan result.
+      fetch("/api/contributors-badge-update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ owner, repo, contributorsCount: finalTotal }),
+      }).catch(() => {});
     } catch (e: unknown) {
       if (e instanceof TokenInvalidError) {
         setTokenOpen(true);

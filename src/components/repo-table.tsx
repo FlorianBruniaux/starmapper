@@ -224,6 +224,9 @@ export const RepoTable = ({ repos }: { repos: MappedRepo[] }) => {
                 </span>
               </span>
             </th>
+            <th scope="col" className="py-2.5 px-4 text-xs uppercase tracking-wider text-muted-subtle font-medium text-right hidden md:table-cell">
+              Contributors
+            </th>
             <ColHeader label="Last scan" col="updatedAt" active={sortCol === "updatedAt"} dir={sortDir} onSort={handleSort}
               tooltip="When StarMapper last fetched and geocoded this repo's stargazers." />
           </tr>
@@ -245,14 +248,6 @@ export const RepoTable = ({ repos }: { repos: MappedRepo[] }) => {
                     <span className="text-sm text-foreground font-medium group-hover/link:text-accent-blue transition-colors">
                       {r.repo}
                     </span>
-                  </Link>
-                  <Link
-                    href={`/${r.owner}/${r.repo}/contributors`}
-                    onClick={(e) => e.stopPropagation()}
-                    title="Contributors map"
-                    className="opacity-0 group-hover:opacity-100 flex items-center gap-1 text-muted-subtle hover:text-accent-blue transition-all text-xs"
-                  >
-                    <GitCommit size={11} aria-hidden="true" />
                   </Link>
                 </div>
               </td>
@@ -299,6 +294,17 @@ export const RepoTable = ({ repos }: { repos: MappedRepo[] }) => {
                 ) : (
                   <span className="text-xs text-muted-subtle">—</span>
                 )}
+              </td>
+              <td className="py-3 px-4 text-right hidden md:table-cell">
+                <Link
+                  href={`/${r.owner}/${r.repo}/contributors`}
+                  onClick={(e) => e.stopPropagation()}
+                  className="inline-flex items-center gap-1 text-xs text-accent-blue hover:underline"
+                  title="Contributors map"
+                >
+                  <GitCommit size={11} aria-hidden="true" />
+                  {r.contributorsCount != null ? formatCount(r.contributorsCount) : "Map"}
+                </Link>
               </td>
               <td className="py-3 px-4 text-right hidden lg:table-cell">
                 {r.dependentsCount != null && r.dependentsCount > 0 ? (

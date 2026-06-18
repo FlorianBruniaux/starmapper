@@ -15,6 +15,7 @@ type RepoRow = {
   organicScore: number | null;
   organicTier: string | null;
   dependentsCount: number | null;
+  contributorsCount: number | null;
 };
 
 export type RepoItem = {
@@ -29,6 +30,7 @@ export type RepoItem = {
   organicScore: number | null;
   organicTier: string | null;
   dependentsCount: number | null;
+  contributorsCount: number | null;
 };
 
 const MAX_PER_OWNER = 3;
@@ -48,6 +50,7 @@ export const fetchReposData = async (
     prisma.$queryRaw<RepoRow[]>`
       SELECT bc.owner, bc.repo, bc."mappedCount", bc."countryCount", bc."totalCount",
              bc.language, bc."updatedAt", bc."organicScore", bc."organicTier",
+             bc."contributorsCount",
              dc."totalCount" AS "dependentsCount"
       FROM badge_cache bc
       LEFT JOIN dependents_cache dc ON dc.owner = bc.owner AND dc.repo = bc.repo
@@ -96,6 +99,7 @@ export const fetchReposData = async (
       organicScore: r.organicScore ?? null,
       organicTier: r.organicTier ?? null,
       dependentsCount: r.dependentsCount != null ? Number(r.dependentsCount) : null,
+      contributorsCount: r.contributorsCount != null ? Number(r.contributorsCount) : null,
     })),
     total,
   };
