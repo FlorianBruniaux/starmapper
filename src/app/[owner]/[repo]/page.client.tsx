@@ -243,6 +243,7 @@ export default function MapPageClient({ owner, repo, initialRepoInfo }: Props) {
 
   const { cacheCheckDone, lastDbScan } = useRepoCacheLoader({
     owner, repo, repoInfo,
+    currentStars: initialRepoInfo?.stars,
     dispatch, setTotal, setCachedAt, setLatestStarredAt, setStatus, setServerStats,
   });
 

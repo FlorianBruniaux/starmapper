@@ -19,6 +19,8 @@ type Options = {
   owner: string;
   repo: string;
   repoInfo: RepoInfo | null;
+  /** Current GitHub stars count — used to detect stale caches (e.g. after fake-star removal). */
+  currentStars?: number;
   dispatch: React.Dispatch<ScanAction>;
   setTotal: React.Dispatch<React.SetStateAction<number>>;
   setCachedAt: React.Dispatch<React.SetStateAction<number | null>>;
@@ -56,8 +58,12 @@ const donateLocalCacheToDb = (owner: string, repo: string, cache: LocalCache) =>
   })();
 };
 
+// A cache whose totalCount exceeds current GitHub stars by this factor is considered
+// stale (e.g. fake-star removal or significant unstar wave) and is discarded.
+const STALE_CACHE_FACTOR = 1.15;
+
 export const useRepoCacheLoader = ({
-  owner, repo, repoInfo, dispatch,
+  owner, repo, repoInfo, currentStars, dispatch,
   setTotal, setCachedAt, setLatestStarredAt, setStatus,
   setServerStats: externalSetServerStats,
 }: Options): Result => {
@@ -77,13 +83,23 @@ export const useRepoCacheLoader = ({
     const loaded = loadCache(owner, repo);
     const local = loaded && Date.now() - loaded.scannedAt <= MAX_LOCAL_AGE_MS ? loaded : null;
     if (loaded && !local) clearCache(owner, repo);
-    if (local) {
-      dispatch({ type: "set", points: local.points, unmapped: local.unmapped });
-      setTotal(local.totalCount);
-      setCachedAt(local.scannedAt);
-      setLatestStarredAt(local.latestStarredAt ?? null);
+
+    // Discard local cache if its count is inflated vs. current GitHub stars (fake-star removal).
+    const isLocalStale =
+      local !== null &&
+      currentStars !== undefined &&
+      currentStars > 0 &&
+      local.totalCount > currentStars * STALE_CACHE_FACTOR;
+    if (isLocalStale) clearCache(owner, repo);
+
+    const validLocal = isLocalStale ? null : local;
+    if (validLocal) {
+      dispatch({ type: "set", points: validLocal.points, unmapped: validLocal.unmapped });
+      setTotal(validLocal.totalCount);
+      setCachedAt(validLocal.scannedAt);
+      setLatestStarredAt(validLocal.latestStarredAt ?? null);
       setStatus("cached");
-      saveBookmark(owner, repo, local.totalCount);
+      saveBookmark(owner, repo, validLocal.totalCount);
       setCacheCheckDone(true);
     }
 
@@ -97,20 +113,22 @@ export const useRepoCacheLoader = ({
         }
         if (r.status === 206) {
           const d = await r.json();
-          if (!local) setLastDbScan(d.lastScan);
-          else donateLocalCacheToDb(owner, repo, local);
+          if (!validLocal) setLastDbScan(d.lastScan);
+          else donateLocalCacheToDb(owner, repo, validLocal);
           return;
         }
         if (!r.ok) {
-          if (local) donateLocalCacheToDb(owner, repo, local);
+          if (validLocal) donateLocalCacheToDb(owner, repo, validLocal);
           return;
         }
         const data = await r.json();
         if (!data.points) return;
         const scannedMs = new Date(data.scannedAt).getTime();
+        // Discard DB cache if its count is inflated vs. current GitHub stars.
+        if (currentStars && currentStars > 0 && data.totalCount > currentStars * STALE_CACHE_FACTOR) return;
         // Skip update only if server data is both older AND has fewer/equal stars.
         // A higher totalCount on the server always wins (rescan captured more users).
-        if (local && scannedMs <= local.scannedAt && data.totalCount <= local.totalCount) return;
+        if (validLocal && scannedMs <= validLocal.scannedAt && data.totalCount <= validLocal.totalCount) return;
         dispatch({ type: "set", points: data.points, unmapped: data.unmapped });
         setTotal(data.totalCount);
         setCachedAt(scannedMs);
@@ -131,7 +149,7 @@ export const useRepoCacheLoader = ({
       }
     })();
     return () => ac.abort();
-  }, [owner, repo, dispatch, setTotal, setCachedAt, setLatestStarredAt, setStatus]);
+  }, [owner, repo, currentStars, dispatch, setTotal, setCachedAt, setLatestStarredAt, setStatus]);
 
   // Effect 2: badge-sync — fires after localStorage hit, reads repoInfo via ref so it
   // doesn't re-run on every repoInfo update (forksCount/watchersCount are bonus fields).
@@ -139,7 +157,12 @@ export const useRepoCacheLoader = ({
     const MAX_LOCAL_AGE_MS = 7 * 24 * 60 * 60 * 1000;
     const loaded = loadCache(owner, repo);
     const local = loaded && Date.now() - loaded.scannedAt <= MAX_LOCAL_AGE_MS ? loaded : null;
-    if (!local) return;
+    const isStale =
+      local !== null &&
+      currentStars !== undefined &&
+      currentStars > 0 &&
+      local.totalCount > currentStars * STALE_CACHE_FACTOR;
+    if (!local || isStale) return;
     const countrySet = new Set(
       local.points
         .map((p) => { const s = p.location?.split(",").pop()?.trim(); return s && isCountry(s) ? normalizeCountry(s) : null; })

@@ -297,7 +297,8 @@ export const useScanController = ({
       const current = scanRef.current;
       const existing = new Set(current.points.map((p) => p.login));
       const mergedPoints = [...newPoints.filter((p) => !existing.has(p.login)), ...current.points];
-      const mergedUnmapped = [...newUnmapped, ...current.unmapped];
+      const existingUnmapped = new Set(current.unmapped.map((u) => u.login));
+      const mergedUnmapped = [...newUnmapped.filter((u) => !existingUnmapped.has(u.login)), ...current.unmapped];
       startTransition(() => {
         dispatch({ type: "set", points: mergedPoints, unmapped: mergedUnmapped });
       });
