@@ -157,10 +157,10 @@ index-contributors-local: ## make index-contributors-local REPO=owner/repo
 	$(ENV) caffeinate -i tsx scripts/ops/index-contributors.ts --base-url http://localhost:3000 $(if $(GH_TOKEN),--gh-token $(GH_TOKEN)) $(REPO)'
 
 batch-index-contributors: ## make batch-index-contributors [MIN_STARS=100] [LIMIT=n] — geocache warm-up, local DB
-	$(ENV) DATABASE_DRIVER=standard DATABASE_URL=$$DATABASE_URL_LOCAL caffeinate -i tsx scripts/ops/batch-index-contributors.ts $(if $(MIN_STARS),--min-stars $(MIN_STARS)) $(if $(LIMIT),--limit $(LIMIT))'
+	$(ENV) DATABASE_DRIVER=standard DATABASE_URL=$$DATABASE_URL_LOCAL caffeinate -i node_modules/.bin/tsx scripts/ops/batch-index-contributors.ts $(if $(MIN_STARS),--min-stars $(MIN_STARS)) $(if $(LIMIT),--limit $(LIMIT))'
 
 batch-index-contributors-prod: ## make batch-index-contributors-prod [MIN_STARS=100] [LIMIT=n] — Neon prod
-	$(ENV) DATABASE_DRIVER=standard caffeinate -i tsx scripts/ops/batch-index-contributors.ts --prod $(if $(MIN_STARS),--min-stars $(MIN_STARS)) $(if $(LIMIT),--limit $(LIMIT))'
+	$(ENV) DATABASE_DRIVER=standard caffeinate -i node_modules/.bin/tsx scripts/ops/batch-index-contributors.ts --prod $(if $(MIN_STARS),--min-stars $(MIN_STARS)) $(if $(LIMIT),--limit $(LIMIT))'
 
 # ─── Calibration + probes ──────────────────────────────────────────────────────
 
