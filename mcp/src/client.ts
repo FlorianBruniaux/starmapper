@@ -171,6 +171,79 @@ export type McpDependentsResponse = {
 export const fetchDependentsMcp = (owner: string, repo: string): Promise<McpDependentsResponse> =>
   get<McpDependentsResponse>(`/api/mcp/dependents/${owner}/${repo}`);
 
+// --- New response types (mirror of server Mcp*Response types — field names must stay in sync) ---
+// Source: src/app/api/mcp/contributors/[owner]/[repo]/route.ts
+export type McpContributorsResponse = {
+  contributors: Array<{
+    login: string;
+    contributions: number;
+    location: string | null;
+    profileUrl: string;
+  }>;
+  shownCount: number;
+  hasMore: boolean;
+  computing: boolean;
+  fetchedAt: string;
+  mapUrl: string;
+};
+
+// Source: src/app/api/mcp/followers/[login]/route.ts
+export type McpFollowersResponse = {
+  login: string;
+  followers: Array<{
+    login: string;
+    name: string | null;
+    followers: number;
+    company: string | null;
+    location: string | null;
+    profileUrl: string;
+  }>;
+  shownCount: number;
+  totalCount: number;
+  truncated: boolean;
+  fetchedAt: string;
+};
+
+// Source: src/app/api/mcp/country-stats/route.ts
+export type McpGlobalCountryStatsResponse = {
+  countries: Array<{ name: string; count: number; slug: string }>;
+  totalCountries: number;
+  totalStargazers: number;
+  generatedAt: string;
+};
+
+// Source: src/app/api/mcp/dependencies/[owner]/[repo]/route.ts
+export type McpDependenciesResponse = {
+  dependencies: Array<{
+    name: string;
+    ecosystem: string | null;
+    version: string | null;
+  }>;
+  totalCount: number;
+  shownCount: number;
+  truncated: boolean;
+  disabled: boolean;
+  fetchedAt: string;
+};
+
+export const fetchContributorsMcp = (
+  owner: string,
+  repo: string,
+  withLocations = false,
+): Promise<McpContributorsResponse> =>
+  get<McpContributorsResponse>(
+    `/api/mcp/contributors/${owner}/${repo}${withLocations ? "?withLocations=1" : ""}`,
+  );
+
+export const fetchFollowersMcp = (login: string): Promise<McpFollowersResponse> =>
+  get<McpFollowersResponse>(`/api/mcp/followers/${login}`);
+
+export const fetchGlobalCountryStats = (): Promise<McpGlobalCountryStatsResponse> =>
+  get<McpGlobalCountryStatsResponse>(`/api/mcp/country-stats`);
+
+export const fetchDependenciesMcp = (owner: string, repo: string): Promise<McpDependenciesResponse> =>
+  get<McpDependenciesResponse>(`/api/mcp/dependencies/${owner}/${repo}`);
+
 export const triggerChunk = async (
   owner: string,
   repo: string,

@@ -5,6 +5,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
   fetchStargazersPage,
   fetchFollowersPage,
+  fetchRepoDependencies,
   GitHubRateLimitError,
   GitHubTokenInvalidError,
 } from "@/lib/github";
@@ -322,5 +323,153 @@ describe("fetchFollowersPage()", () => {
     );
     const page = await fetchFollowersPage("octocat", null);
     expect(page.followers[0].company).toBe("acme");
+  });
+});
+
+// ─── fetchRepoDependencies ────────────────────────────────────────────────────
+
+describe("fetchRepoDependencies()", () => {
+  const makeSbomResponse = (packages: Array<{
+    SPDXID?: string;
+    name: string;
+    versionInfo?: string;
+    externalRefs?: Array<{ referenceCategory: string; referenceType: string; referenceLocator: string }>;
+  }>) => ({
+    sbom: {
+      packages,
+    },
+  });
+
+  const rootPackage = {
+    SPDXID: "SPDXRef-DOCUMENT",
+    name: "github/my-repo",
+    // No purl externalRef — this is the self-package
+    externalRefs: [],
+  };
+
+  const npmReact = {
+    SPDXID: "SPDXRef-Package-npm-react",
+    name: "npm:react",
+    versionInfo: "18.2.0",
+    externalRefs: [
+      { referenceCategory: "PACKAGE-MANAGER", referenceType: "purl", referenceLocator: "pkg:npm/react@18.2.0" },
+    ],
+  };
+
+  const pipRequests = {
+    SPDXID: "SPDXRef-Package-pip-requests",
+    name: "pip:requests",
+    versionInfo: "2.28.0",
+    externalRefs: [
+      { referenceCategory: "PACKAGE-MANAGER", referenceType: "purl", referenceLocator: "pkg:pip/requests@2.28.0" },
+    ],
+  };
+
+  const cargoSerde = {
+    SPDXID: "SPDXRef-Package-cargo-serde",
+    name: "cargo:serde",
+    versionInfo: "1.0.0",
+    externalRefs: [
+      { referenceCategory: "PACKAGE-MANAGER", referenceType: "purl", referenceLocator: "pkg:cargo/serde@1.0.0" },
+    ],
+  };
+
+  beforeEach(() => {
+    vi.stubGlobal("fetch", vi.fn());
+  });
+
+  it("parses ecosystem, name, and version from purl externalRefs", async () => {
+    vi.mocked(fetch).mockReturnValue(
+      mockFetchOk(makeSbomResponse([rootPackage, npmReact, pipRequests, cargoSerde])),
+    );
+    const result = await fetchRepoDependencies("o", "r");
+    expect(result.disabled).toBe(false);
+    expect(result.dependencies).toHaveLength(3);
+    expect(result.dependencies[0]).toEqual({ name: "react", ecosystem: "npm", version: "18.2.0" });
+    expect(result.dependencies[1]).toEqual({ name: "requests", ecosystem: "pip", version: "2.28.0" });
+    expect(result.dependencies[2]).toEqual({ name: "serde", ecosystem: "cargo", version: "1.0.0" });
+    expect(result.totalCount).toBe(3);
+  });
+
+  it("filters out the root SPDX package (no purl externalRef)", async () => {
+    vi.mocked(fetch).mockReturnValue(
+      mockFetchOk(makeSbomResponse([rootPackage, npmReact])),
+    );
+    const result = await fetchRepoDependencies("o", "r");
+    expect(result.dependencies).toHaveLength(1);
+    expect(result.dependencies[0].name).toBe("react");
+  });
+
+  it("deduplicates packages with the same ecosystem and name", async () => {
+    const reactDuplicate = {
+      ...npmReact,
+      SPDXID: "SPDXRef-Package-npm-react-dev",
+      versionInfo: "18.3.0",
+      externalRefs: [
+        { referenceCategory: "PACKAGE-MANAGER", referenceType: "purl", referenceLocator: "pkg:npm/react@18.3.0" },
+      ],
+    };
+    vi.mocked(fetch).mockReturnValue(
+      mockFetchOk(makeSbomResponse([rootPackage, npmReact, reactDuplicate])),
+    );
+    const result = await fetchRepoDependencies("o", "r");
+    expect(result.dependencies).toHaveLength(1);
+    // First occurrence wins
+    expect(result.dependencies[0].version).toBe("18.2.0");
+  });
+
+  it("returns disabled:true gracefully on 403 when quota is not exhausted", async () => {
+    vi.mocked(fetch).mockReturnValue(
+      mockFetchError(403, { "x-ratelimit-remaining": "4999" }),
+    );
+    const result = await fetchRepoDependencies("o", "r");
+    expect(result.disabled).toBe(true);
+    expect(result.dependencies).toHaveLength(0);
+    expect(result.totalCount).toBe(0);
+  });
+
+  it("returns disabled:true gracefully on 404", async () => {
+    vi.mocked(fetch).mockReturnValue(mockFetchError(404));
+    const result = await fetchRepoDependencies("o", "r");
+    expect(result.disabled).toBe(true);
+    expect(result.dependencies).toHaveLength(0);
+  });
+
+  it("throws GitHubRateLimitError on 403 when quota is zero", async () => {
+    vi.mocked(fetch).mockReturnValue(
+      mockFetchError(403, { "x-ratelimit-remaining": "0", "x-ratelimit-reset": String(Math.floor(Date.now() / 1000) + 60) }),
+    );
+    await expect(fetchRepoDependencies("o", "r")).rejects.toBeInstanceOf(GitHubRateLimitError);
+  });
+
+  it("throws GitHubRateLimitError on 429", async () => {
+    vi.mocked(fetch).mockReturnValue(
+      mockFetchError(429, { "retry-after": "30" }),
+    );
+    await expect(fetchRepoDependencies("o", "r")).rejects.toBeInstanceOf(GitHubRateLimitError);
+  });
+
+  it("throws GitHubTokenInvalidError on 401", async () => {
+    vi.mocked(fetch).mockReturnValue(mockFetchError(401));
+    await expect(fetchRepoDependencies("o", "r")).rejects.toBeInstanceOf(GitHubTokenInvalidError);
+  });
+
+  it("throws a generic Error for unexpected non-ok status", async () => {
+    vi.mocked(fetch).mockReturnValue(mockFetchError(500));
+    await expect(fetchRepoDependencies("o", "r")).rejects.toThrow("GitHub SBOM API error: 500");
+  });
+
+  it("extracts quotaRemaining from x-ratelimit-remaining header", async () => {
+    vi.mocked(fetch).mockReturnValue(
+      mockFetchOk(makeSbomResponse([rootPackage, npmReact]), { "x-ratelimit-remaining": "3500" }),
+    );
+    const result = await fetchRepoDependencies("o", "r");
+    expect(result.quotaRemaining).toBe(3500);
+  });
+
+  it("returns null quotaRemaining when header is absent", async () => {
+    vi.mocked(fetch).mockReturnValue(mockFetchOk(makeSbomResponse([rootPackage, npmReact])));
+    const result = await fetchRepoDependencies("o", "r");
+    expect(result.quotaRemaining).toBeNull();
   });
 });

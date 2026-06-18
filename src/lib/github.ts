@@ -367,3 +367,117 @@ export const fetchContributorLocations = async (
 
   return result;
 };
+
+// ─── Dependency Graph SBOM ────────────────────────────────────────────────────
+
+export type RepoDependency = {
+  name: string;
+  ecosystem: string | null;
+  version: string | null;
+};
+
+export type RepoDependenciesResult = {
+  dependencies: RepoDependency[];
+  totalCount: number;
+  disabled: boolean;
+  quotaRemaining: number | null;
+};
+
+type SbomExternalRef = {
+  referenceCategory: string;
+  referenceType: string;
+  referenceLocator: string;
+};
+
+type SbomPackage = {
+  SPDXID: string;
+  name: string;
+  versionInfo?: string;
+  externalRefs?: SbomExternalRef[];
+};
+
+/** Parse ecosystem and clean name from a purl string.
+ *  purl format: pkg:<ecosystem>/<name>@<version> (version optional)
+ *  e.g. "pkg:npm/react@18.0.0" → { ecosystem: "npm", name: "react" } */
+const parsePurl = (purl: string): { ecosystem: string; name: string } | null => {
+  const match = /^pkg:([^/]+)\/([^@]+)/.exec(purl);
+  if (!match) return null;
+  return { ecosystem: match[1]!, name: match[2]! };
+};
+
+/** Parse ecosystem and name from GitHub's name prefix convention.
+ *  e.g. "npm:react" → { ecosystem: "npm", name: "react" } */
+const parseNamePrefix = (name: string): { ecosystem: string; name: string } | null => {
+  const idx = name.indexOf(":");
+  if (idx <= 0) return null;
+  return { ecosystem: name.slice(0, idx), name: name.slice(idx + 1) };
+};
+
+/**
+ * Fetch the dependency graph SBOM for a repository via GitHub REST API.
+ * Returns the parsed list of dependencies declared by the repo.
+ * Returns { disabled: true } when the dependency graph feature is not enabled.
+ */
+export const fetchRepoDependencies = async (
+  owner: string,
+  repo: string,
+  clientToken?: string,
+): Promise<RepoDependenciesResult> => {
+  const token = clientToken || process.env.GITHUB_TOKEN;
+  const url = `${GITHUB_REST}/repos/${owner}/${repo}/dependency-graph/sbom`;
+
+  const res = await fetch(url, {
+    headers: {
+      Accept: "application/vnd.github+json",
+      "User-Agent": "starmapper/1.0",
+      ...(token ? { Authorization: `token ${token}` } : {}),
+    },
+  });
+
+  const quotaRemaining = parseQuotaRemaining(res.headers);
+
+  if (res.status === 401) throw new GitHubTokenInvalidError();
+
+  if (res.status === 403 || res.status === 404) {
+    // Disambiguate rate limit (quota exhausted) from dependency graph disabled.
+    if (quotaRemaining === 0) {
+      throw new GitHubRateLimitError(parseRateLimitResetAt(res.headers));
+    }
+    // Dependency graph disabled or repo not found — graceful, not an error.
+    return { dependencies: [], totalCount: 0, disabled: true, quotaRemaining };
+  }
+
+  if (res.status === 429) {
+    throw new GitHubRateLimitError(parseRateLimitResetAt(res.headers));
+  }
+
+  if (!res.ok) throw new Error(`GitHub SBOM API error: ${res.status}`);
+
+  const json = await res.json() as { sbom: { packages: SbomPackage[] } };
+  const packages = json.sbom.packages;
+
+  const seen = new Map<string, RepoDependency>();
+
+  for (const pkg of packages) {
+    // Skip the root SPDX package (represents the repository itself).
+    // It has no purl externalRef and is always the first entry.
+    const purl = pkg.externalRefs?.find((r) => r.referenceType === "purl")?.referenceLocator;
+    if (!purl) continue;
+
+    const parsed = parsePurl(purl) ?? parseNamePrefix(pkg.name);
+    if (!parsed) continue;
+
+    const { ecosystem, name } = parsed;
+    const key = `${ecosystem}:${name}`;
+    if (seen.has(key)) continue;
+
+    seen.set(key, {
+      name,
+      ecosystem,
+      version: pkg.versionInfo ?? null,
+    });
+  }
+
+  const dependencies = Array.from(seen.values());
+  return { dependencies, totalCount: dependencies.length, disabled: false, quotaRemaining };
+};

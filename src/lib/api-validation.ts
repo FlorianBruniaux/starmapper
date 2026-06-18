@@ -27,3 +27,8 @@ export const normalizeOwnerRepo = (owner: string, repo: string) => ({
   owner: owner.toLowerCase(),
   repo: repo.toLowerCase(),
 });
+
+/** Returns the login string as-is or null if invalid.
+ *  GitHub logins: 1-39 chars, alphanumeric + hyphens, cannot start or end with a hyphen. */
+export const validateLogin = (login: unknown): string | null =>
+  typeof login === "string" && LOGIN_RE.test(login) ? login : null;

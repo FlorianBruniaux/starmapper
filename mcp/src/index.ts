@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
-// StarMapper MCP server - stdio transport, exposes 10 tools.
+// StarMapper MCP server - stdio transport, exposes 15 tools.
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
@@ -17,6 +17,11 @@ import { getTrending } from "./tools/get_trending.js";
 import { listRepos } from "./tools/list_repos.js";
 import { healthCheck } from "./tools/health_check.js";
 import { getDependents } from "./tools/get_dependents.js";
+import { getContributors } from "./tools/get_contributors.js";
+import { getFollowers } from "./tools/get_followers.js";
+import { getCountryStats } from "./tools/get_country_stats.js";
+import { getGlobalCountryStats } from "./tools/get_global_country_stats.js";
+import { getDependencies } from "./tools/get_dependencies.js";
 
 const server = new McpServer({ name: "starmapper", version: "0.1.0" });
 
@@ -125,6 +130,66 @@ server.registerTool(
   },
   async ({ owner, repo }) => ({
     content: [{ type: "text" as const, text: await getDependents({ owner, repo }) }],
+  }),
+);
+
+server.registerTool(
+  "get_contributors",
+  {
+    description: "List the top contributors of a GitHub repository with their contribution counts. Optionally enrich with each contributor's location by passing with_locations: true (adds a server-side lookup, slightly slower). Returns up to 50 contributors.",
+    inputSchema: {
+      ...ownerRepo,
+      with_locations: z.boolean().optional().describe("If true, enrich each contributor with their location from StarMapper data. Defaults to false."),
+    },
+  },
+  async ({ owner, repo, with_locations }) => ({
+    content: [{ type: "text" as const, text: await getContributors({ owner, repo, with_locations }) }],
+  }),
+);
+
+server.registerTool(
+  "get_followers",
+  {
+    description: "List the top followers of a GitHub user by follower count. Returns up to 100 followers sorted descending by their own follower count, with name, company, and location.",
+    inputSchema: {
+      login: z.string().describe("GitHub username (e.g. 'gaearon')"),
+    },
+  },
+  async ({ login }) => ({
+    content: [{ type: "text" as const, text: await getFollowers({ login }) }],
+  }),
+);
+
+server.registerTool(
+  "get_country_stats",
+  {
+    description: "Get the country and city distribution of stargazers for a specific GitHub repository already indexed on StarMapper. Returns full country list and top 30 cities with counts. Use get_cache_status first to confirm the repo is indexed.",
+    inputSchema: ownerRepo,
+  },
+  async ({ owner, repo }) => ({
+    content: [{ type: "text" as const, text: await getCountryStats({ owner, repo }) }],
+  }),
+);
+
+server.registerTool(
+  "get_global_country_stats",
+  {
+    description: "Get the global distribution of stargazers by country across ALL repositories indexed on StarMapper. Returns a ranked country list with geocoded developer counts. Data reflects the last materialized view refresh (typically up to date within a few hours).",
+    inputSchema: {},
+  },
+  async () => ({
+    content: [{ type: "text" as const, text: await getGlobalCountryStats() }],
+  }),
+);
+
+server.registerTool(
+  "get_dependencies",
+  {
+    description: "List the direct dependencies declared in a GitHub repository's dependency graph (its own package dependencies, not who depends on it). Returns package name, ecosystem (npm, pip, etc.), and version. Requires the GitHub dependency graph to be enabled on the repo.",
+    inputSchema: ownerRepo,
+  },
+  async ({ owner, repo }) => ({
+    content: [{ type: "text" as const, text: await getDependencies({ owner, repo }) }],
   }),
 );
 
