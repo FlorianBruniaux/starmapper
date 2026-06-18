@@ -87,7 +87,11 @@ const setupClusteredSourcesAndLayers = (
     filter: ["!", ["has", "point_count"]],
     paint: {
       "circle-color": ["step", ["get", "followers"], "#58a6ff", 100, "#ffa657", 500, "#f85149"],
-      "circle-radius": ["step", ["get", "followers"], 5, 100, 7, 500, 10],
+      "circle-radius": ["case",
+        ["==", ["get", "context"], "contributors"],
+        ["interpolate", ["linear"], ["get", "followers"], 1, 4, 5, 6, 20, 9, 100, 13, 500, 18],
+        ["step", ["get", "followers"], 5, 100, 7, 500, 10],
+      ],
       "circle-opacity": 0.85,
       "circle-stroke-width": 1,
       "circle-stroke-color": "rgba(255,255,255,0.15)",

@@ -56,7 +56,7 @@ export default function ContributorsPageClient({ params }: Props) {
     return h;
   }, []);
 
-  const { status, error, handleStartScan, handleTokenClose } = useContributorsScanController({
+  const { status, error, startScraping, handleStartScan, handleTokenClose } = useContributorsScanController({
     owner,
     repo,
     dispatch,
@@ -102,6 +102,12 @@ export default function ContributorsPageClient({ params }: Props) {
 
   const isScanning = status === "loading" || status === "waiting" || status === "computing";
   const isDone = status === "done";
+
+  // Auto-start scan on mount if token is already set (avoids manual click on revisit)
+  useEffect(() => {
+    if (getStoredToken()) startScraping();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Open the panel the first time points arrive (points.length going 0→N)
   const panelAutoOpenedRef = useRef(false);

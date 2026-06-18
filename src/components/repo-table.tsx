@@ -4,7 +4,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Star, Network, X } from "lucide-react";
+import { Star, Network, X, GitCommit } from "lucide-react";
 import Link from "next/link";
 import type { MappedRepo } from "@/app/api/repos/route";
 
@@ -235,16 +235,26 @@ export const RepoTable = ({ repos }: { repos: MappedRepo[] }) => {
               className="border-b border-border-subtle/50 hover:bg-surface transition-colors group"
             >
               <td className="py-3 px-4">
-                <Link
-                  href={`/${r.owner}/${r.repo}`}
-                  className="inline-flex items-baseline gap-0.5 group/link"
-                >
-                  <span className="text-xs text-muted-subtle">{r.owner}</span>
-                  <span className="text-xs text-muted-subtle">/</span>
-                  <span className="text-sm text-foreground font-medium group-hover/link:text-accent-blue transition-colors">
-                    {r.repo}
-                  </span>
-                </Link>
+                <div className="flex items-center gap-2">
+                  <Link
+                    href={`/${r.owner}/${r.repo}`}
+                    className="inline-flex items-baseline gap-0.5 group/link"
+                  >
+                    <span className="text-xs text-muted-subtle">{r.owner}</span>
+                    <span className="text-xs text-muted-subtle">/</span>
+                    <span className="text-sm text-foreground font-medium group-hover/link:text-accent-blue transition-colors">
+                      {r.repo}
+                    </span>
+                  </Link>
+                  <Link
+                    href={`/${r.owner}/${r.repo}/contributors`}
+                    onClick={(e) => e.stopPropagation()}
+                    title="Contributors map"
+                    className="opacity-0 group-hover:opacity-100 flex items-center gap-1 text-muted-subtle hover:text-accent-blue transition-all text-xs"
+                  >
+                    <GitCommit size={11} aria-hidden="true" />
+                  </Link>
+                </div>
               </td>
               <td className="py-3 px-4 hidden sm:table-cell">
                 {r.language ? (
