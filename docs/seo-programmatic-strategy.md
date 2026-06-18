@@ -1,6 +1,8 @@
 # Programmatic SEO Strategy: StarMapper
 
 *Written June 2026. Reviewed against actual DB state (local sync of Neon prod).*
+
+> **Quick wins shipped** (commit `cab7cc8`): JSON-LD BreadcrumbList on `/devs/[language]`, sitemap caps 50→500 (repos) and 100→500 (profiles), `countryToSlug`/`slugToCountry` in `countries.ts`.
 ---
 
 ## 1. Current pSEO surface
@@ -29,9 +31,11 @@ These are findings against the current codebase, with severity and the exact fil
 
 ### WARN: Content hidden from users, shown to crawlers
 
-`src/app/devs/[language]/page.tsx:46-58` wraps the entire H1 and descriptive paragraph in `<div className="sr-only">`. The comment in the file reads: "visible to crawlers, hidden from sighted users." Google's guidelines define cloaking as showing different content to Googlebot than to users. While `sr-only` is a CSS accessibility pattern and not technically JavaScript cloaking, having the only unique textual content on the page be invisible to human visitors is a pattern Google has flagged in manual actions for other sites.
+`src/app/devs/[language]/page.tsx` previously wrapped the entire H1 and two descriptive paragraphs in `<div className="sr-only">` with a comment reading "visible to crawlers, hidden from sighted users."
 
-Fix: render the intro text visibly, not hidden. Put it above the map or below the stats panel. A visually subtle but non-hidden paragraph is fine and avoids the risk entirely.
+**Partially fixed in `cab7cc8`.** The sr-only block was removed from `page.tsx`. The H1 is now rendered as `<h1 className="sr-only">` inside the layout, consistent with the established pattern used by `/[owner]/[repo]/layout.tsx`. The descriptive paragraphs were dropped entirely.
+
+What remains: the H1 on full-screen map pages is intentionally sr-only across StarMapper (map pages cannot easily host a visible H1 without breaking the `h-screen` layout). This is a reasonable accessibility pattern and not a manual-action risk on its own. The actual thin-content risk comes from the lack of unique visible text per page, which is addressed separately in section 2 (WARN: Thin differentiation) and in the country pages spec via the top-languages breakdown.
 
 ### WARN: Thin differentiation across language pages
 
@@ -41,15 +45,15 @@ The mitigation is injecting genuinely different data: top 5 countries for that l
 
 ### MED: JSON-LD absent on all programmatic pages
 
-Seven pages in the codebase use `application/ld+json` structured data: root layout, repo layout (`/[owner]/[repo]`), `/profile/[login]`, `/vs/star-history`, `/faq`, `/organic-score/calibration`, and the sitemap landing page. The `/devs/[language]` layout has none, and there is no schema on profile pages beyond what layout.tsx provides.
+**Fixed for `/devs/[language]` in `cab7cc8`.** `BreadcrumbList` schema (StarMapper / Developers / {Language} developers) is now rendered in `src/app/devs/[language]/layout.tsx`, matching the pattern from `src/app/[owner]/[repo]/layout.tsx`.
 
-Programmatic pages map well to `Dataset` (a collection of geocoded developer data), `ItemList` (top languages or countries), and `BreadcrumbList`. Adding schema to the country pages spec on day one is easier than retrofitting later across 56 language pages.
+Remaining gap: `/profile/[login]` has JSON-LD in its layout but no `Dataset` or `ItemList` schema. Country pages (when built) should include `Dataset` + `BreadcrumbList` from day one, per the spec in section 4.
 
 ### MED: Sitemap caps suppress long-tail indexation
 
-`src/app/sitemap.ts` caps repo entries at 50 and profile entries at 100. Repos ranked 51 through however many are in `badge_cache` are never submitted. On a healthy domain this eventually resolves through discovery, but it slows the time-to-index for new entries and means Search Console never tracks them explicitly.
+**Fixed in `cab7cc8`.** `src/app/sitemap.ts` caps raised from 50→500 (repos) and 100→500 (profiles). This covers current DB volume with room to grow.
 
-The fix is segmented sitemaps once the page counts grow. Next.js supports multiple sitemap files via a `generateSitemaps()` export. A `sitemap/repos-1.xml` covering entries 1-1000 and `sitemap/repos-2.xml` covering 1001-2000 is the standard pattern. This is not urgent now but worth planning before country pages are shipped (adding 87-132 new URLs to an already-capped sitemap is avoidable).
+Long-term: when repo or profile counts exceed 500, segmented sitemaps via Next.js `generateSitemaps()` are the right path. Not urgent now.
 
 ### LOW: `/vs/star-history` is the start of a playbook, not the playbook itself
 
