@@ -3,7 +3,7 @@
 
 "use client";
 
-import { use, useCallback, useMemo, useReducer, useRef, useState } from "react";
+import { use, useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { GitCommit, Loader2 } from "lucide-react";
 import { Header } from "@/components/header";
@@ -46,7 +46,8 @@ export default function ContributorsPageClient({ params }: Props) {
   const [panelOpen, setPanelOpen] = useState(false);
   const [flyTarget, setFlyTarget] = useState<{ lat: number; lng: number; login: string } | null>(null);
   const [tokenOpen, setTokenOpen] = useState(false);
-  const [hasToken, setHasToken] = useState(() => !!getStoredToken());
+  const [hasToken, setHasToken] = useState(false);
+  useEffect(() => { setHasToken(!!getStoredToken()); }, []);
 
   const ghHeaders = useCallback((): Record<string, string> => {
     const t = getStoredToken();

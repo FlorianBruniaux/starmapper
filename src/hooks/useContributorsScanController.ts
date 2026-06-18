@@ -156,12 +156,17 @@ export const useContributorsScanController = ({
       setTotal(allPoints.length + allUnmapped.length);
       setStatus("done");
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Unknown error");
-      setStatus("error");
+      if (e instanceof TokenInvalidError) {
+        setTokenOpen(true);
+        setStatus("idle");
+      } else {
+        setError(e instanceof Error ? e.message : "Unknown error");
+        setStatus("error");
+      }
     } finally {
       runningRef.current = false;
     }
-  }, [fetchPage, dispatch, setTotal]);
+  }, [fetchPage, dispatch, setTotal, setTokenOpen]);
 
   const handleStartScan = useCallback(() => {
     if (!getStoredToken()) {
