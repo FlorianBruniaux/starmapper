@@ -142,3 +142,11 @@ export const normalizeCountry = (s: string): string => {
   // Lowercase first, then title-case — handles "FRANCE" → "France", not just "france" → "France"
   return s.trim().toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
 };
+
+/** "United States" → "united-states" */
+export const countryToSlug = (canonical: string): string =>
+  canonical.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+
+/** "united-states" → "United States" (mirrors normalizeCountry title-casing) */
+export const slugToCountry = (slug: string): string =>
+  slug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());

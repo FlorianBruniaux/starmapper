@@ -24,12 +24,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       prisma.badgeCache.findMany({
         select: { owner: true, repo: true, updatedAt: true },
         orderBy: { totalCount: "desc" },
-        take: 50,
+        take: 500,
       }),
       prisma.gitHubUser.findMany({
         select: { login: true, fetchedAt: true },
         orderBy: { followers: "desc" },
-        take: 100,
+        take: 500,
       }),
       prisma.news.findMany({
         where: { deletedAt: null },
