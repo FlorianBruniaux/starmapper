@@ -101,7 +101,7 @@ const TopPanelInner = ({
     <>
     <div data-tour="map-top-panel" className="absolute top-4 left-1/2 -translate-x-1/2 z-10
       bg-background/90 border border-border rounded-xl
-      px-4 py-3 backdrop-blur-md shadow-2xl min-w-80 w-max max-w-sm">
+      px-4 py-3 backdrop-blur-md shadow-2xl w-[calc(100vw-2rem)] max-w-md">
 
       {/* ── Header ────────────────────────────────────────────────────────── */}
       <div className="flex items-center gap-3">
@@ -288,7 +288,7 @@ const TopPanelInner = ({
           </div>
           <div className="text-xs text-muted mt-0.5 text-center flex items-center justify-center gap-1">
             <span>
-              {mappingPct}% have a GitHub location ({points.length.toLocaleString()} of {displayTotal.toLocaleString()})
+              {mappingPct}% mapped · {points.length.toLocaleString()} of {displayTotal.toLocaleString()}
             </span>
             <span className="relative group/tip">
               <Info size={9} className="opacity-60" aria-hidden="true" />
@@ -302,9 +302,7 @@ const TopPanelInner = ({
 
       {/* ── Cache status ──────────────────────────────────────────────────── */}
       {(status === "cached" || status === "done") && cachedAt && (
-        <>
-        <div className="mt-2 pt-2 border-t border-border-subtle
-          flex items-center justify-between gap-2">
+        <div className="mt-2 pt-2 border-t border-border-subtle flex items-center justify-between gap-2 flex-wrap">
           <span className="text-2xs text-accent-green flex items-center gap-1">
             <Check size={10} aria-hidden="true" />
             {status === "done" ? "Indexed" : `Cached ${timeAgo(cachedAt)}`}
@@ -342,11 +340,6 @@ const TopPanelInner = ({
             </button>
           </div>
         </div>
-        <p className="text-2xs text-muted-subtle mt-1 text-center leading-relaxed">
-          Data updates when someone refreshes, not in real time.
-          {!hasToken && " Add a token to refresh yourself."}
-        </p>
-        </>
       )}
 
       {/* ── Error state ───────────────────────────────────────────────────── */}
@@ -413,7 +406,7 @@ const TopPanelInner = ({
         </div>
 
         {/* ── Find me shortcut ──────────────────────────────────────────── */}
-        <div className="mt-2 pt-2 border-t border-border-subtle">
+        <div className="mt-2">
           {storedUsername && !askingUsername ? (
             <div className="flex items-center gap-1.5">
               <button
@@ -479,33 +472,29 @@ const TopPanelInner = ({
         </div>
       </div>
 
-      {/* ── Contributors link ─────────────────────────────────────────────── */}
-      <div className="mt-2 pt-2 border-t border-border-subtle">
+      {/* ── CTAs: contributors + dependents ──────────────────────────────── */}
+      <div className={`mt-2 pt-2 border-t border-border-subtle grid gap-2 ${DEPENDENTS_ENABLED ? "grid-cols-2" : "grid-cols-1"}`}>
         <a
           href={`/${owner}/${repo}/contributors`}
-          className="flex items-center justify-between w-full px-2 py-1.5 rounded-md
+          className="flex items-center justify-between px-2 py-1.5 rounded-md
                      bg-accent-green/8 border border-accent-green/20 text-accent-green text-xs font-medium
                      hover:bg-accent-green/15 hover:border-accent-green/40 transition-colors group"
         >
           <span>Who built this?</span>
           <ChevronRight size={12} className="opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 transition-transform" aria-hidden="true" />
         </a>
-      </div>
-
-      {/* ── Dependents link ───────────────────────────────────────────────── */}
-      {DEPENDENTS_ENABLED && (
-        <div className="mt-2 pt-2 border-t border-border-subtle">
+        {DEPENDENTS_ENABLED && (
           <a
             href={`/${owner}/${repo}/dependents`}
-            className="flex items-center justify-between w-full px-2 py-1.5 rounded-md
+            className="flex items-center justify-between px-2 py-1.5 rounded-md
                        bg-accent-blue/8 border border-accent-blue/20 text-accent-blue text-xs font-medium
                        hover:bg-accent-blue/15 hover:border-accent-blue/40 transition-colors group"
           >
-            <span>Who depends on this library?</span>
+            <span>Who depends?</span>
             <ChevronRight size={12} className="opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 transition-transform" aria-hidden="true" />
           </a>
-        </div>
-      )}
+        )}
+      </div>
 
       </>)}
     </div>
