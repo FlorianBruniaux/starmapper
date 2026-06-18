@@ -2,8 +2,13 @@
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 
 import "@/env"; // fail-fast: validates DATABASE_URL + GITHUB_TOKEN at server startup
+import { createRequire } from "node:module";
 import { PrismaClient } from "@prisma/client";
 import { PrismaNeon } from "@prisma/adapter-neon";
+
+// createRequire allows CJS-style dynamic imports in an ESM package ("type":"module").
+// Used only for the standard/pg driver path — never loaded on Vercel (Neon only).
+const _require = createRequire(import.meta.url);
 
 /**
  * DATABASE_DRIVER controls the Prisma connection mode:
@@ -18,10 +23,8 @@ import { PrismaNeon } from "@prisma/adapter-neon";
  */
 const createPrismaClient = () => {
   if (process.env.DATABASE_DRIVER === "standard") {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { Pool } = require("pg") as typeof import("pg");
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { PrismaPg } = require("@prisma/adapter-pg") as typeof import("@prisma/adapter-pg");
+    const { Pool } = _require("pg") as typeof import("pg");
+    const { PrismaPg } = _require("@prisma/adapter-pg") as typeof import("@prisma/adapter-pg");
     const pool = new Pool({
       connectionString: process.env.DATABASE_URL,
       ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: true } : undefined,
