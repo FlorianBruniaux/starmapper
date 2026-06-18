@@ -24,6 +24,7 @@ Enter a GitHub repo URL and StarMapper maps every stargazer, identifies the infl
 
 ## What it does
 
+- **Map who built your repo**: every repo has a `/[owner]/[repo]/contributors` page. Each contributor is geocoded and placed on a map, with dot size proportional to commit count. The panel lists contributors sorted by commits, with a pin icon to fly to their location.
 - **Map who follows your most influential stargazers**: every developer profile has a `/[owner]/followers` page with a full map of their GitHub followers, using the same geocoding and clustering as repo maps
 - **Know your influential stargazers**: filter by follower count (500+, 1k+, 5k+), see who has reach in your audience, spot the developer with 20k followers who starred you last week
 - **See which countries are discovering you**: geographic velocity compares the last 30 days against the prior window, four statuses per country: rising, new, stable, declining

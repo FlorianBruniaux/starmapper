@@ -5,6 +5,36 @@ Versioning: Semantic Versioning (MAJOR.MINOR.PATCH)
 
 ---
 
+## [0.6.7] (2026-06-18)
+
+### Contributors Map `/[owner]/[repo]/contributors`
+
+A new page maps the people who built a repo, not just the people who starred it. Each contributor is geocoded via the same 3-tier cascade (Jawg → Geoapify → Nominatim) and rendered on a MapLibre map with the same clustering and heatmap toggle used on repo maps.
+
+Contributors are fetched via GitHub's REST contributors endpoint, which returns `contributions` (commit count) per login. Locations are resolved using a GraphQL batch approach: 100 logins per request to avoid the N+1 problem on large repos. A GitHub token removes the anonymous rate limit and speeds up scans on repos with hundreds of contributors.
+
+Dot size scales with commit count: contributors with more commits render as larger points, making the map readable at a glance without opening the panel. The popup shows "N commits" instead of "N followers" — a `context: "contributors"` field on each point routes the popup render logic without forking the map component.
+
+The panel (left side, consistent with the followers map layout) lists all mapped contributors sorted by commit count. Each entry has a commit badge and a pin icon that flies the map to their location. An "Unmapped" tab lists contributors without a resolvable location. The scan auto-starts if a GitHub token is already stored, so the map fills in without a manual click on revisit.
+
+Entry points:
+- `/[owner]/[repo]/contributors` — direct URL
+- Contributors column in the `/repos` community table (links to the page, shows count if already indexed)
+- "Contributors Map →" link in the announcement banner (example: `rtk-ai/rtk`)
+- "Who built this?" card in the landing page explore section
+
+The onboarding tour has four steps: intro (centered), scan controls, progress pill (optional, shown after scan starts), and the side panel (optional, shown when open).
+
+### Misc fixes
+
+- Token TTL extended from 7 to 15 days (users prompted to re-enter their PAT half as often)
+- `src/lib/db.ts`: replaced bare `require()` with `createRequire(import.meta.url)`, fixing `ReferenceError: require is not defined` in ESM packages when `DATABASE_DRIVER=standard`
+- `Makefile` `batch-index-contributors` targets: changed bare `tsx` to `node_modules/.bin/tsx` (matches `auto-index` pattern, fixes PATH error when invoked via make)
+- `/repos` table: fixed Deps/Contributors column order mismatch between `<thead>` and `<tbody>`
+- Announcement banner: removed "Language Atlas" link, added "Contributors Map", bumped `BANNER_ID` to `announce-contributors-v1`
+
+---
+
 ## [0.6.6] (2026-06-11)
 
 ### Organic Score: 5th signal (Contributors / 1k stars)

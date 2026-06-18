@@ -1,6 +1,6 @@
 # StarMapper Roadmap
 
-*Last updated: 2026-06-10, v0.6.4*
+*Last updated: 2026-06-18, v0.6.7*
 
 ---
 
@@ -53,6 +53,7 @@
 - **SEO and PWA pass** (v0.6.2): og:image sitewide via `@vercel/og`, PWA web manifest, JSON-LD structured data in root layout, `sitemap.ts`, `robots.ts`, `icon.svg`.
 - **Repos table filter bar and dependents column** (v0.6.4): language chip toggles, "Has dependents" and "Has score" chips, sortable Deps column linking to the dependents page. `dependentsCount` added to `MappedRepo` via LEFT JOIN on `dependents_cache`.
 - **Dependents table report flag** (v0.6.4): flag button per row opens a pre-filled GitHub issue to report an incorrect dependent from ecosyste.ms.
+- **Contributors Map** (v0.6.7): `/[owner]/[repo]/contributors` geocodes repo contributors on an interactive map, dot size proportional to commit count, side panel sorted by commits, GraphQL batch location fetch, auto-start on revisit, onboarding tour. Entry points: `/repos` table column, announcement banner, landing explore section.
 
 ---
 

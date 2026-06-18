@@ -143,5 +143,5 @@ pnpm stats:views                 # Analytics overview (last 7 days, top 20)
 
 ---
 
-*Last updated: 2026-06-05*
-*Version: 0.6.0*
+*Last updated: 2026-06-18*
+*Version: 0.6.7*

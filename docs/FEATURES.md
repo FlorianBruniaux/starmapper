@@ -1,6 +1,6 @@
 # StarMapper — Product Reference
 
-**Version**: 0.6.3 | **Last updated**: 2026-06-10
+**Version**: 0.6.7 | **Last updated**: 2026-06-18
 
 Free, open-source developer intelligence platform built around GitHub stargazer geography. No account required.
 
@@ -29,6 +29,7 @@ The core insight: stars are a proxy for developer community. Where those develop
 | https://starmapper.bruniaux.com/devs/atlas | Language Atlas — dominant language per country |
 | https://starmapper.bruniaux.com/trending | Trending repos × stargazer geography |
 | https://starmapper.bruniaux.com/torvalds/followers | Map of torvalds's GitHub followers |
+| https://starmapper.bruniaux.com/rtk-ai/rtk/contributors | Contributors map for rtk-ai/rtk |
 | https://starmapper.bruniaux.com/feed/florianbruniaux | RSS subscription page |
 | https://starmapper.bruniaux.com/faq | Frequently asked questions |
 | https://starmapper.bruniaux.com/changelog | Version history |
@@ -50,6 +51,17 @@ The core. Given a GitHub repo, StarMapper fetches all stargazers via the GitHub 
 - **Star growth timeline** — "Growth" button in the Dock opens a bar chart of weekly star accumulation. Shows the shape of growth (steady climb, viral spike, plateau) as a complement to the `+N/mo` velocity indicator. Data from `starredAt` already in DB; falls back to in-memory scan data for recent, uncached repos.
 - **Watch mode** — during a product launch, polls GitHub every 60s and shows `+N ★ · India, Germany` with a pulsing badge. Auto-stops after 10 min of inactivity. No DB writes, cache-free.
 - **Shared cache** — first scan is cached globally. Any subsequent visitor loads the same repo instantly, no re-scan.
+
+### Contributors Map `/[owner]/[repo]/contributors`
+
+Maps the people who built a repo. Contributors are fetched from GitHub's REST endpoint, then locations are resolved via a GraphQL batch (100 logins per request) and geocoded through the same 3-tier cascade as repo maps.
+
+- **Dot size by commit count**: contributors with more commits render as larger points. Commit count is cast into the `followers` field so the existing cluster and popup rendering works without forking the map component. The popup shows "N commits" via a `context: "contributors"` field.
+- **Side panel**: left-side drawer listing contributors sorted by commit count. Each row has a commit badge and a pin icon that flies the map to their location. An "Unmapped" tab lists contributors whose location couldn't be resolved.
+- **Auto-start**: if a GitHub token is already stored, the scan starts immediately on page load without a manual click.
+- **Progress pill**: shows mapped count vs total in real time during the scan.
+- **Entry points**: direct URL, `/repos` community table Contributors column, announcement banner ("Contributors Map →"), landing page explore section card.
+- **Onboarding tour**: four-step guided tour covering the scan controls, progress pill, and side panel.
 
 ### Followers Map `/[owner]/followers`
 
