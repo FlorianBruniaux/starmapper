@@ -13,7 +13,7 @@ const BANNER_ID = "announce-contributors-v1";
 type LinkItem = { label: string; href: string; external?: boolean };
 
 const LINKS: LinkItem[] = [
-  { label: "Contributors Map", href: "/reduxjs/toolkit/contributors" },
+  { label: "Contributors Map", href: "/rtk-ai/rtk/contributors" },
   { label: "Dependents Explorer", href: "/vercel/next.js/dependents" },
   { label: "Followers map", href: "/FlorianBruniaux/followers" },
   { label: "Chrome Extension", href: "https://chromewebstore.google.com/detail/starmapper/ejpbdhlaohhngpfbjjfadokgnndnnmmh", external: true },
