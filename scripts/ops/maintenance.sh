@@ -17,10 +17,12 @@
 #   --skip-languages       skip step 6/6 (languages[] from GitHub GraphQL — slowest)
 #   --skip-followers       skip step 7/7 (follower_cache refresh, noop if REFRESH_FOLLOWERS unset)
 #
-# Environment variable:
+# Environment variables:
 #   REFRESH_FOLLOWERS      comma- or space-separated GitHub logins to refresh follower_cache for.
 #                          E.g.: REFRESH_FOLLOWERS=FlorianBruniaux make maintenance
 #                          Or set in .env.local: REFRESH_FOLLOWERS=FlorianBruniaux
+#   REFRESH_CONTRIBUTORS   comma-separated owner/repo pairs to warm contributors geocache for.
+#                          E.g.: REFRESH_CONTRIBUTORS=torvalds/linux,facebook/react make maintenance
 
 set -euo pipefail
 
@@ -139,6 +141,20 @@ if ! $SKIP_BACKFILLS; then
     fi
   elif ! $SKIP_FOLLOWERS && [ -z "$REFRESH_FOLLOWERS" ]; then
     skip "7/7 — Follower cache refresh (set REFRESH_FOLLOWERS=login1,login2 to enable)"
+  fi
+
+  if [ -n "$REFRESH_CONTRIBUTORS" ]; then
+    step "8/8 — Contributors geocache warm-up ($REFRESH_CONTRIBUTORS)"
+    if ! $DRY_RUN; then
+      for repo in $(echo "$REFRESH_CONTRIBUTORS" | tr ',' ' '); do
+        caffeinate -i tsx scripts/ops/index-contributors.ts "$repo"
+      done
+      ok "contributors geocache done"
+    else
+      echo "[dry-run] Would run: index-contributors for $REFRESH_CONTRIBUTORS"
+    fi
+  else
+    skip "8/8 — Contributors geocache (set REFRESH_CONTRIBUTORS=owner/repo,... to enable)"
   fi
 
 fi

@@ -99,6 +99,15 @@ backfill-languages-prod:
 
 # ─── Collect + batch scan ──────────────────────────────────────────────────────
 
+auto-index: ## make auto-index [LIMIT=100] [MIN_STARS=500] — discover + scan new repos (Neon prod)
+	$(ENV) node_modules/.bin/tsx scripts/ops/auto-index.ts $(if $(LIMIT),--limit $(LIMIT)) $(if $(MIN_STARS),--min-stars $(MIN_STARS))'
+
+auto-index-local: ## make auto-index-local [LIMIT=100] — discover + scan new repos (local Docker)
+	$(ENV) node_modules/.bin/tsx scripts/ops/auto-index.ts --local $(if $(LIMIT),--limit $(LIMIT)) $(if $(MIN_STARS),--min-stars $(MIN_STARS))'
+
+auto-index-dry: ## Preview discovery without scanning
+	$(ENV) node_modules/.bin/tsx scripts/ops/auto-index.ts --dry-run $(if $(MIN_STARS),--min-stars $(MIN_STARS))'
+
 collect-repos:
 	$(ENV) tsx scripts/ops/collect-user-repos.ts'
 
@@ -141,6 +150,18 @@ refresh-follower-cache: ## make refresh-follower-cache LOGINS=FlorianBruniaux[,o
 refresh-follower-cache-local: ## make refresh-follower-cache-local LOGINS=FlorianBruniaux[,other]
 	$(ENV) caffeinate -i tsx scripts/ops/batch-index-followers.ts --logins $(LOGINS)'
 
+index-contributors: ## make index-contributors REPO=owner/repo [GH_TOKEN=ghp_xxx]
+	$(ENV) caffeinate -i tsx scripts/ops/index-contributors.ts $(if $(GH_TOKEN),--gh-token $(GH_TOKEN)) $(REPO)'
+
+index-contributors-local: ## make index-contributors-local REPO=owner/repo
+	$(ENV) caffeinate -i tsx scripts/ops/index-contributors.ts --base-url http://localhost:3000 $(if $(GH_TOKEN),--gh-token $(GH_TOKEN)) $(REPO)'
+
+batch-index-contributors: ## make batch-index-contributors [MIN_STARS=100] [LIMIT=n] — geocache warm-up, local DB
+	$(ENV) DATABASE_DRIVER=standard DATABASE_URL=$$DATABASE_URL_LOCAL caffeinate -i tsx scripts/ops/batch-index-contributors.ts $(if $(MIN_STARS),--min-stars $(MIN_STARS)) $(if $(LIMIT),--limit $(LIMIT))'
+
+batch-index-contributors-prod: ## make batch-index-contributors-prod [MIN_STARS=100] [LIMIT=n] — Neon prod
+	$(ENV) DATABASE_DRIVER=standard caffeinate -i tsx scripts/ops/batch-index-contributors.ts --prod $(if $(MIN_STARS),--min-stars $(MIN_STARS)) $(if $(LIMIT),--limit $(LIMIT))'
+
 # ─── Calibration + probes ──────────────────────────────────────────────────────
 
 calibrate-organic-score:
@@ -160,7 +181,8 @@ maintenance-dry:
 maintenance-sync-only:
 	bash scripts/ops/maintenance.sh --skip-backfills
 
-.PHONY: db-sync-to-prod db-sync-from-prod db-dump db-restore db-pull \
+.PHONY: auto-index auto-index-local auto-index-dry \
+        db-sync-to-prod db-sync-from-prod db-dump db-restore db-pull \
         mv-country-stats mv-country-stats-prod mv-country-language mv-country-language-prod \
         mv-user-repo-count mv-user-repo-count-prod mv-trending mv-trending-prod \
         mv-language-grid mv-language-grid-prod \

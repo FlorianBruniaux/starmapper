@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { fetchStargazersPage, GitHubRateLimitError } from "@/lib/github";
+import { fetchStargazersPage, fetchContributorsPage, fetchContributorLocations, GitHubRateLimitError } from "@/lib/github";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -296,54 +296,203 @@ describe("fetchStargazersPage", () => {
       );
     });
   });
+});
 
-  describe("authentication", () => {
-    it("uses clientToken header over GITHUB_TOKEN env when both are set", async () => {
-      let capturedHeaders: Record<string, string> = {};
+// ─── fetchContributorsPage ─────────────────────────────────────────────────────
 
-      vi.spyOn(global, "fetch").mockImplementation(async (_url, init) => {
-        capturedHeaders = Object.fromEntries(
-          new Headers(init?.headers as HeadersInit).entries(),
-        );
-        return makeOkResponse(makeGitHubResponse({}));
-      });
+const makeContributor = (overrides: Partial<{ login: string; contributions: number }> = {}) => ({
+  login: overrides.login ?? "contributor1",
+  contributions: overrides.contributions ?? 42,
+  type: "User",
+});
 
-      await fetchStargazersPage("owner", "repo", null, undefined, "ghp_client_token");
+const makeContribResponse = (
+  contributors: ReturnType<typeof makeContributor>[],
+  status = 200,
+  linkHeader?: string,
+) =>
+  new Response(JSON.stringify(contributors), {
+    status,
+    headers: {
+      "Content-Type": "application/json",
+      ...(linkHeader ? { Link: linkHeader } : {}),
+      "x-ratelimit-remaining": "4999",
+    },
+  });
 
-      expect(capturedHeaders.authorization).toBe("Bearer ghp_client_token");
+describe("fetchContributorsPage", () => {
+  beforeEach(() => {
+    vi.stubEnv("GITHUB_TOKEN", "ghp_test_token");
+  });
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllEnvs();
+  });
+
+  it("returns contributors list on a successful page 1 response", async () => {
+    const contributors = [
+      makeContributor({ login: "alice", contributions: 100 }),
+      makeContributor({ login: "bob", contributions: 50 }),
+    ];
+    vi.spyOn(global, "fetch").mockResolvedValueOnce(makeContribResponse(contributors));
+
+    const result = await fetchContributorsPage("owner", "repo", 1);
+
+    expect(result.contributors).toHaveLength(2);
+    expect(result.contributors[0].login).toBe("alice");
+    expect(result.contributors[0].contributions).toBe(100);
+    expect(result.contributors[1].login).toBe("bob");
+  });
+
+  it("returns hasMore=true when Link rel=next is present", async () => {
+    const contributors = Array.from({ length: 100 }, (_, i) =>
+      makeContributor({ login: `user${i}`, contributions: 10 }),
+    );
+    const linkHeader = '<https://api.github.com/repos/owner/repo/contributors?page=2>; rel="next", <https://api.github.com/repos/owner/repo/contributors?page=3>; rel="last"';
+    vi.spyOn(global, "fetch").mockResolvedValueOnce(
+      makeContribResponse(contributors, 200, linkHeader),
+    );
+
+    const result = await fetchContributorsPage("owner", "repo", 1);
+
+    expect(result.hasMore).toBe(true);
+  });
+
+  it("returns hasMore=false when no Link rel=next is present", async () => {
+    vi.spyOn(global, "fetch").mockResolvedValueOnce(
+      makeContribResponse([makeContributor()]),
+    );
+
+    const result = await fetchContributorsPage("owner", "repo", 1);
+
+    expect(result.hasMore).toBe(false);
+  });
+
+  it("returns empty list with hasMore=false when page exceeds data (empty array)", async () => {
+    vi.spyOn(global, "fetch").mockResolvedValueOnce(makeContribResponse([]));
+
+    const result = await fetchContributorsPage("owner", "repo", 5);
+
+    expect(result.contributors).toHaveLength(0);
+    expect(result.hasMore).toBe(false);
+  });
+
+  it("retries and returns 202 as a retrievable signal", async () => {
+    vi.spyOn(global, "fetch").mockResolvedValueOnce(
+      new Response(null, { status: 202 }),
+    );
+
+    const result = await fetchContributorsPage("owner", "repo", 1);
+
+    expect(result.computing).toBe(true);
+    expect(result.contributors).toHaveLength(0);
+  });
+
+  it("throws GitHubRateLimitError on 429", async () => {
+    vi.spyOn(global, "fetch").mockResolvedValueOnce(
+      new Response("", { status: 429, headers: { "retry-after": "60" } }),
+    );
+
+    await expect(fetchContributorsPage("owner", "repo", 1)).rejects.toThrow(GitHubRateLimitError);
+  });
+
+  it("throws GitHubRateLimitError on 403 with rate limit header", async () => {
+    const resetEpoch = Math.floor(Date.now() / 1000) + 3600;
+    vi.spyOn(global, "fetch").mockResolvedValueOnce(
+      new Response("", {
+        status: 403,
+        headers: { "x-ratelimit-reset": String(resetEpoch) },
+      }),
+    );
+
+    await expect(fetchContributorsPage("owner", "repo", 1)).rejects.toThrow(GitHubRateLimitError);
+  });
+
+  it("uses clientToken when provided", async () => {
+    let capturedHeaders: Record<string, string> = {};
+    vi.spyOn(global, "fetch").mockImplementation(async (_url, init) => {
+      capturedHeaders = Object.fromEntries(
+        new Headers(init?.headers as HeadersInit).entries(),
+      );
+      return makeContribResponse([makeContributor()]);
     });
 
-    it("falls back to GITHUB_TOKEN env when no clientToken is provided", async () => {
-      let capturedHeaders: Record<string, string> = {};
+    await fetchContributorsPage("owner", "repo", 1, "ghp_client");
 
-      vi.spyOn(global, "fetch").mockImplementation(async (_url, init) => {
-        capturedHeaders = Object.fromEntries(
-          new Headers(init?.headers as HeadersInit).entries(),
-        );
-        return makeOkResponse(makeGitHubResponse({}));
-      });
+    expect(capturedHeaders.authorization).toBe("token ghp_client");
+  });
 
-      await fetchStargazersPage("owner", "repo", null);
+  it("filters out non-User type contributors (bots)", async () => {
+    const contributors = [
+      { login: "humandev", contributions: 80, type: "User" },
+      { login: "dependabot[bot]", contributions: 20, type: "Bot" },
+    ];
+    vi.spyOn(global, "fetch").mockResolvedValueOnce(
+      makeContribResponse(contributors as ReturnType<typeof makeContributor>[]),
+    );
 
-      expect(capturedHeaders.authorization).toBe("Bearer ghp_test_token");
+    const result = await fetchContributorsPage("owner", "repo", 1);
+
+    expect(result.contributors.every((c) => c.type === "User")).toBe(true);
+    expect(result.contributors).toHaveLength(1);
+    expect(result.contributors[0].login).toBe("humandev");
+  });
+});
+
+describe("fetchStargazersPage — authentication", () => {
+  beforeEach(() => {
+    vi.stubEnv("GITHUB_TOKEN", "ghp_test_token");
+  });
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllEnvs();
+  });
+
+  it("uses clientToken header over GITHUB_TOKEN env when both are set", async () => {
+    let capturedHeaders: Record<string, string> = {};
+
+    vi.spyOn(global, "fetch").mockImplementation(async (_url, init) => {
+      capturedHeaders = Object.fromEntries(
+        new Headers(init?.headers as HeadersInit).entries(),
+      );
+      return makeOkResponse(makeGitHubResponse({}));
     });
 
-    it("sends no Authorization header when no token is available", async () => {
-      vi.unstubAllEnvs();
-      vi.stubEnv("GITHUB_TOKEN", "");
+    await fetchStargazersPage("owner", "repo", null, undefined, "ghp_client_token");
 
-      let capturedHeaders: Record<string, string> = {};
+    expect(capturedHeaders.authorization).toBe("Bearer ghp_client_token");
+  });
 
-      vi.spyOn(global, "fetch").mockImplementation(async (_url, init) => {
-        capturedHeaders = Object.fromEntries(
-          new Headers(init?.headers as HeadersInit).entries(),
-        );
-        return makeOkResponse(makeGitHubResponse({}));
-      });
+  it("falls back to GITHUB_TOKEN env when no clientToken is provided", async () => {
+    let capturedHeaders: Record<string, string> = {};
 
-      await fetchStargazersPage("owner", "repo", null);
-
-      expect(capturedHeaders.authorization).toBeUndefined();
+    vi.spyOn(global, "fetch").mockImplementation(async (_url, init) => {
+      capturedHeaders = Object.fromEntries(
+        new Headers(init?.headers as HeadersInit).entries(),
+      );
+      return makeOkResponse(makeGitHubResponse({}));
     });
+
+    await fetchStargazersPage("owner", "repo", null);
+
+    expect(capturedHeaders.authorization).toBe("Bearer ghp_test_token");
+  });
+
+  it("sends no Authorization header when no token is available", async () => {
+    vi.unstubAllEnvs();
+    vi.stubEnv("GITHUB_TOKEN", "");
+
+    let capturedHeaders: Record<string, string> = {};
+
+    vi.spyOn(global, "fetch").mockImplementation(async (_url, init) => {
+      capturedHeaders = Object.fromEntries(
+        new Headers(init?.headers as HeadersInit).entries(),
+      );
+      return makeOkResponse(makeGitHubResponse({}));
+    });
+
+    await fetchStargazersPage("owner", "repo", null);
+
+    expect(capturedHeaders.authorization).toBeUndefined();
   });
 });

@@ -187,6 +187,8 @@ const buildGeoJSON = (pts: StargazerPoint[]) => {
         followers: p.followers,
         avatarUrl: p.avatarUrl,
         linkedinUrl: p.linkedinUrl,
+        // context is passed through for popup rendering (e.g. "contributors" → "N commits")
+        context: (p as unknown as { context?: string }).context ?? null,
       },
     })),
   };
@@ -400,17 +402,26 @@ const makePopupElement = (props: Record<string, unknown>): HTMLElement => {
   if (company) metaParts.push(company);
   if (location) metaParts.push(location);
   if (props.followers) {
-    const followersLink = document.createElement("a");
-    followersLink.href = `/${login}/followers`;
-    followersLink.style.cssText = "color:var(--color-muted);text-decoration:none;border-bottom:1px dotted currentColor;cursor:pointer";
-    followersLink.textContent = `${Number(props.followers).toLocaleString()} followers`;
-    followersLink.addEventListener("mouseenter", () => {
-      followersLink.style.color = "var(--color-accent-blue)";
+    const isContributors = props.context === "contributors";
+    const countLink = document.createElement("a");
+    countLink.href = isContributors
+      ? `https://github.com/${login}`
+      : `/${login}/followers`;
+    if (isContributors) {
+      countLink.target = "_blank";
+      countLink.rel = "noopener noreferrer";
+    }
+    countLink.style.cssText = "color:var(--color-muted);text-decoration:none;border-bottom:1px dotted currentColor;cursor:pointer";
+    countLink.textContent = isContributors
+      ? `${Number(props.followers).toLocaleString()} commits`
+      : `${Number(props.followers).toLocaleString()} followers`;
+    countLink.addEventListener("mouseenter", () => {
+      countLink.style.color = "var(--color-accent-blue)";
     });
-    followersLink.addEventListener("mouseleave", () => {
-      followersLink.style.color = "var(--color-muted)";
+    countLink.addEventListener("mouseleave", () => {
+      countLink.style.color = "var(--color-muted)";
     });
-    metaParts.push(followersLink);
+    metaParts.push(countLink);
   }
   metaParts.forEach((part, i) => {
     if (i > 0) meta.appendChild(document.createTextNode(" · "));

@@ -244,7 +244,7 @@ const TopPanelInner = ({
       {(status === "loading" || status === "refreshing" || status === "waiting") && (
         <div className="mt-2.5">
           <div
-            className="w-full bg-surface-alt rounded-full h-1 overflow-hidden"
+            className="w-full bg-surface-alt rounded-full h-2 overflow-hidden"
             role="progressbar"
             aria-valuenow={status === "refreshing" ? 100 : pct}
             aria-valuemin={0}
@@ -252,11 +252,11 @@ const TopPanelInner = ({
             aria-label="Scan progress"
           >
             <div
-              className="bg-accent-blue h-full rounded-full transition-all duration-300"
-              style={{ width: status === "refreshing" ? "100%" : `${pct}%` }}
+              className={`bg-accent-blue h-full rounded-full transition-all duration-300 ${status === "refreshing" ? "animate-pulse" : ""}`}
+              style={{ width: status === "refreshing" ? "100%" : `${Math.max(pct, pct > 0 ? 2 : 0)}%` }}
             />
           </div>
-          <div className="text-2xs text-muted mt-1 text-center">
+          <div className="text-xs text-muted mt-1 text-center">
             {status === "waiting"
               ? `⏸ Queued, resuming in ${retryIn}s…`
               : status === "refreshing"
@@ -274,7 +274,7 @@ const TopPanelInner = ({
       {(status === "cached" || status === "done") && total > 0 && points.length > 0 && (
         <div className="mt-2.5">
           <div
-            className="w-full bg-surface-alt rounded-full h-1 overflow-hidden"
+            className="w-full bg-surface-alt rounded-full h-2 overflow-hidden"
             role="meter"
             aria-valuenow={mappingPct}
             aria-valuemin={0}
@@ -286,7 +286,7 @@ const TopPanelInner = ({
               style={{ width: `${mappingPct}%` }}
             />
           </div>
-          <div className="text-2xs text-muted-subtle mt-0.5 text-center flex items-center justify-center gap-1">
+          <div className="text-xs text-muted mt-0.5 text-center flex items-center justify-center gap-1">
             <span>
               {mappingPct}% have a GitHub location ({points.length.toLocaleString()} of {displayTotal.toLocaleString()})
             </span>
@@ -477,6 +477,19 @@ const TopPanelInner = ({
             </button>
           )}
         </div>
+      </div>
+
+      {/* ── Contributors link ─────────────────────────────────────────────── */}
+      <div className="mt-2 pt-2 border-t border-border-subtle">
+        <a
+          href={`/${owner}/${repo}/contributors`}
+          className="flex items-center justify-between w-full px-2 py-1.5 rounded-md
+                     bg-accent-green/8 border border-accent-green/20 text-accent-green text-xs font-medium
+                     hover:bg-accent-green/15 hover:border-accent-green/40 transition-colors group"
+        >
+          <span>Who built this?</span>
+          <ChevronRight size={12} className="opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 transition-transform" aria-hidden="true" />
+        </a>
       </div>
 
       {/* ── Dependents link ───────────────────────────────────────────────── */}
