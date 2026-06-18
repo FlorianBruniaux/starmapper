@@ -73,15 +73,34 @@ Scores map to: **Healthy** (75–100), **Moderate** (50–74), **Suspicious** (0
 
 ## Add to your README
 
+**Map image**: a 1200×630 scatter map of your stargazers, switching between dark and light themes automatically:
+
+<!-- StarMapper's own embed — shows what yours will look like -->
+<a href="https://starmapper.bruniaux.com/FlorianBruniaux/starmapper?utm_source=map-embed&utm_medium=readme&utm_campaign=stargazer-map">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://starmapper.bruniaux.com/api/map-image/FlorianBruniaux/starmapper?theme=dark" />
+    <source media="(prefers-color-scheme: light)" srcset="https://starmapper.bruniaux.com/api/map-image/FlorianBruniaux/starmapper?theme=light" />
+    <img alt="StarMapper — stargazer world map" src="https://starmapper.bruniaux.com/api/map-image/FlorianBruniaux/starmapper" />
+  </picture>
+</a>
+
+Copy and replace `owner/repo` with your repository, or use the "Embed" button on the map page to get the snippet pre-filled:
+
+```html
+<a href="https://starmapper.bruniaux.com/owner/repo">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://starmapper.bruniaux.com/api/map-image/owner/repo?theme=dark" />
+    <source media="(prefers-color-scheme: light)" srcset="https://starmapper.bruniaux.com/api/map-image/owner/repo?theme=light" />
+    <img alt="StarMapper" src="https://starmapper.bruniaux.com/api/map-image/owner/repo" />
+  </picture>
+</a>
+```
+
 **Badge** (shields-style, star count + countries, CDN-cached every 6 hours):
 
 ```markdown
 [![StarMapper](https://starmapper.bruniaux.com/api/badge/owner/repo)](https://starmapper.bruniaux.com/owner/repo)
 ```
-
-**Map image** (scatter map, dark/light themes via `<picture>`): the "Embed" button on the map page generates the full HTML snippet ready to paste.
-
-Replace `owner/repo` with your repository.
 
 ---
 
