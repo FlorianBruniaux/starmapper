@@ -20,6 +20,48 @@ Stars are a proxy for developer community. Where those developers live tells you
 
 Enter a GitHub repo URL and StarMapper maps every stargazer, identifies the influential ones, and tells you whether those numbers are organic.
 
+```mermaid
+flowchart LR
+    repo["github.com/owner/repo"] --> sm{{"StarMapper"}}
+
+    subgraph map["Repo Map"]
+        direction TB
+        m1["🗺️ Stargazer world map\nheatmap · timelapse · filters"]
+        m2["📊 Organic Score\nreal vs bought?"]
+        m3["📈 Country velocity"]
+        m4["⭐ Influential users"]
+        m5["⚖️ Compare two repos"]
+    end
+
+    subgraph community["Community"]
+        direction TB
+        c1["👥 Contributors map"]
+        c2["👤 Followers map"]
+        c3["🧑‍💻 Developer profiles"]
+        c4["📦 Dependents"]
+    end
+
+    subgraph discover["Discover"]
+        direction TB
+        d1["🔍 Explore · Nearby · Companies"]
+        d2["🌍 Dev Maps · Language Atlas"]
+        d3["📈 Trending repos"]
+    end
+
+    subgraph integrate["Integrate"]
+        direction TB
+        i1["🔴 Live mode during launches"]
+        i2["🤖 MCP server · 10 tools"]
+        i3["🔗 Badge · Embed · GeoJSON API"]
+        i4["🌐 Chrome Extension"]
+    end
+
+    sm --> map
+    sm --> community
+    sm --> discover
+    sm --> integrate
+```
+
 ---
 
 ## What it does
