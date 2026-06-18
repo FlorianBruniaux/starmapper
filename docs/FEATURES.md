@@ -1,6 +1,6 @@
 # StarMapper — Product Reference
 
-**Version**: 0.6.7 | **Last updated**: 2026-06-18
+**Version**: 0.6.9 | **Last updated**: 2026-06-18
 
 Free, open-source developer intelligence platform built around GitHub stargazer geography. No account required.
 
@@ -127,6 +127,24 @@ For library authors: a table of repos that depend on a published package, across
 - **7-day Neon cache**: results cached in `dependents_cache`, gzip+base64. A "Refresh" button triggers a live fetch with a 1-hour cooldown per repo.
 - **No published package**: repos without a package on any registry show a clean empty state (no crash, no spinner loop).
 - **Feature-flagged**: `NEXT_PUBLIC_DEPENDENTS_ENABLED` gates the page and table entry point.
+
+### MCP Server (`starmapper-mcp`)
+
+A stdio MCP server for querying StarMapper data from AI agents and Claude Desktop. Install once (`npx starmapper-mcp`) and any MCP-compatible agent can interrogate GitHub repo audiences without writing API calls.
+
+15 tools across four categories:
+
+**Repo analysis**: `get_repo_stats`, `get_organic_score`, `get_velocity`, `get_influential_stargazers`, `get_country_stats`
+
+**People**: `get_contributors` (top 50 contributors with optional location enrichment), `get_followers` (top 100 followers of any GitHub user, sorted by their own follower count)
+
+**Discovery**: `get_trending`, `list_repos`, `get_cache_status`, `get_global_country_stats` (cross-repo country distribution from the materialized view)
+
+**Dependencies**: `get_dependents` (who depends on your library, via ecosyste.ms), `get_dependencies` (what a repo depends on, via GitHub SBOM API)
+
+**Ops**: `index_repo` (trigger a full scan), `health_check`
+
+All tools return structured Markdown. The server hits `STARMAPPER_BASE_URL` (default: `https://starmapper.bruniaux.com`) — point it at `localhost:3000` for local dev. `GITHUB_TOKEN` is forwarded server-side for live lookups (contributors, followers, dependencies).
 
 ### Integrations & embeds
 

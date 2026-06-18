@@ -5,6 +5,40 @@ Versioning: Semantic Versioning (MAJOR.MINOR.PATCH)
 
 ---
 
+## [0.6.9] (2026-06-18)
+
+### MCP server expanded: 10 tools to 15
+
+The `starmapper-mcp` package gains five new tools covering the features added in 0.6.7 and 0.6.8 that had no MCP surface yet.
+
+`get_contributors` lists the top 50 contributors of any repo with their commit count. Pass `with_locations: true` and the server enriches each contributor with their geocoded location from StarMapper data. Useful for building attribution lists or understanding where a project's core team is based.
+
+`get_followers` returns up to 100 followers of a GitHub user, sorted by their own follower count descending. The `truncated` flag signals when there are more followers than the page cap. Company and location are included per follower.
+
+`get_country_stats` surfaces the full country and city breakdown for a repo already indexed on StarMapper. This replaces manual calls to `/api/stats` from an agent context, returning all countries and the top 30 cities in a single Markdown table.
+
+`get_global_country_stats` queries the `country_stats_mv` materialized view and returns the cumulative developer distribution by country across every indexed repo. The total stargazer count and country count appear in the header.
+
+`get_dependencies` reads a repo's own dependency graph via the GitHub SBOM API and returns a table of packages with ecosystem and version. When the dependency graph is disabled on the repo, the tool returns a message with the settings URL rather than an error.
+
+Four new API routes back these tools: `/api/mcp/contributors/[owner]/[repo]`, `/api/mcp/followers/[login]`, `/api/mcp/country-stats`, `/api/mcp/dependencies/[owner]/[repo]`. The contributors route accepts a `?withLocations=1` query param; the others are plain GET.
+
+The `fetchRepoDependencies` function was added to `src/lib/github.ts`. It calls the GitHub SBOM REST endpoint, parses purl strings from `externalRefs`, deduplicates by ecosystem+name, and filters the root SPDX package (the repo itself). A 403 with `x-ratelimit-remaining: 0` raises `GitHubRateLimitError`; a 403 without quota exhaustion returns `{disabled: true}` gracefully without throwing.
+
+`mcp/package.json` bumped from 0.1.0 to 0.2.0.
+
+### Features
+
+- `get_contributors`: top 50 contributors with commit count and optional location enrichment (`with_locations` param)
+- `get_followers`: top 100 followers of a GitHub user sorted by influence, with company and location
+- `get_country_stats`: full country + city table for a specific indexed repo
+- `get_global_country_stats`: cross-repo developer distribution by country from the MV
+- `get_dependencies`: repo's own dependency graph via GitHub SBOM API, graceful `disabled` state
+- `fetchRepoDependencies` in `src/lib/github.ts`: SBOM endpoint, purl parsing, dedup, root package filtering
+- 4 new MCP routes: contributors, followers, country-stats, dependencies
+
+---
+
 ## [0.6.8] (2026-06-18)
 
 ### Developer maps by country `/devs/in/[country]`
