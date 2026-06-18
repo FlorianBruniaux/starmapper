@@ -4,6 +4,7 @@
 import { cacheLife, cacheTag } from "next/cache";
 import { prisma } from "@/lib/db";
 import { LANGUAGE_SLUG_MAP, languageToSlug } from "@/lib/languages";
+import { countryToSlug } from "@/lib/countries";
 
 export type AtlasCountry = {
   country: string;
@@ -73,6 +74,34 @@ export const fetchAtlasData = async (): Promise<AtlasDominantData> => {
       minDevsThreshold: MIN_DEVS_PER_COUNTRY,
       generatedAt: new Date().toISOString(),
     },
+  };
+};
+
+export type CountryListItem = {
+  slug: string;
+  name: string;
+  count: number;
+};
+
+export type CountryListData = {
+  countries: CountryListItem[];
+};
+
+export const fetchTopCountries = async (): Promise<CountryListData> => {
+  "use cache";
+  cacheTag("explore-mvs");
+  cacheLife({ revalidate: 3600, stale: 86400 });
+
+  const rows = await prisma.$queryRaw<{ country: string; cnt: number }[]>`
+    SELECT country, cnt::int FROM country_stats_mv WHERE cnt >= 100 ORDER BY cnt DESC LIMIT 24
+  `;
+
+  return {
+    countries: rows.map((r) => ({
+      slug: countryToSlug(r.country),
+      name: r.country,
+      count: r.cnt,
+    })),
   };
 };
 
