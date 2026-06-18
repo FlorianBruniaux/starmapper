@@ -162,13 +162,37 @@ export const LandingClient = ({ initialRepos, initialTotal }: Props) => {
                   </h1>
 
                   <p className="text-muted text-lg leading-relaxed max-w-lg">
-                    Know where your stargazers live, who the influential
-                    ones are, and whether the count is real.
+                    See where your GitHub audience lives, who the 10k-reach fans are,
+                    and whether the star count is real.
                   </p>
                 </div>
 
                 {/* Value props: 3 lines, each with concrete benefit */}
                 <ul className="flex flex-col gap-2.5" aria-label="Key features">
+                  <li className="flex items-start gap-2.5 text-sm">
+                    <span className="mt-0.5 size-4 shrink-0 rounded-full
+                      bg-accent-blue/15 flex items-center justify-center">
+                      <span className="size-1.5 rounded-full bg-accent-blue" />
+                    </span>
+                    <span className="text-muted">
+                      <span className="text-foreground font-medium">
+                        See your audience on a map
+                      </span>
+                      {" "}(country, city, continent) updated in real time as we scan
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2.5 text-sm">
+                    <span className="mt-0.5 size-4 shrink-0 rounded-full
+                      bg-accent-purple/15 flex items-center justify-center">
+                      <span className="size-1.5 rounded-full bg-accent-purple" />
+                    </span>
+                    <span className="text-muted">
+                      <span className="text-foreground font-medium">
+                        Influential stargazers
+                      </span>
+                      {" "}filter by follower count to surface the 1k-reach devs in your audience
+                    </span>
+                  </li>
                   <li className="flex items-start gap-2.5 text-sm">
                     <span className="mt-0.5 size-4 shrink-0 rounded-full
                       bg-accent-orange/15 flex items-center justify-center">
@@ -181,31 +205,16 @@ export const LandingClient = ({ initialRepos, initialTotal }: Props) => {
                       {" "}flags fake stars before investors or users trust the count
                     </span>
                   </li>
-                  <li className="flex items-start gap-2.5 text-sm">
-                    <span className="mt-0.5 size-4 shrink-0 rounded-full
-                      bg-accent-blue/15 flex items-center justify-center">
-                      <span className="size-1.5 rounded-full bg-accent-blue" />
-                    </span>
-                    <span className="text-muted">
-                      <span className="text-foreground font-medium">
-                        Influential stargazers
-                      </span>
-                      {" "}filter by follower count to find the 10k-reach devs in your audience
-                    </span>
-                  </li>
-                  <li className="flex items-start gap-2.5 text-sm">
-                    <span className="mt-0.5 size-4 shrink-0 rounded-full
-                      bg-accent-green/15 flex items-center justify-center">
-                      <span className="size-1.5 rounded-full bg-accent-green" />
-                    </span>
-                    <span className="text-muted">
-                      <span className="text-foreground font-medium">
-                        Dependent repos
-                      </span>
-                      {" "}shows every open-source project using your library, across npm, PyPI, Go, and more
-                    </span>
-                  </li>
                 </ul>
+
+                {/* How it works: 3 steps, above the form */}
+                <p className="text-xs text-muted-subtle flex items-center gap-1.5">
+                  <span>1. Paste a repo</span>
+                  <span className="text-border" aria-hidden="true">·</span>
+                  <span>2. We scan GitHub</span>
+                  <span className="text-border" aria-hidden="true">·</span>
+                  <span>3. Everyone sees the map</span>
+                </p>
 
                 <form data-tour="landing-search" onSubmit={handleSubmit} className="flex flex-col gap-3">
                   <div className="flex flex-col sm:flex-row gap-2.5">
@@ -314,17 +323,10 @@ export const LandingClient = ({ initialRepos, initialTotal }: Props) => {
                   )}
                   {initialTotal > 0 && (
                     <p className="text-xs text-muted-subtle">
-                      {initialTotal.toLocaleString()}+ repos mapped by the
-                      community so far
+                      {initialTotal.toLocaleString()}+ repos mapped, including{" "}
+                      <span className="text-muted">Next.js, React, and Rust</span>
                     </p>
                   )}
-                  <p className="text-2xs text-muted-subtle flex items-center gap-1.5">
-                    <span>1. Paste a repo</span>
-                    <span className="text-border" aria-hidden="true">·</span>
-                    <span>2. We scan GitHub</span>
-                    <span className="text-border" aria-hidden="true">·</span>
-                    <span>3. Everyone sees the map</span>
-                  </p>
                 </div>
               </div>
 
@@ -491,7 +493,7 @@ export const LandingClient = ({ initialRepos, initialTotal }: Props) => {
           <section data-tour="landing-community" className="w-full max-w-7xl mx-auto px-4 lg:px-6 pt-4 pb-16">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-muted-subtle text-2xs uppercase tracking-widest">
-                Community maps
+                Recently explored
               </h2>
               <Link
                 href="/repos"

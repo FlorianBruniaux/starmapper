@@ -10,7 +10,7 @@ export default async function HomePage() {
   let reposTotal = 0;
 
   try {
-    const data = await fetchReposData(12, true);
+    const data = await fetchReposData(6, true);
     repos = data.repos;
     reposTotal = data.total;
   } catch {
