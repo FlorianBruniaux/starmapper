@@ -20,6 +20,7 @@
  */
 
 import { parseArgs } from "node:util";
+import { gzipSync } from "node:zlib";
 
 const COOKIE_NAME = "sm-token";
 // Re-bootstrap every N chunks to refresh the 2h token TTL on large repos.
@@ -128,6 +129,8 @@ const main = async () => {
   let chunkNum = 0;
   let total = stars;
   let currentToken = smToken;
+  const allPoints: unknown[] = [];
+  const allUnmapped: unknown[] = [];
 
   while (true) {
     chunkNum++;
@@ -176,8 +179,15 @@ const main = async () => {
         chunkNum--;
         continue;
       }
-      console.error(`\nChunk ${chunkNum} HTTP 429`);
-      break;
+      // StarMapper's own sliding-window rate limit (30 req/60s) — no resetAt.
+      // Wait 65s (full window + margin) and retry the same chunk.
+      const retryMs = 65_000;
+      process.stdout.write(
+        `\nChunk ${chunkNum} rate limited (server). Waiting ${Math.ceil(retryMs / 1000)}s...\n`,
+      );
+      await new Promise((r) => setTimeout(r, retryMs));
+      chunkNum--;
+      continue;
     }
 
     if (!resp.ok) {
@@ -201,6 +211,8 @@ const main = async () => {
 
     const pts = data.points?.length ?? 0;
     const unm = data.unmapped?.length ?? 0;
+    if (Array.isArray(data.points)) allPoints.push(...data.points);
+    if (Array.isArray(data.unmapped)) allUnmapped.push(...data.unmapped);
     cursor = data.nextCursor ?? null;
     total = data.totalCount ?? total;
 
@@ -224,9 +236,54 @@ const main = async () => {
   console.log(`  Unmapped    : ${unmapped}`);
   console.log(`  Chunks run  : ${chunkNum}`);
   console.log(`  URL         : ${baseUrl}/${owner}/${repo}`);
-  console.log(
-    `\nGeocache is now warm. To save the full stargazer_cache, visit the URL above in a browser.`,
-  );
+
+  // Write StargazerCache only when the loop completed (cursor === null = full scan).
+  if (!cursor && allPoints.length + allUnmapped.length > 0) {
+    process.stdout.write("\nSaving StargazerCache... ");
+    try {
+      const pointsGz   = gzipSync(JSON.stringify(allPoints)).toString("base64");
+      const unmappedGz = gzipSync(JSON.stringify(allUnmapped)).toString("base64");
+
+      // Prefer the admin endpoint (CRON_SECRET auth, no browser cookie needed).
+      // Falls back to the public endpoint when CRON_SECRET is not available.
+      const cronSecret = process.env.CRON_SECRET;
+      const [cacheUrl, cacheAuthHeaders] = cronSecret
+        ? [
+            `${baseUrl}/api/admin/stargazer-cache`,
+            { Authorization: `Bearer ${cronSecret}` },
+          ]
+        : [
+            `${baseUrl}/api/stargazer-cache`,
+            {} as Record<string, string>,
+          ];
+
+      const cacheBody = cronSecret
+        ? { owner, repo, totalCount: total, pointsGz, unmappedGz }
+        : { owner, repo, totalCount: total, ts: Date.now(), pointsGz, unmappedGz };
+
+      const cacheRes = await fetch(cacheUrl, {
+        method: "POST",
+        headers: { ...baseHeaders, ...cacheAuthHeaders, "Content-Type": "application/json" },
+        body: JSON.stringify(cacheBody),
+      });
+
+      if (cacheRes.ok) {
+        console.log("saved.");
+        console.log(`  → ${baseUrl}/${owner}/${repo} now loads from cache instantly.`);
+      } else {
+        const err = await cacheRes.text().catch(() => "");
+        console.log(`failed (${cacheRes.status}): ${err}`);
+        console.log(`  → Visit the URL in a browser as fallback.`);
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.log(`error: ${msg}`);
+      console.log(`  → Visit the URL in a browser as fallback.`);
+    }
+  } else if (cursor) {
+    console.log(`\nLoop ended early (cursor still active) — StargazerCache not written.`);
+    console.log(`  → Visit the URL in a browser to complete.`);
+  }
 };
 
 main().catch((err) => {

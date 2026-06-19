@@ -3,6 +3,7 @@
 # Contributors: use `pnpm <script>` instead — see package.json for the full list.
 
 ENV = sh -c 'set -a && . .env.local && set +a &&
+TSX = node_modules/.bin/tsx
 
 # ─── DB sync (local ↔ prod) ────────────────────────────────────────────────────
 
@@ -147,40 +148,40 @@ collect-merge:
 	node -e "const fs=require('fs'),g=p=>fs.existsSync(p)?require(p):[];const a=g('./scripts/repos-from-users.json'),b=g('./scripts/repos-trending.json'),m=[...new Set([...a,...b])];fs.writeFileSync('scripts/repos-all.json',JSON.stringify(m,null,2));console.log('Merged:',m.length,'repos')"
 
 batch-scan:
-	$(ENV) caffeinate -i tsx scripts/ops/batch-scan.ts --local --input scripts/repos-all.json'
+	$(ENV) caffeinate -i node_modules/.bin/tsx scripts/ops/batch-scan.ts --local --input scripts/repos-all.json'
 
 batch-scan-dry:
 	$(ENV) tsx scripts/ops/batch-scan.ts --local --input scripts/repos-all.json --dry-run'
 
 index-repo: ## make index-repo REPO=owner/repo
-	$(ENV) caffeinate -i tsx scripts/ops/index-repo.ts $(REPO)'
+	$(ENV) caffeinate -i node_modules/.bin/tsx scripts/ops/index-repo.ts $(REPO)'
 
 index-repo-local: ## make index-repo-local REPO=owner/repo
-	$(ENV) caffeinate -i tsx scripts/ops/index-repo.ts --base-url http://localhost:3000 $(REPO)'
+	$(ENV) caffeinate -i node_modules/.bin/tsx scripts/ops/index-repo.ts --base-url http://localhost:3000 $(REPO)'
 
 index-followers: ## make index-followers LOGIN=FlorianBruniaux
-	$(ENV) caffeinate -i tsx scripts/ops/index-followers.ts $(LOGIN)'
+	$(ENV) caffeinate -i node_modules/.bin/tsx scripts/ops/index-followers.ts $(LOGIN)'
 
 index-followers-local: ## make index-followers-local LOGIN=FlorianBruniaux
-	$(ENV) caffeinate -i tsx scripts/ops/index-followers.ts --base-url http://localhost:3000 $(LOGIN)'
+	$(ENV) caffeinate -i node_modules/.bin/tsx scripts/ops/index-followers.ts --base-url http://localhost:3000 $(LOGIN)'
 
 index-followers-all: ## make index-followers-all [MIN_FOLLOWERS=100] [LIMIT=n]
-	$(ENV) caffeinate -i tsx scripts/ops/batch-index-followers.ts --prod --min-followers $(or $(MIN_FOLLOWERS),100) $(if $(LIMIT),--limit $(LIMIT))'
+	$(ENV) caffeinate -i node_modules/.bin/tsx scripts/ops/batch-index-followers.ts --prod --min-followers $(or $(MIN_FOLLOWERS),100) $(if $(LIMIT),--limit $(LIMIT))'
 
 index-followers-all-local: ## make index-followers-all-local [MIN_FOLLOWERS=100] [LIMIT=n]
-	$(ENV) caffeinate -i tsx scripts/ops/batch-index-followers.ts --min-followers $(or $(MIN_FOLLOWERS),100) $(if $(LIMIT),--limit $(LIMIT))'
+	$(ENV) caffeinate -i node_modules/.bin/tsx scripts/ops/batch-index-followers.ts --min-followers $(or $(MIN_FOLLOWERS),100) $(if $(LIMIT),--limit $(LIMIT))'
 
 refresh-follower-cache: ## make refresh-follower-cache LOGINS=FlorianBruniaux[,other]
-	$(ENV) caffeinate -i tsx scripts/ops/batch-index-followers.ts --prod --logins $(LOGINS)'
+	$(ENV) caffeinate -i node_modules/.bin/tsx scripts/ops/batch-index-followers.ts --prod --logins $(LOGINS)'
 
 refresh-follower-cache-local: ## make refresh-follower-cache-local LOGINS=FlorianBruniaux[,other]
-	$(ENV) caffeinate -i tsx scripts/ops/batch-index-followers.ts --logins $(LOGINS)'
+	$(ENV) caffeinate -i node_modules/.bin/tsx scripts/ops/batch-index-followers.ts --logins $(LOGINS)'
 
 index-contributors: ## make index-contributors REPO=owner/repo [GH_TOKEN=ghp_xxx]
-	$(ENV) caffeinate -i tsx scripts/ops/index-contributors.ts $(if $(GH_TOKEN),--gh-token $(GH_TOKEN)) $(REPO)'
+	$(ENV) caffeinate -i node_modules/.bin/tsx scripts/ops/index-contributors.ts $(if $(GH_TOKEN),--gh-token $(GH_TOKEN)) $(REPO)'
 
 index-contributors-local: ## make index-contributors-local REPO=owner/repo
-	$(ENV) caffeinate -i tsx scripts/ops/index-contributors.ts --base-url http://localhost:3000 $(if $(GH_TOKEN),--gh-token $(GH_TOKEN)) $(REPO)'
+	$(ENV) caffeinate -i node_modules/.bin/tsx scripts/ops/index-contributors.ts --base-url http://localhost:3000 $(if $(GH_TOKEN),--gh-token $(GH_TOKEN)) $(REPO)'
 
 batch-index-contributors: ## make batch-index-contributors [MIN_STARS=100] [LIMIT=n] [CONCURRENCY=2] [REPOS=owner/repo] — geocache warm-up, local DB
 	$(ENV) DATABASE_DRIVER=standard DATABASE_URL=$$DATABASE_URL_LOCAL $(if $(CONCURRENCY),CONCURRENCY=$(CONCURRENCY)) caffeinate -i node_modules/.bin/tsx scripts/ops/batch-index-contributors.ts $(if $(MIN_STARS),--min-stars $(MIN_STARS)) $(if $(LIMIT),--limit $(LIMIT)) $(if $(REPOS),--repos $(REPOS))'

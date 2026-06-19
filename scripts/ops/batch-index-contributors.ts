@@ -102,11 +102,23 @@ const buildTokenPool = (): TokenState[] => {
 
 const TOKEN_POOL = buildTokenPool();
 
+// Round-robin index — distributes calls evenly across tokens so concurrent repos
+// don't all pile onto TOKEN_POOL[0] and exhaust it first.
+let rrIndex = 0;
+
 const acquireToken = async (): Promise<TokenState | null> => {
   if (TOKEN_POOL.length === 0) return null;
   const now = Date.now();
-  const available = TOKEN_POOL.find((t) => t.exhaustedUntil <= now);
-  if (available) return available;
+
+  // Try each token starting from the current round-robin position.
+  for (let i = 0; i < TOKEN_POOL.length; i++) {
+    const idx = (rrIndex + i) % TOKEN_POOL.length;
+    const t = TOKEN_POOL[idx];
+    if (t && t.exhaustedUntil <= now) {
+      rrIndex = (idx + 1) % TOKEN_POOL.length;
+      return t;
+    }
+  }
 
   const earliest = TOKEN_POOL.reduce((min, t) => (t.exhaustedUntil < min.exhaustedUntil ? t : min));
   const waitMs   = Math.max(0, earliest.exhaustedUntil - Date.now()) + 2_000;
@@ -114,6 +126,7 @@ const acquireToken = async (): Promise<TokenState | null> => {
   process.stdout.write(`\n  [token-pool] All ${TOKEN_POOL.length} tokens exhausted — waiting ${waitMin}min\n`);
   await new Promise((r) => setTimeout(r, waitMs));
   earliest.exhaustedUntil = 0;
+  rrIndex = (TOKEN_POOL.indexOf(earliest) + 1) % TOKEN_POOL.length;
   return earliest;
 };
 
