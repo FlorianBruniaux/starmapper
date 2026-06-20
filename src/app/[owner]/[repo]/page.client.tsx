@@ -131,7 +131,8 @@ export default function MapPageClient({ owner, repo, initialRepoInfo }: Props) {
     timelapseAutoPlay, setTimelapseAutoPlay,
     timelapseSpeed, setTimelapseSpeed,
     weekBuckets, filteredMapPoints,
-  } = useTimelapse(points, followerMapFilter);
+    cumulativeAtCurrentWeek,
+  } = useTimelapse(points, unmapped, followerMapFilter);
 
   // Debounce clusterRadius changes: map rebuild fires 150ms after slider stops
   useEffect(() => {
@@ -670,7 +671,8 @@ export default function MapPageClient({ owner, repo, initialRepoInfo }: Props) {
           currentIndex={timelapseIndex}
           autoPlay={timelapseAutoPlay}
           speed={timelapseSpeed}
-          visibleCount={filteredMapPoints.length}
+          mapCount={filteredMapPoints.length}
+          totalCount={cumulativeAtCurrentWeek}
           onIndexChange={setTimelapseIndex}
           onSpeedChange={setTimelapseSpeed}
           onAutoPlayToggle={() => {
@@ -758,6 +760,7 @@ export default function MapPageClient({ owner, repo, initialRepoInfo }: Props) {
           displayStats={displayStats}
           starsThisMonth={starsThisMonth}
           contributorsCount={repoInfo?.contributorsCount ?? null}
+          repoStars={repoInfo?.stars ?? total}
         />
       )}
     </main>

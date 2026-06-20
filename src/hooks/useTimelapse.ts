@@ -3,6 +3,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import type { StargazerPoint } from "@/app/api/chunk/route";
+import type { UnmappedEntry } from "@/hooks/useScanController";
 import type { TimelapseSpeed } from "@/components/map/timelapse-bar";
 
 // Returns the YYYY-MM-DD of the Monday of the week containing dateStr (YYYY-MM-DD)
@@ -24,10 +25,12 @@ export type TimelapseState = {
   setTimelapseSpeed: (v: TimelapseSpeed) => void;
   weekBuckets: string[];
   filteredMapPoints: StargazerPoint[];
+  cumulativeAtCurrentWeek: number;
 };
 
 export const useTimelapse = (
   points: StargazerPoint[],
+  unmapped: UnmappedEntry[],
   followerMapFilter: "all" | "elite" | "vhigh" | "high" | "mid" | "low",
 ): TimelapseState => {
   const [timelapseActive, setTimelapseActive] = useState(false);
@@ -59,6 +62,33 @@ export const useTimelapse = (
     }, timelapseSpeed);
     return () => clearInterval(t);
   }, [timelapseAutoPlay, timelapseActive, weekBuckets.length, timelapseSpeed]);
+
+  // Cumulative star count per week from ALL users (mapped + unmapped) with starredAt
+  const cumulativeSeries = useMemo(() => {
+    const weekCountMap = new Map<string, number>();
+    for (const u of [...points, ...unmapped]) {
+      if (!u.starredAt) continue;
+      const week = getWeekMonday(u.starredAt.slice(0, 10));
+      weekCountMap.set(week, (weekCountMap.get(week) ?? 0) + 1);
+    }
+    const sorted = [...weekCountMap.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+    let running = 0;
+    return sorted.map(([week, count]): [string, number] => {
+      running += count;
+      return [week, running];
+    });
+  }, [points, unmapped]);
+
+  const cumulativeAtCurrentWeek = useMemo(() => {
+    if (!timelapseActive || weekBuckets.length === 0 || cumulativeSeries.length === 0) return 0;
+    const currentWeek = weekBuckets[timelapseIndex] ?? weekBuckets[0];
+    let result = 0;
+    for (const [week, cum] of cumulativeSeries) {
+      if (week <= currentWeek) result = cum;
+      else break;
+    }
+    return result;
+  }, [cumulativeSeries, timelapseActive, timelapseIndex, weekBuckets]);
 
   // Map points filtered by follower tier and, when active, timelapse cutoff date
   const filteredMapPoints = useMemo(() => {
@@ -92,5 +122,6 @@ export const useTimelapse = (
     setTimelapseSpeed,
     weekBuckets,
     filteredMapPoints,
+    cumulativeAtCurrentWeek,
   };
 };

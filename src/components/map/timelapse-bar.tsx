@@ -26,7 +26,8 @@ type Props = {
   currentIndex: number;
   autoPlay: boolean;
   speed: TimelapseSpeed;
-  visibleCount: number;
+  mapCount: number;
+  totalCount: number;
   onIndexChange: (i: number) => void;
   onAutoPlayToggle: () => void;
   onSpeedChange: (ms: TimelapseSpeed) => void;
@@ -38,7 +39,8 @@ export const TimelapseBar = ({
   currentIndex,
   autoPlay,
   speed,
-  visibleCount,
+  mapCount,
+  totalCount,
   onIndexChange,
   onAutoPlayToggle,
   onSpeedChange,
@@ -66,9 +68,18 @@ export const TimelapseBar = ({
         </div>
 
         {/* Week label + star count */}
-        <div className="flex items-baseline justify-between">
+        <div className="flex items-center justify-between gap-2">
           <span className="text-sm font-semibold text-foreground">{currentLabel}</span>
-          <span className="text-xs text-muted tabular-nums">{visibleCount.toLocaleString()} stars</span>
+          <div className="flex flex-col items-end">
+            <span className="text-xs font-medium text-foreground tabular-nums">
+              {(totalCount > 0 ? totalCount : mapCount).toLocaleString()} stars
+            </span>
+            {totalCount > 0 && (
+              <span className="text-2xs text-muted-subtle tabular-nums">
+                {mapCount.toLocaleString()} on map
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Slider */}

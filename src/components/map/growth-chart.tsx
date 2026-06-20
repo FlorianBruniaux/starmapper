@@ -5,7 +5,7 @@
 
 import { useState } from "react";
 
-export const GrowthChart = ({ data }: { data: [string, number][] }) => {
+export const GrowthChart = ({ data, totalStars }: { data: [string, number][]; totalStars?: number }) => {
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
   const max = Math.max(...data.map(([, v]) => v));
   const H = 120;
@@ -28,7 +28,7 @@ export const GrowthChart = ({ data }: { data: [string, number][] }) => {
     <div>
       <div className="flex gap-4 mb-4">
         <div className="bg-background rounded-lg px-3 py-2 text-center flex-1">
-          <div className="text-lg font-bold text-foreground">{total.toLocaleString()}</div>
+          <div className="text-lg font-bold text-foreground">{(totalStars ?? total).toLocaleString()}</div>
           <div className="text-2xs text-muted uppercase tracking-wide mt-0.5">total stars</div>
         </div>
         <div className="bg-background rounded-lg px-3 py-2 text-center flex-1">

@@ -76,7 +76,7 @@ export const GrowthModal = ({ open, onClose, owner, repo, points, unmapped, tota
         {fetching ? (
           <div className="flex items-center justify-center h-40 text-muted text-sm">Loading growth data…</div>
         ) : chartData.length > 0 ? (
-          <GrowthChart data={chartData} />
+          <GrowthChart data={chartData} totalStars={totalCount} />
         ) : (
           <div className="flex items-center justify-center h-40 text-muted text-sm">No star timestamp data for this repo.</div>
         )}

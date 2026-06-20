@@ -18,9 +18,10 @@ type StatsModalProps = {
   displayStats: RepoStats;
   starsThisMonth: number;
   contributorsCount?: number | null;
+  repoStars?: number;
 };
 
-export const StatsModal = ({ open, onClose, owner, repo, displayStats, starsThisMonth, contributorsCount }: StatsModalProps) => {
+export const StatsModal = ({ open, onClose, owner, repo, displayStats, starsThisMonth, contributorsCount, repoStars }: StatsModalProps) => {
   const [statsTab, setStatsTab] = useState<"countries" | "cities" | "top" | "companies" | "power" | "rising">("top");
   const [geoVelocity, setGeoVelocity] = useState<GeoVelocityItem[] | null>(null);
   const [geoVelocityLoading, setGeoVelocityLoading] = useState(false);
@@ -53,7 +54,7 @@ export const StatsModal = ({ open, onClose, owner, repo, displayStats, starsThis
               const md = [
                 `# ${owner}/${repo} on StarMapper`,
                 ``,
-                `- **Total stargazers**: ${displayStats.totalStars.toLocaleString()} (${displayStats.mappingRate}% mapped)`,
+                `- **Total stargazers**: ${(repoStars ?? displayStats.totalStars).toLocaleString()} (${displayStats.mappingRate}% mapped)`,
                 `- **Countries**: ${displayStats.countryCount}`,
                 `- **Cities**: ${displayStats.topCities.length}`,
                 `- **Avg followers**: ${displayStats.avgFollowers.toLocaleString()}`,
@@ -94,7 +95,7 @@ export const StatsModal = ({ open, onClose, owner, repo, displayStats, starsThis
           <div className="grid grid-cols-2 gap-2 px-4 py-4">
             <div className="bg-background rounded-lg px-2 py-2 text-center">
               <div className="text-xl font-bold text-foreground">
-                {displayStats.totalStars >= 1000 ? `${(displayStats.totalStars / 1000).toFixed(1)}k` : displayStats.totalStars}
+                {(() => { const s = repoStars ?? displayStats.totalStars; return s >= 1000 ? `${(s / 1000).toFixed(1)}k` : s; })()}
               </div>
               <div className="text-2xs text-muted uppercase tracking-wide mt-0.5">stars</div>
               {starsThisMonth > 0 && (
