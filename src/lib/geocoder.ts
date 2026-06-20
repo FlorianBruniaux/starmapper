@@ -233,6 +233,32 @@ const nominatimProvider: GeocodingProvider = {
 
 const PROVIDERS: readonly GeocodingProvider[] = [jawgProvider, geoapifyProvider, nominatimProvider];
 
+// Country names (lowercase) used to deprioritize country-only parts in slash-split locations.
+// "France / Paris" → try "Paris" first, then "France" as fallback.
+const COUNTRY_NAMES = new Set([
+  "france", "germany", "deutschland", "uk", "united kingdom", "great britain",
+  "england", "scotland", "wales", "ireland", "usa", "united states", "canada",
+  "spain", "espana", "españa", "italy", "italia", "netherlands", "holland",
+  "belgium", "belgique", "belgie", "switzerland", "suisse", "schweiz",
+  "sweden", "sverige", "norway", "norge", "denmark", "finland", "suomi",
+  "austria", "österreich", "osterreich", "portugal", "greece", "grece", "grèce",
+  "romania", "turkey", "turquie", "ukraine", "poland", "polska", "russia",
+  "czech", "czechia", "hungary", "slovakia", "bulgaria", "serbia", "croatia",
+  "slovenia", "lithuania", "latvia", "estonia", "belarus", "moldova",
+  "brazil", "brasil", "mexico", "méxico", "argentina", "colombia", "chile",
+  "peru", "perú", "venezuela", "ecuador", "uruguay", "bolivia", "paraguay", "cuba",
+  "india", "china", "japan", "south korea", "taiwan", "vietnam", "philippines",
+  "indonesia", "malaysia", "singapore", "thailand", "bangladesh", "pakistan",
+  "iran", "iraq", "israel", "saudi arabia", "jordan", "lebanon", "nepal",
+  "sri lanka", "hong kong", "myanmar", "uzbekistan", "kazakhstan", "armenia",
+  "azerbaijan", "south africa", "nigeria", "egypt", "kenya", "ghana", "ethiopia",
+  "tanzania", "cameroon", "senegal", "sénégal", "morocco", "maroc", "algeria",
+  "algérie", "algerie", "tunisia", "tunisie", "rwanda", "zimbabwe",
+  "australia", "new zealand",
+]);
+
+const isLikelyCountry = (part: string): boolean => COUNTRY_NAMES.has(part.toLowerCase().trim());
+
 // @-handle strings like "@paris" or "@berlin" — strip @ and geocode the remainder.
 // Caches result under the original key (e.g. "@paris" → same coords as "paris").
 const _resolveAtHandle = async (
@@ -260,15 +286,23 @@ const _resolveAtHandle = async (
 };
 
 // Multi-location strings like "DEL/BLR/SF" or "NYC / LON" — try each part in order.
+// Country-only parts (e.g. "France" in "France / Paris") are deprioritized: cities are tried
+// first so "France / Paris" resolves to Paris rather than France's geographic center.
 // Caches the full original key once a valid result is found.
 const _resolveMultiLocation = async (
   location: string,
   originalKey: string,
 ): Promise<[number, number] | null> => {
-  const parts = location
+  const rawParts = location
     .split("/")
     .map((s) => s.trim())
     .filter((s) => isGeocodeableLocation(s));
+
+  // Non-country parts first, country-only parts as fallback.
+  const parts = [
+    ...rawParts.filter((p) => !isLikelyCountry(p)),
+    ...rawParts.filter((p) => isLikelyCountry(p)),
+  ];
 
   // Batch-read all parts in one DB round-trip instead of sequential reads per part.
   const partKeys = parts.map((p) => p.toLowerCase());

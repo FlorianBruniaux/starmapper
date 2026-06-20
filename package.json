@@ -71,7 +71,9 @@
     "auto-index": "sh -c 'set -a && . .env.local && set +a && tsx scripts/ops/auto-index.ts \"$@\"' _",
     "auto-index:local": "sh -c 'set -a && . .env.local && set +a && tsx scripts/ops/auto-index.ts --local \"$@\"' _",
     "setup:mvs": "sh -c 'set -a && . .env.local && set +a && DATABASE_URL=$DATABASE_URL_LOCAL tsx scripts/db/setup-mvs.ts'",
-    "setup:mvs:prod": "sh -c 'set -a && . .env.local && set +a && tsx scripts/db/setup-mvs.ts'"
+    "setup:mvs:prod": "sh -c 'set -a && . .env.local && set +a && tsx scripts/db/setup-mvs.ts'",
+    "audit:geocache": "sh -c 'set -a && . .env.local && set +a && DATABASE_DRIVER=standard DATABASE_URL=$DATABASE_URL_LOCAL tsx scripts/audit/audit-geocache-integrity.ts \"$@\"' _",
+    "audit:geocache:prod": "sh -c 'set -a && . .env.local && set +a && DATABASE_DRIVER=standard DATABASE_URL=$DATABASE_URL tsx scripts/audit/audit-geocache-integrity.ts \"$@\"' _"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",
