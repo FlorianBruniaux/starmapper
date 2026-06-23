@@ -99,6 +99,7 @@ cyber-defense-*.md
 # Analysis/audit artifacts
 dep-scope-report.md
 vercel-logs.txt
+geocache-audit-report.json
 
 # One-shot repo audit pipeline (The Product Group live, not part of StarMapper)
 scripts/audit-repos/

@@ -51,6 +51,7 @@ SKIP_FOLLOWERS=false
 # follower_cache should be refreshed. E.g. REFRESH_FOLLOWERS=FlorianBruniaux
 # Can be set in .env.local or passed inline: REFRESH_FOLLOWERS=X make maintenance
 REFRESH_FOLLOWERS="${REFRESH_FOLLOWERS:-}"
+REFRESH_CONTRIBUTORS="${REFRESH_CONTRIBUTORS:-}"
 
 for arg in "$@"; do
   case "$arg" in
