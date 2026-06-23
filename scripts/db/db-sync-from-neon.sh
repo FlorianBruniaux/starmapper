@@ -2,7 +2,7 @@
 # db-sync-from-neon.sh — Neon prod → local Docker
 #
 # Syncs production data to local for dev/testing.
-# NOT synced: geocache (already seeded locally with 51k entries).
+# NOT synced: geocache (already seeded locally with 51k entries), api_key (prod credentials must not land on dev laptops).
 #
 # Usage:
 #   ./scripts/db-sync-from-neon.sh "$NEON_URL" [options]
@@ -33,7 +33,7 @@ fi
 
 # ── Parse options ─────────────────────────────────────────────────────────────
 LIMIT=""
-TABLES="github_user,star_event,badge_cache,stargazer_cache,follower_cache,dependents_cache,api_key,news"
+TABLES="github_user,star_event,badge_cache,stargazer_cache,follower_cache,dependents_cache,news"
 REPO=""
 
 shift || true

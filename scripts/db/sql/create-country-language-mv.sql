@@ -10,6 +10,8 @@
 -- Run once manually on each DB instance (local + prod).
 -- UNIQUE INDEX on (country, lang) is mandatory for REFRESH CONCURRENTLY.
 
+SET statement_timeout = 0;
+
 CREATE MATERIALIZED VIEW country_language_stats_mv AS
   SELECT
     "countryNormalized" AS country,

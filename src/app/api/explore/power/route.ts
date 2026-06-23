@@ -85,6 +85,12 @@ export const GET = async (req: NextRequest) => {
       { headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600" } },
     );
   } catch (err) {
+    if (err instanceof Error && err.message.includes("42P01")) {
+      return NextResponse.json(
+        { items: [], total: 0, page, pageSize: size, nextCursor: null } satisfies PowerResponse,
+        { status: 503, headers: { "Retry-After": "60" } },
+      );
+    }
     logError("explore/power", err);
     return jsonError("internal", 500);
   }

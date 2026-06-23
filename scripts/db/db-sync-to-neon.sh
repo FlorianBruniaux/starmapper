@@ -37,6 +37,11 @@ echo "  Local: $LOCAL_URL"
 echo "  Neon:  ${NEON_URL:0:50}..."
 echo ""
 
+if [[ -t 0 ]]; then
+  read -r -p "⚠️  This will WRITE to Neon prod. Continue? [y/N] " _confirm
+  [[ "$_confirm" =~ ^[Yy]$ ]] || { echo "Aborted."; exit 0; }
+fi
+
 # github_user column list — single source of truth shared by the local export AND
 # the Neon \copy. Both MUST use the same order: \copy ... CSV HEADER imports
 # POSITIONALLY (HEADER only skips the first line, it does not match by name), so a

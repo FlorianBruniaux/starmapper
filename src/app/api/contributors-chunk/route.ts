@@ -18,6 +18,8 @@ import { hashApiKey } from "@/lib/api-key";
 import { defineRoute } from "@/lib/define-route";
 import { contributorsChunkSchema } from "@/schemas/contributors-chunk";
 
+export const maxDuration = 60;
+
 export type ContributorPoint = {
   login: string;
   contributions: number;

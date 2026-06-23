@@ -13,6 +13,8 @@ import { hashApiKey } from "@/lib/api-key";
 import { defineRoute } from "@/lib/define-route";
 import { followersChunkSchema } from "@/schemas/followers-chunk";
 
+export const maxDuration = 60;
+
 export type FollowerPoint = {
   login: string;
   name: string | null;

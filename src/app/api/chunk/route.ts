@@ -15,6 +15,8 @@ import { hashApiKey } from "@/lib/api-key";
 import { defineRoute } from "@/lib/define-route";
 import { chunkSchema } from "@/schemas/chunk";
 
+export const maxDuration = 60;
+
 export type StargazerPoint = {
   login: string;
   name: string | null;

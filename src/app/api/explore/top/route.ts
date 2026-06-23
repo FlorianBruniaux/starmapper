@@ -94,6 +94,7 @@ export const GET = async (req: NextRequest) => {
         ? prisma.$queryRaw<{ cnt: bigint }[]>`
             SELECT cnt FROM country_stats_mv WHERE LOWER(country) = LOWER(${country})
           `.then((rows) => Number(rows[0]?.cnt ?? 0))
+          .catch(() => prisma.gitHubUser.count({ where }))
         : isFiltered
         ? prisma.gitHubUser.count({ where })
         : prisma.$queryRaw<{ n: bigint }[]>`
