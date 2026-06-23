@@ -120,7 +120,7 @@
     "prisma": "^7.8.0",
     "tailwindcss": "^4.3.0",
     "tsx": "^4.22.4",
-    "typescript": "^5",
+    "typescript": "^6",
     "typescript-eslint": "^8.61.1",
     "vitest": "^4.1.9"
   }
