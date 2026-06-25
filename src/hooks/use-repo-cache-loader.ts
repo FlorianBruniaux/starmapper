@@ -171,20 +171,24 @@ export const useRepoCacheLoader = ({
     const ri = repoInfoRef.current;
     (async () => {
       try {
-        await fetch("/api/badge-update", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            owner,
-            repo,
-            mappedCount: local.points.length,
-            countryCount: countrySet.size,
-            totalCount: local.totalCount,
-            ...(ri?.forksCount !== undefined && { forksCount: ri.forksCount }),
-            ...(ri?.watchersCount !== undefined && { watchersCount: ri.watchersCount }),
+        // badge-update and stats are independent — fire both in parallel so the stats
+        // fetch does not have to wait for badge-update to complete first.
+        const [, statsRes] = await Promise.all([
+          fetch("/api/badge-update", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              owner,
+              repo,
+              mappedCount: local.points.length,
+              countryCount: countrySet.size,
+              totalCount: local.totalCount,
+              ...(ri?.forksCount !== undefined && { forksCount: ri.forksCount }),
+              ...(ri?.watchersCount !== undefined && { watchersCount: ri.watchersCount }),
+            }),
           }),
-        });
-        const statsRes = await fetch(`/api/stats/${owner}/${repo}`);
+          fetch(`/api/stats/${owner}/${repo}`),
+        ]);
         const data = statsRes.ok ? await statsRes.json() : null;
         if (data) setServerStats(data);
       } catch { /* fire-and-forget */ }

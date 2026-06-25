@@ -52,6 +52,8 @@ type Props = {
   owner: string;
   repo: string;
   initialRepoInfo: RepoInfo | null;
+  /** Server-prefetched stats — avoids a client-side fetch on first paint for repos already in cache. */
+  initialStats?: RepoStats | null;
 };
 
 const TOKEN_REQUIRED_STARS = 50_000;
@@ -70,7 +72,7 @@ const estimateScan = (stars: number): TimeEstimate => {
   return { min: Math.round(minS / 3600 * 10) / 10, max: Math.round(maxS / 3600 * 10) / 10, unit: "h", keepOpen: true };
 }
 
-export default function MapPageClient({ owner, repo, initialRepoInfo }: Props) {
+export default function MapPageClient({ owner, repo, initialRepoInfo, initialStats = null }: Props) {
   const { theme } = useTheme();
   const JAWG_TOKEN = process.env.NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN ?? "";
   const mapStyleUrl = theme === "light" ? MAP_STYLE_LIGHT(JAWG_TOKEN) : MAP_STYLE_DARK(JAWG_TOKEN);
@@ -91,7 +93,7 @@ export default function MapPageClient({ owner, repo, initialRepoInfo }: Props) {
   const [findStatus, setFindStatus] = useState<"idle" | "searching" | "found" | "no-location" | "not-found">("idle");
   const [cachedAt, setCachedAt] = useState<number | null>(null);
   const [latestStarredAt, setLatestStarredAt] = useState<string | null>(null);
-  const [serverStats, setServerStats] = useState<RepoStats | null>(null);
+  const [serverStats, setServerStats] = useState<RepoStats | null>(initialStats);
   const [organicData, setOrganicData] = useState<RepoOrganic | null>(null);
   const [statsOpen, setStatsOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);

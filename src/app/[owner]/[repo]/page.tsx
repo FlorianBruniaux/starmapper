@@ -4,6 +4,8 @@
 import { Suspense } from "react";
 import { cacheLife, cacheTag } from "next/cache";
 import MapPageClient from "./page.client";
+import LoadingFallback from "./loading";
+import type { RepoStats } from "@/app/api/stats/[owner]/[repo]/route";
 
 type RepoInfo = {
   name: string;
@@ -33,15 +35,42 @@ const fetchRepoInfo = async (owner: string, repo: string): Promise<RepoInfo | nu
   }
 };
 
+const fetchStats = async (owner: string, repo: string): Promise<RepoStats | null> => {
+  "use cache";
+  cacheTag(`repo-stats-${owner}-${repo}`);
+  cacheLife("minutes");
+  try {
+    const res = await fetch(
+      `${APP_URL}/api/stats/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`,
+    );
+    if (!res.ok) return null;
+    return res.json() as Promise<RepoStats>;
+  } catch {
+    return null;
+  }
+};
+
 const MapContent = async ({ params }: { params: Promise<{ owner: string; repo: string }> }) => {
   const { owner, repo } = await params;
-  const initialRepoInfo = await fetchRepoInfo(owner, repo);
-  return <MapPageClient owner={owner} repo={repo} initialRepoInfo={initialRepoInfo} />;
+  // Fire both fetches in parallel — stats can be a slow DB query on large repos,
+  // starting it server-side avoids the client-side waterfall entirely.
+  const [initialRepoInfo, initialStats] = await Promise.all([
+    fetchRepoInfo(owner, repo),
+    fetchStats(owner, repo),
+  ]);
+  return (
+    <MapPageClient
+      owner={owner}
+      repo={repo}
+      initialRepoInfo={initialRepoInfo}
+      initialStats={initialStats}
+    />
+  );
 };
 
 export default function MapPage({ params }: { params: Promise<{ owner: string; repo: string }> }) {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<LoadingFallback />}>
       <MapContent params={params} />
     </Suspense>
   );
