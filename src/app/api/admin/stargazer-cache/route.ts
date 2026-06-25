@@ -14,6 +14,7 @@ import { safeEqual } from "@/lib/api-token";
 import { jsonError, logError } from "@/lib/api-helpers";
 import { OWNER_REPO_RE } from "@/lib/api-validation";
 import { MAX_CACHEABLE_STARS } from "@/schemas/stargazer-cache";
+import { getRedis } from "@/lib/github-auth";
 
 export const maxDuration = 60;
 
@@ -58,6 +59,11 @@ export const POST = async (req: NextRequest): Promise<NextResponse> => {
       create: { owner, repo, points: pointsGz, unmapped: unmappedGz, totalCount, scannedAt: new Date() },
       update: { points: pointsGz, unmapped: unmappedGz, totalCount, scannedAt: new Date() },
     });
+
+    // Invalidate the mcp:points Redis L1 cache — fire-and-forget
+    // owner/repo are already lowercase-normalized by the zod schema transform above
+    const rKey = `mcp:points:v1:${owner}:${repo}`;
+    getRedis()?.del(rKey).catch(() => {});
 
     console.log(`[admin/stargazer-cache] wrote ${owner}/${repo} — ${totalCount} stars`);
     return NextResponse.json({ ok: true });

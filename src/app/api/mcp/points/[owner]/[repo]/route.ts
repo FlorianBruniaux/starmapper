@@ -18,6 +18,7 @@ import { prisma } from "@/lib/db";
 import { validateOwnerRepo } from "@/lib/api-validation";
 import { jsonError, logError } from "@/lib/api-helpers";
 import { decompressGzBase64 } from "@/lib/compression";
+import { getRedis } from "@/lib/github-auth";
 
 const POINTS_CAP = 10_000;
 
@@ -47,6 +48,11 @@ const samplePoints = (all: StoredPoint[], cap: number): StoredPoint[] => {
   return Array.from({ length: cap }, (_, i) => all[Math.floor(i * step)]);
 };
 
+const REDIS_TTL = 21_600; // 6 h
+
+const mcpRedisKey = (owner: string, repo: string) =>
+  `mcp:points:v1:${owner.toLowerCase()}:${repo.toLowerCase()}`;
+
 export const GET = async (
   _req: NextRequest,
   { params }: { params: Promise<{ owner: string; repo: string }> },
@@ -54,6 +60,27 @@ export const GET = async (
   const { owner, repo } = await params;
   const key = validateOwnerRepo(owner, repo);
   if (!key) return jsonError("invalid_params", 400);
+
+  const rKey = mcpRedisKey(owner, repo);
+
+  // L1: Redis cache — skip if Redis is not configured
+  try {
+    const redis = getRedis();
+    if (redis) {
+      const hit = await redis.get<string>(rKey);
+      if (hit) {
+        return new NextResponse(hit, {
+          headers: {
+            "Content-Type": "application/json",
+            "Cache-Control": "public, s-maxage=300, stale-while-revalidate=3600",
+            "X-Cache": "HIT",
+          },
+        });
+      }
+    }
+  } catch {
+    // Redis unavailable — fall through to DB
+  }
 
   try {
     const cached = await prisma.stargazerCache.findUnique({
@@ -89,8 +116,20 @@ export const GET = async (
       scannedAt: cached.scannedAt.toISOString(),
     };
 
-    return NextResponse.json(response, {
-      headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=3600" },
+    const payload = JSON.stringify(response);
+
+    // Fire-and-forget write to Redis L1 — never blocks the response
+    const redis = getRedis();
+    if (redis) {
+      redis.setex(rKey, REDIS_TTL, payload).catch(() => {});
+    }
+
+    return new NextResponse(payload, {
+      headers: {
+        "Content-Type": "application/json",
+        "Cache-Control": "public, s-maxage=300, stale-while-revalidate=3600",
+        "X-Cache": "MISS",
+      },
     });
   } catch (err) {
     logError("api/mcp/points GET", err);

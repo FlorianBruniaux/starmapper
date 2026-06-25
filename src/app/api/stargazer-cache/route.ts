@@ -9,6 +9,7 @@ import { jsonError, logError } from "@/lib/api-helpers";
 import { verifyToken, COOKIE_NAME } from "@/lib/api-token";
 import { defineRoute } from "@/lib/define-route";
 import { stargazerCacheEnvelopeSchema, MAX_CACHEABLE_STARS } from "@/schemas/stargazer-cache";
+import { getRedis } from "@/lib/github-auth";
 
 const resolvePatLogin = async (pat: string): Promise<string | null> => {
   try {
@@ -119,6 +120,10 @@ export const POST = defineRoute(stargazerCacheEnvelopeSchema, async (req, body) 
         ...(indexedBy && { indexedBy }),
       },
     });
+
+    // Invalidate the mcp:points Redis L1 cache — fire-and-forget
+    const rKey = `mcp:points:v1:${body.owner}:${body.repo}`;
+    getRedis()?.del(rKey).catch(() => {});
 
     return NextResponse.json({ ok: true });
   } catch (err) {
