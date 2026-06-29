@@ -1,0 +1,27 @@
+scripts/lib/db.ts
+  s_e89bea1c69f510::t_3cbf5d151a91fd 1-46
+src/lib/db.ts
+  s_e89bea1c69f510::t_ec15078ed5f70e 25-29,40-41
+scripts/backfill/backfill-user-top-repos.ts
+  s_e89bea1c69f510::t_5974ff3bbcb2da 241-242
+  s_e89bea1c69f510::t_b11e4a6d3ac030 86
+  s_e89bea1c69f510::t_3ac4315569c870 36
+scripts/db/db-sync-from-neon.sh
+  s_e89bea1c69f510::t_52821ac012ba43 34-42
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "d875acaa7e22e0bf7a3e17965ab2de4df90d2cba",
+  "prompts": {},
+  "sessions": {
+    "s_e89bea1c69f510": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ebf73f13-e39a-4554-a108-204d5c1cf295",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Florian BRUNIAUX <florian@bruniaux.com>"
+    }
+  }
+}
