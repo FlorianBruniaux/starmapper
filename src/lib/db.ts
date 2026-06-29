@@ -22,7 +22,11 @@ const _require = createRequire(import.meta.url);
  * @prisma/adapter-pg stays as require() — only used when DATABASE_DRIVER=standard (never on Vercel).
  */
 const createPrismaClient = () => {
-  if (process.env.DATABASE_DRIVER === "standard") {
+  // pgbouncer=true signals a Neon pooler URL — PgBouncer rejects TCP startup parameters
+  // like statement_timeout. Force the HTTP adapter regardless of DATABASE_DRIVER.
+  const isNeonPooler = process.env.DATABASE_URL?.includes("pgbouncer=true") ?? false;
+
+  if (process.env.DATABASE_DRIVER === "standard" && !isNeonPooler) {
     const { Pool } = _require("pg") as typeof import("pg");
     const { PrismaPg } = _require("@prisma/adapter-pg") as typeof import("@prisma/adapter-pg");
     const pool = new Pool({
@@ -33,7 +37,8 @@ const createPrismaClient = () => {
     return new PrismaClient({ adapter, log: [{ emit: "event", level: "query" }] });
   }
 
-  // Default: Neon serverless adapter (HTTP-based, no persistent TCP connection)
+  // Default: Neon serverless adapter (HTTP-based, no persistent TCP connection).
+  // Also used when DATABASE_DRIVER=standard but DATABASE_URL targets the Neon pooler.
   const adapter = new PrismaNeon({ connectionString: process.env.DATABASE_URL });
   return new PrismaClient({ adapter, log: [{ emit: "event", level: "query" }] });
 };

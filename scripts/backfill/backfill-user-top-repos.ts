@@ -33,9 +33,7 @@
 import { readFileSync } from "fs";
 import { parseArgs } from "node:util";
 import { join } from "path";
-import { PrismaClient } from "@prisma/client";
-import { PrismaPg } from "@prisma/adapter-pg";
-import pg from "pg";
+import { createScriptPrisma } from "../lib/db";
 
 // ─── Load .env.local ──────────────────────────────────────────────────────────
 
@@ -85,14 +83,7 @@ const TOKEN_INDEX   = parseInt(argv.token, 10);
 const CUTOFF_DATE = new Date();
 CUTOFF_DATE.setDate(CUTOFF_DATE.getDate() - 30);
 
-const DATABASE_URL = process.env.DATABASE_URL ?? "";
-if (!DATABASE_URL) {
-  console.error("Error: DATABASE_URL is not set.");
-  process.exit(1);
-}
-
-const pool = new pg.Pool({ connectionString: DATABASE_URL, options: "-c statement_timeout=0" });
-const prisma = new PrismaClient({ adapter: new PrismaPg(pool) });
+const prisma = createScriptPrisma();
 
 // ─── Multi-token pool (identical to collect-user-repos.ts) ────────────────────
 
@@ -247,7 +238,8 @@ const main = async () => {
   console.log(`  Dry run:        ${DRY_RUN}`);
   console.log(`  Skip cutoff:    ${CUTOFF_DATE.toISOString().slice(0, 10)} (30d — unless --force)`);
   console.log(`  Tokens:         ${TOKEN_POOL.length} (${TOKEN_POOL.map((t) => t.token.slice(0, 8) + "...").join(", ")})`);
-  console.log(`  DB:             ${DATABASE_URL.split("@")[1] ?? DATABASE_URL}`);
+  const dbDisplay = (process.env.DATABASE_URL ?? "").split("@")[1] ?? process.env.DATABASE_URL ?? "";
+  console.log(`  DB:             ${dbDisplay}`);
   console.log("");
 
   // 1. Fetch users from DB
