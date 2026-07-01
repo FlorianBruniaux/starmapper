@@ -9,6 +9,8 @@ import { normalizeOwnerRepo, OWNER_REPO_RE } from "@/lib/api-validation";
 import { jsonError, logError } from "@/lib/api-helpers";
 import type { OrganicTier } from "@/lib/organic-score";
 
+export const maxDuration = 30;
+
 export type RepoOrganic = {
   score: number | null;
   tier: OrganicTier;
@@ -127,51 +129,58 @@ export const GET = async (
       mappedCount = badgeRow.mappedCount ?? 0;
     }
 
-    // 3. Location + company + power queries — also JOIN-heavy; catch timeout independently
+    // 3. Location + company + power queries — independent JOINs; one timing out
+    // (e.g. power_users_mv scanning past its cnt-desc index with no cross-repo hit
+    // for a niche repo) must not blank out the other two, which may already have
+    // resolved successfully. Each catches its own Neon timeout instead of sharing
+    // a single Promise.all that rejects on the first failure.
+    const queryOrEmpty = async <T>(label: string, fn: () => Promise<T[]>): Promise<T[]> => {
+      try {
+        return await fn();
+      } catch (err) {
+        if (isNeonTimeout(err)) {
+          logError(`stats/${label} timeout`, { owner: key.owner, repo: key.repo });
+          return [];
+        }
+        throw err;
+      }
+    };
+
     let locationRows: { location: string; cnt: bigint }[] = [];
     let companyRows: { company: string; cnt: bigint }[] = [];
     let crossRepoGroups: { login: string; cnt: bigint }[] = [];
 
     if (!joinTimedOut) {
-      try {
-        [locationRows, companyRows, crossRepoGroups] = await Promise.all([
-          prisma.$queryRaw<{ location: string; cnt: bigint }[]>`
-            SELECT u.location, COUNT(*) AS cnt
-            FROM star_event se
-            JOIN github_user u USING (login)
-            WHERE se.owner = ${key.owner} AND se.repo = ${key.repo}
-              AND u.location IS NOT NULL
-            GROUP BY u.location
-            ORDER BY cnt DESC
-            LIMIT 200
-          `,
-          prisma.$queryRaw<{ company: string; cnt: bigint }[]>`
-            SELECT u.company, COUNT(*) AS cnt
-            FROM star_event se
-            JOIN github_user u USING (login)
-            WHERE se.owner = ${key.owner} AND se.repo = ${key.repo}
-              AND u.company IS NOT NULL
-            GROUP BY u.company
-            ORDER BY cnt DESC
-            LIMIT 50
-          `,
-          prisma.$queryRaw<{ login: string; cnt: bigint }[]>`
-            SELECT mv.login, mv.cnt
-            FROM power_users_mv mv
-            INNER JOIN star_event se ON se.login = mv.login
-            WHERE se.owner = ${key.owner} AND se.repo = ${key.repo}
-            ORDER BY mv.cnt DESC
-            LIMIT 20
-          `,
-        ]);
-      } catch (err) {
-        if (isNeonTimeout(err)) {
-          logError("stats/location timeout", { owner: key.owner, repo: key.repo });
-          // Keep empty arrays — partial response
-        } else {
-          throw err;
-        }
-      }
+      [locationRows, companyRows, crossRepoGroups] = await Promise.all([
+        queryOrEmpty("location", () => prisma.$queryRaw<{ location: string; cnt: bigint }[]>`
+          SELECT u.location, COUNT(*) AS cnt
+          FROM star_event se
+          JOIN github_user u USING (login)
+          WHERE se.owner = ${key.owner} AND se.repo = ${key.repo}
+            AND u.location IS NOT NULL
+          GROUP BY u.location
+          ORDER BY cnt DESC
+          LIMIT 200
+        `),
+        queryOrEmpty("company", () => prisma.$queryRaw<{ company: string; cnt: bigint }[]>`
+          SELECT u.company, COUNT(*) AS cnt
+          FROM star_event se
+          JOIN github_user u USING (login)
+          WHERE se.owner = ${key.owner} AND se.repo = ${key.repo}
+            AND u.company IS NOT NULL
+          GROUP BY u.company
+          ORDER BY cnt DESC
+          LIMIT 50
+        `),
+        queryOrEmpty("power-users", () => prisma.$queryRaw<{ login: string; cnt: bigint }[]>`
+          SELECT mv.login, mv.cnt
+          FROM power_users_mv mv
+          INNER JOIN star_event se ON se.login = mv.login
+          WHERE se.owner = ${key.owner} AND se.repo = ${key.repo}
+          ORDER BY mv.cnt DESC
+          LIMIT 20
+        `),
+      ]);
     }
 
     const countryCount = new Map<string, number>();

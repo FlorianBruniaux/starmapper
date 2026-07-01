@@ -5,6 +5,19 @@ Versioning: Semantic Versioning (MAJOR.MINOR.PATCH)
 
 ---
 
+## [0.6.10] (2026-07-01)
+
+### Fix: intermittent timeouts and 500s on large-repo stat endpoints
+
+`/api/stats`, `/api/mcp/influential` and `/api/mcp/organic-score` were unreliable on repos with tens of thousands of stargazers (vercel/next.js and similar). Root cause: a stale Postgres planner estimate on `star_event(owner, repo)` (13 rows estimated vs 58,403 actual, reproduced on a prod-synced copy) pushed the planner toward a nested-loop-per-stargazer join instead of starting from the selective `github_user.followers` index. `/api/mcp/influential` had no timeout handling for this and returned a hard 500; the other two raced Vercel's function timeout with no margin, matching the reported "timeout, then fine on retry" pattern.
+
+- `scripts/db/sql/create-star-event-owner-repo-stats.sql`: extended statistics (`ndistinct`, `dependencies`) on `star_event(owner, repo)`, applied to production. Verified locally: the influential top-followers query dropped from 1073ms to 34ms on the same repo, no query rewrite needed.
+- `/api/mcp/influential` now catches Neon's statement timeout (P2010/P2024) and returns `{users: [], timedOut: true}` at 200, matching the pattern already used by `/api/stats/.../geo-velocity`.
+- `maxDuration = 30` added to `/api/stats`, `/api/mcp/influential` and `/api/mcp/organic-score`, matching `geo-velocity`, so the app-level catch always has time to respond instead of racing the platform's default timeout.
+- `/api/stats`: the location, company and cross-repo power-user queries no longer share one `Promise.all`. A slow power-user lookup (a niche repo whose stargazers never overlap with the cross-repo `power_users_mv`) was wiping out location and company data that had already resolved successfully.
+
+---
+
 ## [0.6.9] (2026-06-18)
 
 ### MCP server expanded: 10 tools to 15

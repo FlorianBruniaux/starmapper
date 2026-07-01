@@ -150,5 +150,5 @@ make index-repo REPO=owner/repo  # Index a single specific repo
 
 ---
 
-*Last updated: 2026-06-18*
-*Version: 0.6.9*
+*Last updated: 2026-07-01*
+*Version: 0.6.10*

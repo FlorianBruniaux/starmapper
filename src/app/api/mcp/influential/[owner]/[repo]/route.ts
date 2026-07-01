@@ -12,6 +12,8 @@ import { prisma } from "@/lib/db";
 import { validateOwnerRepo } from "@/lib/api-validation";
 import { jsonError, logError } from "@/lib/api-helpers";
 
+export const maxDuration = 30;
+
 export type McpInfluentialUser = {
   login: string;
   name: string | null;
@@ -25,6 +27,7 @@ export type McpInfluentialResponse = {
   users: McpInfluentialUser[];
   total: number;
   minFollowers: number;
+  timedOut?: boolean;
 };
 
 const DEFAULT_MIN_FOLLOWERS = 500;
@@ -45,22 +48,38 @@ export const GET = async (
   }
 
   try {
-    const rows = await prisma.$queryRaw<{
+    let rows: {
       login: string;
       name: string | null;
       followers: number;
       location: string | null;
-    }[]>`
-      SELECT u.login, u.name, u.followers, u.location
-      FROM star_event se
-      JOIN github_user u USING (login)
-      WHERE se.owner = ${key.owner}
-        AND se.repo  = ${key.repo}
-        AND u.followers >= ${minFollowers}
-        AND u."dataVersion" >= 1
-      ORDER BY u.followers DESC
-      LIMIT ${RESULT_CAP}
-    `;
+    }[];
+
+    try {
+      rows = await prisma.$queryRaw`
+        SELECT u.login, u.name, u.followers, u.location
+        FROM star_event se
+        JOIN github_user u USING (login)
+        WHERE se.owner = ${key.owner}
+          AND se.repo  = ${key.repo}
+          AND u.followers >= ${minFollowers}
+          AND u."dataVersion" >= 1
+        ORDER BY u.followers DESC
+        LIMIT ${RESULT_CAP}
+      `;
+    } catch (err) {
+      // P2010 = raw query failed (statement_timeout from Neon)
+      // P2024 = connection pool exhausted (burst traffic before index exists)
+      const isOverload =
+        err != null &&
+        typeof err === "object" &&
+        "code" in err &&
+        (err.code === "P2010" || err.code === "P2024");
+      if (!isOverload) throw err;
+      logError("mcp/influential timeout", { owner: key.owner, repo: key.repo });
+      const response: McpInfluentialResponse = { users: [], total: 0, minFollowers, timedOut: true };
+      return NextResponse.json(response, { status: 200, headers: { "Cache-Control": "no-store" } });
+    }
 
     const users: McpInfluentialUser[] = rows.map((u) => ({
       login: u.login,

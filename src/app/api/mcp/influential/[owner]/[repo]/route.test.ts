@@ -104,4 +104,26 @@ describe("GET /api/mcp/influential/[owner]/[repo]", () => {
     const res = await GET(makeRequest("vercel", "next.js", "500"), makeParams());
     expect(res.status).toBe(500);
   });
+
+  test("degrades to 200 with timedOut when the query hits Neon's statement_timeout (P2010)", async () => {
+    const { prisma } = await import("@/lib/db");
+    vi.mocked(prisma.$queryRaw).mockRejectedValue(
+      Object.assign(new Error("Raw query failed"), { code: "P2010" })
+    );
+    const res = await GET(makeRequest("vercel", "next.js", "500"), makeParams());
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body).toEqual({ users: [], total: 0, minFollowers: 500, timedOut: true });
+  });
+
+  test("degrades to 200 with timedOut when the connection pool is exhausted (P2024)", async () => {
+    const { prisma } = await import("@/lib/db");
+    vi.mocked(prisma.$queryRaw).mockRejectedValue(
+      Object.assign(new Error("Connection pool timeout"), { code: "P2024" })
+    );
+    const res = await GET(makeRequest("vercel", "next.js", "500"), makeParams());
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.timedOut).toBe(true);
+  });
 });

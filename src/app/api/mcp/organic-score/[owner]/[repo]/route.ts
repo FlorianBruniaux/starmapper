@@ -13,6 +13,8 @@ import { computeOrganicScore, tierLabel, ORGANIC_WEIGHTS, ORGANIC_CORPUS_ACCURAC
 import { validateOwnerRepo } from "@/lib/api-validation";
 import { jsonError, logError } from "@/lib/api-helpers";
 
+export const maxDuration = 30;
+
 export type McpOrganicScoreResponse = {
   score: number | null;
   tier: string;
