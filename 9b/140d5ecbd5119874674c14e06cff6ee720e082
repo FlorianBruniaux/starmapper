@@ -1,0 +1,35 @@
+CHANGELOG.md
+  s_e92e4423727ec8::t_20b11f6bb30009 8-20
+CLAUDE.md
+  s_e92e4423727ec8::t_ea98762123237e 153-154
+src/app/api/mcp/organic-score/[owner]/[repo]/route.ts
+  s_e92e4423727ec8::t_a9d537fc391d8b 16-17
+scripts/db/sql/create-star-event-owner-repo-stats.sql
+  s_e92e4423727ec8::t_9c66830698ee90 1-22
+src/app/api/mcp/influential/[owner]/[repo]/route.ts
+  s_e92e4423727ec8::t_fed2180b45f36e 15-16,30
+  s_e92e4423727ec8::t_1ba7df9e8f269e 51,56-82
+package.json
+  s_e92e4423727ec8::t_2ccc9274cb0a27 3
+src/app/api/mcp/influential/[owner]/[repo]/route.test.ts
+  s_e92e4423727ec8::t_2d1dbc9f736161 107-128
+src/app/api/stats/[owner]/[repo]/route.ts
+  s_e92e4423727ec8::t_90b9fdb6d6c572 132-137,139,142-143,145,147-183
+  s_e92e4423727ec8::t_67eee288fbbc11 12-13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.5",
+  "base_commit_sha": "9b140d5ecbd5119874674c14e06cff6ee720e082",
+  "prompts": {},
+  "sessions": {
+    "s_e92e4423727ec8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "29cdd1e2-652c-4266-832d-5011b89192fa",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "Florian BRUNIAUX <florian@bruniaux.com>"
+    }
+  }
+}
