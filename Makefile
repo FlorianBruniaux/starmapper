@@ -93,25 +93,9 @@ refresh-all-prod:
 	$(ENV) psql "$$DATABASE_URL" -c "SET statement_timeout = 0; REFRESH MATERIALIZED VIEW country_stats_mv; REFRESH MATERIALIZED VIEW power_users_mv; REFRESH MATERIALIZED VIEW company_stats_mv; REFRESH MATERIALIZED VIEW user_repo_count_mv;"'
 
 # Refresh all 8 MVs on Neon prod (CONCURRENTLY = no read lock).
-# Uses direct URL (strips -pooler + pgbouncer param) so PGOPTIONS work.
+# Uses direct URL (strips -pooler + pgbouncer param) via refresh-mvs.sh.
 refresh-mvs:
-	$(ENV) _DIRECT=$$(python3 -c " \
-	  import re, urllib.parse, sys; \
-	  u = urllib.parse.urlparse(sys.argv[1]); \
-	  q = urllib.parse.parse_qs(u.query, keep_blank_values=True); \
-	  q.pop('pgbouncer', None); q.pop('connect_timeout', None); \
-	  host = re.sub(r'-pooler(\.[^:@/]+)', r'\1', u.hostname or ''); \
-	  netloc = u.netloc.replace(u.hostname or '', host); \
-	  print(urllib.parse.urlunparse(u._replace(netloc=netloc, query=urllib.parse.urlencode({k: v[0] for k, v in q.items()})))) \
-	" "$$DATABASE_URL") && psql "$$_DIRECT" -c "SET statement_timeout = 0; \
-	  REFRESH MATERIALIZED VIEW CONCURRENTLY github_user_grid_mv; \
-	  REFRESH MATERIALIZED VIEW CONCURRENTLY country_stats_mv; \
-	  REFRESH MATERIALIZED VIEW CONCURRENTLY power_users_mv; \
-	  REFRESH MATERIALIZED VIEW CONCURRENTLY company_stats_mv; \
-	  REFRESH MATERIALIZED VIEW CONCURRENTLY country_language_stats_mv; \
-	  REFRESH MATERIALIZED VIEW CONCURRENTLY user_repo_count_mv; \
-	  REFRESH MATERIALIZED VIEW CONCURRENTLY trending_repos_mv; \
-	  REFRESH MATERIALIZED VIEW CONCURRENTLY city_stats_mv;"'
+	$(ENV) ./scripts/db/refresh-mvs.sh "$$DATABASE_URL"'
 
 # ─── Backfills ─────────────────────────────────────────────────────────────────
 
