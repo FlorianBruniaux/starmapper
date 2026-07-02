@@ -1,0 +1,21 @@
+scripts/db/refresh-mvs.sh
+  s_e89bea1c69f510::t_06729bde78f721 1-46
+Makefile
+  s_e89bea1c69f510::t_ddbf5dfd765215 96,98
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.8",
+  "base_commit_sha": "cdd983b189673d3a0db4ffc9b16803c317dab872",
+  "prompts": {},
+  "sessions": {
+    "s_e89bea1c69f510": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ebf73f13-e39a-4554-a108-204d5c1cf295",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Florian BRUNIAUX <florian@bruniaux.com>"
+    }
+  }
+}
