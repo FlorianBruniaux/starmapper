@@ -1,0 +1,21 @@
+scripts/db/db-sync-to-neon.sh
+  s_e89bea1c69f510::t_bacf089dfccd8b 32-34,36,40-43
+scripts/db/db-sync-from-neon.sh
+  s_e89bea1c69f510::t_ce146b1ac783b7 34-35,37,41-44
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.8",
+  "base_commit_sha": "7261c8ccb66ffb7489c1b16e829a1d8fdf0dedcd",
+  "prompts": {},
+  "sessions": {
+    "s_e89bea1c69f510": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ebf73f13-e39a-4554-a108-204d5c1cf295",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Florian BRUNIAUX <florian@bruniaux.com>"
+    }
+  }
+}
