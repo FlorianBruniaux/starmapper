@@ -31,13 +31,17 @@ if [[ -z "$NEON_URL" ]]; then
   exit 1
 fi
 
-# psql doesn't support the pgbouncer=true query parameter — strip it
+# Convert Neon pooler URL to direct URL: psql rejects pgbouncer=true (unknown param)
+# and PgBouncer rejects PGOPTIONS startup params. Strip -pooler from hostname too.
 NEON_URL=$(python3 -c "
-import urllib.parse, sys
+import re, urllib.parse, sys
 u = urllib.parse.urlparse(sys.argv[1])
 q = urllib.parse.parse_qs(u.query, keep_blank_values=True)
 q.pop('pgbouncer', None)
-print(urllib.parse.urlunparse(u._replace(query=urllib.parse.urlencode({k: v[0] for k, v in q.items()}))))
+q.pop('connect_timeout', None)
+host = re.sub(r'-pooler(\.[^:@/]+)', r'\1', u.hostname or '')
+netloc = u.netloc.replace(u.hostname or '', host)
+print(urllib.parse.urlunparse(u._replace(netloc=netloc, query=urllib.parse.urlencode({k: v[0] for k, v in q.items()}))))
 " "$NEON_URL")
 
 # ── Parse options ─────────────────────────────────────────────────────────────
