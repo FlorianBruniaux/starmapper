@@ -1,0 +1,38 @@
+scripts/backfill/backfill-contributors.ts
+  s_7a0421a274477f::t_33e6f33f561539 66-68,81-82,85-86,88
+  s_7a0421a274477f::t_eb6ecd89ef1cb8 22
+  s_7a0421a274477f::t_e693d21ffbca53 51
+scripts/backfill/backfill-repo-metrics.ts
+  s_7a0421a274477f::t_68db11fb4251dc 92-96
+  s_7a0421a274477f::t_db000a888a17cc 14,16
+  s_7a0421a274477f::t_c92df53deb9ec5 36,38-49,51-61,65-66
+CHANGELOG.md
+  s_7a0421a274477f::t_c7968bf8d7aa5d 8-19
+scripts/lib/github-token-pool.ts
+  s_7a0421a274477f::t_6f7479567e354f 1-109
+scripts/backfill/backfill-repo-languages.ts
+  s_7a0421a274477f::t_ce226bdb0c7f5c 64-65
+  s_7a0421a274477f::t_f3f051be8bc4c7 76-90,92-96
+  s_7a0421a274477f::t_7788c2ced695eb 25
+scripts/backfill/backfill-organic-score.ts
+  s_7a0421a274477f::t_60d30cc4409c0c 41,44,46
+  s_7a0421a274477f::t_10fec9415e8298 25
+  s_7a0421a274477f::t_40357099cf3592 60,63,65
+  s_7a0421a274477f::t_fecb4319fe974b 19
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "f4f21d729c7c0e82a443ac19a6c1486ca6adc8fb",
+  "prompts": {},
+  "sessions": {
+    "s_7a0421a274477f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "59a9e41c-facc-4a2d-9e4c-67386ed4423b",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Florian BRUNIAUX <florian@bruniaux.com>"
+    }
+  }
+}
