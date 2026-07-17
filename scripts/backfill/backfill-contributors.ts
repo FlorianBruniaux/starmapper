@@ -19,6 +19,7 @@ import { parseArgs } from "node:util";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { Pool } from "pg";
+import { acquireToken, buildTokenPool, makeHeaders, syncTokenFromHeaders } from "../lib/github-token-pool";
 
 // ─── CLI args ─────────────────────────────────────────────────────────────────
 
@@ -47,12 +48,7 @@ const prisma = new PrismaClient({ adapter: new PrismaPg(pool) });
 
 // ─── GitHub fetch ──────────────────────────────────────────────────────────────
 
-const GH_TOKEN = process.env.GITHUB_TOKEN;
-
-const ghHeaders = (): Record<string, string> => ({
-  Accept: "application/vnd.github.v3+json",
-  ...(GH_TOKEN ? { Authorization: `Bearer ${GH_TOKEN}` } : {}),
-});
+const TOKEN_POOL = buildTokenPool();
 
 /**
  * Fetch contributors count for owner/repo.
@@ -67,7 +63,9 @@ const fetchContributorsCount = async (
 ): Promise<number | null> => {
   const url = `https://api.github.com/repos/${owner}/${repo}/contributors?per_page=1&anon=0`;
   try {
-    const res = await fetch(url, { headers: ghHeaders() });
+    const tok = await acquireToken(TOKEN_POOL);
+    const res = await fetch(url, { headers: makeHeaders(tok, { Accept: "application/vnd.github.v3+json" }) });
+    syncTokenFromHeaders(tok, res);
 
     if (res.status === 202) {
       if (retries > 0) {
@@ -80,14 +78,14 @@ const fetchContributorsCount = async (
     if (res.status === 403 || res.status === 429) {
       // 403 is ambiguous: real quota exhaustion (x-ratelimit-remaining: 0) vs the
       // "contributor list too large" forbidden that huge repos (torvalds/linux) return.
-      // Only pause for the former — the latter never succeeds, so skip it immediately.
+      // Real quota → park the token and rotate (acquireToken waits for reset if all are
+      // spent); the "too large" 403 never succeeds, so skip it immediately.
       const remaining = res.headers.get("x-ratelimit-remaining");
       if (remaining === "0" || res.status === 429) {
-        console.warn(`[rate-limit] ${owner}/${repo} — pausing 60s`);
-        await new Promise((r) => setTimeout(r, 60_000));
-      } else {
-        console.warn(`[skip] ${owner}/${repo} — 403 (contributor list too large)`);
+        tok.remaining = 0;
+        return fetchContributorsCount(owner, repo, retries);
       }
+      console.warn(`[skip] ${owner}/${repo} — 403 (contributor list too large)`);
       return null;
     }
 

@@ -22,6 +22,7 @@ import { PrismaClient } from "@prisma/client";
 import { PrismaNeon } from "@prisma/adapter-neon";
 import { PrismaPg } from "@prisma/adapter-pg";
 import pg from "pg";
+import { acquireToken, buildTokenPool, makeHeaders, syncTokenFromHeaders } from "../lib/github-token-pool";
 
 // ─── Load .env.local ──────────────────────────────────────────────────────────
 
@@ -60,8 +61,8 @@ const DB_URL = USE_PROD
 
 if (!DB_URL) { console.error("Error: no DB URL found"); process.exit(1); }
 
-const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
-if (!GITHUB_TOKEN) { console.error("Error: GITHUB_TOKEN not set"); process.exit(1); }
+const TOKEN_POOL = buildTokenPool();
+if (TOKEN_POOL.length === 0) { console.error("Error: GITHUB_TOKEN not set"); process.exit(1); }
 
 // ─── Prisma setup ─────────────────────────────────────────────────────────────
 
@@ -72,27 +73,27 @@ const prisma = USE_PROD
 // ─── GitHub REST ──────────────────────────────────────────────────────────────
 
 const fetchRepoLanguage = async (owner: string, repo: string): Promise<string | null> => {
-  const res = await fetch(`https://api.github.com/repos/${owner}/${repo}`, {
-    headers: {
-      "Authorization": `Bearer ${GITHUB_TOKEN}`,
-      "Accept": "application/vnd.github+json",
-      "User-Agent": "starmapper-backfill/1.0",
-    },
-    signal: AbortSignal.timeout(10_000),
-  });
+  // Rotate through every token on 403/429 before falling back to a reset wait.
+  for (let i = 0; i <= TOKEN_POOL.length; i++) {
+    const tok = await acquireToken(TOKEN_POOL);
+    const res = await fetch(`https://api.github.com/repos/${owner}/${repo}`, {
+      headers: makeHeaders(tok),
+      signal: AbortSignal.timeout(10_000),
+    });
+    syncTokenFromHeaders(tok, res);
 
-  if (res.status === 404) return null; // repo deleted/private
-  if (res.status === 403 || res.status === 429) {
-    const reset = res.headers.get("x-ratelimit-reset");
-    const waitMs = reset ? Math.max(0, Number(reset) * 1000 - Date.now()) + 2000 : 60_000;
-    console.warn(`  [rate-limit] waiting ${Math.round(waitMs / 1000)}s…`);
-    await new Promise<void>((r) => setTimeout(r, waitMs));
-    return fetchRepoLanguage(owner, repo); // retry once
+    if (res.status === 404) return null; // repo deleted/private
+    if (res.status === 403 || res.status === 429) {
+      tok.remaining = 0; // park this token; next acquireToken rotates or waits for reset
+      continue;
+    }
+    if (!res.ok) throw new Error(`GitHub HTTP ${res.status} for ${owner}/${repo}`);
+
+    const data = await res.json() as { language?: string | null };
+    return data.language ?? null;
   }
-  if (!res.ok) throw new Error(`GitHub HTTP ${res.status} for ${owner}/${repo}`);
-
-  const data = await res.json() as { language?: string | null };
-  return data.language ?? null;
+  console.warn(`  [skip] ${owner}/${repo} — all tokens rate limited`);
+  return null;
 };
 
 const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));

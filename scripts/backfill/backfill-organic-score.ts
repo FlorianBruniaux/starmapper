@@ -16,23 +16,19 @@ import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import pg from "pg";
 import { computeOrganicScore } from "../../src/lib/organic-score";
+import { acquireToken, buildTokenPool, makeHeaders, syncTokenFromHeaders } from "../lib/github-token-pool";
 
 const DRY_RUN = process.argv.includes("--dry-run");
 const FORCE   = process.argv.includes("--force");
 const limitArg = process.argv.indexOf("--limit");
 const LIMIT = limitArg !== -1 ? parseInt(process.argv[limitArg + 1] ?? "999999", 10) : 999999;
-const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
+const TOKEN_POOL = buildTokenPool();
 const DELAY_MS = 300;
 
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, options: "-c statement_timeout=0" });
 const prisma = new PrismaClient({ adapter: new PrismaPg(pool) });
 
 const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
-
-const ghHeaders: Record<string, string> = {
-  Accept: "application/vnd.github.v3+json",
-  ...(GITHUB_TOKEN ? { Authorization: `Bearer ${GITHUB_TOKEN}` } : {}),
-};
 
 type RepoGitHubData = {
   forksCount: number;
@@ -42,10 +38,12 @@ type RepoGitHubData = {
 
 const fetchReleasesCount = async (owner: string, repo: string): Promise<number | null> => {
   try {
+    const tok = await acquireToken(TOKEN_POOL);
     const relRes = await fetch(
       `https://api.github.com/repos/${owner}/${repo}/releases?per_page=1`,
-      { headers: ghHeaders, signal: AbortSignal.timeout(8000) },
+      { headers: makeHeaders(tok, { Accept: "application/vnd.github.v3+json" }), signal: AbortSignal.timeout(8000) },
     );
+    syncTokenFromHeaders(tok, relRes);
     if (!relRes.ok) return null;
     const linkHeader = relRes.headers.get("link") ?? "";
     const lastMatch = linkHeader.match(/page=(\d+)>; rel="last"/);
@@ -59,10 +57,12 @@ const fetchReleasesCount = async (owner: string, repo: string): Promise<number |
 
 const fetchGitHubData = async (owner: string, repo: string): Promise<RepoGitHubData | null> => {
   try {
+    const tok = await acquireToken(TOKEN_POOL);
     const repoRes = await fetch(
       `https://api.github.com/repos/${owner}/${repo}`,
-      { headers: ghHeaders, signal: AbortSignal.timeout(8000) },
+      { headers: makeHeaders(tok, { Accept: "application/vnd.github.v3+json" }), signal: AbortSignal.timeout(8000) },
     );
+    syncTokenFromHeaders(tok, repoRes);
     if (!repoRes.ok) return null;
     const repoData = await repoRes.json() as { forks_count: number; subscribers_count: number };
     await sleep(DELAY_MS);

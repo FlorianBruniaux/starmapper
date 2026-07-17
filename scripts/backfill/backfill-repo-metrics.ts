@@ -11,8 +11,9 @@ import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { Pool } from "pg";
 import { computeOrganicScore } from "../../src/lib/organic-score";
+import { acquireToken, buildTokenPool, makeHeaders, syncTokenFromHeaders } from "../lib/github-token-pool";
 
-const GH_TOKEN = process.env.GITHUB_TOKEN;
+const TOKEN_POOL = buildTokenPool();
 const ORGANIC_ENABLED = process.env.NEXT_PUBLIC_ORGANIC_SCORE_ENABLED === "true";
 const DRY_RUN = process.argv.includes("--dry-run");
 const FORCE = process.argv.includes("--force");
@@ -32,36 +33,37 @@ type GhRepo = {
 
 type GhRelease = { tag_name: string; html_url: string; published_at: string };
 
-const fetchRepoMeta = async (owner: string, repo: string, attempt = 0): Promise<GhRepo | null> => {
+const fetchRepoMeta = async (owner: string, repo: string): Promise<GhRepo | null> => {
   const url = `https://api.github.com/repos/${owner}/${repo}`;
-  const headers: Record<string, string> = {
-    Accept: "application/vnd.github.v3+json",
-    ...(GH_TOKEN ? { Authorization: `Bearer ${GH_TOKEN}` } : {}),
-  };
-  try {
-    const res = await fetch(url, { headers });
-    if (res.status === 404 || res.status === 410) return null; // deleted / moved
-    if (res.status === 403 || res.status === 429) {
-      if (attempt < RETRY_LIMIT) {
-        await new Promise((r) => setTimeout(r, 5000));
-        return fetchRepoMeta(owner, repo, attempt + 1);
+  let netRetries = 0;
+  // Rotate through every token before giving up: a 403/429 parks the current
+  // token, the next acquireToken picks a fresh one (or waits for reset).
+  for (let i = 0; i <= TOKEN_POOL.length; i++) {
+    const tok = await acquireToken(TOKEN_POOL);
+    try {
+      const res = await fetch(url, { headers: makeHeaders(tok, { Accept: "application/vnd.github.v3+json" }) });
+      syncTokenFromHeaders(tok, res);
+      if (res.status === 404 || res.status === 410) return null; // deleted / moved
+      if (res.status === 403 || res.status === 429) {
+        tok.remaining = 0; // park this token, rotate on next iteration
+        continue;
       }
-      console.warn(`[skip] ${owner}/${repo} — rate limited`);
+      if (!res.ok) {
+        console.warn(`[skip] ${owner}/${repo} — HTTP ${res.status}`);
+        return null;
+      }
+      return await res.json() as GhRepo;
+    } catch {
+      if (netRetries++ < RETRY_LIMIT) {
+        await new Promise((r) => setTimeout(r, 2000));
+        continue;
+      }
+      console.warn(`[skip] ${owner}/${repo} — network error`);
       return null;
     }
-    if (!res.ok) {
-      console.warn(`[skip] ${owner}/${repo} — HTTP ${res.status}`);
-      return null;
-    }
-    return await res.json() as GhRepo;
-  } catch (e) {
-    if (attempt < RETRY_LIMIT) {
-      await new Promise((r) => setTimeout(r, 2000));
-      return fetchRepoMeta(owner, repo, attempt + 1);
-    }
-    console.warn(`[skip] ${owner}/${repo} — network error`);
-    return null;
   }
+  console.warn(`[skip] ${owner}/${repo} — rate limited`);
+  return null;
 };
 
 const fetchZeroFollowerSample = async (owner: string, repo: string): Promise<{ zeroCount: number; sampleSize: number } | null> => {
@@ -86,12 +88,12 @@ const fetchZeroFollowerSample = async (owner: string, repo: string): Promise<{ z
 type WorkItem = { owner: string; repo: string; totalCount: number };
 
 const fetchLatestRelease = async (owner: string, repo: string): Promise<GhRelease | null> => {
-  const headers: Record<string, string> = {
-    Accept: "application/vnd.github.v3+json",
-    ...(GH_TOKEN ? { Authorization: `Bearer ${GH_TOKEN}` } : {}),
-  };
   try {
-    const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/releases/latest`, { headers });
+    const tok = await acquireToken(TOKEN_POOL);
+    const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/releases/latest`, {
+      headers: makeHeaders(tok, { Accept: "application/vnd.github.v3+json" }),
+    });
+    syncTokenFromHeaders(tok, res);
     if (!res.ok) return null;
     return await res.json() as GhRelease;
   } catch { return null; }

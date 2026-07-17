@@ -5,6 +5,18 @@ Versioning: Semantic Versioning (MAJOR.MINOR.PATCH)
 
 ---
 
+## [Unreleased]
+
+### Tooling: multi-token rotation across all maintenance backfills
+
+`make maintenance` was exhausting a single GitHub token. Steps 1 to 4 (`backfill-repo-metrics`, `backfill-repo-languages`, `backfill-contributors`, `backfill-organic-score`) read only `process.env.GITHUB_TOKEN`, so `GITHUB_TOKEN_2/3/4` sat idle. With 2553 repos in `badge_cache` and 2 REST calls each (~5106 requests), step 1 alone blew past the 5000 req/hr REST ceiling on token 1, triggered a skip storm, and left step 2 waiting ~832s for the hourly reset.
+
+New shared helper `scripts/lib/github-token-pool.ts` (`buildTokenPool`, `acquireToken`, `makeHeaders`, `syncTokenFromHeaders`). It always hands out the token with the most remaining capacity, decrements optimistically so concurrent callers spread across tokens before response headers land, syncs real `x-ratelimit-remaining`/`reset` after each call, and waits for the earliest reset only when every token is spent. On a 403/429 the current token is parked (`remaining = 0`) and the next call rotates to a fresh one.
+
+Steps 1 to 4 now use this pool. Steps 5 to 7 (`backfill-user-top-repos`, `backfill-languages`, `batch-index-followers`) already had their own rotation. Effective REST ceiling goes from 5000 to 20000 req/hr on 4 tokens (~1277 req/token for the badge_cache sweep), so a full maintenance run completes in one pass without hitting the reset wall. Verified: `rtk tsc` clean, `backfill-repo-languages --dry-run` fetches with rotation and no token warnings.
+
+---
+
 ## [0.6.10] (2026-07-01)
 
 ### Fix: intermittent timeouts and 500s on large-repo stat endpoints
