@@ -72,11 +72,13 @@ export const useTimelapse = (
       weekCountMap.set(week, (weekCountMap.get(week) ?? 0) + 1);
     }
     const sorted = [...weekCountMap.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+    const series: [string, number][] = [];
     let running = 0;
-    return sorted.map(([week, count]): [string, number] => {
+    for (const [week, count] of sorted) {
       running += count;
-      return [week, running];
-    });
+      series.push([week, running]);
+    }
+    return series;
   }, [points, unmapped]);
 
   const cumulativeAtCurrentWeek = useMemo(() => {
