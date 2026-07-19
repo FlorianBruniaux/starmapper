@@ -85,7 +85,7 @@
     "@vercel/functions": "^3.7.5",
     "lucide-react": "^1.16.0",
     "maplibre-gl": "^5.24.0",
-    "next": "16.2.6",
+    "next": "16.2.10",
     "react": "19.2.7",
     "react-dom": "19.2.7",
     "resend": "^6.17.2",
