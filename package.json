@@ -118,7 +118,7 @@
     "jsdom": "^29.1.1",
     "pg": "^8.21.0",
     "prisma": "^7.8.0",
-    "tailwindcss": "^4.3.0",
+    "tailwindcss": "^4.3.3",
     "tsx": "^4.22.4",
     "typescript": "^6",
     "typescript-eslint": "^8.61.1",
