@@ -88,7 +88,7 @@
     "next": "16.2.6",
     "react": "19.2.7",
     "react-dom": "19.2.7",
-    "resend": "^6.12.4",
+    "resend": "^6.17.2",
     "topojson-client": "^3.1.0",
     "web-vitals": "^5.2.0",
     "world-atlas": "^2.0.2",
