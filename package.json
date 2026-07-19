@@ -99,7 +99,7 @@
     "@inquirer/prompts": "^8.5.2",
     "@next/eslint-plugin-next": "^16.2.6",
     "@prisma/adapter-pg": "^7.8.0",
-    "@tailwindcss/postcss": "^4.3.0",
+    "@tailwindcss/postcss": "^4.3.3",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
