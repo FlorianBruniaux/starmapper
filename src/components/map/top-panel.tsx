@@ -57,6 +57,8 @@ type Props = {
   latestStarredAt: string | null;
   startRefresh: () => void;
   newStarsCount: number;
+  /** Full-rescan trigger. Currently unused: the rescan button is disabled while GitHub
+   *  restricts stargazer access. Kept on the interface so re-enabling is a one-line revert. */
   handleStartScan: () => void;
   hasToken: boolean;
   storedUsername: string;
@@ -76,7 +78,7 @@ const TopPanelInner = ({
   compareOwner, compareRepo, compareInfo, compareStatus, comparePoints,
   points, total, unmapped, setDrawerOpen,
   status, pct, retryIn, processed, estimate,
-  cachedAt, latestStarredAt, startRefresh, newStarsCount, handleStartScan, hasToken,
+  cachedAt, latestStarredAt, startRefresh, newStarsCount, hasToken,
   storedUsername, onSetUsername, findMe,
   error,
   findInput, setFindInput, setFindStatus, findUser, findStatus,
@@ -324,20 +326,24 @@ const TopPanelInner = ({
                 ↻ {newStarsCount > 0 ? `${newStarsCount} new stars` : "Refresh"}
               </button>
             )}
-            <button
-              onClick={handleStartScan}
-              className="text-2xs text-muted-subtle hover:text-muted transition-colors flex items-center gap-1"
-            >
-              {!hasToken && (
-                <span className="relative group/tip">
-                  <Lock size={9} className="opacity-60" aria-hidden="true" />
-                  <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-44 rounded-lg bg-surface border border-border px-3 py-2 text-xs text-foreground leading-relaxed shadow-xl opacity-0 group-hover/tip:opacity-100 transition-opacity duration-150 z-50 whitespace-normal font-normal normal-case tracking-normal">
-                    Add a free GitHub token for faster scanning. No login needed.
-                  </span>
-                </span>
-              )}
-              Full rescan
-            </button>
+            {/* Full rescan is disabled since 2026-07-23: GitHub restricted the stargazers list,
+                so a rescan can only return an empty result. Kept visible with an explanatory
+                tooltip rather than removed. */}
+            <span className="relative group/tip inline-flex">
+              <button
+                type="button"
+                disabled
+                aria-disabled="true"
+                className="text-2xs text-muted-subtle/50 cursor-not-allowed flex items-center gap-1"
+              >
+                <Lock size={9} className="opacity-60" aria-hidden="true" />
+                Full rescan
+              </button>
+              <span className="pointer-events-none absolute bottom-full right-0 mb-2 w-60 rounded-lg bg-surface border border-border px-3 py-2 text-xs text-foreground leading-relaxed shadow-xl opacity-0 group-hover/tip:opacity-100 transition-opacity duration-150 z-50 whitespace-normal font-normal normal-case tracking-normal">
+                Rescan is paused. GitHub restricted public access to stargazer lists on July 23 2026,
+                so a rescan would return nothing. The current map stays available.
+              </span>
+            </span>
           </div>
         </div>
       )}

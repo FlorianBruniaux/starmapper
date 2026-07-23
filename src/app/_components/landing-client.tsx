@@ -16,6 +16,9 @@ import { CommandSearch } from "@/components/command-search";
 import { HeroGlobeDynamic } from "@/components/hero-globe-dynamic";
 import { LandingTourAutoStart } from "@/components/tour/tour-provider";
 import { TourTrigger } from "@/components/tour/tour-trigger";
+import { StargazerNoticeModal } from "@/components/stargazer-notice-modal";
+import { STARGAZER_NOTICE_HEADLINE, STARGAZER_NOTICE_SHORT } from "@/lib/stargazer-notice";
+import { AlertTriangle } from "lucide-react";
 import type { Bookmark } from "@/lib/bookmarks";
 import type { MappedRepo } from "@/app/api/repos/route";
 
@@ -72,6 +75,7 @@ export const LandingClient = ({ initialRepos, initialTotal }: Props) => {
   const [showCompare, setShowCompare] = useState(false);
   const [error, setError] = useState("");
   const [tokenOpen, setTokenOpen] = useState(false);
+  const [noticeOpen, setNoticeOpen] = useState(false);
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [hasToken, setHasToken] = useState(false);
   const router = useRouter();
@@ -138,6 +142,8 @@ export const LandingClient = ({ initialRepos, initialTotal }: Props) => {
           }}
         />
       )}
+
+      {noticeOpen && <StargazerNoticeModal onClose={() => setNoticeOpen(false)} />}
 
       <LandingTourAutoStart />
       <AnnouncementBanner />
@@ -221,6 +227,35 @@ export const LandingClient = ({ initialRepos, initialTotal }: Props) => {
                   <span className="text-border" aria-hidden="true">·</span>
                   <span>3. Everyone sees the map</span>
                 </p>
+
+                {/* Service notice: GitHub restricted stargazer access. Submitting still works,
+                    we recover cached data and save what we can. */}
+                <div
+                  role="alert"
+                  className="flex items-start gap-2.5 rounded-lg border border-accent-orange/40
+                             bg-accent-orange/10 px-3.5 py-3"
+                >
+                  <AlertTriangle
+                    size={16}
+                    className="mt-0.5 shrink-0 text-accent-orange"
+                    aria-hidden="true"
+                  />
+                  <div className="flex flex-col gap-1 text-sm">
+                    <span className="font-semibold text-foreground">
+                      {STARGAZER_NOTICE_HEADLINE}
+                    </span>
+                    <span className="text-muted leading-relaxed">
+                      {STARGAZER_NOTICE_SHORT}{" "}
+                      <button
+                        type="button"
+                        onClick={() => setNoticeOpen(true)}
+                        className="text-accent-blue underline underline-offset-2 hover:no-underline"
+                      >
+                        Learn more
+                      </button>
+                    </span>
+                  </div>
+                </div>
 
                 <form data-tour="landing-search" onSubmit={handleSubmit} className="flex flex-col gap-3">
                   <div className="flex flex-col sm:flex-row gap-2.5">

@@ -9,6 +9,7 @@ import { formatEstimate, timeAgo } from "@/lib/format";
 import type { TimeEstimate } from "@/lib/format";
 import type { ScanStatus } from "@/hooks/useScanController";
 import { useFocusTrap } from "@/hooks/use-focus-trap";
+import { STARGAZER_NOTICE_SHORT, STARGAZER_NOTICE_LINKS } from "@/lib/stargazer-notice";
 
 const TOKEN_REQUIRED_STARS = 50_000;
 
@@ -111,6 +112,31 @@ export const PreScanOverlay = ({
               <button type="button" onClick={onStart} className="text-xs text-accent-blue hover:underline font-medium">
                 Add a free token (takes 30 sec) →
               </button>
+            </div>
+          </div>
+        )}
+
+        {/* GitHub restricted the stargazers list on 2026-07-23. A fresh scan may find no
+            stargazers to map. Shown for repos without an existing scan; cached repos still load. */}
+        {!lastDbScan && (
+          <div className="flex items-start gap-2.5 bg-accent-orange/10 border border-accent-orange/30 rounded-lg px-4 py-3 mb-6">
+            <span className="text-accent-orange mt-0.5 flex-shrink-0 text-sm" aria-hidden="true">⚠</span>
+            <div>
+              <p className="text-accent-orange text-xs font-medium mb-1">
+                GitHub restricted access to stargazer lists
+              </p>
+              <p className="text-muted text-xs leading-relaxed mb-2">
+                {STARGAZER_NOTICE_SHORT} You can still start indexing, we save whatever GitHub returns
+                and the map fills in the moment access comes back.
+              </p>
+              <a
+                href={STARGAZER_NOTICE_LINKS[0]?.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-accent-blue hover:underline font-medium"
+              >
+                Read the GitHub changelog →
+              </a>
             </div>
           </div>
         )}

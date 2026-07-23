@@ -442,6 +442,42 @@ export default function MapPageClient({ owner, repo, initialRepoInfo, initialSta
         clusterRadius={debouncedClusterRadius}
       />
 
+      {/* Empty-map notice: scan finished (or failed) with nothing to place. Since 2026-07-23
+          this is almost always GitHub restricting the stargazers list. */}
+      {cacheCheckDone &&
+        (status === "done" || status === "cached" || status === "error") &&
+        points.length === 0 &&
+        unmapped.length === 0 && (
+          <div className="absolute top-24 left-1/2 -translate-x-1/2 z-20 w-[min(92vw,32rem)] px-2">
+            <div
+              role="alert"
+              className="flex items-start gap-3 rounded-xl bg-surface/95 backdrop-blur-sm
+                         border border-border border-t-2 border-t-accent-orange px-4 py-3.5 shadow-2xl"
+            >
+              <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-accent-orange/15">
+                <span className="text-accent-orange text-sm" aria-hidden="true">⚠</span>
+              </span>
+              <div className="flex flex-col gap-1">
+                <span className="text-sm font-semibold text-foreground">
+                  No stargazers to map yet
+                </span>
+                <span className="text-xs text-muted leading-relaxed">
+                  GitHub restricted public access to stargazer lists on July 23 2026, so a fresh
+                  scan of this repo returns no one to place. Already-mapped repos keep working.{" "}
+                  <a
+                    href="https://github.blog/changelog/2026-06-30-upcoming-access-restrictions-to-public-api-endpoints-and-ui-views/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-accent-blue underline underline-offset-2 hover:no-underline"
+                  >
+                    Read why
+                  </a>
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
       <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-10 pointer-events-none flex flex-col items-center gap-1.5">
         <div className="flex items-center gap-2">
           <a

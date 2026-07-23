@@ -1,5 +1,13 @@
 # StarMapper
 
+> [!WARNING]
+> **GitHub restricted public access to stargazer lists (July 2026).**
+> On [June 30 2026 GitHub announced access restrictions to public API endpoints and UI views](https://github.blog/changelog/2026-06-30-upcoming-access-restrictions-to-public-api-endpoints-and-ui-views/). Since **July 23 2026** the `Repository.stargazers` connection returns empty on GraphQL, REST, and the `/stargazers` web page, for every repo. StarMapper builds its map from that exact list, so **new repo scans currently return no stargazers to place.** Repos mapped before the cutoff still render from cached data.
+>
+> This is a GitHub-side change, not a bug here. I'm analysing what StarMapper can do next, including rebuilding the map from the user side (`starredRepositories`) rather than the repo side, and leaning on the still-working Contributors and Followers maps.
+>
+> Sources: [changelog](https://github.blog/changelog/2026-06-30-upcoming-access-restrictions-to-public-api-endpoints-and-ui-views/) · [community #202114](https://github.com/orgs/community/discussions/202114) · [community #201209](https://github.com/orgs/community/discussions/201209) · [independent confirmation](https://github.com/emanuelef/daily-stars-explorer/issues/363)
+
 <p align="center">
   <a href="https://starmapper.bruniaux.com"><img src="https://img.shields.io/badge/Live_Demo-starmapper.bruniaux.com-58a6ff?style=for-the-badge" alt="Live Demo"/></a>
   <a href="https://chromewebstore.google.com/detail/starmapper/ejpbdhlaohhngpfbjjfadokgnndnnmmh"><img src="https://img.shields.io/badge/Chrome_Extension-Install-4285F4?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Chrome Extension"/></a>
