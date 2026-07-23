@@ -75,6 +75,14 @@ No new items currently queued. See Medium term for backlog.
 
 - **Search mentions / adoption breadth**: GitHub Search API counts for issues, PRs, and discussions that mention a package or repo name (`GET /search/issues?q={name}+in:body`). Shows adoption across third-party projects. Candidate additional signal for Organic Score. `GET /api/stats/[owner]/[repo]/mentions`.
 
+### Ideas from meet-the-fans (evoluteur), audited 2026-07-23
+
+- **Cross-repo fan signal into Organic Score** (highest ROI): a single account that stars several of an owner's indexed repos is a strong organic marker. Bought stars are one-shot, real fans recur. This closes the `cross-repo clustering` gap deferred in the bought-stars analysis (see `docs/organic-score.md`). The data already exists: `power_users_mv` and `repo_power_users_mv` aggregate multi-repo stargazers, and the Stats "Power" tab already surfaces them. New work is only wiring a "distinct repos starred by this user" count as a signal in `src/lib/organic-score.ts`, alongside the contributor-count and search-mentions candidates above. Low effort, hard to fake.
+
+- **Forkers as an engagement signal**: forking a repo (cloning to build on it) is a stronger signal than a star. StarMapper is star-only today. Surface forkers somewhere, or at minimum weight them higher than stars in the Organic Score. `forkCount` is already in `repo-info`; a forkers list needs a GraphQL `forks { nodes { owner } }` fetch.
+
+- **star-history.com deeplink**: per-repo outbound link to `star-history.com/#owner/repo`. Star history over time stays out of scope (that is star-history.com's product), but a deeplink offers the value for free with zero maintenance. Small addition to the repo popup / Stats modal.
+
 ---
 
 ## If monetization ever
