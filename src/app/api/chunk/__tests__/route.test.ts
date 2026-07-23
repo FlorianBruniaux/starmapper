@@ -41,6 +41,14 @@ vi.mock("@/lib/github", () => ({
       this.resetAt = resetAt;
     }
   },
+  GitHubEmptyStargazersError: class GitHubEmptyStargazersError extends Error {
+    totalCount: number;
+    constructor(totalCount: number) {
+      super("empty_stargazers");
+      this.name = "GitHubEmptyStargazersError";
+      this.totalCount = totalCount;
+    }
+  },
   GitHubTokenInvalidError: class GitHubTokenInvalidError extends Error {
     constructor() {
       super("token_invalid");
@@ -535,6 +543,21 @@ describe("POST /api/chunk", () => {
       expect(res.status).toBe(401);
       const body = await res.json();
       expect(body.error).toBe("github_token_invalid");
+    });
+
+    // A degraded GitHub response must abort the scan loudly. Returning 200 with an empty
+    // chunk is what let ghost repos reach badge_cache (see research-ghost-repos.md).
+    it("returns 503 github_empty_stargazers when GitHub serves an empty list", async () => {
+      const { GitHubEmptyStargazersError } = await import("@/lib/github");
+      mockFetchStargazers.mockRejectedValueOnce(new GitHubEmptyStargazersError(264));
+
+      const req = makeRequest({ owner: "octocat", repo: "starmapper" });
+      const res = await POST(req);
+
+      expect(res.status).toBe(503);
+      const body = await res.json();
+      expect(body.error).toBe("github_empty_stargazers");
+      expect(body.totalCount).toBe(264);
     });
 
     it("returns 500 on unexpected errors", async () => {

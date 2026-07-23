@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { fetchStargazersPage, fetchContributorsPage, fetchContributorLocations, GitHubRateLimitError } from "@/lib/github";
+import { fetchStargazersPage, fetchContributorsPage, fetchContributorLocations, GitHubRateLimitError, GitHubEmptyStargazersError } from "@/lib/github";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -228,6 +228,65 @@ describe("fetchStargazersPage", () => {
       expect(result.stargazers[0].login).toBe("new_user");
       // nextCursor must be null because we hit the since boundary
       expect(result.nextCursor).toBeNull();
+    });
+  });
+
+  // GitHub answered HTTP 200 with an empty stargazers connection while still reporting a
+  // non-zero stargazerCount on 2026-07-23. A scan that trusts that response completes with
+  // zero users and writes a "ghost" repo (badge_cache row, no map data). See
+  // research-ghost-repos.md.
+  describe("degraded empty-list response", () => {
+    it("throws GitHubEmptyStargazersError when the first page is empty but stars exist", async () => {
+      vi.spyOn(global, "fetch").mockResolvedValueOnce(
+        makeOkResponse(makeGitHubResponse({ stargazerCount: 264, edges: [], hasNextPage: false })),
+      );
+
+      await expect(fetchStargazersPage("owner", "repo", null)).rejects.toThrow(
+        GitHubEmptyStargazersError,
+      );
+    });
+
+    it("carries the reported star count on the error", async () => {
+      vi.spyOn(global, "fetch").mockResolvedValueOnce(
+        makeOkResponse(makeGitHubResponse({ stargazerCount: 264, edges: [] })),
+      );
+
+      await expect(fetchStargazersPage("owner", "repo", null)).rejects.toMatchObject({
+        totalCount: 264,
+      });
+    });
+
+    it("accepts an empty first page when the repo genuinely has zero stars", async () => {
+      vi.spyOn(global, "fetch").mockResolvedValueOnce(
+        makeOkResponse(makeGitHubResponse({ stargazerCount: 0, edges: [] })),
+      );
+
+      const result = await fetchStargazersPage("owner", "repo", null);
+      expect(result.stargazers).toEqual([]);
+      expect(result.totalCount).toBe(0);
+    });
+
+    it("accepts an empty page mid-pagination — the guard only covers the first page", async () => {
+      vi.spyOn(global, "fetch").mockResolvedValueOnce(
+        makeOkResponse(makeGitHubResponse({ stargazerCount: 264, edges: [] })),
+      );
+
+      const result = await fetchStargazersPage("owner", "repo", "cursor_abc123");
+      expect(result.stargazers).toEqual([]);
+    });
+
+    it("accepts an empty first page on an incremental refresh (since filters everything out)", async () => {
+      vi.spyOn(global, "fetch").mockResolvedValueOnce(
+        makeOkResponse(
+          makeGitHubResponse({
+            stargazerCount: 264,
+            edges: [makeEdge({ starredAt: "2020-01-01T00:00:00Z" })],
+          }),
+        ),
+      );
+
+      const result = await fetchStargazersPage("owner", "repo", null, "2024-01-01T00:00:00Z");
+      expect(result.stargazers).toEqual([]);
     });
   });
 

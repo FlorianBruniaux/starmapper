@@ -32,6 +32,20 @@ export class GitHubTokenInvalidError extends Error {
   }
 }
 
+/**
+ * GitHub answered HTTP 200 with an empty `stargazers` connection while still reporting a
+ * non-zero `stargazerCount`. Observed on 2026-07-23 across every repo tested, including
+ * facebook/react. The response carries no error, so a scan that trusts it finishes with zero
+ * users and writes a repo that looks scanned but holds no map data (see research-ghost-repos.md).
+ */
+export class GitHubEmptyStargazersError extends Error {
+  totalCount: number;
+  constructor(totalCount: number) {
+    super("empty_stargazers");
+    this.totalCount = totalCount;
+  }
+}
+
 export type StargazerRaw = {
   login: string;
   name: string | null;
@@ -128,6 +142,14 @@ export const fetchStargazersPage = async (
 
   const data = json.data.repository;
   const page = data.stargazers;
+
+  // Degraded-response guard. Checked on the raw edges, before the `since` filter: an
+  // incremental refresh legitimately filters a full page down to nothing, but GitHub handing
+  // back zero edges on the first page of a repo that has stars never is. Only the first page
+  // is covered — a later page can be empty when stargazers are unstarred mid-pagination.
+  if (cursor === null && data.stargazerCount > 0 && page.edges.length === 0) {
+    throw new GitHubEmptyStargazersError(data.stargazerCount);
+  }
 
   const sinceTs = since ? new Date(since).getTime() : null;
   let hasMore = page.pageInfo.hasNextPage;

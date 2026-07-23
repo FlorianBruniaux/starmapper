@@ -195,27 +195,31 @@ export default function UserPage({ params }: { params: Promise<{ owner: string }
         const mappedCount = allPoints.length;
         const countryCount = countrySet.size;
 
-        // Write to DB cache (fire-and-forget)
+        // Write to DB cache (fire-and-forget), then the badge.
+        // Order matters, same contract as useScanController.ts: badge-update fires only after
+        // stargazer-cache succeeded, so we never leave a badge_cache row without its map data.
+        // A scan that yielded zero users writes nothing at all — that is how the ghost rows in
+        // badge_cache were created when GitHub served empty stargazer lists.
         if (totalCount > 0) {
           (async () => {
             try {
               type SlimPoint = Omit<StargazerPoint, "bio" | "avatarUrl">;
               const slim: SlimPoint[] = allPoints.map(({ bio: _b, avatarUrl: _av, ...rest }) => rest);
               const [pointsGz, unmappedGz] = await Promise.all([compressToBase64(slim), compressToBase64(allUnmapped)]);
-              await fetch("/api/stargazer-cache", {
+              const cacheRes = await fetch("/api/stargazer-cache", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ owner, repo: repo.name, pointsGz, unmappedGz, totalCount }),
               });
+              if (!cacheRes.ok) return;
+              await fetch("/api/badge-update", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ owner, repo: repo.name, mappedCount, countryCount, totalCount }),
+              });
             } catch { /* non-critical */ }
           })();
         }
-
-        fetch("/api/badge-update", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ owner, repo: repo.name, mappedCount, countryCount, totalCount }),
-        }).catch(() => {});
 
         patchQueue(repo.name, {
           status: "done", processed: totalCount, total: totalCount,

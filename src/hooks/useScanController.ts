@@ -54,6 +54,16 @@ class TokenInvalidError extends Error {
   }
 }
 
+/**
+ * GitHub returned an empty stargazer list for a repo that has stars. Surfaced with a readable
+ * message rather than a raw "HTTP 503", because the user can act on it: wait and retry.
+ */
+class EmptyStargazersError extends Error {
+  constructor() {
+    super("GitHub returned an empty stargazer list for this repo. Its API is degraded, retry in a few minutes.");
+  }
+}
+
 export type ScanStatus = "idle" | "loading" | "waiting" | "done" | "cached" | "refreshing" | "error";
 
 type RepoInfoSlim = { language: string | null; forksCount?: number; watchersCount?: number } | null;
@@ -112,6 +122,10 @@ export const useScanController = ({
     if (res.status === 401) {
       const body = await res.json().catch(() => ({})) as { error?: string };
       if (body.error === "github_token_invalid") throw new TokenInvalidError();
+    }
+    if (res.status === 503) {
+      const body = await res.json().catch(() => ({})) as { error?: string };
+      if (body.error === "github_empty_stargazers") throw new EmptyStargazersError();
     }
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return (await res.json()) as ChunkResponse;

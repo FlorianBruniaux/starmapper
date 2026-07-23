@@ -5,7 +5,7 @@ import type { NextRequest} from "next/server";
 import { NextResponse, after } from "next/server";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
-import { fetchStargazersPage, GitHubRateLimitError, GitHubTokenInvalidError } from "@/lib/github";
+import { fetchStargazersPage, GitHubEmptyStargazersError, GitHubRateLimitError, GitHubTokenInvalidError } from "@/lib/github";
 import { geocodeBatch } from "@/lib/geocoder";
 import { checkDbHealth, DB_WARN_PCT } from "@/lib/db-health";
 import { bulkUpsertUsers, bulkUpsertStarEvents, bulkReadUsers, type UserWritePayload } from "@/lib/user-cache";
@@ -242,6 +242,14 @@ export const POST = async (req: NextRequest) => {
     }
     if (err instanceof GitHubRateLimitError) {
       return NextResponse.json({ error: "rate_limited", resetAt: err.resetAt }, { status: 429 });
+    }
+    // GitHub is up but handing back an empty stargazer list. Transient on their side, so 503
+    // rather than 500: the scan must abort loudly instead of persisting a repo with no data.
+    if (err instanceof GitHubEmptyStargazersError) {
+      return NextResponse.json(
+        { error: "github_empty_stargazers", totalCount: err.totalCount },
+        { status: 503 },
+      );
     }
     logError("chunk", err);
     const msg =
