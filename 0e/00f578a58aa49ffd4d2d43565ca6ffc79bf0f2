@@ -1,0 +1,26 @@
+.env.example
+  h_07916ece6468dd 66-70
+docs/ROADMAP.md
+  s_09fb36ec66cdda::t_cd04a637a7f6ad 78-85
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "0e00f578a58aa49ffd4d2d43565ca6ffc79bf0f2",
+  "prompts": {},
+  "humans": {
+    "h_07916ece6468dd": {
+      "author": "Florian BRUNIAUX <florian@bruniaux.com>"
+    }
+  },
+  "sessions": {
+    "s_09fb36ec66cdda": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9ee153fb-f1f0-4c19-9097-e514af3a0dfa",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Florian BRUNIAUX <florian@bruniaux.com>"
+    }
+  }
+}
