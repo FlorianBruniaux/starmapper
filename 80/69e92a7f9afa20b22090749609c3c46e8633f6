@@ -1,0 +1,21 @@
+package.json
+  s_b3bd94b91483d1::t_f774b66b254bd1 88
+pnpm-lock.yaml
+  s_b3bd94b91483d1::t_41f4eb14ddfd14 45-46,906-907,912-913,918-919,924-925,931-932,938-939,945-946,952-953,958-959,2546-2547,3914,3920,3923,3926,3929,3932,3935,3938,3941,5600,5602,5611-5618,5961
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "8069e92a7f9afa20b22090749609c3c46e8633f6",
+  "prompts": {},
+  "sessions": {
+    "s_b3bd94b91483d1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9e9db0da-00b5-4d51-8464-b93b9245333f",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Florian BRUNIAUX <florian@bruniaux.com>"
+    }
+  }
+}
