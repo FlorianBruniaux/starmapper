@@ -1,0 +1,53 @@
+src/lib/__tests__/jawg-token.test.ts
+  s_e1805c6e8b625d::t_8b0d9347a200df 185
+  s_e1805c6e8b625d::t_dacee5e09dcbcd 1-17,20,25-108,110,112-114,118-119,135-146,149-184,186-199,201-203
+  s_e1805c6e8b625d::t_940e17580472cd 18-19,21-24
+  s_e1805c6e8b625d::t_ca57fd8fd92e4e 109,111,115-117,120-134,147-148
+  s_e1805c6e8b625d::t_39aaa02a04b38a 200
+src/app/api/explore/autocomplete/route.ts
+  s_e1805c6e8b625d::t_587b5905be50b0 20-23,25-26
+  s_e1805c6e8b625d::t_7547a719737379 7
+.env.example
+  s_e1805c6e8b625d::t_ac7b076124d3a9 24-25,27,29-30
+src/env.ts
+  s_e1805c6e8b625d::t_d2e87d662f1413 18-19,21,23
+src/lib/__tests__/geocoder-jawg-shared.test.ts
+  s_e1805c6e8b625d::t_d5ea1f06892f32 1-145
+CLAUDE.md
+  s_e1805c6e8b625d::t_0882d6c0e57284 26-27,32-34
+  s_e1805c6e8b625d::t_065fc149a794ab 62
+  s_e1805c6e8b625d::t_5e225434c602e7 60-61,63
+src/lib/jawg-token.ts
+  s_e1805c6e8b625d::t_13e9ace38810bd 20-27
+  s_e1805c6e8b625d::t_6582c8f7377dec 40-42
+  s_e1805c6e8b625d::t_1c240d6e50f7ef 1-19,28-39,43-110,130-131,134-148,151-155,158
+  s_e1805c6e8b625d::t_8c50da7bd7d542 111-129,132-133,149-150,156-157
+src/app/api/explore/geocode/route.ts
+  s_e1805c6e8b625d::t_052928fc4b79b7 43-46
+  s_e1805c6e8b625d::t_f6ff4da31d054c 10
+src/lib/geocoder.ts
+  s_e1805c6e8b625d::t_da0fec8a5bd0b5 8
+  s_e1805c6e8b625d::t_ed4c055471fd8c 144-148,151-153,156,158,161
+  s_e1805c6e8b625d::t_f8d325ac99e16b 157,159
+  s_e1805c6e8b625d::t_aaac52b13d2813 234-244
+  s_e1805c6e8b625d::t_7c6aaa61d79044 16-17,19-22,29
+  s_e1805c6e8b625d::t_9d778be186bca1 260-266
+  s_e1805c6e8b625d::t_8c117740bf662c 7
+  s_e1805c6e8b625d::t_a43bf972ffe08e 233
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "e2d89a8dd0c90a8e4c56598f18c953b14dc3318c",
+  "prompts": {},
+  "sessions": {
+    "s_e1805c6e8b625d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8457c43e-1ee3-4e85-9f75-603a7f6c909e",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Florian BRUNIAUX <florian@bruniaux.com>"
+    }
+  }
+}
