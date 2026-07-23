@@ -1,0 +1,21 @@
+scripts/ops/rescan-ghosts.ts
+  s_e1805c6e8b625d::t_a6d13b19176073 1-265
+Makefile
+  s_e1805c6e8b625d::t_6b00a156eb6b41 185-190
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "7b0861247d83c4df1fd2b4eb8ea864a2f67d3244",
+  "prompts": {},
+  "sessions": {
+    "s_e1805c6e8b625d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8457c43e-1ee3-4e85-9f75-603a7f6c909e",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Florian BRUNIAUX <florian@bruniaux.com>"
+    }
+  }
+}
