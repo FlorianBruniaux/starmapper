@@ -71,17 +71,23 @@ Le cron `30 */6 * * *` (`/api/admin/refresh-trending`) appelle `selectRefreshTar
 
 ---
 
-## 9 Materialized Views + GIN indexes
+## 13 Materialized Views + GIN indexes
 
 Non gérés par Prisma. À créer une fois par instance DB :
 
 ```bash
-pnpm db:setup   # applique prisma db push + crée les 9 MVs + pg_trgm indexes
+pnpm db:setup   # applique prisma db push + crée les 13 MVs + pg_trgm indexes
 ```
 
-MVs : `github_user_grid_mv`, `country_stats_mv`, `power_users_mv`, `company_stats_mv`, `country_language_stats_mv`, `user_repo_count_mv`, `language_grid_mv`, `trending_repos_mv`, `city_stats_mv`
+MVs : `github_user_grid_mv`, `country_stats_mv`, `power_users_mv`, `company_stats_mv`, `country_language_stats_mv`, `user_repo_count_mv`, `language_grid_mv`, `trending_repos_mv`, `city_stats_mv`, `repo_stats_mv`, `repo_location_stats_mv`, `repo_company_stats_mv`, `repo_power_users_mv`
 
 Routes qui tombent silencieusement si les MVs manquent : `/trending` (503), `/devs/atlas` (vide), `/explore` (timeout search).
+
+**Ordre de rafraîchissement contraint** : `repo_power_users_mv` lit `power_users_mv`, elle doit passer après, jamais avant. C'est respecté dans `scripts/db/refresh-mvs.sh` et par le découpage en deux crons de `/api/admin/refresh-repo-stats`.
+
+**`pnpm db:setup` est devenu tout-ou-rien sur environ 6 minutes.** `scripts/db/setup-mvs.ts` envoie tout `views.sql` en un seul `client.query()`, donc une transaction implicite unique, et les 4 vues `repo_*` coûtent à elles seules environ 306 s de construction. Une interruption ne laisse aucune vue créée. Pour créer ces 4 vues isolément sur une base déjà initialisée, passer par `scripts/db/sql/create-repo-stats-mvs.sql` (attention, celui-là commite instruction par instruction sous `psql`).
+
+**`language_grid_mv` n'est rafraîchie nulle part.** Absente de `MV_NAMES` (`src/app/api/admin/refresh-grid-mv/route.ts`) et de `scripts/db/refresh-mvs.sh`. Dernier autoanalyze au 2026-06-18. Elle alimente `/devs/[language]`. Défaut connu, à traiter séparément.
 
 ---
 

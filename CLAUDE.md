@@ -41,7 +41,7 @@ Without any Jawg or Geoapify key, all geocoding falls to Nominatim at 1100ms/cal
 - **MapLibre GL 5.x**: `getClusterExpansionZoom` returns a Promise, not a callback.
 - **StargazerCache write**: always send `pointsGz`/`unmappedGz` (gzip+base64), never raw arrays.
 - **Neon DDL**: never `CREATE INDEX CONCURRENTLY` (PANIC). Always prefix DDL with `SET statement_timeout = 0;`.
-- **7 MVs + GIN indexes**: not managed by Prisma — `pnpm db:setup` once per DB instance.
+- **13 MVs + GIN indexes**: not managed by Prisma, run `pnpm db:setup` once per DB instance. `repo_power_users_mv` must be refreshed after `power_users_mv`, never before.
 - **GitHub GraphQL cursor**: never pass `cursor: null` — omit or pass `undefined`.
 - **AnnouncementBanner**: dismissal stored by `BANNER_ID` in localStorage — bump the string to force reappear for existing users.
 - **DB Health Guard**: writes silently skip if Neon storage > 95% (`src/lib/user-cache.ts`). Intentional.

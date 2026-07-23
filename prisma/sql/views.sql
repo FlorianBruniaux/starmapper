@@ -6,6 +6,8 @@
 -- IMPORTANT: CREATE INDEX without CONCURRENTLY — holds write lock during build.
 --            On 4M+ rows this takes 2-5min. Run during low-traffic window.
 -- NOTE: CONCURRENTLY is incompatible with Neon storage (SMGR panic) — never use it here.
+-- 13 materialized views total: sections 1-9 are the original set, sections 10-13
+-- (repo_stats_mv and its three dimension views) were appended 2026-07-23.
 
 SET statement_timeout = 0;
 
@@ -232,3 +234,130 @@ CREATE UNIQUE INDEX IF NOT EXISTS city_stats_mv_pk_idx
 
 CREATE INDEX IF NOT EXISTS city_stats_mv_lat_lng_idx
   ON city_stats_mv (lat, lng);
+
+-- ============================================================
+-- 10. repo_stats_mv
+-- ============================================================
+-- Scalar aggregates per repo for GET /api/stats/[owner]/[repo]. Reproduces the totals
+-- query at route.ts:94-103 exactly (INNER JOIN included: a star_event row with no
+-- matching github_user is not counted, same as today).
+
+CREATE MATERIALIZED VIEW IF NOT EXISTS repo_stats_mv AS
+  SELECT
+    se.owner,
+    se.repo,
+    COUNT(*)::bigint                                                        AS total,
+    COUNT(*) FILTER (WHERE u.lat IS NOT NULL AND u.lng IS NOT NULL)::bigint AS mapped,
+    COALESCE(AVG(u.followers)::int, 0)                                      AS avg_followers,
+    COUNT(*) FILTER (WHERE u."dataVersion" >= 1)::bigint                    AS enriched,
+    COUNT(*) FILTER (
+      WHERE u."dataVersion" >= 1
+        AND u.followers < 5
+        AND u.following < 5
+        AND u."publicRepos" < 2
+    )::bigint                                                               AS bots,
+    NOW()                                                                   AS computed_at
+  FROM star_event se
+  JOIN github_user u USING (login)
+  GROUP BY se.owner, se.repo;
+
+CREATE UNIQUE INDEX IF NOT EXISTS repo_stats_mv_pk_idx
+  ON repo_stats_mv (owner, repo);
+
+-- ============================================================
+-- 11. repo_location_stats_mv
+-- ============================================================
+-- Top 200 raw locations per repo. Bound matches route.ts:166 (LIMIT 200). Ranked with a
+-- secondary sort key (location ASC) so ties at the boundary are deterministic across
+-- refreshes, unlike the live route which has no such need.
+
+CREATE MATERIALIZED VIEW IF NOT EXISTS repo_location_stats_mv AS
+  SELECT owner, repo, location, cnt
+  FROM (
+    SELECT
+      se.owner,
+      se.repo,
+      u.location,
+      COUNT(*) AS cnt,
+      ROW_NUMBER() OVER (
+        PARTITION BY se.owner, se.repo
+        ORDER BY COUNT(*) DESC, u.location ASC
+      ) AS rn
+    FROM star_event se
+    JOIN github_user u USING (login)
+    WHERE u.location IS NOT NULL
+    GROUP BY se.owner, se.repo, u.location
+  ) t
+  WHERE rn <= 200;
+
+CREATE UNIQUE INDEX IF NOT EXISTS repo_location_stats_mv_pk_idx
+  ON repo_location_stats_mv (owner, repo, location);
+
+CREATE INDEX IF NOT EXISTS repo_location_stats_mv_cnt_idx
+  ON repo_location_stats_mv (owner, repo, cnt DESC);
+
+-- ============================================================
+-- 12. repo_company_stats_mv
+-- ============================================================
+-- Top 50 raw companies per repo. Bound matches route.ts:176 (LIMIT 50). Same tie-break
+-- reasoning as repo_location_stats_mv above.
+
+CREATE MATERIALIZED VIEW IF NOT EXISTS repo_company_stats_mv AS
+  SELECT owner, repo, company, cnt
+  FROM (
+    SELECT
+      se.owner,
+      se.repo,
+      u.company,
+      COUNT(*) AS cnt,
+      ROW_NUMBER() OVER (
+        PARTITION BY se.owner, se.repo
+        ORDER BY COUNT(*) DESC, u.company ASC
+      ) AS rn
+    FROM star_event se
+    JOIN github_user u USING (login)
+    WHERE u.company IS NOT NULL
+    GROUP BY se.owner, se.repo, u.company
+  ) t
+  WHERE rn <= 50;
+
+CREATE UNIQUE INDEX IF NOT EXISTS repo_company_stats_mv_pk_idx
+  ON repo_company_stats_mv (owner, repo, company);
+
+CREATE INDEX IF NOT EXISTS repo_company_stats_mv_cnt_idx
+  ON repo_company_stats_mv (owner, repo, cnt DESC);
+
+-- ============================================================
+-- 13. repo_power_users_mv
+-- ============================================================
+-- Top 20 power users per repo. Same output columns and tie-break as the live query's
+-- MATERIALIZED CTE (route.ts:189-197), but not the same plan: that query needs the CTE to
+-- force join order because it filters on one (owner, repo). Unfiltered, the planner picks
+-- a parallel hash join on its own. Depends on power_users_mv: refresh that one first.
+--
+-- name and followers are deliberately not stored: the route re-reads them by primary key
+-- for at most 20 logins (route.ts:214-219), which is instant, and storing them would
+-- freeze follower counts that move every day.
+
+CREATE MATERIALIZED VIEW IF NOT EXISTS repo_power_users_mv AS
+  SELECT owner, repo, login, cnt
+  FROM (
+    SELECT
+      se.owner,
+      se.repo,
+      mv.login,
+      mv.cnt,
+      ROW_NUMBER() OVER (
+        PARTITION BY se.owner, se.repo
+        ORDER BY mv.cnt DESC, mv.login ASC
+      ) AS rn
+    FROM star_event se
+    JOIN power_users_mv mv USING (login)
+  ) t
+  WHERE rn <= 20;
+
+CREATE UNIQUE INDEX IF NOT EXISTS repo_power_users_mv_pk_idx
+  ON repo_power_users_mv (owner, repo, login);
+
+CREATE INDEX IF NOT EXISTS repo_power_users_mv_cnt_idx
+  ON repo_power_users_mv (owner, repo, cnt DESC);

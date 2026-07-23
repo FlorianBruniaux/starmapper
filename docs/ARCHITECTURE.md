@@ -423,9 +423,23 @@ Returns the list of already-mapped repositories for the landing page Community M
 
 Returns aggregated statistics for a repo, computed from the `GitHubUser` + `StarEvent` normalized tables.
 
-**Response**: `RepoStats` (topCountries, topCities, topCompanies, topUsers, mappingRate, avgFollowers...)
+**Response**: `RepoStats` (topCountries, topCities, topCompanies, topUsers, mappingRate, avgFollowers...) plus two optional fields describing where the numbers came from:
 
-**Cache**: `public, s-maxage=300` (5 min CDN).
+| Field | Values | Meaning |
+|---|---|---|
+| `source` | `"precomputed"` \| `"live"` \| absent | Absent when `REPO_STATS_MV_ENABLED` is off, or when the client computed the stats itself |
+| `computedAt` | ISO 8601 \| absent | Time of the `repo_stats_mv` REFRESH. Only with `source: "precomputed"`. Distinct from `organic.computedAt`, which dates the organic score |
+| `isPartial` | `true` \| absent | The panel is missing its country, city and company lists |
+
+**Cache**, by provenance:
+
+| Case | Header |
+|---|---|
+| `source: "precomputed"` | `public, s-maxage=900, stale-while-revalidate=3600` |
+| `source: "live"` or flag off | `public, s-maxage=300, stale-while-revalidate=600` |
+| `isPartial` | `public, s-maxage=30, stale-while-revalidate=60` |
+
+With `REPO_STATS_MV_ENABLED=true`, the route reads `repo_stats_mv` first and serves the three dimension views (`repo_location_stats_mv`, `repo_company_stats_mv`, `repo_power_users_mv`) instead of joining `star_event` to `github_user` on every request. A repo absent from the views falls through to the live path unchanged, and any read failure on the views degrades to that same path rather than erroring. With the flag off the response is byte-identical to the pre-MV route. See `docs/adr-repo-stats-precompute.md`.
 
 Returns 404 if no user-level data exists for the repo (i.e., the repo has never been scanned while `GitHubUser`/`StarEvent` were active). `RepoStats` is exported from `src/app/api/stats/[owner]/[repo]/route.ts`.
 

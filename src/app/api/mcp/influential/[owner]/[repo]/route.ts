@@ -76,7 +76,9 @@ export const GET = async (
         "code" in err &&
         (err.code === "P2010" || err.code === "P2024");
       if (!isOverload) throw err;
-      logError("mcp/influential timeout", { owner: key.owner, repo: key.repo });
+      // Repo identity goes in the tag, not as a second arg: logError() calls
+      // sanitizeError(err), which stringifies a plain object to "[object Object]".
+      logError(`mcp/influential timeout [${key.owner}/${key.repo}]`, err);
       const response: McpInfluentialResponse = { users: [], total: 0, minFollowers, timedOut: true };
       return NextResponse.json(response, { status: 200, headers: { "Cache-Control": "no-store" } });
     }

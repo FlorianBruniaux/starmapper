@@ -36,6 +36,12 @@ export const env = createEnv({
     ADMIN_ALLOWED_IPS: z.string().optional(),
     CRON_SECRET: z.string().min(16).optional(),
     ORGANIC_SCORE_ENABLED: z.string().optional(),
+    // Serves GET /api/stats/[owner]/[repo] from the four repo_*_mv instead of the live
+    // joins. Requires views 10 to 13 of prisma/sql/views.sql to be applied first.
+    // Plain string, not a boolean: z.coerce.boolean() would make Boolean("false") true,
+    // so REPO_STATS_MV_ENABLED=false could never turn it off and the rollback path would
+    // be dead. Compared with === "true" at the call site, like the six other flags here.
+    REPO_STATS_MV_ENABLED: z.string().optional(),
 
     NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
   },

@@ -80,6 +80,24 @@ mv-language-grid:
 mv-language-grid-prod:
 	$(ENV) psql "$$DATABASE_URL" -f scripts/db/sql/create-language-grid-mv.sql'
 
+stx-star-event-owner-repo:
+	$(ENV) psql "$$DATABASE_URL_LOCAL" -f scripts/db/sql/create-star-event-owner-repo-stats.sql'
+
+# Direct endpoint, not the pooler: ANALYZE with a statistics target of 3000 samples 900k
+# rows and needs the SET statement_timeout = 0 at the top of the file to survive, which it
+# does not through PgBouncer in transaction mode.
+stx-star-event-owner-repo-prod:
+	$(ENV) psql "$${DIRECT_DATABASE_URL:-$$DATABASE_URL}" -f scripts/db/sql/create-star-event-owner-repo-stats.sql'
+
+# The 4 per-repo stats views. About 306s of build on prod, so the -prod target uses
+# DIRECT_DATABASE_URL: on the pooler endpoint the SET statement_timeout = 0 at the top of
+# the file does not survive to the next statement, and every CREATE would die at 10s.
+mv-repo-stats:
+	$(ENV) psql "$$DATABASE_URL_LOCAL" -f scripts/db/sql/create-repo-stats-mvs.sql'
+
+mv-repo-stats-prod:
+	$(ENV) psql "$${DIRECT_DATABASE_URL:-$$DATABASE_URL}" -f scripts/db/sql/create-repo-stats-mvs.sql'
+
 idx-geo-velocity:
 	$(ENV) psql "$$DATABASE_URL_LOCAL" -f scripts/db/sql/create-geo-velocity-index.sql'
 
@@ -225,6 +243,7 @@ maintenance-sync-only:
         mv-country-stats mv-country-stats-prod mv-country-language mv-country-language-prod \
         mv-user-repo-count mv-user-repo-count-prod mv-trending mv-trending-prod \
         mv-language-grid mv-language-grid-prod \
+        stx-star-event-owner-repo stx-star-event-owner-repo-prod \
         idx-geo-velocity idx-geo-velocity-prod \
         refresh-all refresh-all-prod \
         backfill-organic-score backfill-organic-score-prod \

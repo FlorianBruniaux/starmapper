@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
-# refresh-mvs.sh — Refresh all 8 materialized views on Neon prod
+# refresh-mvs.sh — Refresh 12 of the 13 materialized views on Neon prod
+#
+# language_grid_mv is knowingly absent, as it is from /api/admin/refresh-grid-mv.
+# It feeds /devs/[language] and has not been refreshed since 2026-06-18. Tracked
+# separately; do not fix it here without checking its build cost first.
 #
 # Uses the direct (non-pooler) connection so that SET statement_timeout = 0
 # works. CONCURRENTLY avoids locking reads during refresh.
@@ -33,6 +37,7 @@ echo ""
 
 psql "$DIRECT_URL" -c "
 SET statement_timeout = 0;
+ANALYZE star_event;
 REFRESH MATERIALIZED VIEW CONCURRENTLY github_user_grid_mv;
 REFRESH MATERIALIZED VIEW CONCURRENTLY country_stats_mv;
 REFRESH MATERIALIZED VIEW CONCURRENTLY power_users_mv;
@@ -41,6 +46,10 @@ REFRESH MATERIALIZED VIEW CONCURRENTLY country_language_stats_mv;
 REFRESH MATERIALIZED VIEW CONCURRENTLY user_repo_count_mv;
 REFRESH MATERIALIZED VIEW CONCURRENTLY trending_repos_mv;
 REFRESH MATERIALIZED VIEW CONCURRENTLY city_stats_mv;
+REFRESH MATERIALIZED VIEW CONCURRENTLY repo_stats_mv;
+REFRESH MATERIALIZED VIEW CONCURRENTLY repo_location_stats_mv;
+REFRESH MATERIALIZED VIEW CONCURRENTLY repo_company_stats_mv;
+REFRESH MATERIALIZED VIEW CONCURRENTLY repo_power_users_mv;
 "
 
 echo "All MVs refreshed."

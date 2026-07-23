@@ -15,6 +15,14 @@
     {
       "path": "/api/admin/daily-digest",
       "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/admin/refresh-repo-stats?part=1",
+      "schedule": "0 2,14 * * *"
+    },
+    {
+      "path": "/api/admin/refresh-repo-stats?part=2",
+      "schedule": "20 2,14 * * *"
     }
   ]
 }

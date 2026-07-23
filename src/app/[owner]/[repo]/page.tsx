@@ -44,7 +44,15 @@ const fetchStats = async (owner: string, repo: string): Promise<RepoStats | null
       `${APP_URL}/api/stats/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`,
     );
     if (!res.ok) return null;
-    return res.json() as Promise<RepoStats>;
+    const stats = (await res.json()) as RepoStats;
+    // The route already shortens its own Cache-Control to 30s when the Neon
+    // aggregation timed out, but that header only governs the CDN. This SSR
+    // path is governed by cacheLife alone, and "minutes" would hold a stats
+    // panel with empty countries/cities/companies for revalidate=60s with a
+    // 300s stale window. cacheLife keeps the minimum across calls, so this
+    // second call can only shorten the entry, never extend it.
+    if (stats.isPartial) cacheLife("seconds");
+    return stats;
   } catch {
     return null;
   }

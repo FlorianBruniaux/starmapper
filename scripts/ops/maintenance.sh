@@ -166,6 +166,15 @@ if ! $SKIP_SYNC && ! $DRY_RUN; then
   bash scripts/db/db-sync-to-neon.sh "$DATABASE_URL"
   ok "sync done"
 
+  # star_event's planner statistics go stale between maintenance runs (rows
+  # added by the sync above + by every /api/chunk scan). Stale stats make the
+  # planner pick nested-loop-per-stargazer joins on large repos instead of the
+  # correct hash join, which times out past Vercel's 10s limit. See
+  # research-stats-timeouts.md and scripts/db/sql/create-star-event-owner-repo-stats.sql.
+  step "ANALYZE star_event (refresh planner statistics)"
+  psql "$DATABASE_URL" -c "SET statement_timeout = 0; ANALYZE star_event;"
+  ok "star_event analyzed"
+
   step "Refresh materialized views (prod)"
   psql "$DATABASE_URL" -c "SET statement_timeout = 0;
     REFRESH MATERIALIZED VIEW CONCURRENTLY country_stats_mv;
