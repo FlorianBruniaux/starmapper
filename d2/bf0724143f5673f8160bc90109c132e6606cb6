@@ -1,0 +1,20 @@
+src/app/[owner]/[repo]/opengraph-image.tsx
+  s_b3bd94b91483d1::t_cab589b8c3aeb9 78
+  s_b3bd94b91483d1::t_32547ba59e3009 77,79-84
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "d2bf0724143f5673f8160bc90109c132e6606cb6",
+  "prompts": {},
+  "sessions": {
+    "s_b3bd94b91483d1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9e9db0da-00b5-4d51-8464-b93b9245333f",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Florian BRUNIAUX <florian@bruniaux.com>"
+    }
+  }
+}
