@@ -1,0 +1,53 @@
+src/app/[owner]/[repo]/page.client.tsx
+  s_e1805c6e8b625d::t_7acaa860ba7246 445-480
+src/app/_components/landing-client.tsx
+  s_e1805c6e8b625d::t_ad235301a58b5a 146-147
+  s_e1805c6e8b625d::t_4bd6cc64f00a23 231-259
+  s_e1805c6e8b625d::t_6aae426a8469ca 19-21
+  s_e1805c6e8b625d::t_86ebf668899611 78
+README.md
+  s_e1805c6e8b625d::t_845a0092fdf5d9 3-10
+src/components/announcement-banner.tsx
+  s_e1805c6e8b625d::t_4896464e5536fc 47,53-55,87-95,110
+  s_40ad2421407764::t_9f3da9e76fc977 8-10,13,27,48-52,56-86,96-100,103-109,111-112
+src/lib/stargazer-notice.ts
+  s_e1805c6e8b625d::t_156befbcc5bbb0 1-48
+src/components/map/top-panel.tsx
+  s_e1805c6e8b625d::t_a585bb7429e09a 329-346
+  s_e1805c6e8b625d::t_97afe4317aba76 60-61
+  s_e1805c6e8b625d::t_594c4e32c8c492 81
+src/components/map/pre-scan-overlay.tsx
+  s_e1805c6e8b625d::t_00210fa3d9a4c3 119-143
+  s_e1805c6e8b625d::t_6c2117c0e02515 12
+src/components/stargazer-notice-modal.tsx
+  s_e1805c6e8b625d::t_a883150cb43834 1-92
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "bb179cd2f890cbc0704dfd49b2f288a44aa79d2d",
+  "prompts": {},
+  "humans": {
+    "h_07916ece6468dd": {
+      "author": "Florian BRUNIAUX <florian@bruniaux.com>"
+    }
+  },
+  "sessions": {
+    "s_40ad2421407764": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8e228545-a482-4baa-ae6d-2de573c746d7",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Florian BRUNIAUX <florian@bruniaux.com>"
+    },
+    "s_e1805c6e8b625d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8457c43e-1ee3-4e85-9f75-603a7f6c909e",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Florian BRUNIAUX <florian@bruniaux.com>"
+    }
+  }
+}
