@@ -23,12 +23,15 @@ Seven materialized views (not managed by Prisma) power `/trending`, `/devs/atlas
 | Service | Limit | Handling |
 |---------|-------|----------|
 | GitHub GraphQL | 5000 pts/hr (login+name+location ≈ 0.1 pts/user) | Headers checked, 429 → wait |
-| Jawg Places API | No strict limit | Circuit breaker: 3 errors → 1h cooldown |
+| Jawg dedicated (`starmapper.jawg.io`) | No strict limit, provisioned to absorb spikes | Circuit breaker: 3 errors → 1h cooldown |
+| Jawg shared Places (`api.jawg.io`) | Places quota, billed separately from Map Views | Own circuit breaker + token fallback |
 | Geoapify | 3,000 credits/day | Circuit breaker: 3 errors → 1h cooldown |
 | Nominatim | 1 req/s (polite use policy) | 1100ms delay between calls |
 | Vercel | 10s default, 60s configurable | Chunk architecture handles this |
 
-Without `JAWG_TOKEN_HEADER` + `GEOAPIFY_APIKEY`, all geocoding falls to Nominatim — 1100ms/call, very slow on large repos.
+Geocoding waterfall (4 tiers, `src/lib/geocoder.ts`): dedicated Jawg host → shared Jawg Places API → Geoapify → Nominatim. Each Jawg tier has its own token pool with automatic fallback to a secondary account on 401/402/403/429 (`src/lib/jawg-token.ts`). The two hosts authenticate differently: the dedicated one by `x-api-key` header, the shared one by `access-token` query param, which `api.jawg.io` alone accepts.
+
+Without any Jawg or Geoapify key, all geocoding falls to Nominatim at 1100ms/call, very slow on large repos.
 
 ---
 
@@ -54,8 +57,10 @@ Without `JAWG_TOKEN_HEADER` + `GEOAPIFY_APIKEY`, all geocoding falls to Nominati
 |----------|----------|-------------|
 | `DATABASE_URL` | Yes | Neon Postgres connection string |
 | `GITHUB_TOKEN` | Yes | PAT with `read:user` scope (without: 60 req/hr) |
-| `JAWG_TOKEN_HEADER` | Recommended | Jawg dedicated token — main geocoding via `starmapper.jawg.io` |
-| `JAWGMAP_ACCESS_TOKEN` | Recommended | Jawg token for explore autocomplete + reverse geocoding |
+| `JAWG_TOKEN_HEADER` | Recommended | Jawg dedicated token, main geocoding via `starmapper.jawg.io` (sent as `x-api-key` header) |
+| `JAWG_TOKEN_HEADER_2` | No | Jawg geocoding fallback token, auto-used on 401/402/403/429 |
+| `JAWGMAP_ACCESS_TOKEN` | Recommended | Jawg Places token for explore autocomplete + reverse geocoding (sent as `access-token` query param) |
+| `JAWGMAP_ACCESS_TOKEN_2` | No | Jawg Places fallback token, auto-used on 401/402/403/429 |
 | `GEOAPIFY_APIKEY` | Recommended | Geoapify — geocoding fallback 1 |
 | `NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN` | Yes (client) | Jawg token for MapLibre tile style URL (primary) |
 | `NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN_2` | No | Jawg fallback token — auto-used on 401/402/403/429 |

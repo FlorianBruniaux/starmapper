@@ -15,8 +15,12 @@ export const env = createEnv({
     GITHUB_TOKEN: z.string().min(1),
 
     // Geocoding providers (optional — falls back to Nominatim if absent)
+    // The _2 variants are secondary Jawg accounts, used automatically when the primary
+    // token returns a quota or auth error (401, 402, 403, 429). See src/lib/jawg-token.ts.
     JAWG_TOKEN_HEADER: z.string().optional(),
+    JAWG_TOKEN_HEADER_2: z.string().optional(),
     JAWGMAP_ACCESS_TOKEN: z.string().optional(),
+    JAWGMAP_ACCESS_TOKEN_2: z.string().optional(),
     GEOAPIFY_APIKEY: z.string().optional(),
 
     // Security — optional but strongly recommended in production

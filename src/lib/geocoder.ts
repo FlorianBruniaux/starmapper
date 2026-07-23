@@ -4,6 +4,8 @@
 import { getCache } from "@vercel/functions";
 import { prisma } from "@/lib/db";
 import { CircuitBreaker } from "@/lib/circuit-breaker";
+import { hasJawgToken, jawgFetch } from "@/lib/jawg-token";
+import type { JawgPool } from "@/lib/jawg-token";
 
 type GeoCacheRow = { key: string; lat: number | null; lng: number | null };
 
@@ -11,13 +13,20 @@ type GeoCacheRow = { key: string; lat: number | null; lng: number | null };
 // Falls through silently in local dev / non-Vercel environments.
 const geoRc = () => getCache({ namespace: "geo" });
 
+// Dedicated Jawg host, provisioned to absorb traffic spikes without touching the shared
+// Places quota. Preferred tier whenever it is reachable.
 const JAWG_GEOCODING = "https://starmapper.jawg.io/places/v1/search";
+// Shared Jawg Places API, used when the dedicated host is unreachable (expired certificate,
+// outage). Same Pelias response shape, so the parsing below is identical, but every call
+// bills against the Places quota.
+const JAWG_SHARED_GEOCODING = "https://api.jawg.io/places/v1/search";
 const GEOAPIFY_GEOCODING = "https://api.geoapify.com/v1/geocode/search";
 const NOMINATIM_GEOCODING = "https://nominatim.openstreetmap.org/search";
 
 // --- Circuit breakers (in-memory, per Vercel instance) ---
 const CIRCUIT_RESET_MS = 60 * 60 * 1000; // 1h
 const jawgBreaker = new CircuitBreaker(3, CIRCUIT_RESET_MS, "Jawg");
+const jawgSharedBreaker = new CircuitBreaker(3, CIRCUIT_RESET_MS, "JawgShared");
 const geoapifyBreaker = new CircuitBreaker(3, CIRCUIT_RESET_MS, "Geoapify");
 
 // --- Cache helpers ---
@@ -132,17 +141,24 @@ const callGeoapify = async (
   }
 };
 
+/**
+ * Calls a Jawg Places endpoint. Both hosts speak Pelias, so the response parsing is shared;
+ * only the base URL and the token pool differ (dedicated host authenticates by header,
+ * the shared API by query param — see src/lib/jawg-token.ts).
+ */
 const callJawg = async (
   location: string,
-  apiKey: string,
+  pool: JawgPool,
+  baseUrl: string,
+  label: string,
 ): Promise<[number, number] | null | "error"> => {
   try {
-    const url = `${JAWG_GEOCODING}?text=${encodeURIComponent(location)}&size=1`;
-    const res = await fetchWithTimeout(url, 3000, {
-      headers: { "x-api-key": apiKey },
-    });
+    const url = `${baseUrl}?text=${encodeURIComponent(location)}&size=1`;
+    // Falls back to the secondary Jawg token on quota / auth errors (401, 402, 403, 429).
+    const res = await jawgFetch(pool, url, undefined, (u, i) => fetchWithTimeout(u, 3000, i));
+    if (!res) return "error"; // no token configured — provider unavailable
     if (!res.ok) {
-      console.warn(`[geocoder] Jawg HTTP ${res.status}`);
+      console.warn(`[geocoder] ${label} HTTP ${res.status}`);
       return "error"; // 429, 402, 5xx — transient, don't cache
     }
     const data = await res.json();
@@ -214,8 +230,18 @@ type GeocodingProvider = {
 const jawgProvider: GeocodingProvider = {
   name: "Jawg",
   breaker: jawgBreaker,
-  isAvailable: () => jawgBreaker.isAvailable() && !!process.env.JAWG_TOKEN_HEADER,
-  geocode: (loc) => callJawg(loc, process.env.JAWG_TOKEN_HEADER!),
+  isAvailable: () => jawgBreaker.isAvailable() && hasJawgToken("geocoding"),
+  geocode: (loc) => callJawg(loc, "geocoding", JAWG_GEOCODING, "Jawg"),
+};
+
+// Tier 2: shared Jawg Places API. Covers dedicated-host outages (its certificate expired on
+// 2026-06-24) without falling straight through to Geoapify. Its own breaker means a Places
+// quota exhaustion opens this tier alone and leaves the dedicated host untouched.
+const jawgSharedProvider: GeocodingProvider = {
+  name: "JawgShared",
+  breaker: jawgSharedBreaker,
+  isAvailable: () => jawgSharedBreaker.isAvailable() && hasJawgToken("places"),
+  geocode: (loc) => callJawg(loc, "places", JAWG_SHARED_GEOCODING, "JawgShared"),
 };
 
 const geoapifyProvider: GeocodingProvider = {
@@ -231,7 +257,13 @@ const nominatimProvider: GeocodingProvider = {
   geocode: callNominatimQueued,
 };
 
-const PROVIDERS: readonly GeocodingProvider[] = [jawgProvider, geoapifyProvider, nominatimProvider];
+// Waterfall order: dedicated Jawg host, shared Jawg Places, Geoapify, Nominatim.
+const PROVIDERS: readonly GeocodingProvider[] = [
+  jawgProvider,
+  jawgSharedProvider,
+  geoapifyProvider,
+  nominatimProvider,
+];
 
 // Country names (lowercase) used to deprioritize country-only parts in slash-split locations.
 // "France / Paris" → try "Paris" first, then "France" as fallback.

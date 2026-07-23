@@ -7,6 +7,7 @@ import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 import { geocode } from "@/lib/geocoder";
 import { jsonError, logError, getIP } from "@/lib/api-helpers";
+import { jawgFetch } from "@/lib/jawg-token";
 
 // Dedicated fail-closed limiter — each call may trigger Jawg or Nominatim,
 // so 10 req/min per IP is enforced regardless of the middleware strict-get tier.
@@ -37,12 +38,12 @@ const JAWG_REVERSE = "https://api.jawg.io/places/v1/reverse";
 
 // Reverse geocode via Jawg — returns a human-readable place name from lat/lng.
 const reverseGeocode = async (lat: number, lng: number): Promise<string | null> => {
-  const token = process.env.JAWGMAP_ACCESS_TOKEN;
-  if (!token) return null;
   try {
     const url = `${JAWG_REVERSE}?lon=${lng}&lat=${lat}`;
-    const res = await fetch(url, { next: { revalidate: 3600 }, headers: { "x-api-key": token } });
-    if (!res.ok) return null;
+    // jawgFetch appends the access-token query param and retries with the secondary
+    // token on quota / auth errors. Returns null when no token is configured.
+    const res = await jawgFetch("places", url, { next: { revalidate: 3600 } } as RequestInit);
+    if (!res || !res.ok) return null;
     const data = await res.json();
     const feature = data.features?.[0];
     if (!feature) return null;

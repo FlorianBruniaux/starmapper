@@ -4,6 +4,7 @@
 import type { NextRequest} from "next/server";
 import { NextResponse } from "next/server";
 import { jsonError, logError } from "@/lib/api-helpers";
+import { jawgFetch } from "@/lib/jawg-token";
 
 export type AutocompleteResult = {
   label: string;
@@ -15,14 +16,14 @@ const JAWG_AUTOCOMPLETE = "https://api.jawg.io/places/v1/autocomplete";
 const NOMINATIM_SEARCH  = "https://nominatim.openstreetmap.org/search";
 
 const fetchJawg = async (q: string): Promise<AutocompleteResult[]> => {
-  const token = process.env.JAWGMAP_ACCESS_TOKEN;
-  if (!token) return [];
   const url = `${JAWG_AUTOCOMPLETE}?text=${encodeURIComponent(q)}&size=5`;
-  const res = await fetch(url, {
-    headers: { "Accept": "application/json", "x-api-key": token },
+  // jawgFetch appends the access-token query param and retries with the secondary
+  // token on quota / auth errors. Returns null when no token is configured.
+  const res = await jawgFetch("places", url, {
+    headers: { Accept: "application/json" },
     next: { revalidate: 60 },
-  });
-  if (!res.ok) return [];
+  } as RequestInit);
+  if (!res || !res.ok) return [];
   const data = await res.json();
   return (data.features ?? [])
     .map((f: { geometry: { coordinates: [number, number] }; properties: { label?: string } }) => ({
