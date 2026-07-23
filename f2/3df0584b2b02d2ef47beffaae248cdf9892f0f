@@ -1,0 +1,47 @@
+src/app/[owner]/page.client.tsx
+  s_e1805c6e8b625d::t_fecf96c6d422ca 198-202,209,214-219
+src/lib/github.ts
+  s_e1805c6e8b625d::t_9c61c3d382e3e3 35-48
+  s_e1805c6e8b625d::t_336f6b50c8f95f 146-152
+  s_b3bd94b91483d1::t_b25df1f52de586 153
+src/app/api/chunk/route.ts
+  s_e1805c6e8b625d::t_8208d30f0d907c 246-252
+  s_e1805c6e8b625d::t_f4d5a3ab91b238 8
+  s_b3bd94b91483d1::t_0a5c9f233297b1 253
+src/lib/__tests__/github.test.ts
+  s_e1805c6e8b625d::t_4a379cfe4aa07b 5
+  s_e1805c6e8b625d::t_2c00b732671fd9 234-290
+  s_b3bd94b91483d1::t_51ea9dbec6ecf6 291-292
+src/hooks/useScanController.ts
+  s_e1805c6e8b625d::t_606a2924eff6a4 126-128
+  s_e1805c6e8b625d::t_3a5388499321d8 57-66
+  s_e1805c6e8b625d::t_f89d8e360a6f9a 129
+src/app/api/chunk/__tests__/route.test.ts
+  s_e1805c6e8b625d::t_f21a59a007dede 548-560
+  s_e1805c6e8b625d::t_6f3413afb572f8 44-51
+  s_e1805c6e8b625d::t_81c1628cdc4989 561-562
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "f23df0584b2b02d2ef47beffaae248cdf9892f0f",
+  "prompts": {},
+  "sessions": {
+    "s_b3bd94b91483d1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9e9db0da-00b5-4d51-8464-b93b9245333f",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Florian BRUNIAUX <florian@bruniaux.com>"
+    },
+    "s_e1805c6e8b625d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8457c43e-1ee3-4e85-9f75-603a7f6c909e",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Florian BRUNIAUX <florian@bruniaux.com>"
+    }
+  }
+}
