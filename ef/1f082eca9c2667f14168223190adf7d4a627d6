@@ -1,0 +1,101 @@
+scripts/ops/maintenance.sh
+  s_b3bd94b91483d1::t_df6cd201536cb9 172
+  s_b3bd94b91483d1::t_39d11626b1f4ec 169-171,173-177
+CLAUDE.md
+  s_b3bd94b91483d1::t_a11a919d0d1e39 44
+scripts/db/refresh-mvs.sh
+  s_b3bd94b91483d1::t_8c8030c964a427 49-52
+  s_b3bd94b91483d1::t_18910492ed976b 2-6
+  s_b3bd94b91483d1::t_47293ca84d699c 40
+docs/adr-repo-stats-precompute.md
+  s_b3bd94b91483d1::t_c2d2df3c493a0f 1-408
+src/app/api/mcp/influential/[owner]/[repo]/route.ts
+  s_b3bd94b91483d1::t_181b0cea40e38d 79-81
+src/app/api/admin/refresh-repo-stats/route.ts
+  s_b3bd94b91483d1::t_d1ede234e5dc40 157-162,166,170-173,176-179
+  s_b3bd94b91483d1::t_f1168e4a00196b 121,125-130,132-134,138
+  s_b3bd94b91483d1::t_4613f8384cd7aa 89-107
+  s_b3bd94b91483d1::t_1950a21440004d 1-20,23-62,64-88,108-120,122-124,131,139-145,147-149,155-156,163-165,167-169,174-175,180
+  s_b3bd94b91483d1::t_4a2eaa868c3826 135-137,146,150-154
+  s_b3bd94b91483d1::t_4cd58723a09ebb 63
+  s_b3bd94b91483d1::t_ee7e86b6dae260 21-22
+src/app/api/stats/[owner]/[repo]/route.ts
+  s_b3bd94b91483d1::t_6b96c1144e9fa8 112-113,115-118,120-136,138-141,143-147,150-151
+  s_b3bd94b91483d1::t_f65a140ac88af2 142
+  s_b3bd94b91483d1::t_b858282e9ef35a 288-289,291,294-296,298,300-302,305
+  s_b3bd94b91483d1::t_357748ee9fe364 391
+  s_b3bd94b91483d1::t_5c52d3df8e9cdd 196-197
+  s_b3bd94b91483d1::t_ff70bfcfef9da8 396-397,401-402,411,417
+  s_b3bd94b91483d1::t_4fc8c1f5cb4f04 290,292-293,297
+  s_b3bd94b91483d1::t_d5d40381991f33 247,253,259
+  s_b3bd94b91483d1::t_7176f83a5c5201 148-149,152
+  s_b3bd94b91483d1::t_ce6cff37269f13 153-192
+  s_b3bd94b91483d1::t_cf89d3ee352e37 241-246,248-252,254-258,260-266
+  s_b3bd94b91483d1::t_caf508881f95a3 398-400,403-407
+  s_b3bd94b91483d1::t_aa70405cc41fb3 408-409,412-414
+  s_b3bd94b91483d1::t_1ed1597cff2963 366-375
+  s_b3bd94b91483d1::t_4a81236f1868f4 224-239
+  s_b3bd94b91483d1::t_7dd06bf2e33fb9 410
+  s_b3bd94b91483d1::t_a09e3dc5f85e9f 67-72
+  s_b3bd94b91483d1::t_785a5dab9580e0 205-207,213
+  s_b3bd94b91483d1::t_2a3d489274f70d 392-393
+  s_b3bd94b91483d1::t_d1a5079213c519 46-66
+  s_b3bd94b91483d1::t_4c802b47e147e2 240,415
+scripts/db/sql/create-star-event-owner-repo-stats.sql
+  s_b3bd94b91483d1::t_1a7d840b6ef96e 14-25,28-36,53-59
+  s_b3bd94b91483d1::t_8ff896fc15cf9a 37-47,51-52,63-64
+  s_b3bd94b91483d1::t_16449141fcb007 26-27
+Makefile
+  s_b3bd94b91483d1::t_e5e2fbca2a4ff5 83-85,89,91
+  s_b3bd94b91483d1::t_e094e002d5c54c 92-100
+  s_b3bd94b91483d1::t_c6b0b1faf11ad1 246
+  s_b3bd94b91483d1::t_6bee2460c80a7c 86-88,90
+src/env.ts
+  s_b3bd94b91483d1::t_1fd897779d9864 39-44
+src/app/[owner]/[repo]/page.tsx
+  s_b3bd94b91483d1::t_36ce8cd3c54adb 47-55
+vercel.json
+  s_b3bd94b91483d1::t_25d346fa8444c9 18-25
+src/app/api/stats/[owner]/[repo]/__tests__/route.test.ts
+  s_b3bd94b91483d1::t_a1cb0bfecdc712 4
+  s_b3bd94b91483d1::t_61590c6a04dc91 199-252
+  s_b3bd94b91483d1::t_69ca28d19e9c80 265-335,353-355,392-396,399-448
+  s_b3bd94b91483d1::t_be2479b5dd7f19 352,356-391,397-398
+  s_b3bd94b91483d1::t_ee68d3a53e6b64 336-351
+scripts/db/sql/create-repo-stats-mvs.sql
+  s_b3bd94b91483d1::t_77f78532141ca4 136-137
+  s_b3bd94b91483d1::t_b99ac1f84ed9db 1-16,21-36,54-62,72-74,78-82,94-97,99-103,107-108,120-123,125-135,138-139,151-154,156-166,175-178,191-197
+  s_b3bd94b91483d1::t_1c1ddfb3080a62 17-20,37-40,42-49,75-77,83-93,98,109-119,124,140-150,155,167-170,179-190
+  s_b3bd94b91483d1::t_196b601ea4c8b2 171-174
+  s_b3bd94b91483d1::t_f77ef8d8ebec48 198-199
+  s_b3bd94b91483d1::t_d13d553ab261e7 41,50-53
+  s_b3bd94b91483d1::t_b294ac4b4b4147 63-71
+  s_b3bd94b91483d1::t_6fcbac9f321fca 104-106
+prisma/sql/views.sql
+  s_b3bd94b91483d1::t_46f185aa58ade2 237-363
+  s_b3bd94b91483d1::t_bb7f53c1048e6d 9-10
+docs/spec-repo-stats-mv-implementation.md
+  s_b3bd94b91483d1::t_96bb3254bc8082 490
+  s_b3bd94b91483d1::t_03a83366de58ba 1-489,491-781
+.claude/rules/known-gotchas.md
+  s_b3bd94b91483d1::t_ea3da93bc16f78 74,79,82,86-90
+  s_b3bd94b91483d1::t_2faad2fa9eb3ad 91
+docs/ARCHITECTURE.md
+  s_b3bd94b91483d1::t_63103aa590e398 426,428-442
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "ef1f082eca9c2667f14168223190adf7d4a627d6",
+  "prompts": {},
+  "sessions": {
+    "s_b3bd94b91483d1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9e9db0da-00b5-4d51-8464-b93b9245333f",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Florian BRUNIAUX <florian@bruniaux.com>"
+    }
+  }
+}
