@@ -182,6 +182,12 @@ index-repo: ## make index-repo REPO=owner/repo
 index-repo-local: ## make index-repo-local REPO=owner/repo
 	$(ENV) caffeinate -i node_modules/.bin/tsx scripts/ops/index-repo.ts --base-url http://localhost:3000 $(REPO)'
 
+rescan-ghosts-dry: ## Liste les repos sans données cartographiques, sans rien écrire
+	$(ENV) node_modules/.bin/tsx scripts/ops/rescan-ghosts.ts --dry-run'
+
+rescan-ghosts: ## Rescanne les repos sans données. make rescan-ghosts MAX_STARS=10000 LIMIT=5
+	$(ENV) caffeinate -i node_modules/.bin/tsx scripts/ops/rescan-ghosts.ts $(if $(MAX_STARS),--max-stars=$(MAX_STARS)) $(if $(LIMIT),--limit=$(LIMIT)) $(if $(MIN_STARS),--min-stars=$(MIN_STARS))'
+
 index-followers: ## make index-followers LOGIN=FlorianBruniaux
 	$(ENV) caffeinate -i node_modules/.bin/tsx scripts/ops/index-followers.ts $(LOGIN)'
 
