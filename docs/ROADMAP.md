@@ -1,6 +1,6 @@
 # StarMapper Roadmap
 
-*Last updated: 2026-06-18, v0.6.7*
+*Last updated: 2026-07-24, v0.6.10*
 
 ---
 
@@ -59,7 +59,63 @@
 
 ## Next — prioritized
 
-No new items currently queued. See Medium term for backlog.
+See "Strategic pivot: inverted data model" below, the only prioritized work right now. Everything else sits in Medium term.
+
+---
+
+## Strategic pivot: inverted data model
+
+### Why
+
+GitHub disabled `Repository.stargazers` enumeration on every surface, GraphQL, REST, and the web UI, on 2026-07-23. That single field was the entire data source of the classic scan (`/api/chunk`). `starredRepositories(user)`, the inverse edge, stays open. Full investigation and evidence: `claudedocs/github-stargazers-restriction.md`. The reframe: stop trying to scan a repo for its stargazers, and instead crawl known users' starred repos, then reconstruct any repo's map from our own database.
+
+### Assets in hand
+
+The measured DB, no new work required to read these numbers: `github_user` 7.24M rows (2.21M geolocated, 30%), `star_event` 33M user-repo links across 2642 repos, `stargazer_cache` 2642 repos already cached from prior scans.
+
+### Phases
+
+- **Phase 0, leave-one-out gate (S, go/no-go).** Do not run a naive self-join (a fully-scanned repo's own stargazers are already in `star_event`, so that query returns close to 100% by construction and measures nothing). Instead, take several fully-scanned repos, pretend each is unknown, and count how many of its real stargazers we'd still recover purely from non-stargazer discovery sources (followers, following, contributors) already in the DB. Commit a numeric threshold before running it, for example: median leave-one-out coverage below roughly 20% on mid-size repos (1k-50k stars) means do not build the crawler, go straight to the fallback below. Zero new API calls, pure SQL against the existing 33M rows.
+
+- **Phase 1, reconstruction read path (M, ships now, decoupled from the crawler).** This is the near-term win, and it does not wait on Phase 3 or on any crawler decision. New route `GET /api/reconstruct/[owner]/[repo]`: raw SQL join of `star_event` and `github_user` on `login` filtered by `owner`/`repo`, split into mapped (lat/lng not null) and unmapped, coordinates rounded to 2 decimals matching the existing convention at `chunk/route.ts:183`, points shaped as `StargazerPoint` (bio null, avatar from `github.com/{login}.png`). Read precedence: `stargazer_cache` first for the 2642 already-cached repos, `/api/reconstruct` otherwise. Repo pages fall back to it behind `NEXT_PUBLIC_RECONSTRUCT_ENABLED`. New `fetchStarredReposPage` in `github.ts` lands here too, even though Phase 1 itself makes zero new GitHub calls, later phases reuse it.
+
+- **Phase 1b, live engaged-audience map (M, no crawl, no ToS risk, ships now).** A third path the probe surfaced (`scripts/probe-github-access.ts`, full inventory in `claudedocs/github-api-surface-inventory.md`). GitHub killed `stargazers`, but several repo-to-users connections stayed open on GraphQL, each returning `login` and `location` inline at 1pt/page: `repository.forks{ owner }` (50k on react), `repository.issues{ author }` (14.5k), `repository.pullRequests{ author }` (13k), `repository.mentionableUsers` (1.7k), REST `contributors`, plus `repository.watchers` (6.6k). Build a per-repo map on demand from the union of these, deduplicated. It is not the stargazers, it is a smaller engaged slice (roughly 25-30% of the star count on react, measured), so the copy reframes from "everyone who starred" to "the engaged community". Durable core is forks + issues + PRs + mentionable + contributors, none on the restriction list. `watchers` is a bonus that may close (it IS on the list, REST `subscribers` already 404s), so build the union to degrade cleanly without it. This is the only path that works on a repo StarMapper has never seen, with no crawl and no legal read. Strongest near-term bet.
+
+- **Phase 2, geolocated coverage metric (M).** Surface `0.3 * N / M`, not raw `N / M`. N is the distinct login count we hold for the repo in `star_event`, M is `stargazerCount` (still callable, only enumeration is blocked, so M stays readable). Raw N/M overstates what actually renders as a dot on the map by roughly 3x, since only the geolocated 30% of `github_user` produces a point. Indicator copy needs to read "we've located X of an estimated Y stargazers," with X being the geolocated count.
+
+- **Phase 3, crawler (L, conditional on Phase 0's number AND a legal read, do not start without both).** New `scripts/crawl-user-stars.ts` driven by a new `user_star_crawl` table, walking `starredRepositories(first: 100, after, orderBy: STARRED_AT_DESC)` per known user, geolocated users prioritized first, token rotation across the existing 4 `GITHUB_TOKEN` slots. This phase does not start until Phase 0 clears its committed threshold and the ToS read in the risks section below comes back clean.
+
+- **Phase 4, discovery channels (M).** Following-graph BFS is the highest-ROI replacement for stargazer-based discovery, since location comes back inline on follow edges and doubles as geolocation enrichment. After that: followers (`fetchFollowersPage`, already exists), org `membersWithRole`, `fetchContributorsPage` (already exists, 500-user cap), commit authors. All still-open endpoints, none touch `Repository.stargazers`.
+
+- **Phase 5, freshness (S/M).** Per-user incremental crawl: page `STARRED_AT_DESC`, stop as soon as `starredAt <= latestStarredAt`, the same stop-marker pattern already used by the `since` handling at `github.ts:159`, then persist the newest `starredAt`. A 30-day staleness cron re-enqueues `done` users and clears their cursor.
+
+- **Phase 6, route cleanup (S).** `/api/chunk` returns 410 once the reconstruction path is trusted. `badge-update` flips from client-triggered to the freshness cron. Flags: `NEXT_PUBLIC_RECONSTRUCT_ENABLED`, `STARGAZER_SCAN_ENABLED=false`. Contributors, followers, trending, atlas, explore, and dependents routes are untouched, none of them ever called `Repository.stargazers`.
+
+### Data model
+
+New `user_star_crawl` table: `login` (PK), `status` (`pending`/`in_progress`/`done`/`error`), `priority` (int), `cursor`, `latestStarredAt`, `lastCrawledAt`, `discoverySource`. Indexes on `(status, priority desc)` and `(lastCrawledAt)`. Two new columns on `BadgeCache`: `knownCount`, `coverageComputedAt`. `star_event` is reused as-is: its `@@unique([login, owner, repo])` already gives idempotent upserts via `skipDuplicates`, and its existing `@@index([owner, repo, login])` is what makes the Phase 1 reconstruction query fast without adding anything new. Neon DDL rule still applies for the new table: no `CREATE INDEX CONCURRENTLY` (triggers a PANIC on Neon), prefix scripts with `SET statement_timeout = 0;`.
+
+### Risks, ranked
+
+1. **ToS and circumvention (BLOCKER).** Mass-crawling `starredRepositories` to rebuild the exact stargazer lists GitHub just restricted reads as direct circumvention, not a workaround of an incidental limit. Pooling GraphQL quota across 3 accounts and 4 tokens is itself ToS-fragile, independent of the crawl's purpose. Blast radius if flagged: all 4 tokens and their accounts banned, not just rate-limited. A legal/ToS read is required before Phase 3, this is not something to engineer around.
+
+2. **GraphQL point-cost uncertainty (HIGH).** The crawl timeline for the geolocated pool swings by roughly 10x depending on whether `starredRepositories` costs about 1pt/request, about 0.1pt (like the existing stargazer query), or something driven by the nested `node { stargazerCount }` connection: roughly 9 days versus roughly 90. Neither number is trustworthy until a measured spike (crawl 100 heavy-follower users, read the actual `x-ratelimit-cost` header) replaces the estimate. Secondary and abuse rate limits, not the primary points budget, are the more likely wall in practice.
+
+3. **Silent DB-health no-op (HIGH).** `bulkUpsertStarEvents` and `bulkInsertUsersMinimal` in `src/lib/user-cache.ts` silently skip their writes when DB health is degraded or `usagePct` is high, by design, for the existing chunk loop. A multi-week crawl loop that doesn't check the return value will mark `lastCrawledAt` as done for users whose `star_event` rows were never actually written. The crawl loop has to treat a skip as "retry this user later," never as completion.
+
+4. **Coverage honesty (MEDIUM-HIGH).** Because only 30% of known users are geolocated, an under-covered repo's map can look sparse or broken even when the raw N/M number looks fine. The Phase 2 indicator wording is product-critical, not cosmetic, it has to describe what's actually visible, not what's stored.
+
+5. **star_event growth (MEDIUM).** Projected growth from 33M rows to somewhere between 500M and 1B, with three indexes to keep current. `COUNT(DISTINCT login)` and the join behind reconstruction get slower on Neon as the table grows. Storage itself isn't the constraint (Neon is sponsored), latency and autovacuum behavior at that row count are.
+
+6. **GDPR basis shift (MEDIUM).** The existing LIA and DPIA cover user-initiated, on-demand scans of a repo the visitor asked for. A 24/7 proactive crawl of millions of accounts, with no triggering user request, is a materially broader legal basis and needs a DPIA revision before Phase 3, not after.
+
+### Bottom line
+
+Ship Phase 1 first. The reconstruction read path is low-risk, delivers value today over the 33M `star_event` rows already in hand, and needs neither the crawler nor a ToS decision to exist. Treat the crawler (Phase 3) as fully conditional on Phase 0's leave-one-out number clearing its committed threshold and on the ToS/legal read landing clean. The two are separable, keep building and shipping them that way.
+
+### Fallback
+
+If the leave-one-out simulation doesn't clear the gate, or the ToS read comes back negative, recenter on Contributors Map and Followers Map. Both already exist, both use endpoints verified returning HTTP 200 on 2026-07-23, and neither depends on `Repository.stargazers` in any form.
 
 ---
 
