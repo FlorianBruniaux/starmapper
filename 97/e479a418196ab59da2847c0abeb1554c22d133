@@ -1,0 +1,46 @@
+scripts/probe-github-access.ts
+  s_e1805c6e8b625d::t_db793278f118df 158,162-163
+  s_e1805c6e8b625d::t_8b7dee6d345f11 4-30,32-157,159-161,164-350,352-353,356,358,398-549
+  s_e1805c6e8b625d::t_2218d93182e5ce 31
+  s_e1805c6e8b625d::t_cfcd460a27a3d9 351,354-355,357,359-397
+  s_e1805c6e8b625d::t_5124dc1e1fbca2 1-3
+docs/ROADMAP.md
+  s_e1805c6e8b625d::t_e7c5ab9458e6cd 3
+  s_e1805c6e8b625d::t_fadb725c53919d 62-81,84-118
+  s_e1805c6e8b625d::t_3b96804cccfc8d 82-83
+scripts/poc-admin-exemption.ts
+  s_e1805c6e8b625d::t_9810ee6914dd09 4-100
+  s_e1805c6e8b625d::t_be6531db20013f 1-3
+scripts/poc-engaged-volume.ts
+  s_e1805c6e8b625d::t_c17f7be84a2af2 4-155
+  s_e1805c6e8b625d::t_8b943610116333 1-3
+scripts/measure-reconstruction-coverage.ts
+  s_e1805c6e8b625d::t_deb42e2fd44f50 118-130
+  s_e1805c6e8b625d::t_ce5b56b3f1243b 69-71,75-83,86-90
+  s_e1805c6e8b625d::t_378e9cb03194f7 4-42,44-45,52-58,62-68,72-74,84-85,91-117,131-147
+  s_e1805c6e8b625d::t_2f0ff900ed2d4c 43,46-51,59-60
+  s_e1805c6e8b625d::t_5d178f4e2f292e 61
+  s_e1805c6e8b625d::t_51b1f57fb21184 1-3
+scripts/poc-devs-by-location.ts
+  s_e1805c6e8b625d::t_3eeee128d4fb05 4-91
+  s_e1805c6e8b625d::t_f5038a612110c4 1-3
+scripts/poc-crawl-spike.ts
+  s_e1805c6e8b625d::t_58288b83133c9d 4-137
+  s_e1805c6e8b625d::t_4d93a7d9172cb5 1-3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "97e479a418196ab59da2847c0abeb1554c22d133",
+  "prompts": {},
+  "sessions": {
+    "s_e1805c6e8b625d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8457c43e-1ee3-4e85-9f75-603a7f6c909e",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Florian BRUNIAUX <florian@bruniaux.com>"
+    }
+  }
+}
