@@ -7,8 +7,9 @@
  * Fully automated pipeline: discover new repos → geocode + scan → write to DB.
  *
  *   Step 1 — GitHub Search API fetches trending repos not yet in badge_cache.
- *   Step 2 — batch-scan.ts fetches stargazers + geocodes + writes stargazer_cache,
- *             badge_cache, github_user, star_event.
+ *   Step 2 — index-engaged.ts unions the surviving repo-to-users channels (forks,
+ *             issues, PRs, mentionables, watchers), geocodes, writes engaged_cache.
+ *             (The old stargazer scan died with the 2026-07-23 restriction.)
  *
  * Usage:
  *   pnpm auto-index                   # prod (Neon), 100 repos, 500+ stars
@@ -20,9 +21,7 @@
  *   --min-stars <N>      Minimum star count to include (default: 500)
  *   --since-months <N>   Repos pushed in the last N months (default: 12)
  *   --local              Use DATABASE_URL_LOCAL — local Docker Postgres
- *   --dry-run            Discovery preview only — no writes, no scan
- *   --skip-geocoding     Fetch stargazers only, skip geocoding step
- *   --force              Rescan even if already in stargazer_cache (delta by default)
+ *   --dry-run            Discovery preview only — no writes, no index
  */
 
 import { spawnSync } from "node:child_process";
@@ -58,8 +57,6 @@ const { values: argv } = parseArgs({
     "since-months":   { type: "string",  default: "12" },
     "local":          { type: "boolean", default: false },
     "dry-run":        { type: "boolean", default: false },
-    "skip-geocoding": { type: "boolean", default: false },
-    "force":          { type: "boolean", default: false },
   },
   strict: true,
 });
@@ -69,8 +66,6 @@ const MIN_STARS      = parseInt(argv["min-stars"] ?? "500", 10);
 const SINCE_MONTHS   = parseInt(argv["since-months"] ?? "12", 10);
 const USE_LOCAL      = argv.local;
 const DRY_RUN        = argv["dry-run"];
-const SKIP_GEOCODING = argv["skip-geocoding"];
-const FORCE          = argv.force;
 
 // ─── DB validation ────────────────────────────────────────────────────────────
 
@@ -181,21 +176,21 @@ const main = async () => {
 
   writeFileSync(TMP, JSON.stringify(limited, null, 2));
 
-  // ─── Step 2: Batch scan ───────────────────────────────────────────────────────
+  // ─── Step 2: Engaged-audience index ───────────────────────────────────────────
 
-  separator(`Step 2 / 2 — Scan ${limited.length} repos`);
+  separator(`Step 2 / 2 — Index engaged audience for ${limited.length} repos`);
 
-  const scanArgs = [
-    "scripts/ops/batch-scan.ts",
-    "--input", TMP,
-    // Local Docker: use --local flag (reads DATABASE_URL_LOCAL).
-    // Neon: use --allow-neon explicitly to bypass the production safety guard.
-    ...(USE_LOCAL ? ["--local"] : ["--allow-neon"]),
-    ...(FORCE          ? ["--force"]          : []),
-    ...(SKIP_GEOCODING ? ["--skip-geocoding"] : []),
-  ];
+  // index-engaged reads its DB target from env. Local writes DATABASE_URL_LOCAL,
+  // prod writes DATABASE_URL. Both use the standard (pg) adapter, like the backfills.
+  const engagedEnv: NodeJS.ProcessEnv = USE_LOCAL
+    ? { ...process.env, DATABASE_DRIVER: "standard", DATABASE_URL: LOCAL_URL }
+    : { ...process.env, DATABASE_DRIVER: "standard" };
 
-  run(scanArgs, process.env);
+  // FORCE and SKIP_GEOCODING were stargazer-scan flags. index-engaged is always
+  // idempotent (upsert) and always geocodes, so they no longer apply here.
+  const scanArgs = ["scripts/ops/index-engaged.ts", "--input", TMP];
+
+  run(scanArgs, engagedEnv);
 
   // ─── Done ─────────────────────────────────────────────────────────────────────
 

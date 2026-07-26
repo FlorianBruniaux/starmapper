@@ -23,6 +23,9 @@
 #                          Or set in .env.local: REFRESH_FOLLOWERS=FlorianBruniaux
 #   REFRESH_CONTRIBUTORS   comma-separated owner/repo pairs to warm contributors geocache for.
 #                          E.g.: REFRESH_CONTRIBUTORS=torvalds/linux,facebook/react make maintenance
+#   REFRESH_ENGAGED_LIMIT  number of existing repos to re-index engaged-audience maps for,
+#                          picking the ones missing or stalest in engaged_cache. 0 = skip.
+#                          E.g.: REFRESH_ENGAGED_LIMIT=50 make maintenance
 
 set -euo pipefail
 
@@ -52,6 +55,7 @@ SKIP_FOLLOWERS=false
 # Can be set in .env.local or passed inline: REFRESH_FOLLOWERS=X make maintenance
 REFRESH_FOLLOWERS="${REFRESH_FOLLOWERS:-}"
 REFRESH_CONTRIBUTORS="${REFRESH_CONTRIBUTORS:-}"
+REFRESH_ENGAGED_LIMIT="${REFRESH_ENGAGED_LIMIT:-0}"
 
 for arg in "$@"; do
   case "$arg" in
@@ -145,7 +149,7 @@ if ! $SKIP_BACKFILLS; then
   fi
 
   if [ -n "$REFRESH_CONTRIBUTORS" ]; then
-    step "8/8 — Contributors geocache warm-up ($REFRESH_CONTRIBUTORS)"
+    step "8/9 — Contributors geocache warm-up ($REFRESH_CONTRIBUTORS)"
     if ! $DRY_RUN; then
       for repo in $(echo "$REFRESH_CONTRIBUTORS" | tr ',' ' '); do
         caffeinate -i tsx scripts/ops/index-contributors.ts "$repo"
@@ -155,7 +159,22 @@ if ! $SKIP_BACKFILLS; then
       echo "[dry-run] Would run: index-contributors for $REFRESH_CONTRIBUTORS"
     fi
   else
-    skip "8/8 — Contributors geocache (set REFRESH_CONTRIBUTORS=owner/repo,... to enable)"
+    skip "8/9 — Contributors geocache (set REFRESH_CONTRIBUTORS=owner/repo,... to enable)"
+  fi
+
+  # Engaged-audience refresh: re-indexes existing repos whose engaged_cache map is
+  # missing or stale. Writes prod directly (like the followers/contributors steps
+  # above), so it does not depend on the local->prod sync below.
+  if [ "$REFRESH_ENGAGED_LIMIT" -gt 0 ] 2>/dev/null; then
+    step "9/9 — Engaged-audience refresh (top $REFRESH_ENGAGED_LIMIT stale/missing repos)"
+    if ! $DRY_RUN; then
+      DATABASE_DRIVER=standard caffeinate -i tsx scripts/ops/index-engaged.ts --from-corpus --limit "$REFRESH_ENGAGED_LIMIT"
+      ok "engaged-audience refresh done"
+    else
+      echo "[dry-run] Would run: index-engaged --from-corpus --limit $REFRESH_ENGAGED_LIMIT"
+    fi
+  else
+    skip "9/9 — Engaged-audience refresh (set REFRESH_ENGAGED_LIMIT=N to enable)"
   fi
 
 fi

@@ -2,7 +2,7 @@
 # db-sync-to-neon.sh
 #
 # Syncs local batch-scanned data to Neon production DB.
-# Tables synced: github_user, star_event, badge_cache, stargazer_cache, news, api_key,
+# Tables synced: github_user, star_event, badge_cache, stargazer_cache, engaged_cache, news, api_key,
 #                follower_cache, dependents_cache, geocache
 # geocache uses ON CONFLICT (key) DO NOTHING — new local entries added, Neon entries kept.
 #
@@ -316,6 +316,15 @@ sync_table "dependents_cache" 'ON CONFLICT (owner, repo) DO UPDATE SET
   "dataGz"=EXCLUDED."dataGz", "totalCount"=EXCLUDED."totalCount",
   "fetchedAt"=EXCLUDED."fetchedAt", "expiresAt"=EXCLUDED."expiresAt"
   WHERE EXCLUDED."fetchedAt" > dependents_cache."fetchedAt"'
+
+# engaged_cache — no FK deps. Engaged-audience maps built locally by index-engaged /
+# auto-index-local; keep the freshest by scannedAt.
+sync_table "engaged_cache" 'ON CONFLICT (owner, repo) DO UPDATE SET
+  "pointsGz"=EXCLUDED."pointsGz", "unmappedGz"=EXCLUDED."unmappedGz",
+  "knownCount"=EXCLUDED."knownCount", "starCount"=EXCLUDED."starCount",
+  channels=EXCLUDED.channels, "scannedAt"=EXCLUDED."scannedAt",
+  "expiresAt"=EXCLUDED."expiresAt"
+  WHERE EXCLUDED."scannedAt" > engaged_cache."scannedAt"'
 
 # geocache — additive only: new local entries (from batch-index-contributors +
 # stargazer scans) are pushed; existing Neon entries are never overwritten.

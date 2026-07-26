@@ -188,6 +188,18 @@ rescan-ghosts-dry: ## Liste les repos sans données cartographiques, sans rien �
 rescan-ghosts: ## Rescanne les repos sans données. make rescan-ghosts MAX_STARS=10000 LIMIT=5
 	$(ENV) caffeinate -i node_modules/.bin/tsx scripts/ops/rescan-ghosts.ts $(if $(MAX_STARS),--max-stars=$(MAX_STARS)) $(if $(LIMIT),--limit=$(LIMIT)) $(if $(MIN_STARS),--min-stars=$(MIN_STARS))'
 
+index-engaged: ## make index-engaged REPO=owner/repo — engaged-audience map (Neon prod)
+	$(ENV) DATABASE_DRIVER=standard caffeinate -i node_modules/.bin/tsx scripts/ops/index-engaged.ts $(REPO)'
+
+index-engaged-local: ## make index-engaged-local REPO=owner/repo
+	$(ENV) DATABASE_DRIVER=standard DATABASE_URL=$$DATABASE_URL_LOCAL caffeinate -i node_modules/.bin/tsx scripts/ops/index-engaged.ts $(REPO)'
+
+refresh-engaged: ## make refresh-engaged [LIMIT=50] [STALE_DAYS=30] — re-index stale/missing engaged maps (prod)
+	$(ENV) DATABASE_DRIVER=standard caffeinate -i node_modules/.bin/tsx scripts/ops/index-engaged.ts --from-corpus $(if $(LIMIT),--limit $(LIMIT)) $(if $(STALE_DAYS),--stale-days $(STALE_DAYS))'
+
+refresh-engaged-local: ## make refresh-engaged-local [LIMIT=50]
+	$(ENV) DATABASE_DRIVER=standard DATABASE_URL=$$DATABASE_URL_LOCAL caffeinate -i node_modules/.bin/tsx scripts/ops/index-engaged.ts --from-corpus $(if $(LIMIT),--limit $(LIMIT))'
+
 index-followers: ## make index-followers LOGIN=FlorianBruniaux
 	$(ENV) caffeinate -i node_modules/.bin/tsx scripts/ops/index-followers.ts $(LOGIN)'
 
@@ -244,6 +256,7 @@ maintenance-sync-only:
 	bash scripts/ops/maintenance.sh --skip-backfills
 
 .PHONY: auto-index auto-index-local auto-index-dry \
+        index-engaged index-engaged-local refresh-engaged refresh-engaged-local \
         db-sync-to-prod db-sync-fast db-sync-star-only db-sync-from-prod db-dump db-restore db-pull \
         db-compact-local db-compact-local-check \
         mv-country-stats mv-country-stats-prod mv-country-language mv-country-language-prod \
