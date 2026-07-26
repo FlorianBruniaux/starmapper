@@ -1,0 +1,44 @@
+scripts/ops/index-engaged.ts
+  s_e1805c6e8b625d::t_bbdf297243b113 7-10,12-19,23-28,31,41-42,44-46,56-58,96-124,126,128-133,147-164,167-168,170,172-176,180-200
+  s_e1805c6e8b625d::t_418fe6ea3688b7 1-6,11,20-22,29-30,32-40,43,47-55,59-95,125,127,134-146,165-166,169,171,177-179,201-208
+src/lib/engaged-audience.ts
+  s_e1805c6e8b625d::t_21feb803911f89 1-108,110-215
+  s_e1805c6e8b625d::t_e69c8d8e181019 109
+scripts/ops/auto-index.ts
+  s_e1805c6e8b625d::t_91db35469eb0b1 10-12
+  s_e1805c6e8b625d::t_3552815930d36f 24
+  s_e1805c6e8b625d::t_b9a9ed7d95aa63 179,181,183-191,193
+scripts/ops/maintenance.sh
+  s_e1805c6e8b625d::t_88d8a97c5fb44a 26-28
+  s_e1805c6e8b625d::t_44a4bf92448016 58
+  s_e1805c6e8b625d::t_6697196525a13e 152,162-177
+Makefile
+  s_e1805c6e8b625d::t_b269c6ef6ddf79 259
+  s_e1805c6e8b625d::t_d43c00034db98a 191-202
+prisma/schema.prisma
+  s_e1805c6e8b625d::t_5fdab11cbd3e97 84-103
+package.json
+  s_e1805c6e8b625d::t_bbd68eb93114a8 73-75
+src/lib/__tests__/engaged-audience.test.ts
+  s_e1805c6e8b625d::t_245b9b9bbcb2d8 1-5,7-146
+  s_e1805c6e8b625d::t_3465ea556b2e52 6
+scripts/db/db-sync-to-neon.sh
+  s_e1805c6e8b625d::t_29b531a9b66de1 5
+  s_e1805c6e8b625d::t_fa3606c241866d 320-328
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "570a367d7fd35393266ba565e5ae1656fd96297a",
+  "prompts": {},
+  "sessions": {
+    "s_e1805c6e8b625d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8457c43e-1ee3-4e85-9f75-603a7f6c909e",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Florian BRUNIAUX <florian@bruniaux.com>"
+    }
+  }
+}
