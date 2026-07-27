@@ -1,0 +1,38 @@
+src/app/api/contributors-chunk/route.ts
+  s_e7d66dff0e0ef8::t_1323c1cd30b1be 40-42
+  s_e7d66dff0e0ef8::t_4eb7f00f4fe5b2 16
+src/proxy.ts
+  s_e7d66dff0e0ef8::t_7cbc5ca00ae55d 24-30
+  s_e7d66dff0e0ef8::t_52a65c182105e9 47
+  s_e7d66dff0e0ef8::t_90ec8e3dc1ce90 33-37
+src/app/api/chunk/__tests__/route.test.ts
+  s_e7d66dff0e0ef8::t_c6e16d78cc62de 488-489,493
+  s_e7d66dff0e0ef8::t_41f03be1c54f6a 82
+src/app/api/followers-chunk/__tests__/route.test.ts
+  s_e7d66dff0e0ef8::t_bae354f525f72b 277-278
+src/app/api/followers-chunk/route.ts
+  s_e7d66dff0e0ef8::t_f469d16b8534cd 38-40
+  s_e7d66dff0e0ef8::t_134337d90062af 11
+src/app/api/chunk/route.ts
+  s_e7d66dff0e0ef8::t_f5f62fff18de4f 13
+  s_e7d66dff0e0ef8::t_48535a7b4f34ce 65-67
+src/app/api/track/route.ts
+  s_e7d66dff0e0ef8::t_c7512e825a7fb0 9-10
+  s_e7d66dff0e0ef8::t_fca908bde20ad1 11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "5f6e66f29d5b1631659f1014450d6ae778cbc132",
+  "prompts": {},
+  "sessions": {
+    "s_e7d66dff0e0ef8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "7a5a2bef-f5b0-4032-a8bb-f6f65c7752de",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "Florian BRUNIAUX <florian@bruniaux.com>"
+    }
+  }
+}
