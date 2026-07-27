@@ -18,6 +18,7 @@ import { requireAdminAuth, jsonError, logError } from "@/lib/api-helpers";
 import { safeEqual } from "@/lib/api-token";
 import { checkDbHealth, DB_CRITICAL_PCT } from "@/lib/db-health";
 import { GitHubRateLimitError } from "@/lib/github";
+import { withVerifyFullSsl } from "@/lib/pg-ssl";
 import { selectRefreshTargets, refreshRepoStarEvents, recordRefresh } from "@/lib/trending-refresh";
 
 export const maxDuration = 300;
@@ -115,8 +116,11 @@ const runRefresh = async (limit: number) => {
 const refreshTrendingMv = async () => {
   // SSL only in production (Neon requires it). Local Postgres has no SSL — same gate as db.ts,
   // otherwise the MV refresh throws "server does not support SSL connections" locally.
+  // withVerifyFullSsl makes the effective mode explicit (Neon's DATABASE_URL ships
+  // sslmode=require, which pg-connection-string treats as an alias for verify-full and warns
+  // about on every connect) — no behavior change, just spelling out what already happens.
   const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
+    connectionString: withVerifyFullSsl(process.env.DATABASE_URL ?? ""),
     ssl: process.env.NODE_ENV === "production" ? true : undefined,
   });
   const client = await pool.connect();
