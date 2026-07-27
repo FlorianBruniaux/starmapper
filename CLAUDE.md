@@ -2,7 +2,7 @@
 
 **StarMapper** maps the stargazers of any GitHub repository on an interactive world map. Free, no auth required. Given a repo URL it fetches stargazers via GitHub GraphQL, geocodes their locations through a 3-tier cascade, and renders a MapLibre GL map with GeoJSON clustering.
 
-**Tech Stack**: Next.js 16.2.6 (App Router, Turbopack) · TypeScript 5 · MapLibre GL 5.24.x · Prisma 7.8.0 + `@prisma/adapter-neon` · Neon Postgres · Jawg/Geoapify/Nominatim · Tailwind v4 · Vercel
+**Tech Stack**: Next.js 16.2.11 (App Router, Turbopack) · TypeScript 5 · MapLibre GL 5.24.x · Prisma 7.8.0 + `@prisma/adapter-neon` · Neon Postgres · Jawg/Geoapify/Nominatim · Tailwind v4 · Vercel
 
 ---
 
