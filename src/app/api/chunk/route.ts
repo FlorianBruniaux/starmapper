@@ -10,7 +10,7 @@ import { geocodeBatch } from "@/lib/geocoder";
 import { checkDbHealth, DB_WARN_PCT } from "@/lib/db-health";
 import { bulkUpsertUsers, bulkUpsertStarEvents, bulkReadUsers, type UserWritePayload } from "@/lib/user-cache";
 import { parseLocation } from "@/lib/location-parser";
-import { jsonError, extractGhToken, logError, sanitizeError, getIP } from "@/lib/api-helpers";
+import { jsonError, extractGhToken, logError, sanitizeError } from "@/lib/api-helpers";
 import { hashApiKey } from "@/lib/api-key";
 import { defineRoute } from "@/lib/define-route";
 import { chunkSchema } from "@/schemas/chunk";
@@ -62,23 +62,9 @@ const buildUserWritePayload = (
   };
 };
 
-// Distributed rate limiter — 30 req/min per IP via Upstash. Fail-open if Redis unavailable.
-let _chunkLimiter: Ratelimit | null = null;
-let _chunkLimiterReady = false;
-const getChunkLimiter = (): Ratelimit | null => {
-  if (_chunkLimiterReady) return _chunkLimiter;
-  _chunkLimiterReady = true;
-  try {
-    _chunkLimiter = new Ratelimit({
-      redis: Redis.fromEnv(),
-      limiter: Ratelimit.slidingWindow(30, "60 s"),
-      prefix: "rl:chunk",
-    });
-  } catch {
-    _chunkLimiter = null;
-  }
-  return _chunkLimiter;
-};
+// Per-IP rate limiting for this route lives in src/proxy.ts (rl:chunk, POST_ROUTES,
+// 30 req/min) — a second per-IP limiter here would double the Upstash command cost
+// on the app's highest-traffic endpoint for zero benefit.
 
 // Per-PAT rate limiter — 300 req/h per client token. Prevents a single stolen PAT
 // from exhausting the GitHub API quota (5000 req/h) via distributed IP spoofing.
@@ -108,12 +94,6 @@ const MAX_CONCURRENT = 3;
 
 export const POST = async (req: NextRequest) => {
   if (process.env.NODE_ENV === "production") {
-    const limiter = getChunkLimiter();
-    if (limiter) {
-      const { success } = await limiter.limit(getIP(req));
-      if (!success) return jsonError("Rate limit exceeded. Retry in a few seconds.", 429);
-    }
-
     // Per-PAT rate limit — only when the client provides their own x-gh-token.
     // Prevents exhausting the server GitHub quota (5000 req/h) via distributed IPs with one token.
     const clientPat = req.headers.get("x-gh-token");

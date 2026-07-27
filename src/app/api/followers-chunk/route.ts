@@ -8,7 +8,7 @@ import { Redis } from "@upstash/redis";
 import { fetchFollowersPage, GitHubRateLimitError, GitHubTokenInvalidError } from "@/lib/github";
 import { geocodeBatch } from "@/lib/geocoder";
 import { bulkReadUsers } from "@/lib/user-cache";
-import { jsonError, extractGhToken, logError, sanitizeError, getIP } from "@/lib/api-helpers";
+import { jsonError, extractGhToken, logError, sanitizeError } from "@/lib/api-helpers";
 import { hashApiKey } from "@/lib/api-key";
 import { defineRoute } from "@/lib/define-route";
 import { followersChunkSchema } from "@/schemas/followers-chunk";
@@ -35,23 +35,9 @@ export type FollowersChunkResponse = {
   quotaRemaining: number | null;
 };
 
-// Distributed rate limiter — 30 req/min per IP via Upstash. Fail-open if Redis unavailable.
-let _limiter: Ratelimit | null = null;
-let _limiterReady = false;
-const getLimiter = (): Ratelimit | null => {
-  if (_limiterReady) return _limiter;
-  _limiterReady = true;
-  try {
-    _limiter = new Ratelimit({
-      redis: Redis.fromEnv(),
-      limiter: Ratelimit.slidingWindow(30, "60 s"),
-      prefix: "rl:followers-chunk",
-    });
-  } catch {
-    _limiter = null;
-  }
-  return _limiter;
-};
+// Per-IP rate limiting for this route lives in src/proxy.ts (rl:followers-chunk,
+// POST_ROUTES, 30 req/min) — a second per-IP limiter here would double the Upstash
+// command cost for zero benefit.
 
 // Per-PAT rate limiter — 300 req/h per client token. Prevents a single stolen PAT
 // from exhausting the GitHub API quota (5000 req/h) via distributed IP spoofing.
@@ -81,12 +67,6 @@ const MAX_CONCURRENT = 3;
 
 export const POST = async (req: NextRequest) => {
   if (process.env.NODE_ENV === "production") {
-    const limiter = getLimiter();
-    if (limiter) {
-      const { success } = await limiter.limit(getIP(req));
-      if (!success) return jsonError("Rate limit exceeded. Retry in a few seconds.", 429);
-    }
-
     const clientPat = req.headers.get("x-gh-token");
     if (clientPat) {
       const patLimiter = getPatLimiter();

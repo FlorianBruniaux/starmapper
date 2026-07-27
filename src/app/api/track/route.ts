@@ -2,41 +2,13 @@
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 
 import { NextResponse } from "next/server";
-import { Ratelimit } from "@upstash/ratelimit";
-import { Redis } from "@upstash/redis";
 import { prisma } from "@/lib/db";
 import { defineRoute } from "@/lib/define-route";
-import { getIP } from "@/lib/api-helpers";
 import { trackSchema } from "@/schemas/track";
 
-// Lazy init — Redis.fromEnv() throws at module load if UPSTASH_REDIS_REST_URL is unset.
-let _trackLimiter: Ratelimit | null = null;
-
-const getTrackLimiter = (): Ratelimit | null => {
-  if (_trackLimiter) return _trackLimiter;
-  try {
-    _trackLimiter = new Ratelimit({
-      redis: Redis.fromEnv(),
-      limiter: Ratelimit.slidingWindow(60, "60 s"),
-      prefix: "rl:track",
-    });
-    return _trackLimiter;
-  } catch {
-    return null;
-  }
-};
-
-export const POST = defineRoute(trackSchema, async (req, body) => {
-  const limiter = getTrackLimiter();
-  if (limiter) {
-    try {
-      const { success } = await limiter.limit(getIP(req));
-      if (!success) return NextResponse.json({ ok: true });
-    } catch {
-      // Redis unavailable — fail open
-    }
-  }
-
+// Rate limiting for this route lives in src/proxy.ts (rl:track, POST_ROUTES) — a
+// second per-IP limiter here would double the Upstash command cost for zero benefit.
+export const POST = defineRoute(trackSchema, async (_req, body) => {
   const date = new Date();
   date.setUTCHours(0, 0, 0, 0);
 

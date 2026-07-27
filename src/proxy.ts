@@ -21,9 +21,20 @@ const redis = Redis.fromEnv();
 // could never match an exact-match record and were silently classified "exempt".
 type PostRoute = { match: (p: string) => boolean; limiter: Ratelimit };
 
+// Redis command budget: chunk/followers-chunk/contributors-chunk/track used to run a
+// second, route-local IP limiter on top of the check here — same axis (per-IP), same
+// prefix in most cases — doubling the Upstash command cost of the app's highest-traffic
+// endpoints for no extra protection. Removed in favor of a single check here (2026-07-27,
+// Upstash Free Tier 500k/month exhausted ~16h straight). Per-PAT limiters (different key
+// axis) still live in the route files.
+
 const POST_ROUTES: PostRoute[] = [
   // Existing write endpoints (exact match)
-  { match: (p) => p === "/api/chunk",           limiter: new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(100, "60 s"),  prefix: "rl:chunk" }) },
+  // Limits below match what each route enforced on its own before that check moved
+  // here — see "Redis command budget" note below.
+  { match: (p) => p === "/api/chunk",              limiter: new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(30,  "60 s"),  prefix: "rl:chunk" }) },
+  { match: (p) => p === "/api/followers-chunk",    limiter: new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(30,  "60 s"),  prefix: "rl:followers-chunk" }) },
+  { match: (p) => p === "/api/contributors-chunk", limiter: new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(30,  "60 s"),  prefix: "rl:contributors-chunk" }) },
   { match: (p) => p === "/api/badge-update",    limiter: new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(20,  "60 s"),  prefix: "rl:badge-update" }) },
   { match: (p) => p === "/api/stargazer-cache", limiter: new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(10,  "60 s"),  prefix: "rl:stargazer-cache" }) },
   { match: (p) => p === "/api/user-details",    limiter: new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(30,  "60 s"),  prefix: "rl:user-details" }) },
@@ -33,7 +44,7 @@ const POST_ROUTES: PostRoute[] = [
   { match: (p) => /^\/api\/news\/item\/\d+$/.test(p),        limiter: new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(20,  "60 m"), prefix: "rl:news-delete" }) },
 
   // Analytics fire-and-forget — generous limits, just preventing raw DoS
-  { match: (p) => p === "/api/track",   limiter: new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(120, "60 s"), prefix: "rl:track" }) },
+  { match: (p) => p === "/api/track",   limiter: new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(60,  "60 s"), prefix: "rl:track" }) },
   { match: (p) => p === "/api/vitals",  limiter: new Ratelimit({ redis, limiter: Ratelimit.slidingWindow(60,  "60 s"), prefix: "rl:vitals" }) },
 
   // Nominatim DoS vector — strict limit (each call triggers a geocoder re-request)
