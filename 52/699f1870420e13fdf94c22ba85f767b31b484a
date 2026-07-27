@@ -1,0 +1,30 @@
+src/lib/pg-ssl.test.ts
+  s_e1805c6e8b625d::t_ceb88514b18f3c 1-54
+src/lib/pg-ssl.ts
+  s_e1805c6e8b625d::t_f39aa70af6c605 1-24
+src/app/api/admin/refresh-trending/route.ts
+  s_e1805c6e8b625d::t_7e876d4d5f1ccf 119-121,123
+  s_e1805c6e8b625d::t_86e295eeb29e9e 21
+src/app/api/admin/refresh-grid-mv/route.ts
+  s_e1805c6e8b625d::t_73274673226289 67-69,71
+  s_e1805c6e8b625d::t_6f3a94845f5017 22
+src/app/api/admin/refresh-repo-stats/route.ts
+  s_e1805c6e8b625d::t_bde2274e456707 121-123,125
+  s_e1805c6e8b625d::t_28a1affb90acd8 37
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "52699f1870420e13fdf94c22ba85f767b31b484a",
+  "prompts": {},
+  "sessions": {
+    "s_e1805c6e8b625d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8457c43e-1ee3-4e85-9f75-603a7f6c909e",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "Florian BRUNIAUX <florian@bruniaux.com>"
+    }
+  }
+}
