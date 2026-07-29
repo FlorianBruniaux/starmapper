@@ -1,0 +1,96 @@
+scripts/backfill/backfill-api-key-hash.ts
+  s_e7d66dff0e0ef8::t_c07e736b2f0afc 12,14
+scripts/backfill/backfill-organic-score.ts
+  s_e7d66dff0e0ef8::t_5a89bcc835507a 17
+  s_e7d66dff0e0ef8::t_58805cc1a2966b 28
+scripts/ops/collect-user-repos.ts
+  s_e7d66dff0e0ef8::t_951146b3ccee21 33
+  s_e7d66dff0e0ef8::t_53428835d065a0 92
+scripts/db/setup-mvs.ts
+  s_e7d66dff0e0ef8::t_09ccf3550757ba 12,23
+src/lib/db-health.test.ts
+  s_e7d66dff0e0ef8::t_67eb950147c7c4 82-109
+package.json
+  s_e7d66dff0e0ef8::t_2f34dc67c4a3c0 93
+  s_e7d66dff0e0ef8::t_ba925f534bc9f2 84
+scripts/ops/batch-index-contributors.ts
+  s_e7d66dff0e0ef8::t_ff00208a5d0be4 82
+  s_e7d66dff0e0ef8::t_f19014c9ca9eca 36
+scripts/ops/collect-trending-repos.ts
+  s_e7d66dff0e0ef8::t_f4b2b698ada9ec 95
+  s_e7d66dff0e0ef8::t_da83a0e2b8edf3 38
+scripts/backfill/backfill-repo-languages.ts
+  s_e7d66dff0e0ef8::t_b5ef58e62d6fab 71
+  s_e7d66dff0e0ef8::t_d2f0b3f4faff42 24
+src/lib/db.ts
+  s_e7d66dff0e0ef8::t_77045e651175e8 34
+  s_e7d66dff0e0ef8::t_32e2299a706039 8
+src/lib/db-health.ts
+  s_e7d66dff0e0ef8::t_a59b6b861701eb 8-12,18-21,32-33
+scripts/db/db-sync-to-neon.sh
+  s_e7d66dff0e0ef8::t_9adedc5b8f9933 68-102
+scripts/backfill/backfill-languages.ts
+  s_e7d66dff0e0ef8::t_d23867caa7c5db 39
+  s_e7d66dff0e0ef8::t_97af4adfe5dde4 95
+scripts/ops/probe-star-burst.ts
+  s_e7d66dff0e0ef8::t_b0be916de6d3d7 19
+  s_e7d66dff0e0ef8::t_45e333e51eabfa 309
+scripts/backfill/backfill-contributors.ts
+  s_e7d66dff0e0ef8::t_b95e32622afe9d 21
+  s_e7d66dff0e0ef8::t_200ad212d222a3 46
+scripts/lib/pg-pool.test.ts
+  s_e7d66dff0e0ef8::t_d622e94ce0cd93 1-49
+scripts/ops/batch-scan.ts
+  s_e7d66dff0e0ef8::t_920a0997c79847 35
+  s_e7d66dff0e0ef8::t_ce39069e21a111 142
+scripts/ops/calibrate-organic-score.ts
+  s_e7d66dff0e0ef8::t_6a85147a33ac9b 16
+  s_e7d66dff0e0ef8::t_d4683696d0ea89 372
+vitest.config.ts
+  s_e7d66dff0e0ef8::t_431e0c7fb700b7 61
+scripts/ops/view-stats.ts
+  s_e7d66dff0e0ef8::t_aa17e799d97683 25
+  s_e7d66dff0e0ef8::t_562f2a081b2067 70
+scripts/backfill/backfill-repo-metrics.ts
+  s_e7d66dff0e0ef8::t_9dbd0e10fb729b 24
+  s_e7d66dff0e0ef8::t_f2a8013f3ff289 12
+scripts/backfill/backfill-dependents.ts
+  s_e7d66dff0e0ef8::t_cd4d551d1885f5 20
+  s_e7d66dff0e0ef8::t_2113282749e72e 42
+scripts/audit/audit-geocache-integrity.ts
+  s_e7d66dff0e0ef8::t_1bcbdc198ec036 23
+  s_e7d66dff0e0ef8::t_f84c58d81b8e9a 39
+scripts/lib/pg-pool.ts
+  s_e7d66dff0e0ef8::t_6f8eb47f840302 1-20
+scripts/db/seed-trending-watchlist.ts
+  s_e7d66dff0e0ef8::t_d490dd903564ff 17,22
+scripts/ops/batch-index-followers.ts
+  s_e7d66dff0e0ef8::t_ae4a9d83becc1e 31
+  s_e7d66dff0e0ef8::t_9c6d0529759ae4 71
+pnpm-lock.yaml
+  s_0e00d79ac559e8::t_4fbf4a005c7290 23-25,50-52
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "71a1ea36e4d998e55d85cc9828a3061015b94b09",
+  "prompts": {},
+  "sessions": {
+    "s_0e00d79ac559e8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "76e550e4-8c7a-462f-8730-e85acd01e748",
+        "model": "unknown"
+      },
+      "human_author": "Florian BRUNIAUX <florian@bruniaux.com>"
+    },
+    "s_e7d66dff0e0ef8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "7a5a2bef-f5b0-4032-a8bb-f6f65c7752de",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "Florian BRUNIAUX <florian@bruniaux.com>"
+    }
+  }
+}
