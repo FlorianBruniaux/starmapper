@@ -1,0 +1,61 @@
+src/env.ts
+  s_e7d66dff0e0ef8::t_61b2e0d9517019 58,67
+src/app/devs/[language]/layout.tsx
+  s_e7d66dff0e0ef8::t_67bb93c0e77bfd 51
+  s_e7d66dff0e0ef8::t_830898bcb153a1 6
+  s_e7d66dff0e0ef8::t_60fe7f6ba61673 67
+src/app/faq/page.tsx
+  s_e7d66dff0e0ef8::t_78a1f3fbd7df73 4,6
+  s_e7d66dff0e0ef8::t_9c38e306246eb2 130-140,144-146
+src/app/devs/in/[country]/layout.tsx
+  s_e7d66dff0e0ef8::t_4e1fbc1a6e0bac 6
+  s_e7d66dff0e0ef8::t_4669670b2ab478 71
+  s_e7d66dff0e0ef8::t_5d8adfd29d4c7e 43
+src/app/sitemap/page.tsx
+  s_e7d66dff0e0ef8::t_cc5cc173a73939 92-118,120,123-125
+  s_e7d66dff0e0ef8::t_6f654a95d10b3c 4,6
+src/app/profile/[login]/layout.tsx
+  s_e7d66dff0e0ef8::t_47535de765fde7 6
+  s_e7d66dff0e0ef8::t_4aa3b0f6888a97 65
+  s_e7d66dff0e0ef8::t_cc731033baa2b2 49
+src/lib/token.test.ts
+  s_e7d66dff0e0ef8::t_c1d7744829da76 1-84
+src/lib/token.ts
+  s_e7d66dff0e0ef8::t_23795b61c7f2bd 12-14,16,23,27-31,39-43
+src/components/map/contributors-panel.tsx
+  s_e7d66dff0e0ef8::t_4fe2ee5c70adff 221
+src/components/map/all-stargazers-modal.tsx
+  s_e7d66dff0e0ef8::t_cf2ff2caf258a8 431
+src/components/map/stargazer-map.tsx
+  s_e7d66dff0e0ef8::t_cdb2829be87fa6 512
+src/app/vs/star-history/page.tsx
+  s_e7d66dff0e0ef8::t_b9a2e0223b029a 112-122,126-128
+  s_e7d66dff0e0ef8::t_2da4c92822fdbc 4,6
+src/app/[owner]/[repo]/layout.tsx
+  s_e7d66dff0e0ef8::t_ecd72603b03811 61
+  s_e7d66dff0e0ef8::t_4f903de735645a 47
+  s_e7d66dff0e0ef8::t_6dbe63ef00aeed 6
+src/app/organic-score/calibration/page.tsx
+  s_e7d66dff0e0ef8::t_2f8b5d9fff1ff4 119-120,123,127-135
+  s_e7d66dff0e0ef8::t_1acbd370e5cf98 4,6
+src/components/map/stats-modal.tsx
+  s_e7d66dff0e0ef8::t_c351414f770273 274
+  s_e7d66dff0e0ef8::t_614b15c46e8423 410
+  s_e7d66dff0e0ef8::t_9079c15fdc1a4b 165
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "3338e3b17d0d53d4cb90b0cbbf4197d08f6ba407",
+  "prompts": {},
+  "sessions": {
+    "s_e7d66dff0e0ef8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "7a5a2bef-f5b0-4032-a8bb-f6f65c7752de",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "Florian BRUNIAUX <florian@bruniaux.com>"
+    }
+  }
+}
