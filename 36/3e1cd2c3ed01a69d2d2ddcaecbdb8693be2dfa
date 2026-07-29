@@ -1,0 +1,93 @@
+src/app/api/organic-score/[owner]/[repo]/refresh/route.ts
+  s_e7d66dff0e0ef8::t_eef3f12a3bf065 31-32
+  s_e7d66dff0e0ef8::t_09cfd868b60474 12
+src/app/api/admin/delete-user/route.ts
+  s_e7d66dff0e0ef8::t_f7163f955d475b 74
+  s_e7d66dff0e0ef8::t_24f366763626bc 11
+src/app/api/chunk/__tests__/route.test.ts
+  s_e7d66dff0e0ef8::t_a91b7f4f9d843c 481
+src/app/api/stats/[owner]/[repo]/geo-velocity/__tests__/route.test.ts
+  s_e7d66dff0e0ef8::t_81069d1b693d46 16-21
+src/app/api/organic-score/[owner]/[repo]/__tests__/route.test.ts
+  s_e7d66dff0e0ef8::t_6ae95b37b848f2 28-33
+src/app/api/watch/[owner]/[repo]/route.ts
+  s_e7d66dff0e0ef8::t_04aa9b014d6eeb 26-27
+  s_e7d66dff0e0ef8::t_1e8de3901294e1 7
+src/app/api/admin/organic-score-stats/__tests__/route.test.ts
+  s_e7d66dff0e0ef8::t_4ba049962e5327 16
+scripts/ops/index-engaged.ts
+  s_e7d66dff0e0ef8::t_a19e49146dc9d5 176-181
+  s_e7d66dff0e0ef8::t_e6428232e059bf 18-20
+src/app/api/contributors-badge-update/route.ts
+  s_e7d66dff0e0ef8::t_08f799144ae7f3 22-23,25
+  s_e7d66dff0e0ef8::t_df112d09c81f6b 10
+  s_e7d66dff0e0ef8::t_d5ebabe93496df 9
+  s_e7d66dff0e0ef8::t_0413c4b4f9abac 47
+src/app/api/dependents/[owner]/[repo]/route.ts
+  s_e7d66dff0e0ef8::t_bf8a57a9fb5b3c 37-38
+  s_e7d66dff0e0ef8::t_fbebe5a838ef10 11
+src/app/api/stats/[owner]/[repo]/growth/route.ts
+  s_e7d66dff0e0ef8::t_d99b092d5d2c4a 26-27
+  s_e7d66dff0e0ef8::t_27ce33132840c1 7
+src/app/api/dependents/[owner]/[repo]/refresh/route.ts
+  s_e7d66dff0e0ef8::t_229cdceb6a8ffc 27-28
+  s_e7d66dff0e0ef8::t_e4561f8146c1c1 11
+src/app/api/repos/route.ts
+  s_e7d66dff0e0ef8::t_7c283875d946eb 7
+  s_e7d66dff0e0ef8::t_41c9247a4eacb7 33
+src/app/api/organic-score/[owner]/[repo]/route.ts
+  s_e7d66dff0e0ef8::t_d8007370cd4cb4 21-22
+  s_e7d66dff0e0ef8::t_dcb39d5b171588 11
+src/app/api/stats/[owner]/[repo]/top-users/__tests__/route.test.ts
+  s_e7d66dff0e0ef8::t_93ac0bf0d8d4bc 22-27
+src/app/api/organic-score/[owner]/[repo]/refresh/__tests__/route.test.ts
+  s_e7d66dff0e0ef8::t_bbdfc459a80f7a 34-39
+src/app/api/watch/[owner]/[repo]/__tests__/route.test.ts
+  s_e7d66dff0e0ef8::t_4d82f55ac2c6dc 18-23
+src/app/api/stats/[owner]/[repo]/growth/__tests__/route.test.ts
+  s_e7d66dff0e0ef8::t_a327e2f6a96f11 16-21
+src/app/api/stats/[owner]/[repo]/__tests__/route.test.ts
+  s_e7d66dff0e0ef8::t_f941150b40cf31 29-34
+src/app/api/stats/[owner]/[repo]/top-users/route.ts
+  s_e7d66dff0e0ef8::t_f73c056d2b0085 29-30
+  s_e7d66dff0e0ef8::t_a4d445f2a920a8 11
+src/app/api/chunk/route.ts
+  s_e7d66dff0e0ef8::t_75d09679fd1d95 206
+src/app/api/admin/delete-user/__tests__/route.test.ts
+  s_e7d66dff0e0ef8::t_e61de3efc8bca6 22-26
+  s_e7d66dff0e0ef8::t_f65413327dffd4 115-128
+  s_c24c90e299949a::t_fff97ff84ad715 129
+src/app/api/stats/[owner]/[repo]/geo-velocity/route.ts
+  s_e7d66dff0e0ef8::t_7c6177cd0c4e73 28-29
+  s_e7d66dff0e0ef8::t_7110719a0d46b5 7
+src/app/api/stats/[owner]/[repo]/route.ts
+  s_e7d66dff0e0ef8::t_e78bf8013864cb 87-88
+  s_e7d66dff0e0ef8::t_2ae71fd6ef3c7b 8
+src/app/api/admin/organic-score-stats/route.ts
+  s_e7d66dff0e0ef8::t_8c77de63bb9487 7
+  s_e7d66dff0e0ef8::t_68e92f2db80c0e 74
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "363e1cd2c3ed01a69d2d2ddcaecbdb8693be2dfa",
+  "prompts": {},
+  "sessions": {
+    "s_c24c90e299949a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ff2b68f1-90c8-42eb-82e8-7bf70c0b40a4",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "Florian BRUNIAUX <florian@bruniaux.com>"
+    },
+    "s_e7d66dff0e0ef8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "7a5a2bef-f5b0-4032-a8bb-f6f65c7752de",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "Florian BRUNIAUX <florian@bruniaux.com>"
+    }
+  }
+}
