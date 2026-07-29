@@ -1,0 +1,94 @@
+src/app/api/geo/[owner]/[repo]/route.ts
+  s_e7d66dff0e0ef8::t_abcd907bb830e5 69-94,102
+  s_e7d66dff0e0ef8::t_c4733f959f4dc1 15,21
+src/app/api/recalculate-location/__tests__/route.test.ts
+  s_e7d66dff0e0ef8::t_9df8c5b0ed7b9a 31-34
+src/lib/proxy.test.ts
+  s_e7d66dff0e0ef8::t_0169fca98c932e 1-134
+src/app/api/follower-cache/__tests__/route.test.ts
+  s_e7d66dff0e0ef8::t_cbbc13bfd71f93 1-139
+src/lib/api-token.ts
+  s_e7d66dff0e0ef8::t_b226646e4e154f 70-86,92-96,98-107
+  s_e7d66dff0e0ef8::t_898ea5dbe954eb 20-25
+src/proxy.ts
+  s_e7d66dff0e0ef8::t_bd18da1cf2812c 461-462
+  s_e7d66dff0e0ef8::t_0331e44b020366 463
+  s_e7d66dff0e0ef8::t_80dc5b7a140ac2 26-31,33-35
+  s_e7d66dff0e0ef8::t_5f3e9bd8c26961 402
+  s_e7d66dff0e0ef8::t_ee58f9f260cfff 56-61,64-65,70-71,74,77,80,83,86,89,94,101-104,107,110
+  s_e7d66dff0e0ef8::t_51bce02ed504f7 487
+  s_e7d66dff0e0ef8::t_9c59a8e24aa9c0 508
+  s_e7d66dff0e0ef8::t_8a4eb53baa50cf 515
+  s_e7d66dff0e0ef8::t_13722a9cf07dd1 5
+  s_e7d66dff0e0ef8::t_310f62ddd60ade 67-69
+  s_e7d66dff0e0ef8::t_58bf0ab8d387e2 526-535
+  s_e7d66dff0e0ef8::t_0d1b4dc080b1a7 113-129,136-139
+  s_e7d66dff0e0ef8::t_341f4ec7b4026c 455,479,499
+  s_e7d66dff0e0ef8::t_43314fb8bf7be1 81-82,84-85,87-88
+  s_e7d66dff0e0ef8::t_605914a2794b63 97-100,105-106,108-109,130-135
+  s_e7d66dff0e0ef8::t_7fa11b24ab5242 173-176,178-183
+  s_e7d66dff0e0ef8::t_c4ad1c0e4d8f3c 247-250,255-262
+  s_e7d66dff0e0ef8::t_e85438af219e75 15-22
+  s_e7d66dff0e0ef8::t_edf77d253caf03 263,417,419-425,427-438
+  s_e7d66dff0e0ef8::t_1fad8158ad482f 7,9,24,41-43
+  s_e7d66dff0e0ef8::t_ddf00843713dbd 370
+  s_e7d66dff0e0ef8::t_e430c02899f9c8 32
+  s_e7d66dff0e0ef8::t_aa2e403e43924a 144-145
+  s_e7d66dff0e0ef8::t_12d1166358112d 269-278,283-285,291,293-304,308-313
+  s_8a5f6c90fc3fc1::t_b8f035fd35d6c6 23,25,140,264
+src/app/api/stargazer-cache/route.ts
+  s_e7d66dff0e0ef8::t_5a22def0142378 14-33
+  s_e7d66dff0e0ef8::t_1dc135aa8790a0 61-62,64
+  s_e7d66dff0e0ef8::t_a1b30c51a2b553 9
+  s_e7d66dff0e0ef8::t_9f2243ea3e2fc8 80,88-99
+  s_e7d66dff0e0ef8::t_36067578141777 100
+src/app/api/follower-cache/route.ts
+  s_e7d66dff0e0ef8::t_067ec802b076f2 26-36
+  s_e7d66dff0e0ef8::t_5dd620c461b6b1 9
+src/app/api/badge-update/route.ts
+  s_e7d66dff0e0ef8::t_824b1a206ac5e2 18-19,21
+  s_e7d66dff0e0ef8::t_55af033c73efa7 9
+src/app/api/profile/[login]/refresh/route.ts
+  s_e7d66dff0e0ef8::t_087ffb3224dbd1 8,11-16
+src/lib/upstash-resilience.ts
+  s_e7d66dff0e0ef8::t_2dedbec7db4bbc 1-17
+src/app/api/recalculate-location/route.ts
+  s_e7d66dff0e0ef8::t_5b94bb0463c817 8,17-18,20
+src/app/api/users/autocomplete/route.ts
+  s_e7d66dff0e0ef8::t_e0e67788483fff 49-58
+  s_e7d66dff0e0ef8::t_6e80a69bcb4d1a 6-7,9-31
+src/app/api/stargazer-cache/__tests__/route.test.ts
+  s_e7d66dff0e0ef8::t_9c9ebea5862966 32-37
+  s_e7d66dff0e0ef8::t_6e3aec7964b9e0 186,188,193-210,212
+  s_e7d66dff0e0ef8::t_75628efcb83343 79-82
+  s_e7d66dff0e0ef8::t_fc700edd895f0e 211,213
+src/lib/github-auth.ts
+  s_e7d66dff0e0ef8::t_339da81e290dc8 6,12,21-23,26-30
+  s_e7d66dff0e0ef8::t_cc382f1855d16f 31
+src/app/api/badge-update/__tests__/route.test.ts
+  s_e7d66dff0e0ef8::t_f3a68a5a91335c 27-30
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "9643898db950c51daee13ad381fa297b17e1101c",
+  "prompts": {},
+  "sessions": {
+    "s_8a5f6c90fc3fc1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "af0ec6c5-0f82-48e2-94cd-b219b409904f",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Florian BRUNIAUX <florian@bruniaux.com>"
+    },
+    "s_e7d66dff0e0ef8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "7a5a2bef-f5b0-4032-a8bb-f6f65c7752de",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "Florian BRUNIAUX <florian@bruniaux.com>"
+    }
+  }
+}
