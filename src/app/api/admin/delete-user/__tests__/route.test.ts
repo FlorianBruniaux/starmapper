@@ -19,6 +19,11 @@ vi.mock("@/lib/api-helpers", () => ({
   jsonError: (msg: string, status: number) =>
     new Response(JSON.stringify({ error: msg }), { status }),
   logError: vi.fn(),
+  sanitizeError: (err: unknown) =>
+    (err instanceof Error ? err.message : String(err)).replace(
+      /postgres(ql)?:\/\/[^\s]*/gi,
+      "[db-url-redacted]",
+    ),
 }));
 
 vi.mock("@/lib/db", () => ({
@@ -106,5 +111,20 @@ describe("POST /api/admin/delete-user", () => {
     mockStarDeleteMany.mockRejectedValue(new Error("FK constraint"));
     const res = await POST(makeReq({ login: "octocat" }));
     expect(res.status).toBe(500);
+  });
+
+  it("sanitizes the error message before persisting it in DeletionLog", async () => {
+    mockStarDeleteMany.mockRejectedValue(
+      new Error("connection to postgresql://user:secret@host/db failed"),
+    );
+    await POST(makeReq({ login: "octocat" }));
+
+    const failedUpdateCall = mockDeletionLogUpdate.mock.calls.find(
+      ([arg]) => (arg as { data: { status: string } }).data.status === "failed",
+    );
+    expect(failedUpdateCall).toBeDefined();
+    const notes = (failedUpdateCall?.[0] as { data: { notes: string } }).data.notes;
+    expect(notes).not.toContain("secret");
+    expect(notes).toContain("[db-url-redacted]");
   });
 });

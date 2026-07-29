@@ -4,7 +4,7 @@
 import type { NextRequest} from "next/server";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { normalizeOwnerRepo, OWNER_REPO_RE } from "@/lib/api-validation";
+import { validateOwnerRepo } from "@/lib/api-validation";
 import { jsonError, logError } from "@/lib/api-helpers";
 
 export type WatchResult = {
@@ -23,10 +23,8 @@ export const GET = async (
   { params }: { params: Promise<{ owner: string; repo: string }> },
 ) => {
   const { owner, repo } = await params;
-  if (!OWNER_REPO_RE.test(owner) || !OWNER_REPO_RE.test(repo)) {
-    return jsonError("invalid_params", 400);
-  }
-  const key = normalizeOwnerRepo(owner, repo);
+  const key = validateOwnerRepo(owner, repo);
+  if (!key) return jsonError("invalid_params", 400);
 
   const sinceParam = req.nextUrl.searchParams.get("since");
   let since: Date;

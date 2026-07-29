@@ -4,7 +4,7 @@
 import { NextResponse } from "next/server";
 import { fetchReposData } from "@/lib/repos-query";
 import type { RepoItem } from "@/lib/repos-query";
-import { jsonError } from "@/lib/api-helpers";
+import { jsonError, logError } from "@/lib/api-helpers";
 
 // Re-exported for consumers that already import MappedRepo from this route.
 export type { RepoItem as MappedRepo } from "@/lib/repos-query";
@@ -30,7 +30,7 @@ export const GET = async (req: Request) => {
     // Re-throw Next.js prerender interrupts (NEXT_PRERENDER_INTERRUPTED) so the
     // framework can bail out to dynamic rendering when req.url is accessed.
     if (err instanceof Error && "digest" in err) throw err;
-    console.error("[repos] error", err);
+    logError("repos", err);
     return jsonError("internal", 500);
   }
 };

@@ -478,8 +478,7 @@ describe("POST /api/chunk", () => {
       expect(res.status).toBe(200);
       expect(body.points).toHaveLength(1);
       expect(consoleSpy).toHaveBeenCalledWith(
-        "[chunk] background write failed:",
-        expect.any(Error),
+        expect.stringContaining("[chunk background write] Error: write failed"),
       );
     });
   });

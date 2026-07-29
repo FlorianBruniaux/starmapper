@@ -4,7 +4,7 @@
 import type { NextRequest} from "next/server";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { jsonError, requireAdminAuth } from "@/lib/api-helpers";
+import { jsonError, logError, requireAdminAuth } from "@/lib/api-helpers";
 
 export const GET = async (req: NextRequest) => {
   const authErr = requireAdminAuth(req);
@@ -71,7 +71,7 @@ export const GET = async (req: NextRequest) => {
 
     return NextResponse.json({ totalBadgeCacheRows, tierCounts, avgScore, distribution, staleCount });
   } catch (err) {
-    console.error("[admin/organic-score-stats]", err);
+    logError("admin/organic-score-stats", err);
     return jsonError("internal", 500);
   }
 };

@@ -15,6 +15,9 @@
  *   --from-corpus        refresh existing repos (used by maintenance): picks from
  *                        stargazer_cache the entries missing or stale in engaged_cache
  *
+ * Requires ENGAGED_AUDIENCE_ENABLED=true in env — the pipeline is off by default so it
+ * can be disabled without a deploy if a channel starts misbehaving.
+ *
  * Env must be sourced first (DATABASE_URL, GITHUB_TOKEN, geocoder keys). Run via the
  * make/pnpm wrappers, or:
  *   set -a && . ./.env.local && set +a && DATABASE_DRIVER=standard tsx scripts/ops/index-engaged.ts facebook/react
@@ -170,6 +173,12 @@ const indexOne = async (owner: string, repo: string): Promise<IndexResult> => {
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 const main = async (): Promise<void> => {
+  if (process.env.ENGAGED_AUDIENCE_ENABLED !== "true") {
+    console.error("Engaged-audience pipeline disabled (set ENGAGED_AUDIENCE_ENABLED=true to enable).");
+    process.exitCode = 1;
+    return;
+  }
+
   const targets = await resolveTargets();
   if (targets.length === 0) {
     console.error("No targets. Pass <owner>/<repo>, --input <file>, or --from-corpus.");

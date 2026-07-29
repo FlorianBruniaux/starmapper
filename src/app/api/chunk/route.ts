@@ -203,7 +203,7 @@ export const POST = async (req: NextRequest) => {
             if (newStarEvents.length > 0) await bulkUpsertStarEvents(newStarEvents, health);
           }
         } catch (err) {
-          console.error("[chunk] background write failed:", err);
+          logError("chunk background write", err);
         }
       });
 

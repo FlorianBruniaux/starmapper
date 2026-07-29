@@ -13,8 +13,12 @@ vi.mock("@/lib/db", () => ({
 }));
 
 vi.mock("@/lib/api-validation", () => ({
-  OWNER_REPO_RE: /^[a-zA-Z0-9._-]{1,100}$/,
-  normalizeOwnerRepo: (o: string, r: string) => ({ owner: o.toLowerCase(), repo: r.toLowerCase() }),
+  validateOwnerRepo: (owner: string, repo: string) => {
+    const re = /^[a-zA-Z0-9._-]{1,100}$/;
+    if (!re.test(owner) || !re.test(repo)) return null;
+    if (/^\.+$/.test(owner) || /^\.+$/.test(repo)) return null;
+    return { owner: owner.toLowerCase(), repo: repo.toLowerCase() };
+  },
 }));
 
 import { GET } from "@/app/api/stats/[owner]/[repo]/growth/route";
