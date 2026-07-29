@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 
+import { Suspense } from "react";
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import Link from "next/link";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://starmapper.bruniaux.com";
@@ -114,13 +116,23 @@ const expectedColor = (expected: string) => {
   return "text-accent-orange";
 };
 
-export default function CalibrationPage() {
+const JsonLdScript = async () => {
+  const nonce = (await headers()).get("x-nonce") ?? "";
   return (
-    <>
     <script
+      nonce={nonce}
       type="application/ld+json"
       dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
     />
+  );
+};
+
+export default function CalibrationPage() {
+  return (
+    <>
+    <Suspense fallback={null}>
+      <JsonLdScript />
+    </Suspense>
     <div className="min-h-screen bg-background text-foreground">
       <div className="max-w-5xl mx-auto px-4 py-12">
         {/* Header */}

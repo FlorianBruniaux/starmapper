@@ -182,7 +182,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* Preconnect to tile/geocoding origins, shaves 100-300ms off map LCP */}
         <link rel="preconnect" href="https://tile.jawg.io" crossOrigin="anonymous" />
         <link rel="preconnect" href="https://api.jawg.io" crossOrigin="anonymous" />
-        <link rel="preconnect" href="https://starmapper.jawg.io" crossOrigin="anonymous" />
         <link rel="preconnect" href="https://avatars.githubusercontent.com" />
         <link rel="preconnect" href="https://api.github.com" />
       </head>

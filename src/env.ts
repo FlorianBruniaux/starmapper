@@ -55,6 +55,7 @@ export const env = createEnv({
     NEXT_PUBLIC_CSV_EXPORT: z.string().optional(),
     NEXT_PUBLIC_ENABLE_GLOBE: z.string().optional(),
     NEXT_PUBLIC_ORGANIC_SCORE_ENABLED: z.string().optional(),
+    NEXT_PUBLIC_DEPENDENTS_ENABLED: z.string().optional(),
   },
   experimental__runtimeEnv: {
     NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN: process.env.NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN,
@@ -63,6 +64,7 @@ export const env = createEnv({
     NEXT_PUBLIC_CSV_EXPORT: process.env.NEXT_PUBLIC_CSV_EXPORT,
     NEXT_PUBLIC_ENABLE_GLOBE: process.env.NEXT_PUBLIC_ENABLE_GLOBE,
     NEXT_PUBLIC_ORGANIC_SCORE_ENABLED: process.env.NEXT_PUBLIC_ORGANIC_SCORE_ENABLED,
+    NEXT_PUBLIC_DEPENDENTS_ENABLED: process.env.NEXT_PUBLIC_DEPENDENTS_ENABLED,
   },
   emptyStringAsUndefined: true,
 });

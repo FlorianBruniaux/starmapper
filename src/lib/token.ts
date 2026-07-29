@@ -9,20 +9,26 @@ const USERNAME_KEY = "gh_username";
 
 // 15-day rolling TTL — reset on each active read
 const TOKEN_TTL_MS = 15 * 24 * 60 * 60 * 1000;
+// 90-day absolute ceiling — set once at write time, never renewed, so an
+// actively-used token in a browser that's never closed still expires eventually
+const ABSOLUTE_TTL_MS = 90 * 24 * 60 * 60 * 1000;
 
-type StoredValue = { v: string; exp: number };
+type StoredValue = { v: string; exp: number; absExp: number };
 
 const readSession = (key: string): string => {
   try {
     const raw = localStorage.getItem(key);
     if (!raw) return "";
     const parsed: StoredValue = JSON.parse(raw);
-    if (parsed.exp < Date.now()) {
+    if (parsed.exp < Date.now() || parsed.absExp < Date.now()) {
       localStorage.removeItem(key);
       return "";
     }
-    // Rolling TTL: reset expiry on each active read
-    localStorage.setItem(key, JSON.stringify({ v: parsed.v, exp: Date.now() + TOKEN_TTL_MS }));
+    // Rolling TTL: reset expiry on each active read, keep absExp fixed
+    localStorage.setItem(
+      key,
+      JSON.stringify({ v: parsed.v, exp: Date.now() + TOKEN_TTL_MS, absExp: parsed.absExp }),
+    );
     return parsed.v;
   } catch { return ""; }
 };
@@ -30,7 +36,11 @@ const readSession = (key: string): string => {
 const writeSession = (key: string, value: string) => {
   try {
     if (value) {
-      localStorage.setItem(key, JSON.stringify({ v: value, exp: Date.now() + TOKEN_TTL_MS }));
+      const now = Date.now();
+      localStorage.setItem(
+        key,
+        JSON.stringify({ v: value, exp: now + TOKEN_TTL_MS, absExp: now + ABSOLUTE_TTL_MS }),
+      );
     } else {
       localStorage.removeItem(key);
     }

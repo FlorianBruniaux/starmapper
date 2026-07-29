@@ -428,7 +428,7 @@ export const AllStargazersModal = ({
                         }
                         <div className="min-w-0">
                           <a
-                            href={`/profile/${u.login}`}
+                            href={`/profile/${encodeURIComponent(u.login)}`}
                             onClick={(e) => e.stopPropagation()}
                             className="text-accent-blue font-medium hover:underline"
                           >
