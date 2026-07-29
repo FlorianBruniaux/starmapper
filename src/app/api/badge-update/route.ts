@@ -6,7 +6,7 @@ import { NextResponse } from "next/server";
 import { revalidateTag } from "next/cache";
 import { prisma } from "@/lib/db";
 import { jsonError } from "@/lib/api-helpers";
-import { verifyToken, COOKIE_NAME } from "@/lib/api-token";
+import { verifyToken, getSmSecrets, COOKIE_NAME } from "@/lib/api-token";
 import { computeOrganicScore } from "@/lib/organic-score";
 import { defineRoute } from "@/lib/define-route";
 import { badgeUpdateSchema } from "@/schemas/badge-update";
@@ -15,10 +15,10 @@ const ORGANIC_ENABLED = process.env.ORGANIC_SCORE_ENABLED === "true";
 
 export const POST = defineRoute(badgeUpdateSchema, async (req: NextRequest, body) => {
   // SM token anti-scraping check — runs after body validation, skipped when SM_TOKEN_SECRET is not configured
-  const SM_SECRET = process.env.SM_TOKEN_SECRET ?? "";
-  if (SM_SECRET) {
+  const smSecrets = getSmSecrets();
+  if (smSecrets.length > 0) {
     const smToken = req.cookies.get(COOKIE_NAME)?.value;
-    if (!(await verifyToken(smToken, SM_SECRET))) {
+    if (!(await verifyToken(smToken, smSecrets))) {
       return jsonError("forbidden", 403);
     }
   }

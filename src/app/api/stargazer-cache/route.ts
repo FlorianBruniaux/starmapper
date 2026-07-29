@@ -6,10 +6,30 @@ import { prisma } from "@/lib/db";
 import { compressToGzBase64 } from "@/lib/compression";
 import { checkDbHealth, DB_CRITICAL_PCT } from "@/lib/db-health";
 import { jsonError, logError } from "@/lib/api-helpers";
-import { verifyToken, COOKIE_NAME } from "@/lib/api-token";
+import { verifyToken, getSmSecrets, COOKIE_NAME } from "@/lib/api-token";
 import { defineRoute } from "@/lib/define-route";
 import { stargazerCacheEnvelopeSchema, MAX_CACHEABLE_STARS } from "@/schemas/stargazer-cache";
 import { getRedis } from "@/lib/github-auth";
+
+// Scalar star count — GitHub still serves this on GET /repos/{owner}/{repo} even though
+// stargazer enumeration is restricted (see docs/ROADMAP.md). One cheap REST call, not the
+// enumeration GitHub blocked, so this doesn't touch the GitHub-access pivot's constraints.
+const fetchLiveStarCount = async (owner: string, repo: string): Promise<number | null> => {
+  try {
+    const token = process.env.GITHUB_TOKEN;
+    const headers: Record<string, string> = { "User-Agent": "StarMapper/1.0" };
+    if (token) headers.Authorization = `Bearer ${token}`;
+    const res = await fetch(`https://api.github.com/repos/${owner}/${repo}`, {
+      headers,
+      signal: AbortSignal.timeout(3000),
+    });
+    if (!res.ok) return null;
+    const data = (await res.json()) as { stargazers_count?: unknown };
+    return typeof data.stargazers_count === "number" ? data.stargazers_count : null;
+  } catch {
+    return null;
+  }
+};
 
 const resolvePatLogin = async (pat: string): Promise<string | null> => {
   try {
@@ -38,10 +58,10 @@ export const POST = defineRoute(stargazerCacheEnvelopeSchema, async (req, body) 
     // Session token check — only browsers that loaded a StarMapper page can write the cache.
     // The sm-token cookie is issued by the middleware on every page load (HttpOnly, SameSite=Strict).
     // Skip when SM_TOKEN_SECRET is not configured (local dev without env vars).
-    const SM_SECRET = process.env.SM_TOKEN_SECRET ?? "";
-    if (SM_SECRET) {
+    const smSecrets = getSmSecrets();
+    if (smSecrets.length > 0) {
       const smToken = req.cookies.get(COOKIE_NAME)?.value;
-      if (!(await verifyToken(smToken, SM_SECRET))) {
+      if (!(await verifyToken(smToken, smSecrets))) {
         return jsonError("forbidden", 403);
       }
     }
@@ -57,13 +77,26 @@ export const POST = defineRoute(stargazerCacheEnvelopeSchema, async (req, body) 
       checkDbHealth(),
     ]);
 
-    // Plausibility check — if badge data exists, new totalCount must not be <80% of known count.
+    // Plausibility check — new totalCount must not be <80% of a known-good count.
     // This catches fabricated/stripped-star submissions. The upper bound is intentionally absent:
     // fast-growing repos can legitimately 2x–5x between scans (e.g. a viral week).
     if (existingBadge && existingBadge.totalCount > 0) {
       const ratio = body.totalCount / existingBadge.totalCount;
       if (ratio < 0.8) {
         return jsonError("totalCount_mismatch", 400);
+      }
+    } else {
+      // No BadgeCache row yet — this is the repo's first-ever write, so there was no
+      // floor at all before this check existed: a first visitor could seed a poisoned
+      // cache that every later visitor would see. One extra GitHub call closes that gap;
+      // if the call itself fails (GitHub down, repo renamed), fail open rather than
+      // block a legitimate first scan on an unrelated outage.
+      const liveCount = await fetchLiveStarCount(body.owner, body.repo);
+      if (liveCount !== null && liveCount > 0) {
+        const ratio = body.totalCount / liveCount;
+        if (ratio < 0.8) {
+          return jsonError("totalCount_mismatch", 400);
+        }
       }
     }
 

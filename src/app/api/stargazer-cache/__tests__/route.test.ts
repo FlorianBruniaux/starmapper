@@ -29,6 +29,12 @@ vi.mock("@/lib/db-health", () => ({
 const mockVerifyToken = vi.fn();
 vi.mock("@/lib/api-token", () => ({
   verifyToken: (...args: unknown[]) => mockVerifyToken(...args),
+  // Mirrors the real getSmSecrets(): reads SM_TOKEN_SECRET, empty array when unset —
+  // keeps existing vi.stubEnv("SM_TOKEN_SECRET", ...) calls in this file meaningful.
+  getSmSecrets: () => {
+    const s = process.env.SM_TOKEN_SECRET;
+    return s ? [s] : [];
+  },
   COOKIE_NAME: "sm-token",
 }));
 
@@ -70,6 +76,10 @@ describe("POST /api/stargazer-cache", () => {
     mockUpsert.mockResolvedValue(undefined);
     mockCheckDbHealth.mockResolvedValue(healthOk);
     mockVerifyToken.mockResolvedValue(true);
+    // fetchLiveStarCount's GitHub call — default not-ok so it returns null (fails open,
+    // matches pre-existing "no badge → skip plausibility" behavior). Dedicated tests
+    // below override this to exercise the live-count plausibility path itself.
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false }));
   });
 
   afterEach(() => {
@@ -173,9 +183,31 @@ describe("POST /api/stargazer-cache", () => {
   // ── Plausibility check ─────────────────────────────────────────────────────
 
   describe("plausibility check", () => {
-    it("skips plausibility when no existing badge", async () => {
+    it("skips plausibility when no existing badge and the live GitHub check fails open", async () => {
       mockFindUnique.mockResolvedValue(null);
+      // beforeEach stubs fetch to { ok: false } — fetchLiveStarCount returns null.
       const res = await POST(makeReq({ ...validBodyGz(), totalCount: 9999 }));
+      expect(res.status).toBe(200);
+    });
+
+    it("returns 400 totalCount_mismatch when no badge but live GitHub star count is far higher", async () => {
+      mockFindUnique.mockResolvedValue(null);
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve({ stargazers_count: 1000 }) }),
+      );
+      const res = await POST(makeReq({ ...validBodyGz(), totalCount: 799 }));
+      expect(res.status).toBe(400);
+      expect(await res.json()).toMatchObject({ error: "totalCount_mismatch" });
+    });
+
+    it("accepts totalCount consistent with the live GitHub star count when no badge exists", async () => {
+      mockFindUnique.mockResolvedValue(null);
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve({ stargazers_count: 1000 }) }),
+      );
+      const res = await POST(makeReq({ ...validBodyGz(), totalCount: 900 }));
       expect(res.status).toBe(200);
     });
 

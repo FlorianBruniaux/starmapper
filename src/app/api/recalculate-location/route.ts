@@ -5,7 +5,7 @@ import type { NextRequest} from "next/server";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { geocode } from "@/lib/geocoder";
-import { verifyToken, COOKIE_NAME } from "@/lib/api-token";
+import { verifyToken, getSmSecrets, COOKIE_NAME } from "@/lib/api-token";
 import { defineRoute } from "@/lib/define-route";
 import { recalculateLocationSchema } from "@/schemas/recalculate-location";
 
@@ -14,10 +14,10 @@ export type RecalculateLocationResult =
   | { unmapped: true };
 
 export const POST = async (req: NextRequest) => {
-  const SM_SECRET = process.env.SM_TOKEN_SECRET ?? "";
-  if (SM_SECRET) {
+  const smSecrets = getSmSecrets();
+  if (smSecrets.length > 0) {
     const smToken = req.cookies.get(COOKIE_NAME)?.value;
-    if (!(await verifyToken(smToken, SM_SECRET))) {
+    if (!(await verifyToken(smToken, smSecrets))) {
       return NextResponse.json({ error: "forbidden" }, { status: 403 });
     }
   }

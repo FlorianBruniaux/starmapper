@@ -28,6 +28,10 @@ vi.mock("@/lib/geocoder", () => ({
 
 vi.mock("@/lib/api-token", () => ({
   verifyToken: (...args: unknown[]) => mockVerifyToken(...args),
+  getSmSecrets: () => {
+    const s = process.env.SM_TOKEN_SECRET;
+    return s ? [s] : [];
+  },
   COOKIE_NAME: "sm-token",
 }));
 
