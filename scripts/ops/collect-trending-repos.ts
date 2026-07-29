@@ -35,7 +35,7 @@ import { parseArgs } from "node:util";
 import { join } from "path";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
-import pg from "pg";
+import { createScriptPool } from "../lib/pg-pool";
 
 // ─── Load .env.local ──────────────────────────────────────────────────────────
 
@@ -92,7 +92,7 @@ if (!DATABASE_URL) {
   process.exit(1);
 }
 
-const pool = new pg.Pool({ connectionString: DATABASE_URL });
+const pool = createScriptPool(DATABASE_URL);
 const prisma = new PrismaClient({ adapter: new PrismaPg(pool) });
 
 // ─── Star ranges (3 bands to bypass the 1000-result API cap) ─────────────────

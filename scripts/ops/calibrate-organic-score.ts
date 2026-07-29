@@ -13,7 +13,7 @@ import { readFileSync, writeFileSync } from "fs";
 import { join } from "path";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
-import pg from "pg";
+import { createScriptPool } from "../lib/pg-pool";
 
 // ─── Load .env.local ──────────────────────────────────────────────────────────
 
@@ -369,8 +369,7 @@ const main = async () => {
   let db: PrismaClient | null = null;
   if (!skipDb) {
     try {
-      const { Pool } = pg;
-      const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+      const pool = createScriptPool(process.env.DATABASE_URL ?? "");
       const adapter = new PrismaPg(pool);
       db = new PrismaClient({ adapter } as never);
       console.log("✓ DB connected\n");

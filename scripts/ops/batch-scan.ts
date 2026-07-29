@@ -32,7 +32,7 @@ import { join } from "path";
 import { gzipSync, gunzipSync } from "zlib";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
-import pg from "pg";
+import { createScriptPool } from "../lib/pg-pool";
 
 // ─── Load .env.local BEFORE anything reads env vars ──────────────────────────
 
@@ -139,7 +139,7 @@ if (!GITHUB_TOKEN) {
 
 // ─── Prisma (standard TCP via pg adapter — works with local Docker Postgres) ──
 
-const pool = new pg.Pool({ connectionString: DATABASE_URL });
+const pool = createScriptPool(DATABASE_URL);
 const prisma = new PrismaClient({ adapter: new PrismaPg(pool) });
 
 // ─── Graceful shutdown on SIGINT / SIGTERM ────────────────────────────────────

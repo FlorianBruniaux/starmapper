@@ -22,7 +22,7 @@ import { parseArgs } from "node:util";
 import { join } from "path";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
-import pg from "pg";
+import { createScriptPool } from "../lib/pg-pool";
 
 // ─── Load .env.local ──────────────────────────────────────────────────────────
 
@@ -67,7 +67,7 @@ const USER      = argv.user.trim().toLowerCase();
 const DB_URL = process.env.DATABASE_URL ?? "";
 if (!DB_URL) { console.error("Error: DATABASE_URL not set"); process.exit(1); }
 
-const pool   = new pg.Pool({ connectionString: DB_URL });
+const pool   = createScriptPool(DB_URL);
 const prisma = new PrismaClient({ adapter: new PrismaPg(pool) });
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────

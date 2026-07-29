@@ -18,7 +18,7 @@
 import { parseArgs } from "node:util";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
-import { Pool } from "pg";
+import { createScriptPool } from "../lib/pg-pool";
 import { acquireToken, buildTokenPool, makeHeaders, syncTokenFromHeaders } from "../lib/github-token-pool";
 
 // ─── CLI args ─────────────────────────────────────────────────────────────────
@@ -43,7 +43,7 @@ const CONCURRENCY = Math.min(parseInt(argv["concurrency"]!, 10), 5);
 
 // ─── DB ───────────────────────────────────────────────────────────────────────
 
-const pool   = new Pool({ connectionString: process.env.DATABASE_URL });
+const pool   = createScriptPool(process.env.DATABASE_URL ?? "");
 const prisma = new PrismaClient({ adapter: new PrismaPg(pool) });
 
 // ─── GitHub fetch ──────────────────────────────────────────────────────────────

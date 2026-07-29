@@ -28,7 +28,7 @@
 import { parseArgs } from "node:util";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
-import pg from "pg";
+import { createScriptPool } from "../lib/pg-pool";
 import { fetchFollowersPage, GitHubRateLimitError } from "@/lib/github";
 import { geocodeBatch } from "@/lib/geocoder";
 import { bulkReadUsers } from "@/lib/user-cache";
@@ -68,7 +68,7 @@ if (!DB_URL) {
 
 // ─── Prisma ───────────────────────────────────────────────────────────────────
 
-const pool   = new pg.Pool({ connectionString: DB_URL, options: "-c statement_timeout=0" });
+const pool   = createScriptPool(DB_URL, { options: "-c statement_timeout=0" });
 const prisma = new PrismaClient({ adapter: new PrismaPg(pool) });
 
 // ─── Multi-token pool ─────────────────────────────────────────────────────────

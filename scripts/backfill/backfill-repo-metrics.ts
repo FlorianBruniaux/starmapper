@@ -9,7 +9,7 @@
 
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
-import { Pool } from "pg";
+import { createScriptPool } from "../lib/pg-pool";
 import { computeOrganicScore } from "../../src/lib/organic-score";
 import { acquireToken, buildTokenPool, makeHeaders, syncTokenFromHeaders } from "../lib/github-token-pool";
 
@@ -21,7 +21,7 @@ const CONCURRENCY = 5;
 const RETRY_LIMIT = 1;
 const GATE_MIN_STARS = 5000;
 
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const pool = createScriptPool(process.env.DATABASE_URL ?? "");
 const prisma = new PrismaClient({ adapter: new PrismaPg(pool) });
 
 type GhRepo = {

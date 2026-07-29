@@ -14,12 +14,12 @@
 import { parseArgs } from "node:util";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
-import pg from "pg";
+import { createScriptPool } from "../lib/pg-pool";
 import { TRENDING_WATCHLIST_SEED } from "@/lib/trending-watchlist-seed";
 
 // Scripts never use the @/lib/db singleton (it require()s pg, which breaks under
 // tsx's native ESM). Same pattern as every other script in scripts/ — own PrismaClient.
-const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+const pool = createScriptPool(process.env.DATABASE_URL ?? "");
 const prisma = new PrismaClient({ adapter: new PrismaPg(pool) });
 
 const { values } = parseArgs({

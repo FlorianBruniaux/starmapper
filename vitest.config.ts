@@ -58,7 +58,7 @@ export default defineConfig({
           // MANDATORY: geocoder.ts has module-level circuit breaker state.
           // Process isolation prevents one test file poisoning the next.
           pool: "forks",
-          include: ["src/lib/**/*.test.ts", "src/app/api/**/*.test.ts"],
+          include: ["src/lib/**/*.test.ts", "src/app/api/**/*.test.ts", "scripts/**/*.test.ts"],
           exclude: WORKTREE_EXCLUDE,
           setupFiles: ["./vitest.setup.node.ts"],
         },
