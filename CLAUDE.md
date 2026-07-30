@@ -69,6 +69,7 @@ Without any Jawg or Geoapify key, all geocoding falls to Nominatim at 1100ms/cal
 | `UPSTASH_REDIS_REST_URL` | Recommended | Upstash Redis for distributed rate limiting |
 | `UPSTASH_REDIS_REST_TOKEN` | Recommended | Upstash Redis token |
 | `CACHE_SIGN_SECRET` | Recommended | HMAC-SHA256 for signing PAT→login entries in Upstash |
+| `IP_HASH_SECRET` | Recommended | HMAC-SHA256 for hashing voter IPs on `/roadmap` (dedupe key, not an identity) |
 | `ENGAGED_AUDIENCE_ENABLED` | No | Gates the engaged-audience indexing pipeline (`scripts/ops/index-engaged.ts`). Default off (`!== "true"` disables) so it can be turned off without a deploy |
 
 ---
