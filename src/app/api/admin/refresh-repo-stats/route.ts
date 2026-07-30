@@ -34,6 +34,7 @@ import type { PoolClient } from "pg";
 import { Pool } from "pg";
 import { requireAdminAuth, jsonError, logError, sanitizeError } from "@/lib/api-helpers";
 import { safeEqual } from "@/lib/api-token";
+import { withVerifyFullSsl } from "@/lib/pg-ssl";
 
 export const maxDuration = 300;
 
@@ -117,8 +118,11 @@ const runRefresh = async (part: Part) => {
 
   // TCP mode (pg): persistent session so SET statement_timeout = 0 applies to all queries.
   // SSL gate: Neon (prod) requires SSL with cert validation; local Postgres has no SSL.
+  // withVerifyFullSsl makes the effective mode explicit (Neon's DATABASE_URL ships
+  // sslmode=require, which pg-connection-string treats as an alias for verify-full and warns
+  // about on every connect) — no behavior change, just spelling out what already happens.
   const pool = new Pool({
-    connectionString: toDirectEndpoint(process.env.DATABASE_URL ?? ""),
+    connectionString: withVerifyFullSsl(toDirectEndpoint(process.env.DATABASE_URL ?? "")),
     ssl: process.env.NODE_ENV === "production" ? true : undefined,
   });
 

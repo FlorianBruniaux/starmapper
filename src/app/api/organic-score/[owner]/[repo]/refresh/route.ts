@@ -9,7 +9,7 @@ import type { NextRequest} from "next/server";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { computeOrganicScore } from "@/lib/organic-score";
-import { normalizeOwnerRepo, OWNER_REPO_RE } from "@/lib/api-validation";
+import { validateOwnerRepo } from "@/lib/api-validation";
 import { jsonError, logError } from "@/lib/api-helpers";
 import type { RepoOrganic } from "@/app/api/stats/[owner]/[repo]/route";
 import type { OrganicTier } from "@/lib/organic-score";
@@ -28,10 +28,8 @@ export const POST = async (
   }
 
   const { owner: rawOwner, repo: rawRepo } = await params;
-  if (!OWNER_REPO_RE.test(rawOwner) || !OWNER_REPO_RE.test(rawRepo)) {
-    return jsonError("invalid_params", 400);
-  }
-  const key = normalizeOwnerRepo(rawOwner, rawRepo);
+  const key = validateOwnerRepo(rawOwner, rawRepo);
+  if (!key) return jsonError("invalid_params", 400);
 
   try {
     const badge = await prisma.badgeCache.findUnique({

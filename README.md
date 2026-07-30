@@ -233,6 +233,9 @@ Open [http://localhost:3000](http://localhost:3000), enter any public GitHub rep
 | `GEOAPIFY_APIKEY` | Recommended | Geocoding fallback (Geoapify) |
 | `NEXT_PUBLIC_APP_URL` | No | App base URL for OG metadata |
 | `ADMIN_SECRET` | No | Secret for `/api/admin/*` routes |
+| `SM_TOKEN_SECRET` | Recommended | HMAC secret for the anti-scraping session cookie, min 32 chars (`openssl rand -hex 32`) |
+| `SM_TOKEN_SECRET_PREV` | No | Previous `SM_TOKEN_SECRET`, accepted for verification only during a rotation |
+| `IP_HASH_SECRET` | Recommended | HMAC secret for hashing voter IPs on `/roadmap`, min 16 chars |
 
 Without `JAWG_TOKEN_HEADER` and `GEOAPIFY_APIKEY`, geocoding falls back to Nominatim (sequential, 1 req/s). With the GeoNames pre-seed in place, this rarely matters.
 

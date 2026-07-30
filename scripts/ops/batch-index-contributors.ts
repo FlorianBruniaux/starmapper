@@ -33,7 +33,7 @@ import { parseArgs } from "node:util";
 import { writeFileSync, readFileSync, existsSync } from "node:fs";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
-import pg from "pg";
+import { createScriptPool } from "../lib/pg-pool";
 import {
   fetchContributorsPage,
   fetchContributorLocations,
@@ -79,7 +79,7 @@ if (!DB_URL) {
 
 // ─── Prisma ───────────────────────────────────────────────────────────────────
 
-const pool   = new pg.Pool({ connectionString: DB_URL, options: "-c statement_timeout=0" });
+const pool   = createScriptPool(DB_URL, { options: "-c statement_timeout=0" });
 const prisma = new PrismaClient({ adapter: new PrismaPg(pool) });
 
 // ─── Multi-token pool ─────────────────────────────────────────────────────────

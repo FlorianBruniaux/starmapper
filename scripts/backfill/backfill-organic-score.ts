@@ -14,7 +14,7 @@
 
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
-import pg from "pg";
+import { createScriptPool } from "../lib/pg-pool";
 import { computeOrganicScore } from "../../src/lib/organic-score";
 import { acquireToken, buildTokenPool, makeHeaders, syncTokenFromHeaders } from "../lib/github-token-pool";
 
@@ -25,7 +25,7 @@ const LIMIT = limitArg !== -1 ? parseInt(process.argv[limitArg + 1] ?? "999999",
 const TOKEN_POOL = buildTokenPool();
 const DELAY_MS = 300;
 
-const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, options: "-c statement_timeout=0" });
+const pool = createScriptPool(process.env.DATABASE_URL ?? "", { options: "-c statement_timeout=0" });
 const prisma = new PrismaClient({ adapter: new PrismaPg(pool) });
 
 const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));

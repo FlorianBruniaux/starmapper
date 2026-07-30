@@ -79,7 +79,7 @@ vi.mock("@/lib/api-key", () => ({
 }));
 
 import { POST } from "@/app/api/chunk/route";
-import { fetchStargazersPage, GitHubRateLimitError } from "@/lib/github";
+import { fetchStargazersPage } from "@/lib/github";
 import { geocodeBatch } from "@/lib/geocoder";
 import { checkDbHealth } from "@/lib/db-health";
 import { bulkReadUsers, bulkUpsertStarEvents, bulkUpsertUsers } from "@/lib/user-cache";
@@ -478,32 +478,18 @@ describe("POST /api/chunk", () => {
       expect(res.status).toBe(200);
       expect(body.points).toHaveLength(1);
       expect(consoleSpy).toHaveBeenCalledWith(
-        "[chunk] background write failed:",
-        expect.any(Error),
+        expect.stringContaining("[chunk background write] Error: write failed"),
       );
     });
   });
 
   describe("error handling", () => {
-    it("returns 429 when the IP rate limiter rejects the request", async () => {
-      vi.stubEnv("NODE_ENV", "production");
-      mockRateLimit.mockResolvedValueOnce({ success: false });
-
-      const req = makeRequest({ owner: "octocat", repo: "starmapper" });
-      const res = await POST(req);
-      const body = await res.json();
-
-      vi.unstubAllEnvs();
-      expect(res.status).toBe(429);
-      expect(body.error).toBe("Rate limit exceeded. Retry in a few seconds.");
-      expect(mockFetchStargazers).not.toHaveBeenCalled();
-    });
+    // Per-IP rate limiting for this route moved to src/proxy.ts (rl:chunk,
+    // POST_ROUTES) — no longer testable at this route-unit level.
 
     it("returns 429 when the per-PAT limiter rejects the request", async () => {
       vi.stubEnv("NODE_ENV", "production");
-      mockRateLimit
-        .mockResolvedValueOnce({ success: true })
-        .mockResolvedValueOnce({ success: false });
+      mockRateLimit.mockResolvedValueOnce({ success: false });
 
       const req = makeRequest(
         { owner: "octocat", repo: "starmapper" },

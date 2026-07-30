@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 
+import { Suspense } from "react";
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import Link from "next/link";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
@@ -125,13 +127,23 @@ const jsonLd = {
   ],
 };
 
+const JsonLdScript = async () => {
+  const nonce = (await headers()).get("x-nonce") ?? "";
+  return (
+    <script
+      nonce={nonce}
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
+    />
+  );
+};
+
 export default function FaqPage() {
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
-      />
+      <Suspense fallback={null}>
+        <JsonLdScript />
+      </Suspense>
       <Header sticky showNav innerMaxWidth="max-w-5xl" />
 
       <main id="main" className="w-full max-w-5xl mx-auto px-4 lg:px-6 pt-24 pb-20">

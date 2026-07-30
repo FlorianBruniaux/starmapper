@@ -162,7 +162,7 @@ export const StatsModal = ({ open, onClose, owner, repo, displayStats, starsThis
                 {displayStats.topUsers.slice(0, 10).map((u) => (
                   <a
                     key={u.login}
-                    href={`/profile/${u.login}`}
+                    href={`/profile/${encodeURIComponent(u.login)}`}
                     title={`@${u.login} (${u.followers.toLocaleString()} followers)`}
                     aria-label={`@${u.login}, ${u.followers.toLocaleString()} followers`}
                     className="flex items-center gap-2 hover:opacity-75 transition-opacity"
@@ -271,7 +271,7 @@ export const StatsModal = ({ open, onClose, owner, repo, displayStats, starsThis
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <a
-                            href={`/profile/${u.login}`}
+                            href={`/profile/${encodeURIComponent(u.login)}`}
                             className="text-accent-blue text-xs font-medium hover:underline"
                           >
                             @{u.login}
@@ -407,7 +407,7 @@ export const StatsModal = ({ open, onClose, owner, repo, displayStats, starsThis
                     <NextImage src={u.avatarUrl} alt="" width={32} height={32} sizes="32px" className="w-8 h-8 rounded-full flex-shrink-0 ring-1 ring-border" />
                     <div className="flex-1 min-w-0">
                       <a
-                        href={`/profile/${u.login}`}
+                        href={`/profile/${encodeURIComponent(u.login)}`}
                         className="text-accent-blue text-xs font-medium hover:underline"
                       >
                         @{u.login}

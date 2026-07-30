@@ -3,12 +3,13 @@
 
 import { createHash, createHmac, timingSafeEqual } from "crypto";
 import { Redis } from "@upstash/redis";
+import { UPSTASH_CLIENT_CONFIG } from "@/lib/upstash-resilience";
 
 let _redis: Redis | null = null;
 export const getRedis = (): Redis | null => {
   if (_redis) return _redis;
   try {
-    _redis = Redis.fromEnv();
+    _redis = Redis.fromEnv(UPSTASH_CLIENT_CONFIG);
     return _redis;
   } catch {
     return null;
@@ -17,8 +18,16 @@ export const getRedis = (): Redis | null => {
 
 // CACHE_SIGN_SECRET: when set, signs cached PAT→login entries with HMAC-SHA256.
 // Prevents an attacker with Redis access from forging entries.
-// When unset, cached values are stored and read as plain strings (backward compat).
+// When unset, cached values are stored and read as plain strings (backward compat) — this
+// is a deliberate degrade, not a silent one: it's loud in production so it doesn't go
+// unnoticed, since the whole point of the secret is defense against a compromised Redis.
 const CACHE_SIGN_SECRET = process.env.CACHE_SIGN_SECRET ?? "";
+
+if (!CACHE_SIGN_SECRET && process.env.NODE_ENV === "production") {
+  console.warn(
+    "[github-auth] CACHE_SIGN_SECRET not set in production — cached PAT→login entries are unsigned, an attacker with Redis access could forge them",
+  );
+}
 
 const signCacheValue = (login: string): string => {
   if (!CACHE_SIGN_SECRET) return login;

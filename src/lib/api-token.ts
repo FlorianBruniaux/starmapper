@@ -17,7 +17,12 @@
  */
 
 export const TOKEN_TTL_MS = 2 * 60 * 60 * 1000; // 2 hours
-export const COOKIE_NAME = "sm-token";
+// __Host- requires Secure + Path=/ + no Domain attribute (all already true in production —
+// see proxy.ts's cookies.set call) and additionally makes the cookie unforgeable via a
+// sibling subdomain or a Domain-scoped cookie set by a compromised subdomain. Only applied
+// in production: __Host- cookies are rejected outright by the browser over plain http://,
+// which is how local dev runs, so this would otherwise break the session cookie locally.
+export const COOKIE_NAME = process.env.NODE_ENV === "production" ? "__Host-sm-token" : "sm-token";
 
 const toHex = (buf: ArrayBuffer): string =>
   Array.from(new Uint8Array(buf))
@@ -62,14 +67,41 @@ export const generateToken = async (secret: string): Promise<string> => {
   return `${payload}.${sig}`;
 };
 
-/** Verify a session token. Returns false if invalid, expired, or secret missing. */
-export const verifyToken = async (token: string | undefined, secret: string): Promise<boolean> => {
-  if (!secret || !token) return false;
+/**
+ * Verify a session token against one or more secrets.
+ *
+ * Accepting an array enables secret rotation: sign new tokens with the primary
+ * secret only (generateToken), but keep verifying against the previous secret
+ * too for the length of one TOKEN_TTL_MS window so cookies issued before a
+ * rotation aren't rejected mid-flight. Two-deploy rotation: set
+ * SM_TOKEN_SECRET_PREV to the old value, SM_TOKEN_SECRET to the new one,
+ * deploy; once TOKEN_TTL_MS has elapsed, drop SM_TOKEN_SECRET_PREV.
+ * Returns false if invalid, expired, or no secret provided.
+ */
+export const verifyToken = async (
+  token: string | undefined,
+  secret: string | readonly string[],
+): Promise<boolean> => {
+  const secrets = (Array.isArray(secret) ? secret : [secret]).filter(Boolean);
+  if (secrets.length === 0 || !token) return false;
   const parts = token.split(".");
   if (parts.length !== 3) return false;
   const [ts, nonce, sig] = parts;
   const tsNum = parseInt(ts, 10);
   if (isNaN(tsNum) || Math.abs(Date.now() - tsNum) > TOKEN_TTL_MS) return false;
-  const expected = await hmacSign(`${ts}.${nonce}`, secret);
-  return safeEqual(sig, expected);
+  for (const s of secrets) {
+    const expected = await hmacSign(`${ts}.${nonce}`, s);
+    if (safeEqual(sig, expected)) return true;
+  }
+  return false;
 };
+
+/**
+ * Reads SM_TOKEN_SECRET (primary, used for signing new tokens) and the
+ * optional SM_TOKEN_SECRET_PREV (verification-only, for rotation) from env.
+ * Returns them as an array suitable for verifyToken; empty when neither is set.
+ */
+export const getSmSecrets = (): string[] =>
+  [process.env.SM_TOKEN_SECRET, process.env.SM_TOKEN_SECRET_PREV].filter(
+    (s): s is string => Boolean(s),
+  );

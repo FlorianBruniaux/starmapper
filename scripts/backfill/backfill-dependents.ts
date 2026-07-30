@@ -17,7 +17,7 @@
 
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
-import pg from "pg";
+import { createScriptPool } from "../lib/pg-pool";
 import { fetchDependents } from "../../src/lib/dependents";
 import { compressToGzBase64 } from "../../src/lib/compression";
 
@@ -39,8 +39,7 @@ const STALE_MS  = 7 * 24 * 60 * 60 * 1000; // 7 days — matches expiresAt TTL
 
 // ─── DB ───────────────────────────────────────────────────────────────────────
 
-const pool = new pg.Pool({
-  connectionString: process.env.DATABASE_URL,
+const pool = createScriptPool(process.env.DATABASE_URL ?? "", {
   options: "-c statement_timeout=0",
 });
 const prisma = new PrismaClient({ adapter: new PrismaPg(pool) });

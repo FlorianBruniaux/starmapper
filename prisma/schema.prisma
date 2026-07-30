@@ -81,6 +81,26 @@ model DependentsCache {
   @@map("dependents_cache")
 }
 
+// Engaged-audience map (replaces the dead stargazer scan). Points are the
+// deduplicated union of forkers, issue/PR authors, mentionables and watchers,
+// geocoded, gzip+base64. Kept separate from stargazer_cache and star_event so
+// engaged users never pollute the star-based MVs. See src/lib/engaged-audience.ts.
+model EngagedCache {
+  owner      String
+  repo       String
+  pointsGz   String   @db.Text
+  unmappedGz String   @db.Text
+  knownCount Int // distinct engaged users found (mapped + unmapped)
+  starCount  Int // stargazerCount at fetch time, the coverage denominator
+  channels   String // comma-separated channels used, e.g. "fork,issue,pr,mention,watch"
+  scannedAt  DateTime @default(now())
+  expiresAt  DateTime @default(dbgenerated("NOW() + INTERVAL '30 days'"))
+
+  @@id([owner, repo])
+  @@index([expiresAt])
+  @@map("engaged_cache")
+}
+
 model GitHubUser {
   login            String      @id
   name             String?
@@ -207,4 +227,22 @@ model ApiKey {
   lastUsedAt DateTime?
 
   @@map("api_key")
+}
+
+// Public roadmap vote (GitHub stargazer-restriction pivot). Upsert-by-ipHash: a repeat vote
+// from the same hashed IP overwrites options rather than appending a row, which is both the
+// "change your mind" UX and the anti-spam mechanism (see src/lib/ip-hash.ts).
+model RoadmapVote {
+  ipHash    String   @id
+  options   String[]
+  // Both optional and opt-in only — the voter explicitly chooses to leave these instead of
+  // voting anonymously. Consent basis documented in /privacy Section 2. Never used for
+  // marketing, only to follow up with people who voted.
+  email     String?
+  name      String?
+  message   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("roadmap_vote")
 }

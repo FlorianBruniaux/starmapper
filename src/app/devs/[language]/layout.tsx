@@ -3,6 +3,7 @@
 
 import { Suspense } from "react";
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { displayLanguage, slugToLanguage } from "@/lib/languages";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://starmapper.bruniaux.com";
@@ -47,6 +48,7 @@ const LanguageLayoutMeta = async ({
   const { language: slug } = await params;
   const language = displayLanguage(slugToLanguage(slug) ?? slug);
   const url = `${APP_URL}/devs/${slug}`;
+  const nonce = (await headers()).get("x-nonce") ?? "";
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -62,6 +64,7 @@ const LanguageLayoutMeta = async ({
     <>
       <h1 className="sr-only">{language} developers world map</h1>
       <script
+        nonce={nonce}
         type="application/ld+json"
         // nosemgrep: typescript.react.security.audit.react-dangerouslysetinnerhtml.react-dangerouslysetinnerhtml
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}

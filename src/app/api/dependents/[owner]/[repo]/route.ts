@@ -8,7 +8,7 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { normalizeOwnerRepo, OWNER_REPO_RE } from "@/lib/api-validation";
+import { validateOwnerRepo } from "@/lib/api-validation";
 import { jsonError, logError } from "@/lib/api-helpers";
 import { decompressGzBase64 } from "@/lib/compression";
 import { sortDependents } from "@/lib/dependents";
@@ -34,10 +34,8 @@ export const GET = async (
   { params }: { params: Promise<{ owner: string; repo: string }> },
 ) => {
   const { owner: rawOwner, repo: rawRepo } = await params;
-  if (!OWNER_REPO_RE.test(rawOwner) || !OWNER_REPO_RE.test(rawRepo)) {
-    return jsonError("invalid_params", 400);
-  }
-  const key = normalizeOwnerRepo(rawOwner, rawRepo);
+  const key = validateOwnerRepo(rawOwner, rawRepo);
+  if (!key) return jsonError("invalid_params", 400);
 
   const sp = req.nextUrl.searchParams;
   const sortRaw = sp.get("sort") ?? "stars";

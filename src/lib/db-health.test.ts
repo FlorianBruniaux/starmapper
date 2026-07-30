@@ -79,4 +79,32 @@ describe("checkDbHealth()", () => {
       expect(health.usagePct).toBeLessThan(5);
     }
   });
+
+  it("logs a warning when the DB query fails", async () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    mockQueryRaw.mockRejectedValue(new Error("connection refused"));
+    await checkDbHealth();
+    expect(warnSpy).toHaveBeenCalledTimes(1);
+    expect(warnSpy.mock.calls[0]?.[0]).toContain("[db-health]");
+  });
+
+  it("caches a failure for only the short TTL, not the full 5-minute TTL", async () => {
+    mockQueryRaw.mockRejectedValueOnce(new Error("connection refused"));
+    const first = await checkDbHealth();
+    expect(first.ok).toBe(false);
+    expect(mockQueryRaw).toHaveBeenCalledTimes(1);
+
+    // Still within the short failure TTL (10s) — cache hit, no second query.
+    mockQueryRaw.mockResolvedValueOnce([{ size: BigInt(1024) }]);
+    const withinShortTtl = await checkDbHealth();
+    expect(withinShortTtl.ok).toBe(false);
+    expect(mockQueryRaw).toHaveBeenCalledTimes(1);
+
+    // Advance past the short failure TTL (10s) but still within the 5-minute success TTL.
+    fakeNow += 11 * 1000;
+    vi.spyOn(Date, "now").mockReturnValue(fakeNow);
+    const afterShortTtl = await checkDbHealth();
+    expect(afterShortTtl.ok).toBe(true);
+    expect(mockQueryRaw).toHaveBeenCalledTimes(2);
+  });
 });

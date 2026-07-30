@@ -20,7 +20,7 @@
 
 import { parseArgs } from "node:util";
 import { writeFile } from "node:fs/promises";
-import pg from "pg";
+import { createScriptPool } from "../lib/pg-pool";
 
 const { values } = parseArgs({
   options: {
@@ -36,8 +36,7 @@ const FIX = values.fix;
 const BATCH_SIZE = parseInt(values["batch-size"] ?? "2000", 10);
 const OUT_FILE = values.out ?? "geocache-audit-report.json";
 
-const pool = new pg.Pool({
-  connectionString: process.env.DATABASE_URL,
+const pool = createScriptPool(process.env.DATABASE_URL ?? "", {
   options: "-c statement_timeout=0",
 });
 

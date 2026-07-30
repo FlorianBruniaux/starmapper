@@ -3,6 +3,7 @@
 
 import { Suspense } from "react";
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { OWNER_REPO_RE } from "@/lib/api-validation";
 
@@ -43,6 +44,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 const RepoLayoutMeta = async ({ params }: { params: Promise<{ owner: string; repo: string }> }) => {
   const { owner, repo } = await params;
   if (!OWNER_REPO_RE.test(owner) || !OWNER_REPO_RE.test(repo)) notFound();
+  const nonce = (await headers()).get("x-nonce") ?? "";
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
@@ -56,6 +58,7 @@ const RepoLayoutMeta = async ({ params }: { params: Promise<{ owner: string; rep
     <>
       <h1 className="sr-only">{owner}/{repo} stargazers map</h1>
       <script
+        nonce={nonce}
         type="application/ld+json"
         // nosemgrep: typescript.react.security.audit.react-dangerouslysetinnerhtml.react-dangerouslysetinnerhtml
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}

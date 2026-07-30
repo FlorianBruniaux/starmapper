@@ -26,6 +26,7 @@ export const env = createEnv({
     // Security — optional but strongly recommended in production
     SM_TOKEN_SECRET: z.string().min(32).optional(),
     CACHE_SIGN_SECRET: z.string().min(16).optional(),
+    IP_HASH_SECRET: z.string().min(16).optional(),
 
     // Upstash Redis — required for distributed rate limiting in production
     UPSTASH_REDIS_REST_URL: z.string().optional(),
@@ -55,6 +56,7 @@ export const env = createEnv({
     NEXT_PUBLIC_CSV_EXPORT: z.string().optional(),
     NEXT_PUBLIC_ENABLE_GLOBE: z.string().optional(),
     NEXT_PUBLIC_ORGANIC_SCORE_ENABLED: z.string().optional(),
+    NEXT_PUBLIC_DEPENDENTS_ENABLED: z.string().optional(),
   },
   experimental__runtimeEnv: {
     NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN: process.env.NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN,
@@ -63,6 +65,7 @@ export const env = createEnv({
     NEXT_PUBLIC_CSV_EXPORT: process.env.NEXT_PUBLIC_CSV_EXPORT,
     NEXT_PUBLIC_ENABLE_GLOBE: process.env.NEXT_PUBLIC_ENABLE_GLOBE,
     NEXT_PUBLIC_ORGANIC_SCORE_ENABLED: process.env.NEXT_PUBLIC_ORGANIC_SCORE_ENABLED,
+    NEXT_PUBLIC_DEPENDENTS_ENABLED: process.env.NEXT_PUBLIC_DEPENDENTS_ENABLED,
   },
   emptyStringAsUndefined: true,
 });

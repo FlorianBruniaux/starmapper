@@ -2,7 +2,7 @@
 
 **StarMapper** maps the stargazers of any GitHub repository on an interactive world map. Free, no auth required. Given a repo URL it fetches stargazers via GitHub GraphQL, geocodes their locations through a 3-tier cascade, and renders a MapLibre GL map with GeoJSON clustering.
 
-**Tech Stack**: Next.js 16.2.6 (App Router, Turbopack) · TypeScript 5 · MapLibre GL 5.24.x · Prisma 7.8.0 + `@prisma/adapter-neon` · Neon Postgres · Jawg/Geoapify/Nominatim · Tailwind v4 · Vercel
+**Tech Stack**: Next.js 16.2.11 (App Router, Turbopack) · TypeScript 5 · MapLibre GL 5.24.x · Prisma 7.8.0 + `@prisma/adapter-neon` · Neon Postgres · Jawg/Geoapify/Nominatim · Tailwind v4 · Vercel
 
 ---
 
@@ -65,9 +65,12 @@ Without any Jawg or Geoapify key, all geocoding falls to Nominatim at 1100ms/cal
 | `NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN` | Yes (client) | Jawg token for MapLibre tile style URL (primary) |
 | `NEXT_PUBLIC_JAWGMAP_ACCESS_TOKEN_2` | No | Jawg fallback token — auto-used on 401/402/403/429 |
 | `SM_TOKEN_SECRET` | Recommended | HMAC secret, min 32 chars (`openssl rand -hex 32`) |
+| `SM_TOKEN_SECRET_PREV` | No | Previous `SM_TOKEN_SECRET`, accepted for verification only during a rotation |
 | `UPSTASH_REDIS_REST_URL` | Recommended | Upstash Redis for distributed rate limiting |
 | `UPSTASH_REDIS_REST_TOKEN` | Recommended | Upstash Redis token |
 | `CACHE_SIGN_SECRET` | Recommended | HMAC-SHA256 for signing PAT→login entries in Upstash |
+| `IP_HASH_SECRET` | Recommended | HMAC-SHA256 for hashing voter IPs on `/roadmap` (dedupe key, not an identity) |
+| `ENGAGED_AUDIENCE_ENABLED` | No | Gates the engaged-audience indexing pipeline (`scripts/ops/index-engaged.ts`). Default off (`!== "true"` disables) so it can be turned off without a deploy |
 
 ---
 

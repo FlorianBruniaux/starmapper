@@ -9,7 +9,7 @@
 
 import { readFileSync } from "fs";
 import { join } from "path";
-import pg from "pg";
+import { createScriptPool } from "../lib/pg-pool";
 
 const url = process.env.DATABASE_URL;
 if (!url) {
@@ -20,7 +20,7 @@ if (!url) {
 const sqlPath = join(import.meta.dirname, "..", "..", "prisma", "sql", "views.sql");
 const sql = readFileSync(sqlPath, "utf-8");
 
-const pool = new pg.Pool({ connectionString: url, max: 1 });
+const pool = createScriptPool(url, { max: 1 });
 const client = await pool.connect();
 
 try {

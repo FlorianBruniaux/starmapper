@@ -12,12 +12,13 @@ import { validateOwnerRepo } from "@/lib/api-validation";
 import { jsonError, logError, getIP } from "@/lib/api-helpers";
 import { parseLocation } from "@/lib/location-parser";
 import type { StargazerPoint } from "@/app/api/chunk/route";
+import { UPSTASH_CLIENT_CONFIG } from "@/lib/upstash-resilience";
 
 // ---------------------------------------------------------------------------
 // Rate limiter — 60 req/min per IP (separate from middleware tiers)
 // ---------------------------------------------------------------------------
 
-const redis = Redis.fromEnv();
+const redis = Redis.fromEnv(UPSTASH_CLIENT_CONFIG);
 
 const limiter = new Ratelimit({
   redis,
@@ -65,32 +66,9 @@ export const GET = async (
   if (!validated) return jsonError("invalid_params", 400);
   const { owner, repo } = validated;
 
-  // 2. Extract API key from Authorization header
-  const authHeader = req.headers.get("authorization");
-  if (!authHeader?.startsWith("Bearer ")) {
-    return jsonError("unauthorized", 401);
-  }
-  const apiKey = authHeader.slice(7).trim();
-  if (!apiKey) return jsonError("unauthorized", 401);
-
-  // 3. Verify key exists and is not revoked — lookup by keyHash (SHA-256) only.
-  // Backfill (scripts/backfill-api-key-hash.ts) has been run; plaintext fallback removed.
-  const incomingHash = hashApiKey(apiKey);
-  let keyRecord: { key: string; revokedAt: Date | null } | null;
-  try {
-    keyRecord = await prisma.apiKey.findUnique({
-      where: { keyHash: incomingHash },
-      select: { key: true, revokedAt: true },
-    });
-  } catch (err) {
-    logError("geo/api-key-lookup", err);
-    return jsonError("internal_error", 500);
-  }
-
-  if (!keyRecord) return jsonError("unauthorized", 401);
-  if (keyRecord.revokedAt) return jsonError("forbidden", 403);
-
-  // 4. Rate limit by IP
+  // 2. Rate limit by IP — runs BEFORE auth so a brute-forced/invalid API key still counts
+  // against the caller's quota. Previously this ran after the key lookup, so unlimited
+  // 401s cost nothing: an attacker could probe an unbounded number of keys for free.
   const ip = getIP(req);
   try {
     const { success, limit, remaining, reset } = await limiter.limit(ip);
@@ -112,6 +90,31 @@ export const GET = async (
   } catch {
     // Redis unavailable — fail open, never block legitimate API consumers
   }
+
+  // 3. Extract API key from Authorization header
+  const authHeader = req.headers.get("authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
+    return jsonError("unauthorized", 401);
+  }
+  const apiKey = authHeader.slice(7).trim();
+  if (!apiKey) return jsonError("unauthorized", 401);
+
+  // 4. Verify key exists and is not revoked — lookup by keyHash (SHA-256) only.
+  // Backfill (scripts/backfill-api-key-hash.ts) has been run; plaintext fallback removed.
+  const incomingHash = hashApiKey(apiKey);
+  let keyRecord: { key: string; revokedAt: Date | null } | null;
+  try {
+    keyRecord = await prisma.apiKey.findUnique({
+      where: { keyHash: incomingHash },
+      select: { key: true, revokedAt: true },
+    });
+  } catch (err) {
+    logError("geo/api-key-lookup", err);
+    return jsonError("internal_error", 500);
+  }
+
+  if (!keyRecord) return jsonError("unauthorized", 401);
+  if (keyRecord.revokedAt) return jsonError("forbidden", 403);
 
   // 4b. Rate limit by API key hash — defense against distributed IP spoofing with one stolen key.
   try {

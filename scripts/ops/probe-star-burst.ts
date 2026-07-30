@@ -16,7 +16,7 @@ import { readFileSync } from "fs";
 import { join } from "path";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
-import pg from "pg";
+import { createScriptPool } from "../lib/pg-pool";
 
 // ─── Load .env.local ──────────────────────────────────────────────────────────
 
@@ -306,7 +306,7 @@ const main = async () => {
   let db: PrismaClient | null = null;
   if (!SKIP_DB) {
     try {
-      const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+      const pool = createScriptPool(process.env.DATABASE_URL ?? "");
       db = new PrismaClient({ adapter: new PrismaPg(pool) } as never);
       await db.$queryRaw`SELECT 1`;
       console.log("✓ DB connected\n");

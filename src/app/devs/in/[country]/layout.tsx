@@ -3,6 +3,7 @@
 
 import { Suspense } from "react";
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { slugToCountry } from "@/lib/countries";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://starmapper.bruniaux.com";
@@ -39,6 +40,7 @@ const CountryLayoutMeta = async ({
   const { country: slug } = await params;
   const countryName = slugToCountry(slug);
   const url = `${APP_URL}/devs/in/${slug}`;
+  const nonce = (await headers()).get("x-nonce") ?? "";
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -66,6 +68,7 @@ const CountryLayoutMeta = async ({
     <>
       <h1 className="sr-only">GitHub developers in {countryName}</h1>
       <script
+        nonce={nonce}
         type="application/ld+json"
         // nosemgrep: typescript.react.security.audit.react-dangerouslysetinnerhtml.react-dangerouslysetinnerhtml
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}

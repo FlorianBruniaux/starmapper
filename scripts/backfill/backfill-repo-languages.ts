@@ -21,7 +21,7 @@ import { join } from "path";
 import { PrismaClient } from "@prisma/client";
 import { PrismaNeon } from "@prisma/adapter-neon";
 import { PrismaPg } from "@prisma/adapter-pg";
-import pg from "pg";
+import { createScriptPool } from "../lib/pg-pool";
 import { acquireToken, buildTokenPool, makeHeaders, syncTokenFromHeaders } from "../lib/github-token-pool";
 
 // ─── Load .env.local ──────────────────────────────────────────────────────────
@@ -68,7 +68,7 @@ if (TOKEN_POOL.length === 0) { console.error("Error: GITHUB_TOKEN not set"); pro
 
 const prisma = USE_PROD
   ? new PrismaClient({ adapter: new PrismaNeon({ connectionString: DB_URL }) })
-  : new PrismaClient({ adapter: new PrismaPg(new pg.Pool({ connectionString: DB_URL, options: "-c statement_timeout=0" })) });
+  : new PrismaClient({ adapter: new PrismaPg(createScriptPool(DB_URL, { options: "-c statement_timeout=0" })) });
 
 // ─── GitHub REST ──────────────────────────────────────────────────────────────
 

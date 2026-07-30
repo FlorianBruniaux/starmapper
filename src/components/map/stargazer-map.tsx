@@ -509,7 +509,7 @@ const makePopupElement = (props: Record<string, unknown>): HTMLElement => {
     el.appendChild(graphBtn);
   } else {
     const profileBtn = document.createElement("a");
-    profileBtn.href = `/profile/${login}`;
+    profileBtn.href = `/profile/${encodeURIComponent(login)}`;
     profileBtn.style.cssText = btnStyle;
     profileBtn.textContent = "View StarMapper profile →";
     profileBtn.addEventListener("mouseenter", () => {

@@ -1,150 +1,246 @@
-# StarMapper — AI Agent Guide
+# StarMapper — Codex Agent Guide
 
-## Build
+## Priority
 
-```bash
-pnpm install
-pnpm typecheck   # must pass before any commit
-pnpm lint
-pnpm test
-```
+StarMapper no longer has reliable access to arbitrary public repo stargazer
+enumeration. GitHub restricted `Repository.stargazers`, REST stargazers, REST
+subscribers/watchers, and the UI stargazer/watchers pages in July 2026.
+
+The current product priority is the GitHub pivot documented in
+`docs/ROADMAP.md` and `claudedocs/`:
+
+1. Fix stale/misleading surfaces first, especially historical trending labels.
+2. Ship honest map source handling: historical cache, engaged audience, then
+   owner-authorized live stargazers.
+3. Keep any mass crawl of `starredRepositories(user)` blocked unless the
+   explicit legal/ToS decision is clean. Do not treat this as an engineering
+   workaround.
+
+Do not spend time on medium-term features until the pivot surfaces are honest.
+
+## Sources Of Truth
+
+Read the relevant files before changing code. For pivot or data-source work,
+read these first:
+
+- `docs/ROADMAP.md`
+- `claudedocs/github-stargazers-restriction.md`
+- `claudedocs/github-api-surface-inventory.md`
+- `claudedocs/pivot-action-plan.md`
+- `claudedocs/github-access-probe-2026-07-24.json` when raw probe evidence is needed
+
+For implementation rules, prefer:
+
+- `CLAUDE.md` for stack, architecture, env vars, commands, and gotchas
+- `.claude/rules/architecture.md` for chunk loop, geocoder, GitHub, API route contracts
+- `.claude/rules/code-conventions.md` for TypeScript and React style
+- `.claude/rules/known-gotchas.md` for Prisma, MapLibre, MVs, cursor, geocodeBatch
+- `.claude/rules/tdd-mandatory.md` for tests
+- `.claude/rules/defensive-code-audit.md` for forbidden error-handling patterns
+- `.claude/rules/design-system.md` and `docs/design-system.md` for UI tokens
+- `docs/ARCHITECTURE.md` for endpoint and file map reference
+
+This file is the Codex entry point. Do not paste stale Claude memory blocks into
+it. Link to the detailed docs instead of duplicating them.
+
+## Codex Tooling And Skills
+
+- Use repository instructions plus Codex skills together. If a task matches an
+  available skill, read that skill's `SKILL.md` before acting.
+- Use `tool_search` for deferred MCP/plugin tools when the request mentions
+  GitHub, Vercel, automations, threads, browser control, document control, or
+  another connector.
+- Use `grepai search "english intent" --json --compact` first for semantic code
+  exploration. Fall back to `rg` for exact symbols, imports, strings, and paths.
+- Use `rtk` whenever an equivalent exists for CLI commands. Common checks:
+  `rtk tsc`, `rtk vitest run`, `rtk git status --short`.
+- For library/framework/API docs, prefer the official/source-backed tool path
+  available in the session, such as Context7 for library docs and Vercel skills
+  for Vercel-specific work.
+- Do not invent plugin access. If a connector/plugin is missing, say so and use
+  the best available fallback.
 
 ## Stack
 
-Next.js 16 (App Router), TypeScript 5, MapLibre GL 5.x, Prisma 7 + Neon Postgres, Tailwind CSS v4.
+- Next.js 16.2.11 App Router, React 19.2, Turbopack
+- TypeScript 6, strict zero-error policy
+- MapLibre GL 5.24.x
+- Prisma 7.8 + `@prisma/adapter-neon`, Neon Postgres
+- Tailwind CSS v4 with `@theme inline` tokens in `src/app/globals.css`
+- Vercel, Upstash Redis for distributed rate limiting
+- Jawg dedicated geocoding, Jawg Places, Geoapify, Nominatim fallback
 
-## Key conventions
-
-- Arrow functions only (`const fn = () => {}`), never `function` keyword
-- `type` over `interface`, `import type` for type-only imports
-- No `any` — use `unknown` + type guards
-- Tailwind: CSS tokens from `@theme` in `globals.css`, no arbitrary values (`w-[Npx]`)
-- MapLibre components: dynamic import with `ssr: false`, cleanup on unmount
-
-## Architecture notes
-
-- `/api/chunk` is the critical path — called in a client-side loop, 100 users per call
-- Geocoder: 3-tier cascade Jawg → Geoapify → Nominatim, with a DB geocache (~51k pre-seeded entries)
-- Prisma adapter: `@prisma/adapter-neon` by default, `@prisma/adapter-pg` when `DATABASE_DRIVER=standard`
-- `schema.prisma` has no `url` field — intentional with Prisma 7 adapter pattern
-- MapLibre GL 5.x: `getClusterExpansionZoom` is Promise-based, not callback-based
-- `src/app/[owner]/[repo]/page.tsx` refactored: 2668 → 700 lines, delegates via `useScanController` hook and sub-components in `app/[owner]/[repo]/components/` and `hooks/`
-- `src/lib/repo-cache.ts`: centralized localStorage helpers (`loadCache`, `saveCache`, `clearCache`, `cacheKey`)
-- `src/env.ts`: environment variable validation via `@t3-oss/env-nextjs` — build fails if required vars are missing
-
-## DB setup (after prisma db push)
-
-7 materialized views and pg_trgm indexes are required but not managed by Prisma. Run:
+## Commands
 
 ```bash
+pnpm install
+pnpm dev
+pnpm build
+rtk tsc
+pnpm lint
+rtk vitest run
+pnpm test
 pnpm db:setup
 ```
 
-See `scripts/db-setup.sh` and `docs/ARCHITECTURE.md` for details.
+Before any commit, `rtk tsc` must pass. Run the narrowest relevant tests for the
+change, then broader tests when touching shared contracts, API routes, DB writes,
+or map source behavior.
 
+The Vercel CLI installed in this environment may be outdated. If Vercel CLI
+behavior is relevant, recommend upgrading with `pnpm add -g vercel@latest` or
+`npm i -g vercel@latest` before relying on new CLI behavior.
 
-## grepai - Semantic Code Search
+## Non-Negotiable Code Rules
 
-**IMPORTANT: You MUST use grepai as your PRIMARY tool for code exploration and search.**
+- Arrow functions only: `const fn = () => {}`. Do not use `function`.
+- Use `type`, not `interface`.
+- Use `import type` for type-only imports.
+- No `any`; use precise types or `unknown` plus narrowing.
+- Kebab-case file and folder names.
+- 2 spaces, double quotes, semicolons, trailing commas in multiline structures.
+- No silent catches in API routes. Return a typed error response or rethrow.
+- No `forEach(async ...)`; use `for...of` or `Promise.all(items.map(...))`.
+- Do not introduce hardcoded secrets, tokens, coordinates, or magic URLs.
+- Do not make broad refactors while fixing a narrow issue.
 
-### When to Use grepai (REQUIRED)
+## UI Rules
 
-Use `grepai search` INSTEAD OF Grep/Glob/find for:
-- Understanding what code does or where functionality lives
-- Finding implementations by intent (e.g., "authentication logic", "error handling")
-- Exploring unfamiliar parts of the codebase
-- Any search where you describe WHAT the code does rather than exact text
+- Use Tailwind tokens from `src/app/globals.css`. No arbitrary values like
+  `w-[40px]`, `text-[12px]`, or `bg-[#0d1117]`.
+- Use existing classes such as `bg-background`, `bg-surface`, `text-foreground`,
+  `text-muted`, `border-border`, and `text-accent-blue`.
+- MapLibre DOM and popup specifics live in JS/CSS outside Tailwind when needed.
+- Do not use `position: fixed` on mobile overlays without checking keyboard
+  behavior.
+- Interactive controls need visible focus states and mobile touch targets.
 
-### When to Use Standard Tools
+## Database And Prisma
 
-Only use Grep/Glob when you need:
-- Exact text matching (variable names, imports, specific strings)
-- File path patterns (e.g., `**/*.go`)
+- `schema.prisma` intentionally has no datasource `url`; runtime connection is
+  passed through Prisma adapters in `src/lib/db.ts`.
+- `DATABASE_DRIVER=neon` is the default for Vercel/Neon. `standard` is for
+  local Docker/Railway/Supabase-style Postgres.
+- Use `prisma db push`, not `prisma migrate dev`.
+- After `prisma db push`, run the required follow-up for affected data, notably
+  `pnpm backfill:api-key-hash:*` when `ApiKey.keyHash` can be missing.
+- Neon DDL rule: never `CREATE INDEX CONCURRENTLY`; prefix DDL with
+  `SET statement_timeout = 0;`.
+- Materialized views are not managed by Prisma. `pnpm db:setup` creates the
+  current MV/index set. `repo_power_users_mv` depends on `power_users_mv`.
+- Repo stats precompute is controlled by `REPO_STATS_MV_ENABLED`. In production,
+  keep it enabled when `repo_stats_mv` and the three repo dimension MVs are
+  populated and fresh; otherwise `/api/stats/[owner]/[repo]` can fall back to
+  expensive live joins and timeout. See `docs/adr-repo-stats-precompute.md`.
+- `src/lib/user-cache.ts` can skip writes when DB health is critical. Long-running
+  crawls must treat skipped writes as retryable, not complete.
 
-### Fallback
+## GitHub Data Reality
 
-If grepai fails (not running, index unavailable, or errors), fall back to standard Grep/Glob tools.
+Dead or unreliable for arbitrary repos:
 
-### Usage
+- GraphQL `Repository.stargazers`
+- REST `/repos/{owner}/{repo}/stargazers`
+- REST `/repos/{owner}/{repo}/subscribers`
+- UI `/stargazers` and `/watchers`
 
-```bash
-# ALWAYS use English queries for best results (--compact saves ~80% tokens)
-grepai search "user authentication flow" --json --compact
-grepai search "error handling middleware" --json --compact
-grepai search "database connection pool" --json --compact
-grepai search "API request validation" --json --compact
+Still useful:
+
+- Scalar `repository.stargazerCount`
+- Inverse `user.starredRepositories`
+- Repo engaged channels: forks, issues, pull requests, mentionable users,
+  contributors, and GraphQL watchers while it remains available
+- Followers/following, contributors, dependents, trending/atlas/explore reads
+  over existing DB data
+
+Use honest naming:
+
+- Historical cache can say "stargazers", but must show freshness.
+- Engaged audience must not be labelled as stargazers.
+- Owner-authorized live access can say "stargazers" only when ownership/token
+  access is proven.
+
+## Current Pivot Direction
+
+The architecture should converge on a first-class map source discriminant:
+
+```ts
+type RepoMapSource = "history" | "engaged" | "owner-live";
 ```
 
-### Query Tips
+Propagate source and coverage through route responses, map UI, stats, badges,
+Open Graph images, exports, and copy. Avoid coercing engaged users into
+stargazer terminology just to reuse legacy components.
 
-- **Use English** for queries (better semantic matching)
-- **Describe intent**, not implementation: "handles user login" not "func Login"
-- **Be specific**: "JWT token validation" better than "token"
-- Results include: file path, line numbers, relevance score, code preview
+Near-term expected sequence:
 
-### Call Graph Tracing
+1. Freeze or relabel stale historical/trending surfaces.
+2. Add source-aware map serving and coverage metadata.
+3. Serve engaged audience for arbitrary repos with explicit copy.
+4. Add owner-authorized live stargazers only if the GitHub exemption is verified.
+5. Deprecate arbitrary `/api/chunk` scans with a clear `410 Gone` path.
 
-Use `grepai trace` to understand function relationships:
-- Finding all callers of a function before modifying it
-- Understanding what functions are called by a given function
-- Visualizing the complete call graph around a symbol
+## Critical Existing Contracts
 
-#### Trace Commands
+- Old chunk loop was browser-orchestrated and sequential: one `/api/chunk` call
+  per 100 users. Do not replace it with a long server loop.
+- GitHub GraphQL cursor variables must omit null cursors. Do not pass
+  `cursor: null`.
+- `geocodeBatch()` returns a `Map` keyed by the raw input location string, not by
+  normalized lowercase keys.
+- Nominatim fallback must stay sequential with at least 1100 ms between calls.
+- `StargazerCache` writes should use `pointsGz` and `unmappedGz`.
+- MapLibre `getClusterExpansionZoom` is Promise-based in v5.
+- Map sources should update with `source.setData()`; do not remove/re-add sources
+  on every points update.
 
-**IMPORTANT: Always use `--json` flag for optimal AI agent integration.**
+## Rate Limiting
+
+`proxy.ts` is the Next.js 16 middleware entrypoint. Keep one IP rate-limit check
+per public POST route there. Do not reintroduce a second identical IP limiter
+inside `chunk`, `track`, `followers-chunk`, or `contributors-chunk`.
+
+Per-PAT or per-token limiters inside routes are a different axis and may remain.
+
+The July 2026 production incident was caused by duplicate Upstash checks and the
+Free Tier command quota being exhausted. Treat Redis command count as a real
+production budget.
+
+## Tests And Verification
+
+- New code in `src/lib/` and `src/app/api/` needs tests.
+- For route changes, test validation, success, expected fallback, and error
+  shape.
+- For source/coverage changes, test terminology and the source discriminant.
+- For DB writes, test DB-health skip behavior where relevant.
+- For map/UI changes, run a browser check when feasible.
+
+Before handing off:
 
 ```bash
-# Find all functions that call a symbol
-grepai trace callers "HandleRequest" --json
-
-# Find all functions called by a symbol
-grepai trace callees "ProcessOrder" --json
-
-# Build complete call graph (callers + callees)
-grepai trace graph "ValidateToken" --depth 3 --json
+rtk tsc
+rtk vitest run
+pnpm lint
 ```
 
-### Workflow
+Use judgment on scope, but say exactly what was and was not run.
 
-1. Start with `grepai search` to find relevant code
-2. Use `grepai trace` to understand function relationships
-3. Use `Read` tool to examine files from results
-4. Only use Grep for exact string searches if needed
+## Git
 
-<claude-mem-context>
-# Memory Context
+- Branches: `feature/*`, `fix/*`, `chore/*`.
+- Commit format: `type(scope): imperative lowercase message`, max 50 chars.
+- Do not commit or push unless explicitly asked.
+- Never use destructive git commands against user changes. Inspect
+  `rtk git status --short` before editing and before final handoff.
 
-# [starmapper] recent context, 2026-06-11 5:09pm GMT+2
+Common scopes: `api`, `map`, `cache`, `geocoder`, `github`, `db`, `ui`, `admin`,
+`mcp`, `config`, `deps`, `docs`.
 
-Legend: 🎯session 🔴bugfix 🟣feature 🔄refactor ✅change 🔵discovery ⚖️decision
-Format: ID TIME TYPE TITLE
-Fetch details: get_observations([IDs]) | Search: mem-search skill
+## Product Guardrails
 
-Stats: 21 obs (3,540t read) | 193,482t work | 98% savings
-
-### May 17, 2026
-20816 11:48a 🔴 Fixes in agent.md file
-20818 11:49a 🔴 Debugging pwd command execution
-20820 " 🔴 Debugging ls command execution
-20821 " 🔴 Skill check for using-superpowers skill
-20822 " 🔴 Skill check for source-command-tech-audit-codebase skill
-20823 " 🔴 Updating plan for StarMapper project
-20824 " 🔴 Checking if rtk command exists in the system
-20825 " 🔴 Skill check for AGENTS.md file
-20826 " 🔴 Skill check for package.json file
-20827 " 🔴 Skill check for README.md file
-20828 " 🔴 Skill check for docs/ARCHITECTURE.md file
-20829 " 🔴 Skill check for src/test.ts file
-### Jun 11, 2026
-27405 3:42p ✅ Updated local repository to the latest version
-27416 3:43p 🔵 Security Vulnerabilities Found in Package.json
-27417 " 🔴 Updated `setup:mvs:prod` Script to Include Environment Variable Check
-27418 " 🔴 Untitled
-27419 " 🔄 Refactored `setup:mvs:prod` Script to Use Environment Variables Instead of Command Line Arguments
-27420 " 🔴 Updated `setup:mvs:prod` Script to Use Environment Variables Instead of Command Line Arguments
-27421 3:44p 🔵 Security Vulnerabilities Identified in package.json
-27422 " 🔄 Security Vulnerabilities Fixed in package.json
-27423 " ⚖️ Security Vulnerabilities Addressed in package.json
-
-Access 193k tokens of past work via get_observations([IDs]) or mem-search skill.
-</claude-mem-context>
+- StarMapper is still no-auth and read-only by default. Auth/user accounts are a
+  real product decision, not incidental plumbing.
+- Do not build fake placeholders for external services or legal decisions.
+- Do not resume the crawler path just because it is technically possible.
+- Preserve user trust: if the data is historical, partial, engaged-only, or
+  owner-live, the UI and API labels must say that plainly.

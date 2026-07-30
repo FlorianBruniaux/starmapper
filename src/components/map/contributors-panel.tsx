@@ -218,7 +218,7 @@ export const ContributorsPanel = ({
               {/* Info */}
               <div className="flex-1 min-w-0">
                 <Link
-                  href={`/profile/${c.login}`}
+                  href={`/profile/${encodeURIComponent(c.login)}`}
                   className="text-accent-blue text-xs font-medium hover:underline leading-tight block truncate"
                 >
                   @{c.login}

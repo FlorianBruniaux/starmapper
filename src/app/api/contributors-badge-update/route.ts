@@ -6,8 +6,8 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { revalidateTag } from "next/cache";
 import { prisma } from "@/lib/db";
-import { jsonError } from "@/lib/api-helpers";
-import { verifyToken, COOKIE_NAME } from "@/lib/api-token";
+import { jsonError, logError } from "@/lib/api-helpers";
+import { verifyToken, getSmSecrets, COOKIE_NAME } from "@/lib/api-token";
 import { OWNER_REPO_RE } from "@/lib/api-validation";
 
 const schema = z.object({
@@ -19,10 +19,10 @@ const schema = z.object({
 export const POST = async (req: NextRequest) => {
   // SM token check — same pattern as badge-update and other write routes.
   // Blocks external requests; passes for any valid browser session.
-  const SM_SECRET = process.env.SM_TOKEN_SECRET ?? "";
-  if (SM_SECRET) {
+  const smSecrets = getSmSecrets();
+  if (smSecrets.length > 0) {
     const smToken = req.cookies.get(COOKIE_NAME)?.value;
-    if (!(await verifyToken(smToken, SM_SECRET))) {
+    if (!(await verifyToken(smToken, smSecrets))) {
       return jsonError("forbidden", 403);
     }
   }
@@ -44,7 +44,7 @@ export const POST = async (req: NextRequest) => {
 
     return NextResponse.json({ ok: true });
   } catch (err) {
-    console.error("[contributors-badge-update] error", err);
+    logError("contributors-badge-update", err);
     return jsonError("internal", 500);
   }
 };

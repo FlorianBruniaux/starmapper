@@ -8,7 +8,7 @@
 import type { NextRequest} from "next/server";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { requireAdminAuth, jsonError, logError } from "@/lib/api-helpers";
+import { requireAdminAuth, jsonError, logError, sanitizeError } from "@/lib/api-helpers";
 import { defineRoute } from "@/lib/define-route";
 import { adminDeleteUserSchema } from "@/schemas/admin-delete-user";
 
@@ -71,7 +71,7 @@ export const POST = async (req: NextRequest) => {
       try {
         await prisma.deletionLog.update({
           where: { id: logId },
-          data: { status: "failed", notes: err instanceof Error ? err.message.slice(0, 255) : "unknown" },
+          data: { status: "failed", notes: sanitizeError(err).slice(0, 255) },
         });
       } catch { /* swallow — original error takes priority */ }
 

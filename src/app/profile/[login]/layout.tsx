@@ -3,6 +3,7 @@
 
 import { Suspense } from "react";
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { LOGIN_RE } from "@/lib/api-validation";
 
@@ -45,6 +46,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 const ProfileJsonLd = async ({ params }: { params: Promise<{ login: string }> }) => {
   const { login } = await params;
   if (!LOGIN_RE.test(login)) notFound();
+  const nonce = (await headers()).get("x-nonce") ?? "";
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Person",
@@ -60,6 +62,7 @@ const ProfileJsonLd = async ({ params }: { params: Promise<{ login: string }> })
   };
   return (
     <script
+      nonce={nonce}
       type="application/ld+json"
       // nosemgrep: typescript.react.security.audit.react-dangerouslysetinnerhtml.react-dangerouslysetinnerhtml
       dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}

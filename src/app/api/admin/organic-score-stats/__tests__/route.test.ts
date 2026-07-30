@@ -13,6 +13,7 @@ vi.mock("@/lib/api-helpers", () => ({
   requireAdminAuth: (...args: unknown[]) => mockRequireAdminAuth(...args),
   jsonError: (msg: string, status: number) =>
     new Response(JSON.stringify({ error: msg }), { status }),
+  logError: vi.fn(),
 }));
 
 vi.mock("@/lib/db", () => ({

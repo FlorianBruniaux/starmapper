@@ -2,7 +2,7 @@
 # db-sync-to-neon.sh
 #
 # Syncs local batch-scanned data to Neon production DB.
-# Tables synced: github_user, star_event, badge_cache, stargazer_cache, news, api_key,
+# Tables synced: github_user, star_event, badge_cache, stargazer_cache, engaged_cache, news, api_key,
 #                follower_cache, dependents_cache, geocache
 # geocache uses ON CONFLICT (key) DO NOTHING — new local entries added, Neon entries kept.
 #
@@ -64,6 +64,41 @@ fi
 # topReposFetchedAt was exactly that: source ("stargazer") landing in a timestamp
 # column. Keeping one list for export + import makes the two sides impossible to drift.
 GH_COLS='login,name,company,location,followers,lat,lng,"fetchedAt","accountCreatedAt","dataVersion",following,"publicRepos","linkedinUrl","cityNormalized","countryNormalized",languages,"languagesFetchedAt","topRepos","topReposFetchedAt",source'
+
+# ── Preflight: verify target schema before any write ──────────────────────────
+# Guards the incident risk where `prisma db push` hasn't landed on Neon yet (e.g.
+# engaged_cache, added in 570a367) and this script starts writing anyway, failing
+# halfway through a prod sync. Checked once, up front, before any sync_table call.
+preflight_check_columns() {
+  local table="$1"
+  shift
+  local col_list=""
+  for c in "$@"; do
+    col_list="${col_list}'${c}',"
+  done
+  col_list="${col_list%,}"
+
+  local missing
+  missing=$(psql -v ON_ERROR_STOP=1 -Atqc "
+    SELECT string_agg(expected.col, ', ')
+    FROM unnest(ARRAY[$col_list]) AS expected(col)
+    LEFT JOIN information_schema.columns ic
+      ON ic.table_name = '$table' AND ic.column_name = expected.col
+    WHERE ic.column_name IS NULL
+  " "$NEON_URL")
+
+  if [[ -n "$missing" ]]; then
+    echo "Error: Neon target is missing expected schema for table \"$table\": [$missing]" >&2
+    echo "  This usually means 'npx prisma db push' has not been run against the target yet." >&2
+    echo "  Push the schema before syncing — aborting before any write." >&2
+    exit 1
+  fi
+}
+
+echo "Preflight: checking target schema..."
+preflight_check_columns "engaged_cache" owner repo pointsGz unmappedGz knownCount starCount channels scannedAt expiresAt
+echo "  OK"
+echo ""
 
 # ── Helper: retry a psql call on transient failure ────────────────────────────
 # The live prod app writes github_user / star_event concurrently
@@ -316,6 +351,15 @@ sync_table "dependents_cache" 'ON CONFLICT (owner, repo) DO UPDATE SET
   "dataGz"=EXCLUDED."dataGz", "totalCount"=EXCLUDED."totalCount",
   "fetchedAt"=EXCLUDED."fetchedAt", "expiresAt"=EXCLUDED."expiresAt"
   WHERE EXCLUDED."fetchedAt" > dependents_cache."fetchedAt"'
+
+# engaged_cache — no FK deps. Engaged-audience maps built locally by index-engaged /
+# auto-index-local; keep the freshest by scannedAt.
+sync_table "engaged_cache" 'ON CONFLICT (owner, repo) DO UPDATE SET
+  "pointsGz"=EXCLUDED."pointsGz", "unmappedGz"=EXCLUDED."unmappedGz",
+  "knownCount"=EXCLUDED."knownCount", "starCount"=EXCLUDED."starCount",
+  channels=EXCLUDED.channels, "scannedAt"=EXCLUDED."scannedAt",
+  "expiresAt"=EXCLUDED."expiresAt"
+  WHERE EXCLUDED."scannedAt" > engaged_cache."scannedAt"'
 
 # geocache — additive only: new local entries (from batch-index-contributors +
 # stargazer scans) are pushed; existing Neon entries are never overwritten.

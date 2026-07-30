@@ -274,17 +274,8 @@ describe("POST /api/followers-chunk", () => {
       expect(body.error).toBe("github_token_invalid");
     });
 
-    it("returns 429 when IP rate limiter rejects the request", async () => {
-      vi.stubEnv("NODE_ENV", "production");
-      mockRateLimit.mockResolvedValueOnce({ success: false });
-
-      const req = makeRequest({ login: "octocat" });
-      const res = await POST(req);
-
-      vi.unstubAllEnvs();
-      expect(res.status).toBe(429);
-      expect(mockFetchFollowersPage).not.toHaveBeenCalled();
-    });
+    // Per-IP rate limiting for this route moved to src/proxy.ts (rl:followers-chunk,
+    // POST_ROUTES) — no longer testable at this route-unit level.
 
     it("returns 500 on unexpected errors", async () => {
       mockFetchFollowersPage.mockRejectedValueOnce(new Error("Unexpected failure"));

@@ -6,7 +6,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { checkDbHealth, DB_CRITICAL_PCT } from "@/lib/db-health";
 import { jsonError, logError } from "@/lib/api-helpers";
-import { verifyToken, COOKIE_NAME } from "@/lib/api-token";
+import { verifyToken, getSmSecrets, COOKIE_NAME } from "@/lib/api-token";
 import type { NextRequest } from "next/server";
 
 const bodySchema = z.object({
@@ -23,14 +23,17 @@ export const POST = async (req: NextRequest) => {
     if (!parsed.success) return jsonError("invalid_params", 400);
     const { login, pointsGz, unmappedGz, totalCount } = parsed.data;
 
-    const SM_SECRET = process.env.SM_TOKEN_SECRET;
-    if (!SM_SECRET) {
-      logError("follower-cache POST", new Error("SM_TOKEN_SECRET not configured"));
-      return jsonError("forbidden", 403);
-    }
-    const smToken = req.cookies.get(COOKIE_NAME)?.value;
-    if (!(await verifyToken(smToken, SM_SECRET))) {
-      return jsonError("forbidden", 403);
+    // Same convention as every sibling write route (stargazer-cache, badge-update,
+    // recalculate-location, contributors-badge-update): skip the check when
+    // SM_TOKEN_SECRET isn't configured (local dev without env vars), don't deny.
+    // This route used to deny outright here, which broke it in local dev while every
+    // other route stayed usable — an inconsistency, not a deliberate stricter policy.
+    const smSecrets = getSmSecrets();
+    if (smSecrets.length > 0) {
+      const smToken = req.cookies.get(COOKIE_NAME)?.value;
+      if (!(await verifyToken(smToken, smSecrets))) {
+        return jsonError("forbidden", 403);
+      }
     }
 
     // Plausibility check — totalCount must not vastly exceed the user's known follower count.

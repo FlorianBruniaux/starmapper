@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 
+import { Suspense } from "react";
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import Link from "next/link";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
@@ -87,29 +89,40 @@ const SECTIONS: Section[] = [
   },
 ];
 
-export default function SitemapPage() {
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "ItemList",
-    name: "StarMapper sitemap",
-    url: `${APP_URL}/sitemap`,
-    numberOfItems: SECTIONS.reduce((acc, s) => acc + s.links.length, 0),
-    itemListElement: SECTIONS.flatMap((s, si) =>
-      s.links.map((l, li) => ({
-        "@type": "ListItem",
-        position: si * 100 + li + 1,
-        name: l.label,
-        url: `${APP_URL}${l.href}`,
-      }))
-    ),
-  };
+const buildJsonLd = () => ({
+  "@context": "https://schema.org",
+  "@type": "ItemList",
+  name: "StarMapper sitemap",
+  url: `${APP_URL}/sitemap`,
+  numberOfItems: SECTIONS.reduce((acc, s) => acc + s.links.length, 0),
+  itemListElement: SECTIONS.flatMap((s, si) =>
+    s.links.map((l, li) => ({
+      "@type": "ListItem",
+      position: si * 100 + li + 1,
+      name: l.label,
+      url: `${APP_URL}${l.href}`,
+    }))
+  ),
+});
 
+const JsonLdScript = async () => {
+  const nonce = (await headers()).get("x-nonce") ?? "";
+  const jsonLd = buildJsonLd();
+  return (
+    <script
+      nonce={nonce}
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
+    />
+  );
+};
+
+export default function SitemapPage() {
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
-      />
+      <Suspense fallback={null}>
+        <JsonLdScript />
+      </Suspense>
       <Header sticky showNav innerMaxWidth="max-w-7xl" />
 
       <main id="main" className="w-full max-w-7xl mx-auto px-4 lg:px-6 pt-24 pb-20">

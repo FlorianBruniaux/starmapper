@@ -3,30 +3,17 @@
 
 import type { NextRequest} from "next/server";
 import { NextResponse } from "next/server";
-import { Ratelimit } from "@upstash/ratelimit";
-import { Redis } from "@upstash/redis";
 import { prisma } from "@/lib/db";
 import { geocode } from "@/lib/geocoder";
-import { jsonError, extractGhToken, logError, getIP } from "@/lib/api-helpers";
+import { jsonError, extractGhToken, logError } from "@/lib/api-helpers";
 import { LOGIN_RE } from "@/lib/api-validation";
 
-// Fail-open: 15 req/min per IP — enough for legitimate profile browsing, limits mass-refresh abuse.
-let _limiter: Ratelimit | null = null;
-let _limiterReady = false;
-const getRefreshLimiter = (): Ratelimit | null => {
-  if (_limiterReady) return _limiter;
-  _limiterReady = true;
-  try {
-    _limiter = new Ratelimit({
-      redis: Redis.fromEnv(),
-      limiter: Ratelimit.slidingWindow(15, "60 s"),
-      prefix: "rl:profile-refresh",
-    });
-  } catch {
-    _limiter = null;
-  }
-  return _limiter;
-};
+// Rate limiting for this route lives in src/proxy.ts (rl:profile-refresh, POST_ROUTES).
+// A second route-local IP limiter used to run here under the SAME Redis key prefix but a
+// DIFFERENT window (15/60s vs the proxy's 10/60m) — two limiters sharing a prefix with
+// different window sizes read and increment each other's counters, producing 429s that
+// neither limiter's config alone explains. Removed; the proxy's 1h-cooldown-aware limit
+// is now the only IP check on this route.
 
 const COOLDOWN_MS = 60 * 60 * 1000; // 1h
 
@@ -91,16 +78,6 @@ export const POST = async (
   req: NextRequest,
   { params }: { params: Promise<{ login: string }> },
 ) => {
-  const limiter = getRefreshLimiter();
-  if (limiter) {
-    try {
-      const { success } = await limiter.limit(getIP(req));
-      if (!success) return jsonError("rate_limit", 429);
-    } catch {
-      // Fail-open: Redis unavailable — allow through.
-    }
-  }
-
   const { login } = await params;
   if (!LOGIN_RE.test(login)) return jsonError("invalid_params", 400);
 
