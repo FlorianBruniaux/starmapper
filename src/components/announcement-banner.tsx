@@ -8,19 +8,12 @@ import Link from "next/link";
 import { ArrowRight, X, AlertTriangle } from "lucide-react";
 import { StargazerNoticeModal } from "@/components/stargazer-notice-modal";
 import { STARGAZER_NOTICE_SHORT } from "@/lib/stargazer-notice";
+import { STILL_WORKING_LINKS } from "@/lib/still-working-links";
 
 // Bump this ID whenever you want the banner to reappear for users who dismissed it.
-const BANNER_ID = "issue-stargazer-restriction-v1";
+const BANNER_ID = "issue-stargazer-restriction-v2-vote";
 
-type LinkItem = { label: string; href: string; external?: boolean };
-
-const LINKS: LinkItem[] = [
-  { label: "Contributors Map", href: "/rtk-ai/rtk/contributors" },
-  { label: "Dependents Explorer", href: "/vercel/next.js/dependents" },
-  { label: "Followers map", href: "/FlorianBruniaux/followers" },
-  { label: "Trending repos", href: "/trending" },
-  { label: "Dev Maps", href: "/devs" },
-];
+const LINKS = STILL_WORKING_LINKS;
 
 export const AnnouncementBanner = () => {
   const [visible, setVisible] = useState(true);
@@ -75,6 +68,21 @@ export const AnnouncementBanner = () => {
             ·
           </span>
 
+          {/* Vote CTA — new, actionable content distinct from the restriction notice above */}
+          <Link
+            href="/roadmap"
+            className="flex items-center gap-1.5 text-sm text-foreground hover:text-accent-blue transition-colors"
+          >
+            <span className="font-medium">Four ways forward. One of them is a real open question.</span>
+            <span className="text-accent-blue underline underline-offset-2 hover:no-underline">
+              Vote on the roadmap
+            </span>
+          </Link>
+
+          <span className="hidden sm:inline text-border-subtle select-none" aria-hidden="true">
+            ·
+          </span>
+
           {/* Still-working features (different data sources, unaffected by the restriction) */}
           {LINKS.map((link, i) => {
             const cls =
@@ -88,11 +96,7 @@ export const AnnouncementBanner = () => {
                 )}
               </>
             );
-            return link.external ? (
-              <a key={link.href} href={link.href} target="_blank" rel="noopener noreferrer" className={cls}>
-                {inner}
-              </a>
-            ) : (
+            return (
               <Link key={link.href} href={link.href} className={cls}>
                 {inner}
               </Link>

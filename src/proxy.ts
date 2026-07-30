@@ -87,6 +87,11 @@ const POST_ROUTES: PostRoute[] = [
 
   // Follower cache write — same shape as stargazer-cache
   { match: (p) => p === "/api/follower-cache", limiter: makeLimiter("rl:follower-cache", 10, "60 s") },
+
+  // Roadmap vote — single-row upsert, same budget as follower-cache. Anti-abuse is the
+  // upsert-by-ipHash shape itself (src/lib/ip-hash.ts), this limiter is DoS/DB-load
+  // protection only, not fraud prevention.
+  { match: (p) => p === "/api/roadmap-vote", limiter: makeLimiter("rl:roadmap-vote", 10, "60 s") },
 ];
 
 // Fallback rate limiter for POST routes not registered in POST_ROUTES.
@@ -122,9 +127,9 @@ const STATIC_ROUTE_SEGMENTS = new Set([
   "geo-velocity", "geocode", "global-map", "growth", "import-geocache", "in", "influential",
   "item", "json", "locations", "map", "map-image", "mcp", "nearby", "news", "organic-score",
   "organic-score-stats", "points", "power", "profile", "recalculate-location", "refresh",
-  "refresh-grid-mv", "refresh-repo-stats", "refresh-trending", "repo-info", "repos", "rss",
-  "stargazer-cache", "stats", "top", "top-users", "track", "trending", "user-details",
-  "user-repos", "users", "vitals", "watch",
+  "refresh-grid-mv", "refresh-repo-stats", "refresh-trending", "repo-info", "repos",
+  "roadmap-vote", "rss", "stargazer-cache", "stats", "top", "top-users", "track", "trending",
+  "user-details", "user-repos", "users", "vitals", "watch",
 ]);
 
 // Collapses a concrete pathname to a bounded route template before it's used as part of

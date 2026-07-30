@@ -228,3 +228,15 @@ model ApiKey {
 
   @@map("api_key")
 }
+
+// Public roadmap vote (GitHub stargazer-restriction pivot). Upsert-by-ipHash: a repeat vote
+// from the same hashed IP overwrites options rather than appending a row, which is both the
+// "change your mind" UX and the anti-spam mechanism (see src/lib/ip-hash.ts).
+model RoadmapVote {
+  ipHash    String   @id
+  options   String[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("roadmap_vote")
+}

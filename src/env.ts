@@ -26,6 +26,7 @@ export const env = createEnv({
     // Security — optional but strongly recommended in production
     SM_TOKEN_SECRET: z.string().min(32).optional(),
     CACHE_SIGN_SECRET: z.string().min(16).optional(),
+    IP_HASH_SECRET: z.string().min(16).optional(),
 
     // Upstash Redis — required for distributed rate limiting in production
     UPSTASH_REDIS_REST_URL: z.string().optional(),

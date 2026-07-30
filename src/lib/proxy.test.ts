@@ -98,6 +98,12 @@ describe("proxy.ts", () => {
       expect(__TEST_ONLY__.classifyRoute("POST", "/api/chunk")).toBe("post");
       expect(__TEST_ONLY__.classifyRoute("DELETE", "/api/news/item/1")).toBe("post");
     });
+
+    it("classifies GET /api/roadmap-vote as moderate-get and POST as post", async () => {
+      const { __TEST_ONLY__ } = await import("@/proxy");
+      expect(__TEST_ONLY__.classifyRoute("GET", "/api/roadmap-vote")).toBe("moderate-get");
+      expect(__TEST_ONLY__.classifyRoute("POST", "/api/roadmap-vote")).toBe("post");
+    });
   });
 
   // MED-1 / LOW-7 / LOW-9: pin the CSP shape so a future edit can't silently reopen the
