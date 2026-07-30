@@ -5,7 +5,16 @@
       "mcp__grepai__trace_callers",
       "mcp__grepai__trace_callees",
       "mcp__grepai__trace_graph",
-      "mcp__grepai__index_status"
+      "mcp__grepai__index_status",
+      "mcp__perplexity__perplexity_search",
+      "mcp__plugin_claude-mem_mcp-search__search",
+      "Bash(pnpm vitest run:*)",
+      "Bash(pnpm exec eslint:*)",
+      "Bash(pnpm eslint:*)",
+      "Bash(pnpm exec tsc:*)",
+      "Bash(pnpm tsc --noEmit:*)",
+      "Bash(rtk grep:*)",
+      "Bash(rtk tsc:*)"
     ],
     "deny": [
       "Read(//**/.env*)",
