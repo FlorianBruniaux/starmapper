@@ -13,7 +13,7 @@ const IP_HASH_SECRET = process.env.IP_HASH_SECRET ?? "dev-insecure-ip-hash-secre
 
 if (!process.env.IP_HASH_SECRET && process.env.NODE_ENV === "production") {
   console.warn(
-    "[ip-hash] IP_HASH_SECRET not set in production — falling back to a predictable dev key",
+    "[ip-hash] IP_HASH_SECRET not set in production, falling back to a predictable dev key",
   );
 }
 

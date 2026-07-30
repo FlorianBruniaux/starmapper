@@ -5,7 +5,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Check, HelpCircle, ArrowRight } from "lucide-react";
+import { Check, HelpCircle, ArrowRight, X, Mail } from "lucide-react";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { StargazerNoticeModal } from "@/components/stargazer-notice-modal";
@@ -32,6 +32,136 @@ const StatusTag = ({ status, label }: { status: "decided" | "evaluating"; label:
   </span>
 );
 
+type ContactModalProps = {
+  submitting: boolean;
+  onAnonymous: () => void;
+  onWithContact: (email: string, name: string, message: string) => void;
+  onClose: () => void;
+};
+
+const VoteContactModal = ({ submitting, onAnonymous, onWithContact, onClose }: ContactModalProps) => {
+  const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
+  const [message, setMessage] = useState("");
+  const [showForm, setShowForm] = useState(false);
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="vote-contact-title"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60"
+      onClick={onClose}
+    >
+      <div
+        className="relative w-full max-w-md rounded-xl bg-surface border border-border shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          onClick={onClose}
+          aria-label="Close"
+          className="absolute right-3 top-3 p-1.5 rounded text-muted-subtle hover:text-foreground transition-colors"
+        >
+          <X size={16} aria-hidden="true" />
+        </button>
+
+        <div className="p-6 flex flex-col gap-4">
+          <h2 id="vote-contact-title" className="text-lg font-bold text-foreground">
+            One more thing before you submit
+          </h2>
+
+          {!showForm ? (
+            <>
+              <p className="text-sm text-muted leading-relaxed">
+                Vote anonymously, or leave your email so I can follow up with the people who
+                voted. No marketing, ever, just this conversation.
+              </p>
+              <div className="flex flex-col gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={onAnonymous}
+                  disabled={submitting}
+                  className="w-full bg-accent-green text-white font-semibold px-4 py-2 rounded-md
+                             text-sm hover:opacity-90 transition-opacity disabled:opacity-50
+                             focus:outline-none focus:ring-2 focus:ring-accent-blue/40"
+                >
+                  {submitting ? "Submitting…" : "Submit anonymously"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowForm(true)}
+                  className="w-full flex items-center justify-center gap-2 border border-border text-muted px-4 py-2
+                             rounded-md text-sm hover:text-foreground hover:border-accent-blue/50 transition-colors
+                             focus:outline-none focus:ring-2 focus:ring-accent-blue/40"
+                >
+                  <Mail size={14} aria-hidden="true" />
+                  Leave my email instead
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <p className="text-sm text-muted leading-relaxed">
+                Just for this: I&apos;ll reach out to talk about the roadmap. No marketing, no
+                third party, ever.
+              </p>
+              <div className="flex flex-col gap-3">
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  className="bg-surface-alt border border-border rounded-md px-3 py-2 text-sm
+                             text-foreground placeholder:text-muted
+                             focus:ring-2 focus:ring-accent-blue/40 focus:border-accent-blue min-h-11"
+                />
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Name (optional)"
+                  className="bg-surface-alt border border-border rounded-md px-3 py-2 text-sm
+                             text-foreground placeholder:text-muted
+                             focus:ring-2 focus:ring-accent-blue/40 focus:border-accent-blue min-h-11"
+                />
+                <textarea
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  placeholder="Anything you want to add (optional)"
+                  rows={3}
+                  className="bg-surface-alt border border-border rounded-md px-3 py-2 text-sm
+                             text-foreground placeholder:text-muted resize-none
+                             focus:ring-2 focus:ring-accent-blue/40 focus:border-accent-blue"
+                />
+              </div>
+              <div className="flex items-center gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => onWithContact(email, name, message)}
+                  disabled={submitting || !email}
+                  className="flex-1 bg-accent-green text-white font-semibold px-4 py-2 rounded-md
+                             text-sm hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed
+                             focus:outline-none focus:ring-2 focus:ring-accent-blue/40"
+                >
+                  {submitting ? "Submitting…" : "Submit with my email"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowForm(false)}
+                  className="text-sm text-muted hover:text-foreground transition-colors px-2"
+                >
+                  Back
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const RoadmapPageClient = ({ initialTallies }: Props) => {
   const [selected, setSelected] = useState<Option[]>([]);
   const [voted, setVoted] = useState(false);
@@ -39,6 +169,7 @@ const RoadmapPageClient = ({ initialTallies }: Props) => {
   const [submitting, setSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [contactModalOpen, setContactModalOpen] = useState(false);
 
   useEffect(() => {
     const stored = getStoredVote();
@@ -54,7 +185,7 @@ const RoadmapPageClient = ({ initialTallies }: Props) => {
     );
   };
 
-  const submit = async () => {
+  const submit = async (contact?: { email: string; name?: string; message?: string }) => {
     if (selected.length === 0 || submitting) return;
     setSubmitting(true);
     setFeedback(null);
@@ -62,13 +193,14 @@ const RoadmapPageClient = ({ initialTallies }: Props) => {
       const res = await fetch("/api/roadmap-vote", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ options: selected }),
+        body: JSON.stringify({ options: selected, ...(contact ? { contact } : {}) }),
       });
       if (!res.ok) throw new Error("vote failed");
       const data = (await res.json()) as { tallies: RoadmapVoteResponse["tallies"]; totalVoters: number };
       setTallies({ tallies: data.tallies, totalVoters: data.totalVoters });
       saveStoredVote(selected);
       setVoted(true);
+      setContactModalOpen(false);
       setFeedback(voted ? "Vote updated." : "Thanks, vote recorded.");
     } catch {
       setFeedback("Vote failed, try again.");
@@ -83,6 +215,16 @@ const RoadmapPageClient = ({ initialTallies }: Props) => {
   return (
     <>
       {modalOpen && <StargazerNoticeModal onClose={() => setModalOpen(false)} />}
+      {contactModalOpen && (
+        <VoteContactModal
+          submitting={submitting}
+          onAnonymous={() => submit()}
+          onWithContact={(email, name, message) =>
+            submit({ email, name: name || undefined, message: message || undefined })
+          }
+          onClose={() => setContactModalOpen(false)}
+        />
+      )}
       <Header sticky showNav innerMaxWidth="max-w-5xl" />
 
       <main id="main" className="w-full max-w-5xl mx-auto px-4 lg:px-6 pt-24 pb-20 space-y-14">
@@ -132,6 +274,8 @@ const RoadmapPageClient = ({ initialTallies }: Props) => {
               <Link
                 key={link.href}
                 href={link.href}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="flex items-center justify-between gap-2 p-3 rounded-lg border border-border bg-surface
                            hover:border-accent-blue/50 hover:bg-surface-alt transition-colors group min-h-11"
               >
@@ -221,7 +365,7 @@ const RoadmapPageClient = ({ initialTallies }: Props) => {
           <div className="flex items-center gap-3">
             <button
               type="button"
-              onClick={submit}
+              onClick={() => setContactModalOpen(true)}
               disabled={selected.length === 0 || submitting}
               className="w-full sm:w-auto bg-accent-green text-white font-semibold px-4 py-2 rounded-md
                          text-sm hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed

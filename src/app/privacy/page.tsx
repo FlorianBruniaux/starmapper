@@ -82,7 +82,14 @@ export default function PrivacyPage() {
             </li>
           </ul>
           <p>
-            We do not collect email addresses, private repository data, or any information not publicly visible on GitHub profiles.
+            For this stargazer-scanning feature, we do not collect email addresses, private repository data, or any information not
+            publicly visible on GitHub profiles.
+          </p>
+          <p>
+            Separately, the <Link href="/roadmap" className="text-accent-blue hover:underline">roadmap vote</Link> lets you optionally leave
+            an email address, name, and a free-text message when you vote, so we can follow up with people who voted. This is opt-in only,
+            used solely for that purpose, never for marketing, and never shared with a third party. Legal basis: consent (GDPR Art. 6(1)(a)).
+            You can request deletion of this information at any time using the process in Section 10.
           </p>
         </Section>
 

@@ -4,7 +4,8 @@
 "use client";
 
 import { useEffect } from "react";
-import { AlertTriangle, ExternalLink, X } from "lucide-react";
+import Link from "next/link";
+import { AlertTriangle, ArrowRight, ExternalLink, X } from "lucide-react";
 import {
   STARGAZER_NOTICE_HEADLINE,
   STARGAZER_NOTICE_BODY,
@@ -67,6 +68,18 @@ export const StargazerNoticeModal = ({ onClose }: Props) => {
               </p>
             ))}
           </div>
+
+          <Link
+            href="/roadmap"
+            onClick={onClose}
+            className="flex items-center justify-between gap-2 p-3 rounded-lg border border-accent-blue/30
+                       bg-accent-blue/5 hover:bg-accent-blue/10 transition-colors group"
+          >
+            <span className="text-sm font-medium text-foreground group-hover:text-accent-blue transition-colors">
+              Vote on the roadmap: four ways forward
+            </span>
+            <ArrowRight size={14} className="shrink-0 text-accent-blue" aria-hidden="true" />
+          </Link>
 
           <div className="flex flex-col gap-2 pt-1">
             <p className="text-xs font-semibold text-muted-subtle uppercase tracking-wide">

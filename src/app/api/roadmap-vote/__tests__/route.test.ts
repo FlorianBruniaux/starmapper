@@ -26,6 +26,9 @@ vi.mock("@/lib/db-health", () => ({
   DB_CRITICAL_PCT: 95,
 }));
 
+// notifyVote is unmocked (real function) but returns immediately when RESEND_API_KEY is
+// unset, which is the default test env state: no network call, no need to mock "resend" here.
+
 const mockVerifyToken = vi.fn();
 vi.mock("@/lib/api-token", () => ({
   verifyToken: (...args: unknown[]) => mockVerifyToken(...args),
@@ -139,6 +142,52 @@ describe("POST /api/roadmap-vote", () => {
 
     it("does not crash when getIP falls back to 'unknown' (no IP headers)", async () => {
       const res = await POST(makeReq({ options: ["A"] }));
+      expect(res.status).toBe(200);
+    });
+  });
+
+  describe("optional contact (opt-in)", () => {
+    it("stores email and name when provided", async () => {
+      const res = await POST(
+        makeReq({ options: ["A"], contact: { email: "a@b.com", name: "Ada" } }, { ip: "4.4.4.4" }),
+      );
+      expect(res.status).toBe(200);
+      const call = mockUpsert.mock.calls[0][0];
+      expect(call.create).toMatchObject({ email: "a@b.com", name: "Ada" });
+      expect(call.update).toMatchObject({ email: "a@b.com", name: "Ada" });
+    });
+
+    it("stores null email/name/message when contact is omitted", async () => {
+      const res = await POST(makeReq({ options: ["A"] }, { ip: "5.5.5.5" }));
+      expect(res.status).toBe(200);
+      const call = mockUpsert.mock.calls[0][0];
+      expect(call.create).toMatchObject({ email: null, name: null, message: null });
+    });
+
+    it("stores an optional free-text message alongside contact info", async () => {
+      const res = await POST(
+        makeReq(
+          { options: ["A"], contact: { email: "a@b.com", message: "Happy to chat about this." } },
+          { ip: "8.8.8.8" },
+        ),
+      );
+      expect(res.status).toBe(200);
+      const call = mockUpsert.mock.calls[0][0];
+      expect(call.create).toMatchObject({ message: "Happy to chat about this." });
+    });
+
+    it("returns 400 invalid_params for a malformed email", async () => {
+      const res = await POST(
+        makeReq({ options: ["A"], contact: { email: "not-an-email" } }, { ip: "6.6.6.6" }),
+      );
+      expect(res.status).toBe(400);
+      expect(mockUpsert).not.toHaveBeenCalled();
+    });
+
+    it("accepts contact with email only (name is optional)", async () => {
+      const res = await POST(
+        makeReq({ options: ["A"], contact: { email: "solo@example.com" } }, { ip: "7.7.7.7" }),
+      );
       expect(res.status).toBe(200);
     });
   });

@@ -8,7 +8,7 @@ import { checkDbHealth, DB_CRITICAL_PCT } from "@/lib/db-health";
 import { jsonError, logError, getIP } from "@/lib/api-helpers";
 import { verifyToken, getSmSecrets, COOKIE_NAME } from "@/lib/api-token";
 import { hashIp } from "@/lib/ip-hash";
-import { getTallies, OPTIONS } from "@/lib/roadmap-vote";
+import { getTallies, notifyVote, OPTIONS } from "@/lib/roadmap-vote";
 import type { NextRequest } from "next/server";
 
 const bodySchema = z.object({
@@ -17,6 +17,15 @@ const bodySchema = z.object({
     .min(1)
     .max(4)
     .refine((arr) => new Set(arr).size === arr.length, "duplicate_options"),
+  // Both optional and opt-in, the voter chooses to leave these instead of voting
+  // anonymously. See /privacy Section 2 for the consent-based legal basis.
+  contact: z
+    .object({
+      email: z.email().max(254).optional(),
+      name: z.string().max(200).optional(),
+      message: z.string().max(2000).optional(),
+    })
+    .optional(),
 });
 
 export const POST = async (req: NextRequest) => {
@@ -24,7 +33,7 @@ export const POST = async (req: NextRequest) => {
     const raw = await req.json().catch(() => null);
     const parsed = bodySchema.safeParse(raw);
     if (!parsed.success) return jsonError("invalid_params", 400);
-    const { options } = parsed.data;
+    const { options, contact } = parsed.data;
 
     // Same skip-if-unset convention as every sibling write route (follower-cache,
     // stargazer-cache, badge-update, recalculate-location, contributors-badge-update).
@@ -40,11 +49,17 @@ export const POST = async (req: NextRequest) => {
     if (health.ok && health.usagePct >= DB_CRITICAL_PCT) return jsonError("storage_full", 507);
 
     const ipHash = hashIp(getIP(req));
+    const email = contact?.email ?? null;
+    const name = contact?.name ?? null;
+    const message = contact?.message ?? null;
     await prisma.roadmapVote.upsert({
       where: { ipHash },
-      create: { ipHash, options },
-      update: { options },
+      create: { ipHash, options, email, name, message },
+      update: { options, email, name, message },
     });
+
+    // Best-effort, never blocks or fails the vote itself (see notifyVote's own doc comment).
+    await notifyVote(options, email ?? undefined, name ?? undefined, message ?? undefined);
 
     const { tallies, totalVoters } = await getTallies();
     return NextResponse.json({ ok: true, tallies, totalVoters });

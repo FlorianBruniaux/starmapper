@@ -4,7 +4,7 @@
 /**
  * Single source of truth for "features unaffected by the July 23 2026 GitHub stargazer
  * restriction". Shared by AnnouncementBanner (compact link row) and the /roadmap page
- * (full cards) — update here, both surfaces stay in sync.
+ * (full cards). Update here, both surfaces stay in sync.
  */
 export type StillWorkingLink = { label: string; href: string; description: string };
 

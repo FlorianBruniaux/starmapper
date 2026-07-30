@@ -68,6 +68,6 @@ export const saveStoredVote = (options: Option[]): void => {
   try {
     localStorage.setItem(KEY, JSON.stringify(options));
   } catch {
-    // localStorage unavailable (private browsing, etc.) — non-fatal, vote still recorded server-side
+    // localStorage unavailable (private browsing, etc.), non-fatal, vote still recorded server-side
   }
 };

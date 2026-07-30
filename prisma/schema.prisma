@@ -235,6 +235,12 @@ model ApiKey {
 model RoadmapVote {
   ipHash    String   @id
   options   String[]
+  // Both optional and opt-in only — the voter explicitly chooses to leave these instead of
+  // voting anonymously. Consent basis documented in /privacy Section 2. Never used for
+  // marketing, only to follow up with people who voted.
+  email     String?
+  name      String?
+  message   String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
