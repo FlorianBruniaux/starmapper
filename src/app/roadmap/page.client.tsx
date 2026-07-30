@@ -18,6 +18,30 @@ import type { RoadmapVoteResponse } from "@/app/api/roadmap-vote/route";
 
 type Props = { initialTallies: RoadmapVoteResponse };
 
+const AsciiDiagram = ({ children }: { children: string }) => (
+  <div className="rounded-md border border-border bg-surface-alt overflow-x-auto">
+    <pre aria-hidden="true" className="font-mono text-2xs sm:text-xs text-muted leading-relaxed p-4 whitespace-pre">
+      {children}
+    </pre>
+  </div>
+);
+
+const WHAT_BROKE_DIAGRAM = `Any visitor requests a scan
+        │
+        ▼
+GET github.com/{owner}/{repo}/stargazers
+        │
+        ├── before Jul 23, 2026 ──▶ full list ──▶ StarMapper maps it
+        │
+        └── since Jul 23, 2026  ──▶ empty · 404, for everyone, every repo`;
+
+const FOUR_WAYS_DIAGRAM = `Stargazers list blocked (Jul 23, 2026)
+        │
+        ├──▶ [A] Engaged community pipeline ......... Already shipping
+        ├──▶ [C] Contributors & dependents maps ...... Already live
+        ├──▶ [D] Freeze pre-cutoff data as archive .... Already planned
+        └──▶ [B] Owner-verified OAuth dashboard ....... Under evaluation`;
+
 const StatusTag = ({ status, label }: { status: "decided" | "evaluating"; label: string }) => (
   <span
     className={[
@@ -257,6 +281,7 @@ const RoadmapPageClient = ({ initialTallies }: Props) => {
           {STARGAZER_NOTICE_BODY.slice(0, 2).map((para) => (
             <p key={para.slice(0, 24)} className="text-sm text-muted leading-relaxed">{para}</p>
           ))}
+          <AsciiDiagram>{WHAT_BROKE_DIAGRAM}</AsciiDiagram>
           <button
             onClick={() => setModalOpen(true)}
             className="text-sm text-accent-blue hover:underline underline-offset-2"
@@ -296,6 +321,8 @@ const RoadmapPageClient = ({ initialTallies }: Props) => {
           <h2 id="roadmap-vote-heading" className="text-sm font-semibold text-foreground uppercase tracking-wider">
             Four ways forward
           </h2>
+
+          <AsciiDiagram>{FOUR_WAYS_DIAGRAM}</AsciiDiagram>
 
           <div className="bg-surface-alt border border-border rounded-md p-4 text-sm text-muted space-y-2">
             <p>
