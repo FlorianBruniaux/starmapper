@@ -297,12 +297,18 @@ const RoadmapPageClient = ({ initialTallies }: Props) => {
             Four ways forward
           </h2>
 
-          <div className="bg-surface-alt border border-border rounded-md p-4 text-sm text-muted">
-            A vote on A, C or D tells me which one to prioritize first and gives me a number to
-            point to. A vote on B is the one that actually changes a decision: whether StarMapper
-            adds real login and starts storing your GitHub token, something it has never done.
-            Vote for as many as apply. &quot;A plus C&quot; is the expected answer for a lot of
-            people, not an edge case.
+          <div className="bg-surface-alt border border-border rounded-md p-4 text-sm text-muted space-y-2">
+            <p>
+              The four cards below are the ways StarMapper can move forward from here. Select any
+              that apply, you can pick more than one, and submit when you&apos;re done.
+            </p>
+            <p>
+              A, C and D are already decided, voting there just tells me which to build first and
+              gives me a number to point to. B is the real fork in the road: it is the only option
+              that would add real login and start storing your GitHub token, something StarMapper
+              has never done. &quot;A plus C&quot; is the answer most people land on, not an edge
+              case.
+            </p>
           </div>
 
           <fieldset className="border-0 p-0 m-0">
@@ -362,7 +368,7 @@ const RoadmapPageClient = ({ initialTallies }: Props) => {
             </p>
           )}
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 pt-4">
             <button
               type="button"
               onClick={() => setContactModalOpen(true)}
