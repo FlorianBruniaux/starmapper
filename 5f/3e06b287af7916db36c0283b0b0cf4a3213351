@@ -1,0 +1,86 @@
+src/lib/roadmap-vote.test.ts
+  s_e7d66dff0e0ef8::t_6c8ee44fc186f4 85-100
+  s_e7d66dff0e0ef8::t_94a660d5533e1f 101-109
+  s_e7d66dff0e0ef8::t_a4bed275d07398 4,16-23
+  s_e7d66dff0e0ef8::t_f2bf513ac54d89 57-84,110-129
+src/app/roadmap/page.client.tsx
+  s_e7d66dff0e0ef8::t_94807c9b932989 218-221,225-227
+  s_e7d66dff0e0ef8::t_f6953ad9acdfa9 128-136,141
+  s_e7d66dff0e0ef8::t_32d400557c3ee5 172
+  s_e7d66dff0e0ef8::t_b956c6635de25c 35-37,39-44,46-127,137-140,142-164
+  s_e7d66dff0e0ef8::t_4f216bee89f279 277-278
+  s_e7d66dff0e0ef8::t_f011c7d5898bf3 196,203
+  s_e7d66dff0e0ef8::t_56a30137085a91 8
+  s_e7d66dff0e0ef8::t_00b3caffdf3441 38,45
+  s_e7d66dff0e0ef8::t_127e564abd64ef 188
+  s_e7d66dff0e0ef8::t_5157cdcd765ac8 222-224
+  s_e7d66dff0e0ef8::t_31b707af97de6b 368
+src/app/privacy/page.tsx
+  s_e7d66dff0e0ef8::t_92fae0d05d0815 90-92
+  s_e7d66dff0e0ef8::t_dbf4a5a3f77d69 85-88
+  s_e7d66dff0e0ef8::t_0f1038a994f4f4 89
+src/components/announcement-banner.tsx
+  s_e7d66dff0e0ef8::t_1fec42b8a9ae51 8
+  s_e7d66dff0e0ef8::t_5e0d0efea50f29 47
+  s_e7d66dff0e0ef8::t_8a79195a7fc4e2 42-43,48-54,56,58-60,63-71,73-77,82
+  s_e7d66dff0e0ef8::t_ec6162fa560117 62
+src/lib/roadmap-vote.ts
+  s_e7d66dff0e0ef8::t_0669d2ee17239b 45-53,71,73
+  s_e7d66dff0e0ef8::t_cdf35240511b1e 56
+  s_e7d66dff0e0ef8::t_6fc669a26bbf23 19
+  s_e7d66dff0e0ef8::t_76e78a7367a859 59-64,72,74-76,81
+  s_e7d66dff0e0ef8::t_cede2376aa1b46 44
+  s_e7d66dff0e0ef8::t_fcd1f08e5580a8 4,6
+  s_e7d66dff0e0ef8::t_02198863fb0fd8 43,54-55,57-58,65-70,77-80,82-87
+prisma/schema.prisma
+  s_e7d66dff0e0ef8::t_29e1da2c3e014b 238-242
+  s_e7d66dff0e0ef8::t_4957058e0c1250 243
+src/lib/ip-hash.ts
+  s_e7d66dff0e0ef8::t_4fdbf65acadee5 16
+src/app/api/roadmap-vote/__tests__/route.test.ts
+  s_e7d66dff0e0ef8::t_e17eec5ff56ca5 30
+  s_e7d66dff0e0ef8::t_e1d99c551492a3 149-159,161-163,177-194
+  s_e7d66dff0e0ef8::t_0900679ed9e506 160,164-176
+  s_e7d66dff0e0ef8::t_cec6ede28f6c50 29,31
+src/app/api/roadmap-vote/route.ts
+  s_e7d66dff0e0ef8::t_594ecbd532f749 24
+  s_e7d66dff0e0ef8::t_65de9a0a3a4d85 52-53
+  s_e7d66dff0e0ef8::t_09fd83c6b144f6 20
+  s_e7d66dff0e0ef8::t_23fe7a171495b6 26
+  s_e7d66dff0e0ef8::t_1160a5e3d55c4f 54,57-58,62
+  s_e7d66dff0e0ef8::t_269f499e9e76d6 61
+  s_e7d66dff0e0ef8::t_99afff35f69176 11,21-23,25,27-28
+  s_e7d66dff0e0ef8::t_b5cfccb0b95918 36
+  s_0e00d79ac559e8::t_07e074cbe9a03e 63
+src/components/stargazer-notice-modal.tsx
+  s_e7d66dff0e0ef8::t_ed0ea3c88dab1c 72-83
+  s_e7d66dff0e0ef8::t_481d330420f92c 7-8
+src/lib/roadmap-vote-copy.ts
+  s_e7d66dff0e0ef8::t_071453284e63fe 71
+src/lib/still-working-links.ts
+  s_e7d66dff0e0ef8::t_9d2ccca0b8d6fe 7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.18",
+  "base_commit_sha": "5f3e06b287af7916db36c0283b0b0cf4a3213351",
+  "prompts": {},
+  "sessions": {
+    "s_0e00d79ac559e8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "76e550e4-8c7a-462f-8730-e85acd01e748",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Florian BRUNIAUX <florian@bruniaux.com>"
+    },
+    "s_e7d66dff0e0ef8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "7a5a2bef-f5b0-4032-a8bb-f6f65c7752de",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "Florian BRUNIAUX <florian@bruniaux.com>"
+    }
+  }
+}
