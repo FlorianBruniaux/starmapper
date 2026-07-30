@@ -1,0 +1,53 @@
+src/proxy.ts
+  s_e7d66dff0e0ef8::t_55f5012869e5fc 130-132
+  s_e7d66dff0e0ef8::t_96a87629be6802 90-94
+src/app/roadmap/page.client.tsx
+  s_e7d66dff0e0ef8::t_f0b52953147db4 1-258
+src/lib/still-working-links.ts
+  s_e7d66dff0e0ef8::t_cea5b43cf2a800 1-37
+src/app/roadmap/page.tsx
+  s_e7d66dff0e0ef8::t_922bfa3c762285 1-85
+prisma/schema.prisma
+  s_e7d66dff0e0ef8::t_3865bab02bfdec 231-242
+src/lib/roadmap-vote-copy.ts
+  s_e7d66dff0e0ef8::t_43c41087067a6d 1-73
+src/lib/ip-hash.ts
+  s_e7d66dff0e0ef8::t_ea9789e47fb684 1-26
+src/lib/ip-hash.test.ts
+  s_e7d66dff0e0ef8::t_e5a3b1f73c08b9 1-60
+src/lib/roadmap-vote.ts
+  s_e7d66dff0e0ef8::t_eb830f055cc4ea 1-40
+src/app/api/roadmap-vote/route.ts
+  s_e7d66dff0e0ef8::t_af2fcc21b734d4 1-70
+src/lib/proxy.test.ts
+  s_e7d66dff0e0ef8::t_c5fa51dc4e4f3b 101-106
+src/lib/roadmap-vote.test.ts
+  s_e7d66dff0e0ef8::t_cda24fbc8f927d 1-49
+src/env.ts
+  s_e7d66dff0e0ef8::t_be2135bdd52c56 29
+src/app/api/roadmap-vote/__tests__/route.test.ts
+  s_e7d66dff0e0ef8::t_4503783654a583 1-200
+src/app/sitemap.ts
+  s_e7d66dff0e0ef8::t_df7d6eecd7e181 98
+src/components/announcement-banner.tsx
+  s_e7d66dff0e0ef8::t_a7561d985f55fa 99
+  s_e7d66dff0e0ef8::t_b083ef6ffab7be 11,16
+  s_e7d66dff0e0ef8::t_8bfa128ef232d1 71-85
+  s_e7d66dff0e0ef8::t_bd64fd3a453606 14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.18",
+  "base_commit_sha": "8006294a9ff94b586d7bff635084e0043ad3f177",
+  "prompts": {},
+  "sessions": {
+    "s_e7d66dff0e0ef8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "7a5a2bef-f5b0-4032-a8bb-f6f65c7752de",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "Florian BRUNIAUX <florian@bruniaux.com>"
+    }
+  }
+}
