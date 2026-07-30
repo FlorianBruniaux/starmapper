@@ -5,11 +5,15 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 const mockQueryRaw = vi.fn();
 const mockCount = vi.fn();
+const mockFindMany = vi.fn();
 
 vi.mock("@/lib/db", () => ({
   prisma: {
     $queryRaw: (...args: unknown[]) => mockQueryRaw(...args),
-    roadmapVote: { count: (...args: unknown[]) => mockCount(...args) },
+    roadmapVote: {
+      count: (...args: unknown[]) => mockCount(...args),
+      findMany: (...args: unknown[]) => mockFindMany(...args),
+    },
   },
 }));
 
@@ -20,7 +24,7 @@ vi.mock("resend", () => ({
   },
 }));
 
-import { getTallies, notifyVote } from "@/lib/roadmap-vote";
+import { getTallies, notifyVote, getWeeklyRoadmapRecap } from "@/lib/roadmap-vote";
 
 describe("getTallies", () => {
   beforeEach(() => {
@@ -125,5 +129,47 @@ describe("notifyVote", () => {
     vi.stubEnv("RESEND_API_KEY", "re_test_key");
     mockSend.mockRejectedValue(new Error("network error"));
     await expect(notifyVote(["A"])).resolves.toBeUndefined();
+  });
+});
+
+describe("getWeeklyRoadmapRecap", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("returns newVotesCount and all-time tallies together", async () => {
+    mockFindMany.mockResolvedValue([]);
+    mockQueryRaw.mockResolvedValue([{ option: "A", count: 5n }]);
+    mockCount.mockResolvedValue(5);
+    const recap = await getWeeklyRoadmapRecap(new Date("2026-07-24T00:00:00Z"));
+    expect(recap.newVotesCount).toBe(0);
+    expect(recap.tallies).toEqual({ A: 5, B: 0, C: 0, D: 0 });
+    expect(recap.totalVoters).toBe(5);
+    expect(recap.contacts).toEqual([]);
+  });
+
+  it("queries findMany with a createdAt gte filter on the given date", async () => {
+    mockFindMany.mockResolvedValue([]);
+    mockQueryRaw.mockResolvedValue([]);
+    mockCount.mockResolvedValue(0);
+    const since = new Date("2026-07-24T00:00:00Z");
+    await getWeeklyRoadmapRecap(since);
+    expect(mockFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { createdAt: { gte: since } } }),
+    );
+  });
+
+  it("only includes voters who left an email, name, or message in contacts", async () => {
+    mockFindMany.mockResolvedValue([
+      { options: ["A"], email: "a@b.com", name: null, message: null, createdAt: new Date() },
+      { options: ["B"], email: null, name: null, message: null, createdAt: new Date() },
+      { options: ["C"], email: null, name: null, message: "hey", createdAt: new Date() },
+    ]);
+    mockQueryRaw.mockResolvedValue([]);
+    mockCount.mockResolvedValue(3);
+    const recap = await getWeeklyRoadmapRecap(new Date());
+    expect(recap.newVotesCount).toBe(3);
+    expect(recap.contacts).toHaveLength(2);
+    expect(recap.contacts.map((c) => c.options)).toEqual([["A"], ["C"]]);
   });
 });

@@ -11,6 +11,7 @@ import { Resend } from "resend";
 import { prisma } from "@/lib/db";
 import { requireAdminAuth, logError } from "@/lib/api-helpers";
 import { safeEqual } from "@/lib/api-token";
+import { getWeeklyRoadmapRecap, escapeHtml, OPTIONS } from "@/lib/roadmap-vote";
 
 const runDigest = async () => {
   const resendKey = process.env.RESEND_API_KEY;
@@ -71,6 +72,31 @@ const runDigest = async () => {
     return `<tr><td style="padding:4px 12px 4px 0;color:#8b949e;font-size:12px">${d}</td><td style="padding:4px 12px 4px 0;font-family:monospace;color:#f0f6fc">${s.owner}/${s.repo}</td><td style="padding:4px 12px 4px 0;text-align:right">${fmt(s.totalCount)}</td><td style="padding:4px 0">${by}</td></tr>`;
   }).join("");
 
+  // Weekly roadmap-vote recap, Mondays only, the digest itself stays daily. Votes don't
+  // accumulate fast enough to justify repeating this section every single day.
+  let roadmapHtml = "";
+  if (new Date().getUTCDay() === 1) {
+    const recap = await getWeeklyRoadmapRecap(since7d);
+    const tallyRowsHtml = OPTIONS.map((opt) =>
+      `<tr><td style="padding:4px 12px 4px 0;font-family:monospace;color:#58a6ff">${opt}</td><td style="padding:4px 0;text-align:right">${fmt(recap.tallies[opt])}</td></tr>`
+    ).join("");
+    const contactRowsHtml = recap.contacts.map((c) => {
+      const voter = c.email
+        ? `${c.name ? `${escapeHtml(c.name)}, ` : ""}${escapeHtml(c.email)}`
+        : "anonymous";
+      const msg = c.message ? `<div style="color:#8b949e;font-size:12px">${escapeHtml(c.message)}</div>` : "";
+      return `<tr><td style="padding:4px 12px 4px 0;font-family:monospace;color:#58a6ff">${c.options.join("+")}</td><td style="padding:4px 0">${voter}${msg}</td></tr>`;
+    }).join("");
+
+    roadmapHtml = `
+  <h2 style="font-size:14px;color:#8b949e;text-transform:uppercase;letter-spacing:1px">Roadmap vote, 7 derniers jours</h2>
+  <p style="margin:0 0 8px">${recap.newVotesCount} nouveau(x) vote(s) &middot; ${recap.totalVoters} au total</p>
+  <table style="width:100%;border-collapse:collapse;margin-bottom:${contactRowsHtml ? "12px" : "24px"}">
+    ${tallyRowsHtml}
+  </table>
+  ${contactRowsHtml ? `<table style="width:100%;border-collapse:collapse;margin-bottom:24px">${contactRowsHtml}</table>` : ""}`;
+  }
+
   const html = `
 <!DOCTYPE html>
 <html>
@@ -105,9 +131,10 @@ const runDigest = async () => {
   </table>
 
   <h2 style="font-size:14px;color:#8b949e;text-transform:uppercase;letter-spacing:1px">Scans récents</h2>
-  <table style="width:100%;border-collapse:collapse">
+  <table style="width:100%;border-collapse:collapse;margin-bottom:24px">
     ${recentScansHtml}
   </table>
+  ${roadmapHtml}
 </body>
 </html>`;
 

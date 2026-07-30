@@ -43,13 +43,51 @@ export const getTallies = async (): Promise<RoadmapVoteTallies> => {
 
 // name/email are free-text/voter-supplied, escape before interpolating into the HTML email
 // body, or a name like `<img src=x onerror=...>` renders unescaped in the recipient's client.
-const escapeHtml = (s: string): string =>
+export const escapeHtml = (s: string): string =>
   s
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
+
+export type WeeklyRoadmapContact = {
+  options: Option[];
+  email: string | null;
+  name: string | null;
+  message: string | null;
+  createdAt: Date;
+};
+
+export type WeeklyRoadmapRecap = RoadmapVoteTallies & {
+  newVotesCount: number;
+  contacts: WeeklyRoadmapContact[];
+};
+
+/**
+ * Feeds the daily-digest email's weekly roadmap section (see daily-digest/route.ts, gated to
+ * fire once a week, not every day). Tallies stay all-time (getTallies), only newVotesCount and
+ * contacts are scoped to `since`, so the recap reads as "N new this week, X total so far".
+ */
+export const getWeeklyRoadmapRecap = async (since: Date): Promise<WeeklyRoadmapRecap> => {
+  const [recentVotes, { tallies, totalVoters }] = await Promise.all([
+    prisma.roadmapVote.findMany({
+      where: { createdAt: { gte: since } },
+      orderBy: { createdAt: "desc" },
+      select: { options: true, email: true, name: true, message: true, createdAt: true },
+    }),
+    getTallies(),
+  ]);
+
+  return {
+    newVotesCount: recentVotes.length,
+    tallies,
+    totalVoters,
+    contacts: recentVotes
+      .filter((v) => v.email || v.name || v.message)
+      .map((v) => ({ ...v, options: v.options as Option[] })),
+  };
+};
 
 /**
  * Best-effort notification to the site owner on each vote. Never blocks or fails the vote
