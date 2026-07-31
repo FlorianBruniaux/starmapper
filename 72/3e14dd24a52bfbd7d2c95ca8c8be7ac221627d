@@ -1,0 +1,35 @@
+src/components/map/data-source-badge.tsx
+  s_0a0a17497804b1::t_5d68fd56a95166 1-15
+src/hooks/use-repo-cache-loader.test.ts
+  s_0a0a17497804b1::t_6718cf1d8a75ac 184-253
+src/hooks/use-repo-cache-loader.ts
+  s_0a0a17497804b1::t_f87517302d27f1 105
+  s_0a0a17497804b1::t_28ee5e274778f1 73
+  s_0a0a17497804b1::t_a7812daaa906e1 223
+  s_0a0a17497804b1::t_ffa1cbba2d8e3d 36
+  s_0a0a17497804b1::t_c76bae65f62ccc 124-145,161
+src/components/map/data-source-badge.test.tsx
+  s_0a0a17497804b1::t_52a8326aa5f721 1-18
+src/lib/stargazer-notice.ts
+  s_0a0a17497804b1::t_e3a0e132fdb245 31-37
+src/app/[owner]/[repo]/page.client.tsx
+  s_0a0a17497804b1::t_f77812e97d3e1c 19
+  s_0a0a17497804b1::t_12339b2b2959d9 570-575
+  s_0a0a17497804b1::t_17d4f6f33b4185 248
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.19",
+  "base_commit_sha": "723e14dd24a52bfbd7d2c95ca8c8be7ac221627d",
+  "prompts": {},
+  "sessions": {
+    "s_0a0a17497804b1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "56e73de0-441a-4109-b8a6-49dba223336e",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "Florian BRUNIAUX <florian@bruniaux.com>"
+    }
+  }
+}
