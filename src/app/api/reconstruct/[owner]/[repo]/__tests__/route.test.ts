@@ -21,8 +21,8 @@ const makeReq = (
 ];
 
 const ROWS = [
-  { login: "a", name: null, company: null, location: "Paris", followers: 10, lat: 48.8566, lng: 2.3522, starredAt: new Date("2024-01-01") },
-  { login: "b", name: null, company: null, location: null, followers: 3, lat: null, lng: null, starredAt: new Date("2024-01-02") },
+  { login: "a", name: null, company: null, location: "Paris", followers: 10, lat: 48.8566, lng: 2.3522, linkedinUrl: "https://linkedin.com/in/a", starredAt: new Date("2024-01-01") },
+  { login: "b", name: null, company: null, location: null, followers: 3, lat: null, lng: null, linkedinUrl: null, starredAt: new Date("2024-01-02") },
 ];
 
 describe("GET /api/reconstruct/[owner]/[repo]", () => {
@@ -67,6 +67,37 @@ describe("GET /api/reconstruct/[owner]/[repo]", () => {
     const [req, ctx] = makeReq("octocat", "hello");
     const json = await (await GET(req, ctx)).json();
     expect(json.points[0].avatarUrl).toBe("https://github.com/a.png");
+  });
+
+  it("passes linkedinUrl through instead of hardcoding null", async () => {
+    mockQueryRaw.mockResolvedValue(ROWS);
+    const [req, ctx] = makeReq("octocat", "hello");
+    const json = await (await GET(req, ctx)).json();
+    expect(json.points[0].linkedinUrl).toBe("https://linkedin.com/in/a");
+  });
+
+  it("caps the query with a LIMIT so the star_event join stays bounded", async () => {
+    mockQueryRaw.mockResolvedValue(ROWS);
+    const [req, ctx] = makeReq("octocat", "hello");
+    await GET(req, ctx);
+    const [strings, ...values] = mockQueryRaw.mock.calls[0] as [string[], ...unknown[]];
+    expect(strings.join("?")).toContain("LIMIT");
+    expect(values).toContain(10_000);
+  });
+
+  it("returns 503, not 500, when Neon times out the query (P2010)", async () => {
+    mockQueryRaw.mockRejectedValue(Object.assign(new Error("statement timeout"), { code: "P2010" }));
+    const [req, ctx] = makeReq("octocat", "hello");
+    const res = await GET(req, ctx);
+    expect(res.status).toBe(503);
+    expect((await res.json()).error).toBe("timeout");
+  });
+
+  it("returns 503 when the connection pool is exhausted (P2024)", async () => {
+    mockQueryRaw.mockRejectedValue(Object.assign(new Error("pool timeout"), { code: "P2024" }));
+    const [req, ctx] = makeReq("octocat", "hello");
+    const res = await GET(req, ctx);
+    expect(res.status).toBe(503);
   });
 
   it("returns 500 when the query throws", async () => {
