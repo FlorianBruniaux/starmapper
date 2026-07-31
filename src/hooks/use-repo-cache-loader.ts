@@ -125,8 +125,13 @@ export const useRepoCacheLoader = ({
             donateLocalCacheToDb(owner, repo, validLocal);
             return;
           }
-          const reconstructRes = await fetch(`/api/reconstruct/${owner}/${repo}`, { signal: ac.signal });
-          if (reconstructRes.ok) {
+          // Each fallback fetch is caught independently — a thrown exception (offline, DNS
+          // failure) on one source must not abort the chain before the next source is tried.
+          let reconstructRes: Response | null = null;
+          try {
+            reconstructRes = await fetch(`/api/reconstruct/${owner}/${repo}`, { signal: ac.signal });
+          } catch { /* try the next source */ }
+          if (reconstructRes?.ok) {
             const rd = await reconstructRes.json();
             dispatch({ type: "set", points: rd.points, unmapped: rd.unmapped });
             setTotal(rd.totalCount);
@@ -134,8 +139,11 @@ export const useRepoCacheLoader = ({
             setDataSource("reconstructed");
             return;
           }
-          const engagedRes = await fetch(`/api/engaged/${owner}/${repo}`, { signal: ac.signal });
-          if (engagedRes.ok) {
+          let engagedRes: Response | null = null;
+          try {
+            engagedRes = await fetch(`/api/engaged/${owner}/${repo}`, { signal: ac.signal });
+          } catch { /* give up silently, same as the outer catch */ }
+          if (engagedRes?.ok) {
             const ed = await engagedRes.json();
             dispatch({ type: "set", points: ed.points, unmapped: ed.unmapped });
             setTotal(ed.knownCount);

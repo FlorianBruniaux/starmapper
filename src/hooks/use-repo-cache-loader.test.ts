@@ -240,6 +240,23 @@ describe("useRepoCacheLoader", () => {
     expect(result.current.dataSource).toBe("cache");
   });
 
+  it("falls through to /api/engaged when /api/reconstruct fetch itself rejects (not just non-ok)", async () => {
+    mockLoadCache.mockReturnValue(null);
+    const engagedPoints = [{ ...LOCAL_CACHE.points[0], login: "engaged-after-reject" }];
+    mockFetch.mockImplementation((url: string) => {
+      if (url.includes("/api/stargazer-cache/")) return Promise.resolve(new Response(null, { status: 404 }));
+      if (url.includes("/api/reconstruct/")) return Promise.reject(new Error("network down"));
+      if (url.includes("/api/engaged/")) {
+        return jsonResponse({ points: engagedPoints, unmapped: [], knownCount: 1, starCount: 500, channels: ["fork"] });
+      }
+      return Promise.resolve(new Response(null, { status: 404 }));
+    });
+    const opts = makeOpts();
+    const { result } = renderHook(() => useRepoCacheLoader(opts));
+    await waitFor(() => expect(result.current.dataSource).toBe("engaged"));
+    expect(opts.dispatch).toHaveBeenCalledWith({ type: "set", points: engagedPoints, unmapped: [] });
+  });
+
   it("dataSource is 'cache' when stargazer_cache 200s with fresh data", async () => {
     mockLoadCache.mockReturnValue(null);
     mockFetch.mockImplementation((url: string) => {
