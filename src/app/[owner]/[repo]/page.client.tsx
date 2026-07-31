@@ -479,7 +479,13 @@ export default function MapPageClient({ owner, repo, initialRepoInfo, initialSta
           </div>
         )}
 
+      {/* Bottom-centred stack: TopPanel spans calc(100vw-2rem) below ~900px, so any
+          top-anchored badge lands on top of it. This column is already clear of the Dock
+          (bottom-left) and the compare pill (bottom-right). */}
       <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-10 pointer-events-none flex flex-col items-center gap-1.5">
+        {(dataSource === "reconstructed" || dataSource === "engaged") && (
+          <DataSourceBadge source={dataSource} />
+        )}
         <div className="flex items-center gap-2">
           <a
             href="https://florian.bruniaux.com"
@@ -566,12 +572,6 @@ export default function MapPageClient({ owner, repo, initialRepoInfo, initialSta
         findStatus={findStatus}
         organic={organicData ?? serverStats?.organic}
       />
-
-      {(dataSource === "reconstructed" || dataSource === "engaged") && (
-        <div className="absolute top-16 left-4 z-10">
-          <DataSourceBadge source={dataSource} />
-        </div>
-      )}
 
       {/* Shared-view banner — shown when URL encoded filters were detected on load */}
       {sharedView && (
@@ -806,6 +806,7 @@ export default function MapPageClient({ owner, repo, initialRepoInfo, initialSta
           starsThisMonth={starsThisMonth}
           contributorsCount={repoInfo?.contributorsCount ?? null}
           repoStars={repoInfo?.stars ?? total}
+          hideLocationAggregates={dataSource === "engaged"}
         />
       )}
     </main>

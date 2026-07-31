@@ -9,7 +9,7 @@ const COPY: Record<Props["source"], string> = {
 };
 
 export const DataSourceBadge = ({ source }: Props) => (
-  <div className="bg-surface-alt border border-border-subtle text-muted-subtle text-xs px-2 py-1 rounded-md">
+  <div className="bg-surface-alt/90 backdrop-blur-sm border border-border-subtle text-muted-subtle text-2xs text-center px-2 py-1 rounded-md max-w-xs">
     {COPY[source]}
   </div>
 );

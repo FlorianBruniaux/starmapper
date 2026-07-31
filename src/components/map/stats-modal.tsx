@@ -19,9 +19,17 @@ type StatsModalProps = {
   starsThisMonth: number;
   contributorsCount?: number | null;
   repoStars?: number;
+  /**
+   * Engaged-community points carry no location or company, so every location-derived
+   * aggregate would render a hard 0. Hiding reads as a limitation; a 0 reads as a bug.
+   */
+  hideLocationAggregates?: boolean;
 };
 
-export const StatsModal = ({ open, onClose, owner, repo, displayStats, starsThisMonth, contributorsCount, repoStars }: StatsModalProps) => {
+const ALL_TABS = ["top", "countries", "cities", "companies", "power", "rising"] as const;
+const TABS_WITHOUT_LOCATION = ["top", "power", "rising"] as const;
+
+export const StatsModal = ({ open, onClose, owner, repo, displayStats, starsThisMonth, contributorsCount, repoStars, hideLocationAggregates = false }: StatsModalProps) => {
   const [statsTab, setStatsTab] = useState<"countries" | "cities" | "top" | "companies" | "power" | "rising">("top");
   const [geoVelocity, setGeoVelocity] = useState<GeoVelocityItem[] | null>(null);
   const [geoVelocityLoading, setGeoVelocityLoading] = useState(false);
@@ -55,18 +63,22 @@ export const StatsModal = ({ open, onClose, owner, repo, displayStats, starsThis
                 `# ${owner}/${repo} on StarMapper`,
                 ``,
                 `- **Total stargazers**: ${(repoStars ?? displayStats.totalStars).toLocaleString()} (${displayStats.mappingRate}% mapped)`,
-                `- **Countries**: ${displayStats.countryCount}`,
-                `- **Cities**: ${displayStats.topCities.length}`,
+                ...(hideLocationAggregates ? [] : [
+                  `- **Countries**: ${displayStats.countryCount}`,
+                  `- **Cities**: ${displayStats.topCities.length}`,
+                ]),
                 `- **Avg followers**: ${displayStats.avgFollowers.toLocaleString()}`,
                 ``,
-                `## Top Countries`,
-                ...displayStats.topCountries.slice(0, 10).map(([c, n], i) => `${i + 1}. ${c}: ${n}`),
-                ``,
-                `## Top Cities`,
-                ...displayStats.topCities.slice(0, 10).map(([c, n], i) => `${i + 1}. ${c}: ${n}`),
-                `## Top Companies`,
-                ...(displayStats.topCompanies.length ? displayStats.topCompanies.slice(0, 10).map(([c, n], i) => `${i + 1}. ${c}: ${n}`) : ["No company data"]),
-                ``,
+                ...(hideLocationAggregates ? [] : [
+                  `## Top Countries`,
+                  ...displayStats.topCountries.slice(0, 10).map(([c, n], i) => `${i + 1}. ${c}: ${n}`),
+                  ``,
+                  `## Top Cities`,
+                  ...displayStats.topCities.slice(0, 10).map(([c, n], i) => `${i + 1}. ${c}: ${n}`),
+                  `## Top Companies`,
+                  ...(displayStats.topCompanies.length ? displayStats.topCompanies.slice(0, 10).map(([c, n], i) => `${i + 1}. ${c}: ${n}`) : ["No company data"]),
+                  ``,
+                ]),
                 `## Top Stargazers`,
                 ...displayStats.topUsers.slice(0, 10).map((u, i) => `${i + 1}. [@${u.login}](https://github.com/${u.login}) (${u.followers.toLocaleString()} followers)`),
                 ``,
@@ -106,14 +118,18 @@ export const StatsModal = ({ open, onClose, owner, repo, displayStats, starsThis
               <div className="text-xl font-bold text-accent-green">{displayStats.mappingRate}%</div>
               <div className="text-2xs text-muted uppercase tracking-wide mt-0.5">mapped</div>
             </div>
-            <div className="bg-background rounded-lg px-2 py-2 text-center">
-              <div className="text-xl font-bold text-foreground">{displayStats.countryCount}</div>
-              <div className="text-2xs text-muted uppercase tracking-wide mt-0.5">countries</div>
-            </div>
-            <div className="bg-background rounded-lg px-2 py-2 text-center">
-              <div className="text-xl font-bold text-foreground">{displayStats.topCities.length}</div>
-              <div className="text-2xs text-muted uppercase tracking-wide mt-0.5">cities</div>
-            </div>
+            {!hideLocationAggregates && (
+              <>
+                <div className="bg-background rounded-lg px-2 py-2 text-center">
+                  <div className="text-xl font-bold text-foreground">{displayStats.countryCount}</div>
+                  <div className="text-2xs text-muted uppercase tracking-wide mt-0.5">countries</div>
+                </div>
+                <div className="bg-background rounded-lg px-2 py-2 text-center">
+                  <div className="text-xl font-bold text-foreground">{displayStats.topCities.length}</div>
+                  <div className="text-2xs text-muted uppercase tracking-wide mt-0.5">cities</div>
+                </div>
+              </>
+            )}
             <div className="bg-background rounded-lg px-2 py-2 text-center">
               <div className="text-xl font-bold text-accent-orange">
                 {displayStats.avgFollowers >= 1000 ? `${(displayStats.avgFollowers / 1000).toFixed(1)}k` : displayStats.avgFollowers}
@@ -191,7 +207,7 @@ export const StatsModal = ({ open, onClose, owner, repo, displayStats, starsThis
         <div className="flex-1 flex flex-col min-h-0 min-w-0">
           {/* Tabs */}
           <div role="tablist" aria-label="Stats view" className="flex border-b border-border-subtle flex-shrink-0">
-            {(["top", "countries", "cities", "companies", "power", "rising"] as const).map((tab, idx, arr) => (
+            {(hideLocationAggregates ? TABS_WITHOUT_LOCATION : ALL_TABS).map((tab, idx, arr) => (
               <button
                 key={tab}
                 role="tab"
