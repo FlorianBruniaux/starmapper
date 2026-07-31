@@ -107,6 +107,44 @@ export const useRepoCacheLoader = ({
     }
 
     const ac = new AbortController();
+
+    // Degraded sources, tried in order of fidelity. Each fetch is caught independently — a
+    // thrown exception (offline, DNS failure) on one source must not abort the chain before
+    // the next source is tried. Returns true once a source has rendered a map.
+    // Callers deliberately skip saveCache/saveBookmark/donate afterwards: degraded data must
+    // never overwrite localStorage or the public badge counts.
+    const tryDegradedSources = async (): Promise<boolean> => {
+      let reconstructRes: Response | null = null;
+      try {
+        reconstructRes = await fetch(`/api/reconstruct/${owner}/${repo}`, { signal: ac.signal });
+      } catch { /* try the next source */ }
+      if (reconstructRes?.ok) {
+        const rd = await reconstructRes.json();
+        if (rd.points) {
+          dispatch({ type: "set", points: rd.points, unmapped: rd.unmapped });
+          setTotal(rd.totalCount);
+          setStatus("cached");
+          setDataSource("reconstructed");
+          return true;
+        }
+      }
+      let engagedRes: Response | null = null;
+      try {
+        engagedRes = await fetch(`/api/engaged/${owner}/${repo}`, { signal: ac.signal });
+      } catch { /* give up silently, same as the outer catch */ }
+      if (engagedRes?.ok) {
+        const ed = await engagedRes.json();
+        if (ed.points) {
+          dispatch({ type: "set", points: ed.points, unmapped: ed.unmapped });
+          setTotal(ed.knownCount);
+          setStatus("cached");
+          setDataSource("engaged");
+          return true;
+        }
+      }
+      return false;
+    };
+
     (async () => {
       try {
         const r = await fetch(`/api/stargazer-cache/${owner}/${repo}`, { signal: ac.signal });
@@ -116,8 +154,14 @@ export const useRepoCacheLoader = ({
         }
         if (r.status === 206) {
           const d = await r.json();
-          if (!validLocal) setLastDbScan(d.lastScan);
-          else donateLocalCacheToDb(owner, repo, validLocal);
+          if (validLocal) {
+            donateLocalCacheToDb(owner, repo, validLocal);
+            return;
+          }
+          // 206 means "scanned before, blob gone" — the profile most likely to still have
+          // star_event rows, so try reconstruction before offering a fresh scan.
+          if (await tryDegradedSources()) return;
+          setLastDbScan(d.lastScan);
           return;
         }
         if (!r.ok) {
@@ -125,32 +169,7 @@ export const useRepoCacheLoader = ({
             donateLocalCacheToDb(owner, repo, validLocal);
             return;
           }
-          // Each fallback fetch is caught independently — a thrown exception (offline, DNS
-          // failure) on one source must not abort the chain before the next source is tried.
-          let reconstructRes: Response | null = null;
-          try {
-            reconstructRes = await fetch(`/api/reconstruct/${owner}/${repo}`, { signal: ac.signal });
-          } catch { /* try the next source */ }
-          if (reconstructRes?.ok) {
-            const rd = await reconstructRes.json();
-            dispatch({ type: "set", points: rd.points, unmapped: rd.unmapped });
-            setTotal(rd.totalCount);
-            setStatus("cached");
-            setDataSource("reconstructed");
-            return;
-          }
-          let engagedRes: Response | null = null;
-          try {
-            engagedRes = await fetch(`/api/engaged/${owner}/${repo}`, { signal: ac.signal });
-          } catch { /* give up silently, same as the outer catch */ }
-          if (engagedRes?.ok) {
-            const ed = await engagedRes.json();
-            dispatch({ type: "set", points: ed.points, unmapped: ed.unmapped });
-            setTotal(ed.knownCount);
-            setStatus("cached");
-            setDataSource("engaged");
-            return;
-          }
+          await tryDegradedSources();
           return;
         }
         const data = await r.json();

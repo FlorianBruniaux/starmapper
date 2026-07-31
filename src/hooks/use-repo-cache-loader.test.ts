@@ -219,6 +219,37 @@ describe("useRepoCacheLoader", () => {
     expect(opts.setTotal).toHaveBeenCalledWith(1);
   });
 
+  // 206 = "repo was scanned before, we just don't hold the blob" — the profile most likely
+  // to still have star_event rows, so the fallback chain must run here too, not only on 404.
+  it("runs the fallback chain on a 206 with no local cache", async () => {
+    mockLoadCache.mockReturnValue(null);
+    const reconstructPoints = [{ ...LOCAL_CACHE.points[0], login: "reconstructed-from-206" }];
+    mockFetch.mockImplementation((url: string) => {
+      if (url.includes("/api/stargazer-cache/")) return jsonResponse({ lastScan: "2026-01-01" }, 206);
+      if (url.includes("/api/reconstruct/")) {
+        return jsonResponse({ points: reconstructPoints, unmapped: [], totalCount: 1 });
+      }
+      return new Response(null, { status: 404 });
+    });
+    const opts = makeOpts();
+    const { result } = renderHook(() => useRepoCacheLoader(opts));
+    await waitFor(() => expect(result.current.dataSource).toBe("reconstructed"));
+    expect(opts.dispatch).toHaveBeenCalledWith({ type: "set", points: reconstructPoints, unmapped: [] });
+    // A reconstructed map replaces the pre-scan dialog, so lastDbScan must stay unset.
+    expect(result.current.lastDbScan).toBeNull();
+  });
+
+  it("still sets lastDbScan on a 206 when every degraded source 404s", async () => {
+    mockLoadCache.mockReturnValue(null);
+    mockFetch.mockImplementation((url: string) => {
+      if (url.includes("/api/stargazer-cache/")) return jsonResponse({ lastScan: "2026-02-02" }, 206);
+      return new Response(null, { status: 404 });
+    });
+    const { result } = renderHook(() => useRepoCacheLoader(makeOpts()));
+    await waitFor(() => expect(result.current.lastDbScan).toBe("2026-02-02"));
+    expect(result.current.dataSource).toBeNull();
+  });
+
   it("dataSource stays null when every source 404s", async () => {
     mockLoadCache.mockReturnValue(null);
     mockFetch.mockResolvedValue(new Response(null, { status: 404 }));
