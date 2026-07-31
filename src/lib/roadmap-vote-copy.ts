@@ -21,7 +21,7 @@ export const ROADMAP_OPTIONS: readonly RoadmapOptionCopy[] = [
     statusLabel: "Already shipping",
     label: "Map the engaged community, not just stargazers",
     sentence:
-      "A pipeline already crawls forks, issues, PRs and mentions instead of the closed stargazers list. Early runs recovered 6-16% of a repo's stargazer count, with 57-89% of those accounts carrying a usable location.",
+      "A pipeline already crawls forks, issues, PRs and mentions instead of the closed stargazers list. Early runs recovered 6-16% of a repo's stargazer count, with 57-89% of those accounts carrying a usable location. Now visible on repos indexed without a prior stargazer scan, labeled honestly as engaged-community data, not a stargazer count.",
   },
   {
     option: "C",

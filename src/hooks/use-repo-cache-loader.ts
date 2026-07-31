@@ -33,6 +33,7 @@ type Options = {
 type Result = {
   cacheCheckDone: boolean;
   lastDbScan: string | null;
+  dataSource: "cache" | "reconstructed" | "engaged" | null;
 };
 
 const donateLocalCacheToDb = (owner: string, repo: string, cache: LocalCache) => {
@@ -69,6 +70,7 @@ export const useRepoCacheLoader = ({
 }: Options): Result => {
   const [cacheCheckDone, setCacheCheckDone] = useState(false);
   const [lastDbScan, setLastDbScan] = useState<string | null>(null);
+  const [dataSource, setDataSource] = useState<"cache" | "reconstructed" | "engaged" | null>(null);
   // Local state is used when no external setter is provided (e.g. in tests).
   const [_serverStats, _setServerStats] = useState<RepoStats | null>(null);
   const setServerStats = externalSetServerStats ?? _setServerStats;
@@ -100,10 +102,49 @@ export const useRepoCacheLoader = ({
       setLatestStarredAt(validLocal.latestStarredAt ?? null);
       setStatus("cached");
       saveBookmark(owner, repo, validLocal.totalCount);
+      setDataSource("cache");
       setCacheCheckDone(true);
     }
 
     const ac = new AbortController();
+
+    // Degraded sources, tried in order of fidelity. Each fetch is caught independently — a
+    // thrown exception (offline, DNS failure) on one source must not abort the chain before
+    // the next source is tried. Returns true once a source has rendered a map.
+    // Callers deliberately skip saveCache/saveBookmark/donate afterwards: degraded data must
+    // never overwrite localStorage or the public badge counts.
+    const tryDegradedSources = async (): Promise<boolean> => {
+      let reconstructRes: Response | null = null;
+      try {
+        reconstructRes = await fetch(`/api/reconstruct/${owner}/${repo}`, { signal: ac.signal });
+      } catch { /* try the next source */ }
+      if (reconstructRes?.ok) {
+        const rd = await reconstructRes.json();
+        if (rd.points) {
+          dispatch({ type: "set", points: rd.points, unmapped: rd.unmapped });
+          setTotal(rd.totalCount);
+          setStatus("cached");
+          setDataSource("reconstructed");
+          return true;
+        }
+      }
+      let engagedRes: Response | null = null;
+      try {
+        engagedRes = await fetch(`/api/engaged/${owner}/${repo}`, { signal: ac.signal });
+      } catch { /* give up silently, same as the outer catch */ }
+      if (engagedRes?.ok) {
+        const ed = await engagedRes.json();
+        if (ed.points) {
+          dispatch({ type: "set", points: ed.points, unmapped: ed.unmapped });
+          setTotal(ed.knownCount);
+          setStatus("cached");
+          setDataSource("engaged");
+          return true;
+        }
+      }
+      return false;
+    };
+
     (async () => {
       try {
         const r = await fetch(`/api/stargazer-cache/${owner}/${repo}`, { signal: ac.signal });
@@ -113,12 +154,22 @@ export const useRepoCacheLoader = ({
         }
         if (r.status === 206) {
           const d = await r.json();
-          if (!validLocal) setLastDbScan(d.lastScan);
-          else donateLocalCacheToDb(owner, repo, validLocal);
+          if (validLocal) {
+            donateLocalCacheToDb(owner, repo, validLocal);
+            return;
+          }
+          // 206 means "scanned before, blob gone" — the profile most likely to still have
+          // star_event rows, so try reconstruction before offering a fresh scan.
+          if (await tryDegradedSources()) return;
+          setLastDbScan(d.lastScan);
           return;
         }
         if (!r.ok) {
-          if (validLocal) donateLocalCacheToDb(owner, repo, validLocal);
+          if (validLocal) {
+            donateLocalCacheToDb(owner, repo, validLocal);
+            return;
+          }
+          await tryDegradedSources();
           return;
         }
         const data = await r.json();
@@ -134,6 +185,7 @@ export const useRepoCacheLoader = ({
         setCachedAt(scannedMs);
         setLatestStarredAt(data.latestStarredAt ?? null);
         setStatus("cached");
+        setDataSource("cache");
         saveBookmark(owner, repo, data.totalCount);
         saveCache(owner, repo, {
           points: data.points,
@@ -195,5 +247,5 @@ export const useRepoCacheLoader = ({
     })();
   }, [owner, repo, setServerStats]);
 
-  return { cacheCheckDone, lastDbScan };
+  return { cacheCheckDone, lastDbScan, dataSource };
 };

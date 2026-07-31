@@ -474,6 +474,31 @@ Validates `totalCount ≤ 500,000`. Performs an upsert on `StargazerCache`.
 
 ---
 
+### `GET /api/reconstruct/[owner]/[repo]`
+
+Rebuilds a map from `star_event ⨝ github_user` when no `stargazer_cache` blob exists. First fallback of the degraded chain in `src/hooks/use-repo-cache-loader.ts`.
+
+**Responses**:
+- `200`: `{ points: StargazerPoint[], unmapped: { login }[], totalCount }`, coordinates rounded to 2 decimals
+- `404`: no `star_event` row for this repo
+- `503`: `{ error: "timeout" }`, Neon `statement_timeout` (`P2010`) or pool exhaustion (`P2024`)
+
+Capped at the 10,000 most recent stars (`RESULT_CAP`) with `maxDuration = 30`. The client never persists this response to localStorage or `badge_cache`.
+
+---
+
+### `GET /api/engaged/[owner]/[repo]`
+
+Serves the engaged-audience map (forkers, issue and PR authors, mentionables, watchers) written by `scripts/ops/index-engaged.ts`. Second fallback of the degraded chain, used when reconstruction also fails.
+
+**Responses**:
+- `200`: `{ points, unmapped, knownCount, starCount, channels: string[], scannedAt }`
+- `404`: no `engaged_cache` row for this repo
+
+Points carry no `location`, `company` or `starredAt`, so the stats panel hides its location-derived aggregates for this source.
+
+---
+
 ### `POST /api/user-details`
 
 Fetches enriched profile data for a list of stargazers (bio, followers, company). Used to populate detail cards when a user clicks a map point.

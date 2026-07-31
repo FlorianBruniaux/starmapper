@@ -26,6 +26,8 @@ model BadgeCache {
   organicScore       Int?
   organicTier        String?
   organicComputedAt  DateTime?
+  knownCount         Int?
+  coverageComputedAt DateTime?
   openIssuesCount    Int?
   openPRsCount       Int?
   latestReleaseTag   String?

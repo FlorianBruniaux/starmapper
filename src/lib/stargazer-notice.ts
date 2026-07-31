@@ -28,6 +28,13 @@ export const STARGAZER_NOTICE_BODY: readonly string[] = [
   "I'm actively analysing what StarMapper can do next, including rebuilding the map from the user side rather than the repo side. Follow the links below for the official sources.",
 ];
 
+/** Paragraphs shown when a repo falls back to reconstructed or engaged data instead of a full scan. */
+export const STARGAZER_NOTICE_DEGRADED_BODY: readonly string[] = [
+  "On June 30 2026 GitHub announced restrictions on public API endpoints and UI views. Since July 23 the restriction reached the stargazers list.",
+  "This repo's map is not from a fresh stargazers scan. It's reconstructed from data StarMapper already holds, or built from the engaged community (forkers, contributors, issue and PR authors) instead. Both recover a slice of the real audience, not the full list.",
+  "Follow the links below for the official sources, or see the open options at /roadmap.",
+];
+
 export const STARGAZER_NOTICE_LINKS: readonly NoticeLink[] = [
   {
     label: "GitHub changelog (June 30 2026)",
