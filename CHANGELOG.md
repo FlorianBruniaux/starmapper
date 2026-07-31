@@ -7,6 +7,24 @@ Versioning: Semantic Versioning (MAJOR.MINOR.PATCH)
 
 ## [Unreleased]
 
+---
+
+## [0.6.11] (2026-07-30)
+
+### Strategic pivot: GitHub stargazer restriction
+
+GitHub closed the `Repository.stargazers` connection on every surface (GraphQL, REST, web UI) on 2026-07-23, StarMapper's sole data source for new scans. Full response across three fronts: communicate the situation, measure what still works, ship the first replacement data path.
+
+- **UI communication** (`bb179cd`): new `src/lib/stargazer-notice.ts` single source of truth for the copy, `StargazerNoticeModal`, announcement banner with an ISSUE badge, pre-scan and landing-page warnings, empty-map notice on repos that scan clean, full rescan disabled with an explanatory tooltip (one-line revert once/if access returns).
+- **Access probes and pivot POCs** (`97e479a`): 29 alive/dead probes across REST and GraphQL. Measured: engaged-audience union recovers 6-16% of star volume; leave-one-out reconstruction recovers 94% of a repo's real stargazers with 46% mappable; `search(type:USER)` capped at 1k retrieval; `starredRepositories` crawl costs exactly 1.00 pt/page; the admin/OAuth exemption GitHub announced is dead in practice (404, not 403, on a repo the token owns).
+- **Engaged-audience indexing pipeline** (`570a367`): replaces the dead stargazers scan with the union of still-open repo-to-user channels, `forks.owner`, `issues.author`, `pullRequests.author`, `mentionableUsers`, `watchers`, each carrying location inline at 1pt/page. New `src/lib/engaged-audience.ts`, new `EngagedCache` table (kept separate from `star_event` so it doesn't pollute star-based materialized views), `scripts/ops/index-engaged.ts` with 3 targeting modes and 4-token rotation, wired into `auto-index` and `maintenance.sh` (step 9/9). Gated behind `ENGAGED_AUDIENCE_ENABLED`, default off. 7 unit tests.
+
+### Public roadmap vote page
+
+`/roadmap` (`8006294`, `5f3e06b`, `68e77e6`, `d023106`): visitors vote on StarMapper's response to the restriction across 4 options (A/C/D shipping or planned, B a genuinely open question, owner-verified OAuth dashboard). `RoadmapVote` model, upsert-by-hashed-IP so a repeat vote overwrites rather than appends (both the "change your mind" UX and the anti-spam mechanism). Optional opt-in name/email/message fields behind a consent modal with an explicit no-solicitation disclaimer, HTML-escaped through the vote pipeline to close an XSS path through unescaped interpolation. Two zero-dependency ASCII diagrams (before/after, and the A/B/C/D branch with per-option status) for visitors who won't read the prose. `/privacy` updated to disclose the opt-in contact capture.
+
+Each vote notifies the site owner via Resend, reusing daily-digest's `RESEND_API_KEY`/`DIGEST_EMAIL`/`DIGEST_FROM` convention. `3f43d52` folds a weekly recap into the existing daily-digest cron instead of a dedicated admin page: a "Roadmap vote, 7 derniers jours" section appears Mondays only (new votes this week, all-time tallies, contact-info leavers), via new `getWeeklyRoadmapRecap()` in `roadmap-vote.ts`.
+
 ### Security hardening pass: rate limiting, CSP, secret rotation, SSL
 
 Follow-up to the July 2026 Upstash quota incident (`5f6e66f`). A three-agent audit (system, backend/API, frontend) produced a consolidated 35-item plan; every blocker, high, medium and low finding is fixed here, verified with `rtk tsc` (0 errors) and the full suite (1143/1143 passing, up from 1130).
@@ -26,6 +44,10 @@ Follow-up to the July 2026 Upstash quota incident (`5f6e66f`). A three-agent aud
 New shared helper `scripts/lib/github-token-pool.ts` (`buildTokenPool`, `acquireToken`, `makeHeaders`, `syncTokenFromHeaders`). It always hands out the token with the most remaining capacity, decrements optimistically so concurrent callers spread across tokens before response headers land, syncs real `x-ratelimit-remaining`/`reset` after each call, and waits for the earliest reset only when every token is spent. On a 403/429 the current token is parked (`remaining = 0`) and the next call rotates to a fresh one.
 
 Steps 1 to 4 now use this pool. Steps 5 to 7 (`backfill-user-top-repos`, `backfill-languages`, `batch-index-followers`) already had their own rotation. Effective REST ceiling goes from 5000 to 20000 req/hr on 4 tokens (~1277 req/token for the badge_cache sweep), so a full maintenance run completes in one pass without hitting the reset wall. Verified: `rtk tsc` clean, `backfill-repo-languages --dry-run` fetches with rotation and no token warnings.
+
+### Docs
+
+- `d09ebda`: `CLAUDE.md` said Next.js 16.2.6, `node_modules/next/package.json` had 16.2.11 actually installed. Corrected.
 
 ---
 
