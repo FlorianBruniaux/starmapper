@@ -1,0 +1,25 @@
+docs/superpowers/plans/2026-07-31-github-restriction-recovery.md
+  s_0a0a17497804b1::t_751392fe7685ba 24
+  s_0a0a17497804b1::t_5a4cf950170654 215
+  s_0a0a17497804b1::t_ca77c2d929becf 403
+  s_0a0a17497804b1::t_497bc3fb67eedc 648
+  s_0a0a17497804b1::t_0e0d922917ea2b 742
+  s_0a0a17497804b1::t_6b24e1fbc426e5 750
+  s_0a0a17497804b1::t_f5832599be848d 772
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.19",
+  "base_commit_sha": "4c1e0555318048f89ab9e885483728bbfde41217",
+  "prompts": {},
+  "sessions": {
+    "s_0a0a17497804b1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "56e73de0-441a-4109-b8a6-49dba223336e",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "Florian BRUNIAUX <florian@bruniaux.com>"
+    }
+  }
+}
