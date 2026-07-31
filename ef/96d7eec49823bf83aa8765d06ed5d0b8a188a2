@@ -1,0 +1,21 @@
+src/app/api/engaged/[owner]/[repo]/__tests__/route.test.ts
+  s_0a0a17497804b1::t_b0412b5d0b781b 1-88
+src/app/api/engaged/[owner]/[repo]/route.ts
+  s_0a0a17497804b1::t_617b26a6783b92 1-59
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.19",
+  "base_commit_sha": "ef96d7eec49823bf83aa8765d06ed5d0b8a188a2",
+  "prompts": {},
+  "sessions": {
+    "s_0a0a17497804b1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "56e73de0-441a-4109-b8a6-49dba223336e",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "Florian BRUNIAUX <florian@bruniaux.com>"
+    }
+  }
+}
