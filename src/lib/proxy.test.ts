@@ -54,6 +54,22 @@ describe("proxy.ts", () => {
         "/api/stats/*/*/top-users",
       );
       expect(__TEST_ONLY__.routeKey("/api/watch/facebook/react")).toBe("/api/watch/*/*");
+      expect(__TEST_ONLY__.routeKey("/api/reconstruct/facebook/react")).toBe(
+        "/api/reconstruct/*/*",
+      );
+      expect(__TEST_ONLY__.routeKey("/api/engaged/facebook/react")).toBe("/api/engaged/*/*");
+    });
+
+    // Without "engaged"/"reconstruct" in STATIC_ROUTE_SEGMENTS both collapse to /api/*/*/*
+    // and share one bucket with every other 3-segment dynamic route.
+    it("keeps reconstruct and engaged on distinct rate-limit keys", async () => {
+      const { __TEST_ONLY__ } = await import("@/proxy");
+      expect(__TEST_ONLY__.routeKey("/api/reconstruct/a/b")).not.toBe(
+        __TEST_ONLY__.routeKey("/api/engaged/a/b"),
+      );
+      expect(__TEST_ONLY__.routeKey("/api/reconstruct/a/b")).not.toBe(
+        __TEST_ONLY__.routeKey("/api/stargazer-cache/a/b"),
+      );
     });
 
     it("leaves fully-static paths unchanged", async () => {
@@ -97,6 +113,22 @@ describe("proxy.ts", () => {
       const { __TEST_ONLY__ } = await import("@/proxy");
       expect(__TEST_ONLY__.classifyRoute("POST", "/api/chunk")).toBe("post");
       expect(__TEST_ONLY__.classifyRoute("DELETE", "/api/news/item/1")).toBe("post");
+    });
+
+    // Both serve the same bulk per-user PII as /api/stargazer-cache (login, name, company,
+    // location, followers, coordinates). Falling through to moderate-get would give them
+    // 60 req/min with no Referer or sm-token check, 20x the sibling route's budget.
+    it("classifies stargazer-cache, reconstruct and engaged on the same tight GET tier", async () => {
+      const { __TEST_ONLY__ } = await import("@/proxy");
+      expect(__TEST_ONLY__.classifyRoute("GET", "/api/stargazer-cache/facebook/react")).toBe(
+        "stargazer-cache-get",
+      );
+      expect(__TEST_ONLY__.classifyRoute("GET", "/api/reconstruct/facebook/react")).toBe(
+        "stargazer-cache-get",
+      );
+      expect(__TEST_ONLY__.classifyRoute("GET", "/api/engaged/facebook/react")).toBe(
+        "stargazer-cache-get",
+      );
     });
 
     it("classifies GET /api/roadmap-vote as moderate-get and POST as post", async () => {

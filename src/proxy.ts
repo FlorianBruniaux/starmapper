@@ -104,6 +104,8 @@ const TIER_LIMITERS: Record<
   Ratelimit
 > = {
   "strict-get":          makeLimiter("rl:strict-get", 30, "60 s"),
+  // Shared by every bulk per-user dump (stargazer-cache, reconstruct, engaged). The key is
+  // `${ip}:${routeKey}`, so each route still gets its own 3/60s bucket, not a shared one.
   "stargazer-cache-get": makeLimiter("rl:stargazer-cache-get", 3, "60 s"),
   "moderate-get":        makeLimiter("rl:moderate-get", 60, "60 s"),
   "admin":               makeLimiter("rl:admin", 10, "60 s"),
@@ -123,11 +125,11 @@ const STATIC_ROUTE_SEGMENTS = new Set([
   "api", "admin", "atlas", "autocomplete", "badge", "badge-update", "cache-status", "chunk",
   "cleanup", "clear-geocache", "companies", "contributors", "contributors-badge-update",
   "contributors-chunk", "country-stats", "daily-digest", "delete-user", "dependencies",
-  "dependents", "devs", "explore", "feed", "follower-cache", "followers-chunk", "geo",
+  "dependents", "devs", "engaged", "explore", "feed", "follower-cache", "followers-chunk", "geo",
   "geo-velocity", "geocode", "global-map", "growth", "import-geocache", "in", "influential",
   "item", "json", "locations", "map", "map-image", "mcp", "nearby", "news", "organic-score",
-  "organic-score-stats", "points", "power", "profile", "recalculate-location", "refresh",
-  "refresh-grid-mv", "refresh-repo-stats", "refresh-trending", "repo-info", "repos",
+  "organic-score-stats", "points", "power", "profile", "recalculate-location", "reconstruct",
+  "refresh", "refresh-grid-mv", "refresh-repo-stats", "refresh-trending", "repo-info", "repos",
   "roadmap-vote", "rss", "stargazer-cache", "stats", "top", "top-users", "track", "trending",
   "user-details", "user-repos", "users", "vitals", "watch",
 ]);
@@ -233,8 +235,16 @@ const classifyRoute = (method: string, pathname: string): Tier => {
   // (origin check + HMAC + default rate limit) rather than bypassing middleware silently.
   if (method !== "GET" && method !== "HEAD") return "post";
 
-  // Stargazer-cache GET — returns up to 50k users in one shot, dedicated tight limiter
-  if (pathname.startsWith("/api/stargazer-cache/")) return "stargazer-cache-get";
+  // Bulk per-user dumps — one request returns login/name/company/location/followers/coords
+  // for every user of a repo. /api/reconstruct and /api/engaged serve the same class of data
+  // as /api/stargazer-cache and must not sit on a looser tier than it.
+  if (
+    pathname.startsWith("/api/stargazer-cache/") ||
+    pathname.startsWith("/api/reconstruct/") ||
+    pathname.startsWith("/api/engaged/")
+  ) {
+    return "stargazer-cache-get";
+  }
 
   // Strict GET — data-rich endpoints with per-user PII (logins, locations, coordinates)
   // Note: /api/repos is intentionally excluded — it only returns aggregate badge stats,
