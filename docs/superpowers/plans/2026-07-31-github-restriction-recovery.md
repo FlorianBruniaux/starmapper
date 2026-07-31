@@ -21,7 +21,7 @@
 
 ---
 
-## Track A: `/api/engaged/[owner]/[repo]` read route
+## Task 1: `/api/engaged/[owner]/[repo]` read route (Track A)
 
 Makes the already-shipped `EngagedCache` table (`570a367`, currently write-only) readable. Mirrors `src/app/api/stargazer-cache/[owner]/[repo]/route.ts` almost line for line.
 
@@ -212,7 +212,7 @@ git commit -m "feat(api): add engaged-audience read route"
 
 ---
 
-## Track B: `/api/reconstruct/[owner]/[repo]` read route
+## Task 2: `/api/reconstruct/[owner]/[repo]` read route (Track B)
 
 Ships ROADMAP.md Phase 1, currently unbuilt despite the doc calling it "the near-term win... does not wait on Phase 3" (`docs/ROADMAP.md:80`). Joins `star_event` and `github_user` on `login`, filtered by `owner`/`repo`. Zero new GitHub API calls, works purely off the 33M rows already in `star_event`.
 
@@ -400,7 +400,7 @@ git commit -m "feat(api): add star_event reconstruction read route"
 
 ---
 
-## Track C: wire the fallback chain into the repo page
+## Task 3: wire the fallback chain into the repo page (Track C)
 
 `src/hooks/use-repo-cache-loader.ts` currently gives up silently on a `stargazer_cache` miss (line 120: `if (!r.ok) { ...; return; }`, which is exactly the empty-map state the July 24 UI work (`bb179cd`) added a notice for). Insert `/api/reconstruct` then `/api/engaged` as fallbacks before that give-up, and track which source served the data so the UI never claims a degraded map is a full scan.
 
@@ -645,7 +645,7 @@ git commit -m "feat(map): fall back to reconstruct/engaged data, label honestly"
 
 ---
 
-## Track D: Phase 2 coverage metric
+## Task 4: Phase 2 coverage metric (Track D)
 
 `docs/ROADMAP.md:84` specs `0.3 * N / M` (N = distinct logins in `star_event` for the repo, M = live `stargazerCount`) instead of raw `N/M`, which overstates coverage ~3x since only 30% of `github_user` rows are geolocated. Neither the `BadgeCache.knownCount`/`coverageComputedAt` columns nor the computation exist yet.
 
@@ -739,7 +739,7 @@ git commit -m "feat(db): add coverage metric fields and weighted formula"
 
 ---
 
-## Track E: legal ToS read for Phase 3 (not code)
+## Task 90: legal ToS read for Phase 3, not code, not dispatched (Track E)
 
 `docs/ROADMAP.md:100` ranks this risk #1, BLOCKER: *"Pooling GraphQL quota across 3 accounts and 4 tokens is itself ToS-fragile... A legal/ToS read is required before Phase 3, this is not something to engineer around."* Checked during this planning pass: `claudedocs/audit-rgpd-legal-2026-04-17.md` (the only existing legal doc) has zero mentions of `starredRepositories`, pooling, or circumvention. It covers the stargazer-list scraping question only, not the crawler's multi-account quota-pooling question. No document answers this. Phase 0's own gate is already clear (`before-after-and-poc-plan.md`: 94.4% median leave-one-out recovery, threshold was 20%), so the crawler is blocked on this alone.
 
@@ -747,7 +747,7 @@ git commit -m "feat(db): add coverage metric fields and weighted formula"
 
 ---
 
-## Track F: resync `/roadmap` page copy (after Tracks A-C ship)
+## Task 5: resync `/roadmap` page copy (Track F, after Tasks 1-3 ship)
 
 Once Track C is live, option A's public claim ("Already shipping") stops being misleading, since the engaged-audience map becomes something a visitor can actually see. Do this last, not first: resyncing copy before the feature is visible just moves the same overclaim from README to `/roadmap`.
 
@@ -769,7 +769,7 @@ git commit -m "docs(roadmap): update option A copy now the map is visible"
 
 ---
 
-## Self-Review
+## Task 91: Self-Review notes, not a task
 
 **Spec coverage:** Track A covers making `EngagedCache` readable (the immediate gap found this session). Track B covers ROADMAP.md Phase 1 (explicitly "does not wait on Phase 3"). Track C covers the actual user-visible wiring both A and B need to matter at all, plus the honesty requirement (never label degraded data as a full scan). Track D covers ROADMAP.md Phase 2. Track E surfaces the Phase 3 BLOCKER as an explicit non-engineering action instead of leaving it silent in a doc. Track F closes the roadmap-page/reality gap flagged earlier this session, sequenced after the feature actually ships.
 
