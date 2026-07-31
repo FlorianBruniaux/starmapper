@@ -1,0 +1,21 @@
+src/app/api/reconstruct/[owner]/[repo]/__tests__/route.test.ts
+  s_0a0a17497804b1::t_2359e95af85ab2 1-78
+src/app/api/reconstruct/[owner]/[repo]/route.ts
+  s_0a0a17497804b1::t_e00aad38b1983a 1-66
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.19",
+  "base_commit_sha": "9ba28caa8ed07e3480f74efe230860a557d2b6ee",
+  "prompts": {},
+  "sessions": {
+    "s_0a0a17497804b1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "56e73de0-441a-4109-b8a6-49dba223336e",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "Florian BRUNIAUX <florian@bruniaux.com>"
+    }
+  }
+}
