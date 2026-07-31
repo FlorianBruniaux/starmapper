@@ -114,7 +114,7 @@
     "@types/topojson-client": "^3.1.5",
     "@types/topojson-specification": "^1.0.5",
     "@types/ws": "^8.18.1",
-    "@vitejs/plugin-react": "^6.0.2",
+    "@vitejs/plugin-react": "^6.0.4",
     "@vitest/coverage-v8": "^4.1.6",
     "eslint": "^10.7.0",
     "eslint-plugin-jsx-a11y": "^6.10.2",
