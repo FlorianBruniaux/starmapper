@@ -8,7 +8,7 @@ import { checkDbHealth, DB_CRITICAL_PCT } from "@/lib/db-health";
 import { jsonError, logError, getIP } from "@/lib/api-helpers";
 import { verifyToken, getSmSecrets, COOKIE_NAME } from "@/lib/api-token";
 import { hashIp } from "@/lib/ip-hash";
-import { getTallies, notifyVote, OPTIONS } from "@/lib/roadmap-vote";
+import { getTallies, notifyVote, type OPTIONS } from "@/lib/roadmap-vote";
 import type { NextRequest } from "next/server";
 
 const bodySchema = z.object({
