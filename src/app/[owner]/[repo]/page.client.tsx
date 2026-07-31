@@ -16,6 +16,7 @@ const RateLimitedModal = dynamic(() => import("@/components/map/rate-limited-mod
 const RepoNotFoundModal = dynamic(() => import("@/components/map/not-found-modal").then((m) => ({ default: m.RepoNotFoundModal })), { ssr: false });
 import { RateLimitOverlay } from "@/components/map/rate-limit-overlay";
 import { PreScanOverlay } from "@/components/map/pre-scan-overlay";
+import { DataSourceBadge } from "@/components/map/data-source-badge";
 import { StargazerMapDynamic } from "@/components/map/stargazer-map-dynamic";
 import { MapFloatingNav } from "@/components/map/map-floating-nav";
 import { CLUSTER_RADIUS } from "@/components/map/constants";
@@ -244,7 +245,7 @@ export default function MapPageClient({ owner, repo, initialRepoInfo, initialSta
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [owner, repo]); // initialRepoInfo is stable after mount — intentionally excluded
 
-  const { cacheCheckDone, lastDbScan } = useRepoCacheLoader({
+  const { cacheCheckDone, lastDbScan, dataSource } = useRepoCacheLoader({
     owner, repo, repoInfo,
     currentStars: initialRepoInfo?.stars,
     dispatch, setTotal, setCachedAt, setLatestStarredAt, setStatus, setServerStats,
@@ -565,6 +566,12 @@ export default function MapPageClient({ owner, repo, initialRepoInfo, initialSta
         findStatus={findStatus}
         organic={organicData ?? serverStats?.organic}
       />
+
+      {(dataSource === "reconstructed" || dataSource === "engaged") && (
+        <div className="absolute top-16 left-4 z-10">
+          <DataSourceBadge source={dataSource} />
+        </div>
+      )}
 
       {/* Shared-view banner — shown when URL encoded filters were detected on load */}
       {sharedView && (

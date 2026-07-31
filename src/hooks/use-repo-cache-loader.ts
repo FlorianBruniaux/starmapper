@@ -33,6 +33,7 @@ type Options = {
 type Result = {
   cacheCheckDone: boolean;
   lastDbScan: string | null;
+  dataSource: "cache" | "reconstructed" | "engaged" | null;
 };
 
 const donateLocalCacheToDb = (owner: string, repo: string, cache: LocalCache) => {
@@ -69,6 +70,7 @@ export const useRepoCacheLoader = ({
 }: Options): Result => {
   const [cacheCheckDone, setCacheCheckDone] = useState(false);
   const [lastDbScan, setLastDbScan] = useState<string | null>(null);
+  const [dataSource, setDataSource] = useState<"cache" | "reconstructed" | "engaged" | null>(null);
   // Local state is used when no external setter is provided (e.g. in tests).
   const [_serverStats, _setServerStats] = useState<RepoStats | null>(null);
   const setServerStats = externalSetServerStats ?? _setServerStats;
@@ -100,6 +102,7 @@ export const useRepoCacheLoader = ({
       setLatestStarredAt(validLocal.latestStarredAt ?? null);
       setStatus("cached");
       saveBookmark(owner, repo, validLocal.totalCount);
+      setDataSource("cache");
       setCacheCheckDone(true);
     }
 
@@ -118,7 +121,28 @@ export const useRepoCacheLoader = ({
           return;
         }
         if (!r.ok) {
-          if (validLocal) donateLocalCacheToDb(owner, repo, validLocal);
+          if (validLocal) {
+            donateLocalCacheToDb(owner, repo, validLocal);
+            return;
+          }
+          const reconstructRes = await fetch(`/api/reconstruct/${owner}/${repo}`, { signal: ac.signal });
+          if (reconstructRes.ok) {
+            const rd = await reconstructRes.json();
+            dispatch({ type: "set", points: rd.points, unmapped: rd.unmapped });
+            setTotal(rd.totalCount);
+            setStatus("cached");
+            setDataSource("reconstructed");
+            return;
+          }
+          const engagedRes = await fetch(`/api/engaged/${owner}/${repo}`, { signal: ac.signal });
+          if (engagedRes.ok) {
+            const ed = await engagedRes.json();
+            dispatch({ type: "set", points: ed.points, unmapped: ed.unmapped });
+            setTotal(ed.knownCount);
+            setStatus("cached");
+            setDataSource("engaged");
+            return;
+          }
           return;
         }
         const data = await r.json();
@@ -134,6 +158,7 @@ export const useRepoCacheLoader = ({
         setCachedAt(scannedMs);
         setLatestStarredAt(data.latestStarredAt ?? null);
         setStatus("cached");
+        setDataSource("cache");
         saveBookmark(owner, repo, data.totalCount);
         saveCache(owner, repo, {
           points: data.points,
@@ -195,5 +220,5 @@ export const useRepoCacheLoader = ({
     })();
   }, [owner, repo, setServerStats]);
 
-  return { cacheCheckDone, lastDbScan };
+  return { cacheCheckDone, lastDbScan, dataSource };
 };

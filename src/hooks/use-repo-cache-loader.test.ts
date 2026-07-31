@@ -181,4 +181,74 @@ describe("useRepoCacheLoader", () => {
     const { result } = renderHook(() => useRepoCacheLoader(makeOpts()));
     await waitFor(() => expect(result.current.cacheCheckDone).toBe(true));
   });
+
+  // ── fallback chain: reconstruct / engaged ─────────────────────────────────
+
+  it("falls back to /api/reconstruct when stargazer_cache 404s and no local cache", async () => {
+    mockLoadCache.mockReturnValue(null);
+    const reconstructPoints = [{ ...LOCAL_CACHE.points[0], login: "reconstructed-user" }];
+    mockFetch.mockImplementation((url: string) => {
+      if (url.includes("/api/stargazer-cache/")) return new Response(null, { status: 404 });
+      if (url.includes("/api/reconstruct/")) {
+        return jsonResponse({ points: reconstructPoints, unmapped: [], totalCount: 1 });
+      }
+      return new Response(null, { status: 404 });
+    });
+    const opts = makeOpts();
+    const { result } = renderHook(() => useRepoCacheLoader(opts));
+    await waitFor(() => expect(result.current.dataSource).toBe("reconstructed"));
+    expect(opts.dispatch).toHaveBeenCalledWith({ type: "set", points: reconstructPoints, unmapped: [] });
+    expect(opts.setTotal).toHaveBeenCalledWith(1);
+  });
+
+  it("falls back to /api/engaged when both stargazer_cache and /api/reconstruct 404", async () => {
+    mockLoadCache.mockReturnValue(null);
+    const engagedPoints = [{ ...LOCAL_CACHE.points[0], login: "engaged-user" }];
+    mockFetch.mockImplementation((url: string) => {
+      if (url.includes("/api/stargazer-cache/")) return new Response(null, { status: 404 });
+      if (url.includes("/api/reconstruct/")) return new Response(null, { status: 404 });
+      if (url.includes("/api/engaged/")) {
+        return jsonResponse({ points: engagedPoints, unmapped: [], knownCount: 1, starCount: 500, channels: ["fork"] });
+      }
+      return new Response(null, { status: 404 });
+    });
+    const opts = makeOpts();
+    const { result } = renderHook(() => useRepoCacheLoader(opts));
+    await waitFor(() => expect(result.current.dataSource).toBe("engaged"));
+    expect(opts.dispatch).toHaveBeenCalledWith({ type: "set", points: engagedPoints, unmapped: [] });
+    expect(opts.setTotal).toHaveBeenCalledWith(1);
+  });
+
+  it("dataSource stays null when every source 404s", async () => {
+    mockLoadCache.mockReturnValue(null);
+    mockFetch.mockResolvedValue(new Response(null, { status: 404 }));
+    const { result } = renderHook(() => useRepoCacheLoader(makeOpts()));
+    await waitFor(() => expect(result.current.cacheCheckDone).toBe(true));
+    expect(result.current.dataSource).toBeNull();
+  });
+
+  it("does not attempt reconstruct/engaged fallback when local cache exists (donates instead)", async () => {
+    mockLoadCache.mockReturnValue(LOCAL_CACHE);
+    mockFetch.mockImplementation((url: string) => {
+      if (url.includes("/api/stargazer-cache/")) return new Response(null, { status: 404 });
+      return new Response(JSON.stringify({ ok: true }), { status: 200 });
+    });
+    const { result } = renderHook(() => useRepoCacheLoader(makeOpts()));
+    await waitFor(() => expect(mockCompressToBase64).toHaveBeenCalled());
+    expect(mockFetch).not.toHaveBeenCalledWith(expect.stringContaining("/api/reconstruct/"), expect.anything());
+    expect(mockFetch).not.toHaveBeenCalledWith(expect.stringContaining("/api/engaged/"), expect.anything());
+    expect(result.current.dataSource).toBe("cache");
+  });
+
+  it("dataSource is 'cache' when stargazer_cache 200s with fresh data", async () => {
+    mockLoadCache.mockReturnValue(null);
+    mockFetch.mockImplementation((url: string) => {
+      if (url.includes("/api/stargazer-cache/")) {
+        return jsonResponse({ points: LOCAL_CACHE.points, unmapped: [], totalCount: 1, scannedAt: new Date(2000).toISOString(), latestStarredAt: null });
+      }
+      return new Response(null, { status: 404 });
+    });
+    const { result } = renderHook(() => useRepoCacheLoader(makeOpts()));
+    await waitFor(() => expect(result.current.dataSource).toBe("cache"));
+  });
 });
