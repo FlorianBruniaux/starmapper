@@ -1,0 +1,19 @@
+src/app/api/roadmap-vote/route.ts
+  s_0a0a17497804b1::t_325e95d11bfc3e 11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.19",
+  "base_commit_sha": "887c16286bccc4c1d632804bd89e2d8d6a5df779",
+  "prompts": {},
+  "sessions": {
+    "s_0a0a17497804b1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "56e73de0-441a-4109-b8a6-49dba223336e",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "Florian BRUNIAUX <florian@bruniaux.com>"
+    }
+  }
+}
