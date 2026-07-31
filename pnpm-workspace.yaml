@@ -9,5 +9,7 @@ ignoredBuiltDependencies:
 overrides:
   hono: ">=4.12.25"
   '@hono/node-server': 1.19.13
-  postcss: 8.5.14
+  postcss: ">=8.5.18"
   vite: 8.0.5
+  fast-uri: ">=3.1.4"
+  sharp: ">=0.35.0"
