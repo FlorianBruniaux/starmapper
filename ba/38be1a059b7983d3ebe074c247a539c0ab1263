@@ -1,0 +1,22 @@
+src/hooks/use-repo-cache-loader.test.ts
+  s_0a0a17497804b1::t_e21b96b720dd02 243-259
+src/hooks/use-repo-cache-loader.ts
+  s_0a0a17497804b1::t_81e5924e6402b1 130-133,142-145
+  s_0a0a17497804b1::t_bd20521b23dde5 128-129,134,146
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.19",
+  "base_commit_sha": "ba38be1a059b7983d3ebe074c247a539c0ab1263",
+  "prompts": {},
+  "sessions": {
+    "s_0a0a17497804b1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "56e73de0-441a-4109-b8a6-49dba223336e",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "Florian BRUNIAUX <florian@bruniaux.com>"
+    }
+  }
+}
