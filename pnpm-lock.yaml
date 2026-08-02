@@ -39,7 +39,7 @@ importers:
         version: 1.38.0
       '@vercel/functions':
         specifier: ^3.7.6
-        version: 3.7.6(ws@8.21.0)
+        version: 3.7.6(ws@8.21.1)
       lucide-react:
         specifier: ^1.25.0
         version: 1.25.0(react@19.2.7)
@@ -71,8 +71,8 @@ importers:
         specifier: ^2.0.2
         version: 2.0.2
       ws:
-        specifier: ^8.21.0
-        version: 8.21.0
+        specifier: ^8.21.1
+        version: 8.21.1
       zod:
         specifier: ^4.4.3
         version: 4.4.3
@@ -3412,8 +3412,8 @@ packages:
   world-atlas@2.0.2:
     resolution: {integrity: sha512-IXfV0qwlKXpckz1FhwXVwKRjiIhOnWttOskm5CtxMsjgE/MXAYRHWJqgXOpM8IkcPBoXnyTU5lFHcYa5ChG0LQ==}
 
-  ws@8.21.0:
-    resolution: {integrity: sha512-Vsp28b7DRcimFQvrqu2Wek3z1iYxDCWqHYB8Qsnk/S4RfaCQzPGPyBNuVjJV3cd6UiKtUtp6sNM77gWvzcCH+g==}
+  ws@8.21.1:
+    resolution: {integrity: sha512-+0NTnW77fFN/DjQi6k/Sq/Yvk4Sgajw7urW8V+asjXnRgDs9gyGkdb7EzgfhA4goXsRIZKE28fzIXBHEzhuiWw==}
     engines: {node: '>=10.0.0'}
     peerDependencies:
       bufferutil: ^4.0.1
@@ -4655,11 +4655,11 @@ snapshots:
     dependencies:
       execa: 5.1.1
 
-  '@vercel/functions@3.7.6(ws@8.21.0)':
+  '@vercel/functions@3.7.6(ws@8.21.1)':
     dependencies:
       '@vercel/oidc': 3.8.1
     optionalDependencies:
-      ws: 8.21.0
+      ws: 8.21.1
 
   '@vercel/oidc@3.8.1':
     dependencies:
@@ -6647,7 +6647,7 @@ snapshots:
 
   world-atlas@2.0.2: {}
 
-  ws@8.21.0: {}
+  ws@8.21.1: {}
 
   xdg-app-paths@5.5.1:
     dependencies:
