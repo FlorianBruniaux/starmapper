@@ -108,6 +108,74 @@ describe("GET /api/repos", () => {
     });
   });
 
+  // ── Limit handling ─────────────────────────────────────────────────────────
+
+  // fetchReposData carries "use cache", so its `limit` argument is part of the cache
+  // key. The route snaps it onto a five-rung ladder and slices afterwards, which caps
+  // the number of distinct cache entries without changing any caller's payload.
+  // The pool actually sent to Postgres is the second tagged-template argument of the
+  // first $queryRaw call (repos-query.ts `LIMIT ${pool}`).
+  describe("limit handling", () => {
+    const seedRows = (n: number) => {
+      vi.resetAllMocks();
+      mockQueryRaw
+        .mockResolvedValueOnce(
+          Array.from({ length: n }, (_, i) => makeRow(`owner${i}`, `repo${i}`)),
+        )
+        .mockResolvedValueOnce([{ count: BigInt(n) }]);
+    };
+
+    const poolArg = () => mockQueryRaw.mock.calls[0]?.[1];
+
+    it("snaps limit=1 to the first ladder rung but returns exactly 1 row", async () => {
+      seedRows(12);
+      const json = await (await GET(makeReq({ limit: "1" }))).json();
+      expect(poolArg()).toBe(12);
+      expect(json.repos).toHaveLength(1);
+    });
+
+    it("snaps an off-ladder limit up to the next rung and slices back down", async () => {
+      seedRows(50);
+      const json = await (await GET(makeReq({ limit: "37" }))).json();
+      expect(poolArg()).toBe(50);
+      expect(json.repos).toHaveLength(37);
+    });
+
+    it("caps a limit above the ladder max at 5000", async () => {
+      seedRows(3);
+      await GET(makeReq({ limit: "99999" }));
+      expect(poolArg()).toBe(5000);
+    });
+
+    it("falls back to 500 on a non-numeric limit instead of forwarding NaN", async () => {
+      seedRows(3);
+      await GET(makeReq({ limit: "abc" }));
+      expect(poolArg()).toBe(500);
+      expect(Number.isNaN(poolArg())).toBe(false);
+    });
+
+    it("clamps a zero or negative limit to 1", async () => {
+      seedRows(12);
+      const json = await (await GET(makeReq({ limit: "-5" }))).json();
+      expect(poolArg()).toBe(12);
+      expect(json.repos).toHaveLength(1);
+    });
+
+    it("defaults to 500 when no limit is given", async () => {
+      seedRows(3);
+      await GET(makeReq());
+      expect(poolArg()).toBe(500);
+    });
+
+    it("keeps the diverse path equivalent: quantised pool, exact slice", async () => {
+      seedRows(200);
+      const json = await (await GET(makeReq({ limit: "6", diverse: "true" }))).json();
+      // quantiseLimit(6) = 12, then repos-query widens it: min(12 * 40, 500) = 480
+      expect(poolArg()).toBe(480);
+      expect(json.repos).toHaveLength(6);
+    });
+  });
+
   // ── Error handling ─────────────────────────────────────────────────────────
 
   describe("error handling", () => {
