@@ -103,9 +103,13 @@ export const POST = defineRoute(badgeUpdateSchema, async (req: NextRequest, body
       },
     });
 
-    // Invalidate cached data for this repo immediately after scan completion
+    // Invalidate cached data for this repo immediately after scan completion.
+    // repo-stats is the tag set at [owner]/[repo]/page.tsx on fetchStats. It was declared
+    // there but never invalidated anywhere; the old 60s revalidate hid that. Now that the
+    // window is 600s, this call is what keeps the stats panel correct right after a scan.
     revalidateTag(`badge-${key.owner}-${key.repo}`, "hours");
     revalidateTag(`repo-info-${key.owner}-${key.repo}`, { expire: 300 });
+    revalidateTag(`repo-stats-${key.owner}-${key.repo}`, { expire: 300 });
     revalidateTag("repos", { expire: 300 }); // landing page + /repos list
 
     return NextResponse.json({ ok: true });

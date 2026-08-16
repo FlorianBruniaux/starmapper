@@ -4,19 +4,26 @@
 import { Suspense } from "react";
 import { cacheLife, cacheTag } from "next/cache";
 import ProfilePageClient from "./page.client";
+import { fetchProfile as queryProfile } from "@/lib/profile-query";
+import { logError } from "@/lib/api-helpers";
 import type { ProfileResponse } from "@/app/api/profile/[login]/route";
-
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://starmapper.bruniaux.com";
 
 const fetchProfile = async (login: string): Promise<ProfileResponse | null> => {
   "use cache";
   cacheTag(`profile-${login}`);
-  cacheLife("minutes");
+  // Profile data only moves when /api/profile/[login]/refresh runs, and that route carries
+  // a 1h internal cooldown plus a 10-per-hour rate limit. Rewriting every 60s for data that
+  // cannot change more than hourly threw away 59 writes out of 60. The refresh route now
+  // invalidates this tag, so a manual refresh is still visible immediately.
+  cacheLife({ stale: 300, revalidate: 1800, expire: 86400 });
   try {
-    const res = await fetch(`${APP_URL}/api/profile/${encodeURIComponent(login)}`);
-    if (!res.ok) return null;
-    return res.json() as Promise<ProfileResponse>;
-  } catch {
+    // Direct call rather than fetch(APP_URL + "/api/profile/…"): the handler only wraps
+    // queryProfile and turns its discriminated result into a status code. Both 400 and 404
+    // collapse to null here, exactly as the previous `!res.ok` check did.
+    const result = await queryProfile(login);
+    return result.ok ? result.profile : null;
+  } catch (err) {
+    logError("profile page", err);
     return null;
   }
 };

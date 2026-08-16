@@ -3,6 +3,7 @@
 
 import type { NextRequest} from "next/server";
 import { NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { prisma } from "@/lib/db";
 import { geocode } from "@/lib/geocoder";
 import { jsonError, extractGhToken, logError } from "@/lib/api-helpers";
@@ -129,6 +130,10 @@ export const POST = async (
         },
       });
 
+      // profile/[login]/page.tsx tags its cached fetch `profile-${login}` but nothing ever
+      // invalidated it. This route exists precisely to make a refresh visible, so it has to
+      // drop the SSR entry too, otherwise the user waits out the cacheLife window.
+      revalidateTag(`profile-${login}`, { expire: 300 });
       return NextResponse.json<RefreshResponse>({ ok: true, updatedAt: now.toISOString() });
     }
 
@@ -180,6 +185,7 @@ export const POST = async (
       },
     });
 
+    revalidateTag(`profile-${login}`, { expire: 300 });
     return NextResponse.json<RefreshResponse>({ ok: true, updatedAt: now.toISOString() });
   } catch (err) {
     logError("profile/refresh", err);
