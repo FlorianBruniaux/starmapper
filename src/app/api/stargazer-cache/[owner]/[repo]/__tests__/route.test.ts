@@ -2,6 +2,7 @@
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { gunzipSync } from "node:zlib";
 import { NextRequest } from "next/server";
 
 // ─── Mocks ───────────────────────────────────────────────────────────────────
@@ -26,10 +27,13 @@ vi.mock("@/lib/db", () => ({
 
 const POINTS = [{ login: "a", lat: 1, lng: 2 }];
 const UNMAPPED = [{ login: "b" }];
+// Full-precision coordinates, to prove the route still rounds them down to 2 decimals.
+const PRECISE_POINTS = [{ login: "a", lat: 48.856614, lng: 2.3522219 }];
 
 vi.mock("@/lib/compression", () => ({
   decompressGzBase64: (v: unknown) => {
     if (v === "gz_points") return POINTS;
+    if (v === "gz_precise") return PRECISE_POINTS;
     if (v === "gz_unmapped") return UNMAPPED;
     return [];
   },
@@ -43,9 +47,11 @@ const makeReq = (
   owner: string,
   repo: string,
   ifNoneMatch?: string,
+  acceptEncoding?: string,
 ): [NextRequest, { params: Promise<{ owner: string; repo: string }> }] => {
   const headers: Record<string, string> = {};
   if (ifNoneMatch) headers["if-none-match"] = ifNoneMatch;
+  if (acceptEncoding) headers["accept-encoding"] = acceptEncoding;
   const req = new NextRequest(`http://localhost/api/stargazer-cache/${owner}/${repo}`, { headers });
   return [req, { params: Promise.resolve({ owner, repo }) }];
 };
@@ -165,6 +171,67 @@ describe("GET /api/stargazer-cache/[owner]/[repo]", () => {
       const [req, ctx] = makeReq("octocat", "hello");
       const json = await (await GET(req, ctx)).json();
       expect(json.latestStarredAt).toBeNull();
+    });
+  });
+
+  // ── Transport ──────────────────────────────────────────────────────────────
+
+  // Fast Origin Transfer bills the function-to-edge segment, upstream of the CDN's own
+  // client-facing compression, so this payload crossed it uncompressed. The envelope and
+  // every field stay identical; only the encoding changes.
+  describe("gzip transport", () => {
+    beforeEach(() => {
+      mockCacheFind
+        .mockResolvedValueOnce(metaRow)
+        .mockResolvedValueOnce(fullRow);
+    });
+
+    it("gzips the body when the client advertises gzip", async () => {
+      const [req, ctx] = makeReq("octocat", "hello", undefined, "gzip, deflate, br");
+      const res = await GET(req, ctx);
+      expect(res.headers.get("content-encoding")).toBe("gzip");
+      const raw = Buffer.from(await res.arrayBuffer());
+      // gzip magic number, proving the body really is compressed
+      expect(raw[0]).toBe(0x1f);
+      expect(raw[1]).toBe(0x8b);
+      const json = JSON.parse(gunzipSync(raw).toString("utf8"));
+      expect(json.totalCount).toBe(42);
+      expect(json.points).toHaveLength(1);
+    });
+
+    it("returns identity when the client does not advertise gzip", async () => {
+      const [req, ctx] = makeReq("octocat", "hello", undefined, "identity");
+      const res = await GET(req, ctx);
+      expect(res.headers.get("content-encoding")).toBeNull();
+      const json = await res.json();
+      expect(json.totalCount).toBe(42);
+    });
+
+    it("always sets Vary: Accept-Encoding, both encodings share an s-maxage cache", async () => {
+      for (const enc of ["gzip", "identity"]) {
+        // Re-seed per iteration: the route consumes two findUnique calls each time.
+        mockCacheFind.mockReset();
+        mockCacheFind.mockResolvedValueOnce(metaRow).mockResolvedValueOnce(fullRow);
+        const [req, ctx] = makeReq("octocat", "hello", undefined, enc);
+        const res = await GET(req, ctx);
+        expect(res.headers.get("vary")).toBe("Accept-Encoding");
+      }
+    });
+
+    // Anti-regression guard. The stored blob is written client-side without validation,
+    // so this rounding is the data-minimisation control, not an optimisation. Anyone
+    // tempted to "simplify" by returning the blob verbatim has to break this test first.
+    it("keeps lat/lng rounded to 2 decimals on the gzip path", async () => {
+      // Drop the describe-level seeding, this test needs full-precision points instead.
+      mockCacheFind.mockReset();
+      mockCacheFind
+        .mockResolvedValueOnce(metaRow)
+        .mockResolvedValueOnce({ ...fullRow, points: "gz_precise" });
+      const [req, ctx] = makeReq("octocat", "hello", undefined, "gzip");
+      const res = await GET(req, ctx);
+      const json = JSON.parse(gunzipSync(Buffer.from(await res.arrayBuffer())).toString("utf8"));
+      expect(json.points[0].lat).toBe(48.86);
+      expect(json.points[0].lng).toBe(2.35);
     });
   });
 

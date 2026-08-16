@@ -6,10 +6,11 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { validateOwnerRepo } from "@/lib/api-validation";
 import { jsonError, logError } from "@/lib/api-helpers";
+import { jsonMaybeGzip } from "@/lib/http-gzip";
 import { decompressGzBase64 } from "@/lib/compression";
 
 export const GET = async (
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ owner: string; repo: string }> },
 ) => {
   const { owner, repo } = await params;
@@ -39,7 +40,7 @@ export const GET = async (
     // ETag based on scannedAt — browser validates freshness on every request.
     // If data hasn't changed → 304 (no payload transfer).
     const etag = `"${meta.scannedAt.getTime()}"`;
-    if (_req.headers.get("if-none-match") === etag) {
+    if (req.headers.get("if-none-match") === etag) {
       return new NextResponse(null, { status: 304, headers: { ETag: etag } });
     }
 
@@ -64,7 +65,12 @@ export const GET = async (
         : {}),
     }));
 
-    return NextResponse.json(
+    // The JSON envelope, the 2-decimal rounding above and the avatarUrl reconstruction all
+    // stay; only the transport changes. Returning the stored blob verbatim would drop the
+    // rounding, which is a data-minimisation control and not an optimisation: the blob is
+    // written client-side without validation on the modern write path.
+    return jsonMaybeGzip(
+      req,
       {
         points: pointsWithAvatar,
         unmapped,
@@ -72,7 +78,7 @@ export const GET = async (
         scannedAt: cached.scannedAt.toISOString(),
         latestStarredAt: cached.latestStarredAt?.toISOString() ?? null,
       },
-      { headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=3600", ETag: etag } },
+      { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=3600", ETag: etag },
     );
   } catch (err) {
     logError("stargazer-cache GET", err);

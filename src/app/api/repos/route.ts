@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 
-import { NextResponse } from "next/server";
 import { fetchReposData } from "@/lib/repos-query";
 import type { RepoItem } from "@/lib/repos-query";
 import { jsonError, logError } from "@/lib/api-helpers";
+import { jsonMaybeGzip } from "@/lib/http-gzip";
 
 // Re-exported for consumers that already import MappedRepo from this route.
 export type { RepoItem as MappedRepo } from "@/lib/repos-query";
@@ -49,13 +49,10 @@ export const GET = async (req: Request) => {
       diverse,
     );
 
-    return NextResponse.json(
+    return jsonMaybeGzip(
+      req,
       { repos: repos.slice(0, limit), total } satisfies ReposResponse,
-      {
-        headers: {
-          "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
-        },
-      },
+      { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600" },
     );
   } catch (err) {
     // Re-throw Next.js prerender interrupts (NEXT_PRERENDER_INTERRUPTED) so the

@@ -11,6 +11,9 @@ import { safeEqual } from "@/lib/api-token";
 export const jsonError = (message: string, status: number) =>
   NextResponse.json({ error: message }, { status });
 
+// jsonMaybeGzip lives in src/lib/http-gzip.ts, not here: this module is imported by the
+// OG image routes, which run on the edge runtime where `node:zlib` does not exist.
+
 /**
  * Extract the real client IP — resistant to spoofing on Vercel deployments.
  *
@@ -52,7 +55,10 @@ export const requireAdminAuth = (req: NextRequest): NextResponse | null => {
   const allowedIPs = process.env.ADMIN_ALLOWED_IPS;
   if (allowedIPs) {
     const ip = getIP(req);
-    const allowed = allowedIPs.split(",").map((s) => s.trim()).filter(Boolean);
+    const allowed = allowedIPs
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
     if (!allowed.includes(ip)) {
       logAdminAudit(req, "denied_ip");
       return jsonError("not_found", 404);
@@ -70,10 +76,15 @@ export const requireAdminAuth = (req: NextRequest): NextResponse | null => {
 };
 
 /** Structured audit log for admin endpoint access — captured by Vercel Logs. */
-const logAdminAudit = (req: NextRequest, action: "allowed" | "denied_ip" | "denied_secret"): void => {
+const logAdminAudit = (
+  req: NextRequest,
+  action: "allowed" | "denied_ip" | "denied_secret",
+): void => {
   const ip = getIP(req);
   const path = new URL(req.url).pathname;
-  console.log(`[ADMIN_AUDIT] ts=${new Date().toISOString()} ip=${ip} path=${path} action=${action}`);
+  console.log(
+    `[ADMIN_AUDIT] ts=${new Date().toISOString()} ip=${ip} path=${path} action=${action}`,
+  );
 };
 
 /**
@@ -112,7 +123,9 @@ export const logError = (tag: string, err: unknown): void => {
  * Returns null on any non-200 response (202 = stats computing, 403 = forbidden)
  * so callers can treat it as "data unavailable" rather than 0.
  */
-export const parseGitHubCountFromLink = async (res: Response): Promise<number | null> => {
+export const parseGitHubCountFromLink = async (
+  res: Response,
+): Promise<number | null> => {
   if (!res.ok) return null;
   const link = res.headers.get("link");
   if (link) {
@@ -123,7 +136,7 @@ export const parseGitHubCountFromLink = async (res: Response): Promise<number | 
   }
   // No Link header → all items fit on this page; parse the array length
   try {
-    const items = await res.json() as unknown[];
+    const items = (await res.json()) as unknown[];
     return Array.isArray(items) ? items.length : null;
   } catch {
     return null;

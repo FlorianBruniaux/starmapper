@@ -2,6 +2,7 @@
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { gunzipSync } from "node:zlib";
 
 // ─── Mocks ───────────────────────────────────────────────────────────────────
 
@@ -20,10 +21,12 @@ import { GET } from "@/app/api/repos/route";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-const makeReq = (params: Record<string, string> = {}) => {
+const makeReq = (params: Record<string, string> = {}, acceptEncoding?: string) => {
   const url = new URL("http://localhost/api/repos");
   for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
-  return new Request(url.toString());
+  return new Request(url.toString(), {
+    headers: acceptEncoding ? { "accept-encoding": acceptEncoding } : {},
+  });
 };
 
 const makeRow = (owner: string, repo: string, overrides: Record<string, unknown> = {}) => ({
@@ -173,6 +176,35 @@ describe("GET /api/repos", () => {
       // quantiseLimit(6) = 12, then repos-query widens it: min(12 * 40, 500) = 480
       expect(poolArg()).toBe(480);
       expect(json.repos).toHaveLength(6);
+    });
+  });
+
+  // ── Transport ──────────────────────────────────────────────────────────────
+
+  describe("gzip transport", () => {
+    it("gzips the body when the client advertises gzip", async () => {
+      const res = await GET(makeReq({}, "gzip, deflate, br"));
+      expect(res.headers.get("content-encoding")).toBe("gzip");
+      const raw = Buffer.from(await res.arrayBuffer());
+      expect(raw[0]).toBe(0x1f);
+      expect(raw[1]).toBe(0x8b);
+      const json = JSON.parse(gunzipSync(raw).toString("utf8"));
+      expect(json.repos).toHaveLength(1);
+      expect(json.total).toBe(1);
+    });
+
+    it("returns identity when the client does not advertise gzip", async () => {
+      const res = await GET(makeReq({}, "identity"));
+      expect(res.headers.get("content-encoding")).toBeNull();
+      expect((await res.json()).total).toBe(1);
+    });
+
+    // Mandatory: this route carries s-maxage=300, so without Vary the CDN could hand a
+    // cached gzip body to an identity client.
+    it("sets Vary: Accept-Encoding alongside the s-maxage cache header", async () => {
+      const res = await GET(makeReq({}, "gzip"));
+      expect(res.headers.get("vary")).toBe("Accept-Encoding");
+      expect(res.headers.get("cache-control")).toContain("s-maxage=300");
     });
   });
 
