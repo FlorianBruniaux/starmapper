@@ -8,6 +8,12 @@ export const runtime = "edge";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
+// Social crawlers hit one OG image per repo path and that path space is unvalidated.
+// Without this, every scanner-invented /{owner}/{repo} rendered a fresh ImageResponse
+// plus an uncached GitHub call. A repo card is stable for a day; the star count on it
+// is decorative.
+export const revalidate = 86400;
+
 export default async function Image({ params }: { params: Promise<{ owner: string; repo: string }> }) {
   const { owner, repo } = await params;
 
@@ -18,6 +24,7 @@ export default async function Image({ params }: { params: Promise<{ owner: strin
     const token = process.env.GITHUB_TOKEN;
     const res = await fetch(`https://api.github.com/repos/${owner}/${repo}`, {
       headers: { Accept: "application/vnd.github.v3+json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      next: { revalidate: 86400 },
     });
     if (res.ok) {
       const data = await res.json() as { stargazers_count?: number; description?: string; owner?: { avatar_url?: string } };
