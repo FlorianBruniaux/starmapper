@@ -39,24 +39,11 @@ type Props = {
 };
 
 export const ShareModal = ({
-  open,
-  onClose,
-  owner,
-  repo,
-  repoInfo,
-  points,
-  displayStats,
-  captureCanvas,
-  buildFilteredUrl,
-  filterCountry,
-  filterCity,
-  filterCompany,
-  filterFollowers,
-  filterDate,
-  followerMapFilter,
-  viewMode,
-  liDraft,
-  onLiDraftChange,
+  open, onClose, owner, repo, repoInfo, points, displayStats,
+  captureCanvas, buildFilteredUrl,
+  filterCountry, filterCity, filterCompany, filterFollowers,
+  filterDate, followerMapFilter, viewMode,
+  liDraft, onLiDraftChange,
 }: Props) => {
   const [liPanelOpen, setLiPanelOpen] = useState(false);
   const [liCopied, setLiCopied] = useState(false);
@@ -66,30 +53,21 @@ export const ShareModal = ({
   const [filterLinkCopied, setFilterLinkCopied] = useState(false);
 
   const hasActiveFilters = !!(
-    filterCountry ||
-    filterCity ||
-    filterCompany ||
-    filterFollowers > 0 ||
-    filterDate !== "all" ||
-    followerMapFilter !== "all" ||
-    viewMode !== "clusters"
+    filterCountry || filterCity || filterCompany ||
+    filterFollowers > 0 || filterDate !== "all" ||
+    followerMapFilter !== "all" || viewMode !== "clusters"
   );
 
   const handleDownload = useCallback(async () => {
     const dataUrl = await captureCanvas();
     if (!dataUrl) return;
     const mapImg = new Image();
-    await new Promise<void>((res) => {
-      mapImg.onload = () => res();
-      mapImg.src = dataUrl;
-    });
-    const W = mapImg.naturalWidth,
-      H = mapImg.naturalHeight;
+    await new Promise<void>((res) => { mapImg.onload = () => res(); mapImg.src = dataUrl; });
+    const W = mapImg.naturalWidth, H = mapImg.naturalHeight;
     const S = W / 1440;
 
     const out = document.createElement("canvas");
-    out.width = W;
-    out.height = H;
+    out.width = W; out.height = H;
     const ctx = out.getContext("2d")!;
 
     ctx.drawImage(mapImg, 0, 0);
@@ -102,52 +80,32 @@ export const ShareModal = ({
     const boxH = Math.round(66 * S);
     const tagsH = displayStats?.topCountries.length ? Math.round(34 * S) : 0;
     const footerH = Math.round(28 * S);
-    const panelH =
-      pad + avatarSize + Math.round(12 * S) + boxH + tagsH + footerH + pad;
+    const panelH = pad + avatarSize + Math.round(12 * S) + boxH + tagsH + footerH + pad;
 
     ctx.fillStyle = SHARE_IMAGE.surfaceOverlay;
     ctx.beginPath();
     ctx.roundRect(panelX, panelY, panelW, panelH, Math.round(12 * S));
     ctx.fill();
-    ctx.strokeStyle = SHARE_IMAGE.border;
-    ctx.lineWidth = 1;
-    ctx.stroke();
+    ctx.strokeStyle = SHARE_IMAGE.border; ctx.lineWidth = 1; ctx.stroke();
 
     if (repoInfo.avatar) {
       try {
-        const img = new Image();
-        img.crossOrigin = "anonymous";
-        await new Promise<void>((res, rej) => {
-          img.onload = () => res();
-          img.onerror = rej;
-          img.src = repoInfo.avatar!;
-        });
+        const img = new Image(); img.crossOrigin = "anonymous";
+        await new Promise<void>((res, rej) => { img.onload = () => res(); img.onerror = rej; img.src = repoInfo.avatar!; });
         ctx.save();
         ctx.beginPath();
-        ctx.arc(
-          panelX + pad + avatarSize / 2,
-          panelY + pad + avatarSize / 2,
-          avatarSize / 2,
-          0,
-          Math.PI * 2,
-        );
+        ctx.arc(panelX + pad + avatarSize / 2, panelY + pad + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2);
         ctx.clip();
         ctx.drawImage(img, panelX + pad, panelY + pad, avatarSize, avatarSize);
         ctx.restore();
-      } catch {
-        /* skip avatar on CORS error */
-      }
+      } catch { /* skip avatar on CORS error */ }
     }
 
     const nameSize = Math.round(13 * S);
     ctx.fillStyle = SHARE_IMAGE.foreground;
     ctx.font = `bold ${nameSize}px -apple-system, BlinkMacSystemFont, sans-serif`;
     ctx.textAlign = "left";
-    ctx.fillText(
-      `${owner}/${repo}`,
-      panelX + pad + avatarSize + Math.round(10 * S),
-      panelY + pad + Math.round(nameSize * 0.85),
-    );
+    ctx.fillText(`${owner}/${repo}`, panelX + pad + avatarSize + Math.round(10 * S), panelY + pad + Math.round(nameSize * 0.85));
 
     const statsY = panelY + pad + avatarSize + Math.round(12 * S);
     const gap = Math.round(6 * S);
@@ -155,22 +113,13 @@ export const ShareModal = ({
     const statsArr = [
       { v: repoInfo.stars, label: "★ STARS", color: SHARE_IMAGE.statAmber },
       { v: points.length, label: "MAPPED", color: SHARE_IMAGE.linkBlue },
-      {
-        v: displayStats?.countryCount ?? 0,
-        label: "COUNTRIES",
-        color: SHARE_IMAGE.statGreen,
-      },
+      { v: displayStats?.countryCount ?? 0, label: "COUNTRIES", color: SHARE_IMAGE.statGreen },
     ];
     for (let i = 0; i < 3; i++) {
       const bx = panelX + pad + i * (bW + gap);
       ctx.fillStyle = SHARE_IMAGE.panelBg;
-      ctx.beginPath();
-      ctx.roundRect(bx, statsY, bW, boxH, Math.round(8 * S));
-      ctx.fill();
-      const valStr =
-        statsArr[i].v >= 1000
-          ? `${(statsArr[i].v / 1000).toFixed(1)}k`
-          : String(statsArr[i].v);
+      ctx.beginPath(); ctx.roundRect(bx, statsY, bW, boxH, Math.round(8 * S)); ctx.fill();
+      const valStr = statsArr[i].v >= 1000 ? `${(statsArr[i].v / 1000).toFixed(1)}k` : String(statsArr[i].v);
       const valSize = Math.round(20 * S);
       ctx.fillStyle = statsArr[i].color;
       ctx.font = `bold ${valSize}px -apple-system, sans-serif`;
@@ -191,19 +140,10 @@ export const ShareModal = ({
         const tw = ctx.measureText(text).width + Math.round(14 * S);
         const tH = Math.round(20 * S);
         ctx.fillStyle = SHARE_IMAGE.surfaceOverlay80;
-        ctx.beginPath();
-        ctx.roundRect(tagX, tagsY, tw, tH, Math.round(5 * S));
-        ctx.fill();
-        ctx.strokeStyle = SHARE_IMAGE.border;
-        ctx.lineWidth = 1;
-        ctx.stroke();
-        ctx.fillStyle = SHARE_IMAGE.muted;
-        ctx.textAlign = "left";
-        ctx.fillText(
-          text,
-          tagX + Math.round(7 * S),
-          tagsY + Math.round(14 * S),
-        );
+        ctx.beginPath(); ctx.roundRect(tagX, tagsY, tw, tH, Math.round(5 * S)); ctx.fill();
+        ctx.strokeStyle = SHARE_IMAGE.border; ctx.lineWidth = 1; ctx.stroke();
+        ctx.fillStyle = SHARE_IMAGE.muted; ctx.textAlign = "left";
+        ctx.fillText(text, tagX + Math.round(7 * S), tagsY + Math.round(14 * S));
         tagX += tw + Math.round(6 * S);
       }
     }
@@ -214,11 +154,7 @@ export const ShareModal = ({
     ctx.fillStyle = SHARE_IMAGE.linkBlue;
     ctx.font = `${Math.round(11 * S)}px -apple-system, sans-serif`;
     ctx.textAlign = "left";
-    ctx.fillText(
-      "🌍 starmapper.bruniaux.com",
-      Math.round(12 * S),
-      brandY + Math.round(18 * S),
-    );
+    ctx.fillText("🌍 starmapper.bruniaux.com", Math.round(12 * S), brandY + Math.round(18 * S));
 
     out.toBlob((blob) => {
       if (!blob) return;
@@ -231,102 +167,57 @@ export const ShareModal = ({
 
   if (!open) return null;
 
-  const starsLabel =
-    repoInfo.stars >= 1000
-      ? `${(repoInfo.stars / 1000).toFixed(1)}k`
-      : repoInfo.stars;
+  const starsLabel = repoInfo.stars >= 1000
+    ? `${(repoInfo.stars / 1000).toFixed(1)}k`
+    : repoInfo.stars;
 
   return (
     <Modal open={open} onClose={onClose} title="Share" maxWidth="max-w-lg">
       {/* Preview card */}
-      <div
-        id="share-card"
-        className="mx-5 my-4 bg-background rounded-xl p-6 border border-border"
-      >
+      <div id="share-card" className="mx-5 my-4 bg-background rounded-xl p-6 border border-border">
         <div className="flex items-center gap-3 mb-4">
-          {repoInfo.avatar && (
-            <NextImage
-              src={repoInfo.avatar}
-              alt=""
-              width={40}
-              height={40}
-              sizes="40px"
-              className="w-10 h-10 rounded-full border border-border flex-shrink-0"
-              unoptimized
-            />
-          )}
+          {repoInfo.avatar && <NextImage src={repoInfo.avatar} alt="" width={40} height={40} sizes="40px" className="w-10 h-10 rounded-full border border-border flex-shrink-0" unoptimized />}
           <div className="min-w-0">
             <div className="text-muted text-xs leading-tight">{owner}</div>
-            <div className="text-foreground font-bold text-base leading-tight truncate">
-              {repo}
-            </div>
-            {repoInfo.description && (
-              <div className="text-muted text-xs mt-1 line-clamp-1">
-                {repoInfo.description}
-              </div>
-            )}
+            <div className="text-foreground font-bold text-base leading-tight truncate">{repo}</div>
+            {repoInfo.description && <div className="text-muted text-xs mt-1 line-clamp-1">{repoInfo.description}</div>}
           </div>
         </div>
         <div className="flex gap-4 mb-4">
           <div className="flex-1 bg-surface rounded-lg p-3 text-center">
-            <div className="text-2xl font-bold text-accent-orange">
-              {repoInfo.stars >= 1000
-                ? `${(repoInfo.stars / 1000).toFixed(1)}k`
-                : repoInfo.stars}
-            </div>
-            <div className="text-2xs text-muted-subtle uppercase tracking-wide mt-0.5">
-              ★ stars
-            </div>
+            <div className="text-2xl font-bold text-accent-orange">{repoInfo.stars >= 1000 ? `${(repoInfo.stars / 1000).toFixed(1)}k` : repoInfo.stars}</div>
+            <div className="text-2xs text-muted-subtle uppercase tracking-wide mt-0.5">★ stars</div>
           </div>
           <div className="flex-1 bg-surface rounded-lg p-3 text-center">
-            <div className="text-2xl font-bold text-accent-blue">
-              {points.length.toLocaleString()}
-            </div>
-            <div className="text-2xs text-muted-subtle uppercase tracking-wide mt-0.5">
-              mapped
-            </div>
+            <div className="text-2xl font-bold text-accent-blue">{points.length.toLocaleString()}</div>
+            <div className="text-2xs text-muted-subtle uppercase tracking-wide mt-0.5">mapped</div>
           </div>
           {displayStats && (
             <div className="flex-1 bg-surface rounded-lg p-3 text-center">
-              <div className="text-2xl font-bold text-accent-green">
-                {displayStats.countryCount}
-              </div>
-              <div className="text-2xs text-muted-subtle uppercase tracking-wide mt-0.5">
-                countries
-              </div>
+              <div className="text-2xl font-bold text-accent-green">{displayStats.countryCount}</div>
+              <div className="text-2xs text-muted-subtle uppercase tracking-wide mt-0.5">countries</div>
             </div>
           )}
         </div>
         {displayStats && displayStats.topCountries.slice(0, 3).length > 0 && (
           <div className="flex gap-2 flex-wrap">
             {displayStats.topCountries.slice(0, 3).map(([country, count]) => (
-              <span
-                key={country}
-                className="text-xs bg-surface border border-border rounded px-2 py-1 text-muted"
-              >
+              <span key={country} className="text-xs bg-surface border border-border rounded px-2 py-1 text-muted">
                 {country} · {count}
               </span>
             ))}
           </div>
         )}
         <div className="mt-4 pt-3 border-t border-border-subtle flex items-center justify-between">
-          <span className="text-2xs text-muted-subtle">
-            <span aria-hidden="true">🌍</span> starmapper.bruniaux.com
-          </span>
-          <span className="text-2xs text-muted-subtle">
-            + live map in download
-          </span>
+          <span className="text-2xs text-muted-subtle"><span aria-hidden="true">🌍</span> starmapper.bruniaux.com</span>
+          <span className="text-2xs text-muted-subtle">+ live map in download</span>
         </div>
       </div>
 
       <div className="px-5 pb-5 flex flex-col gap-3">
         <div className="flex gap-3">
           <button
-            onClick={() => {
-              navigator.clipboard
-                .writeText(window.location.href)
-                .catch(() => {});
-            }}
+            onClick={() => { navigator.clipboard.writeText(window.location.href).catch(() => {}); }}
             className="flex-1 bg-surface-alt hover:bg-border border border-border text-muted hover:text-foreground text-sm py-2 rounded-lg transition-colors"
           >
             Copy link
@@ -347,56 +238,27 @@ export const ShareModal = ({
             rel="noopener noreferrer"
             className="flex-1 flex items-center justify-center gap-2 bg-surface-alt hover:bg-border border border-border text-muted hover:text-foreground text-xs py-2 rounded-lg transition-colors"
           >
-            <svg
-              width="13"
-              height="13"
-              viewBox="0 0 1200 1227"
-              fill="currentColor"
-            >
-              <path d="M714.163 519.284 1160.89 0h-105.86L667.137 450.887 357.328 0H0l468.492 681.821L0 1226.37h105.866l409.625-476.152 327.181 476.152H1200L714.137 519.284h.026ZM569.165 687.828l-47.468-67.894-377.686-540.24h162.604l304.797 435.991 47.468 67.894 396.2 566.721H892.476L569.165 687.854v-.026Z" />
-            </svg>
+            <svg width="13" height="13" viewBox="0 0 1200 1227" fill="currentColor"><path d="M714.163 519.284 1160.89 0h-105.86L667.137 450.887 357.328 0H0l468.492 681.821L0 1226.37h105.866l409.625-476.152 327.181 476.152H1200L714.137 519.284h.026ZM569.165 687.828l-47.468-67.894-377.686-540.24h162.604l304.797 435.991 47.468 67.894 396.2 566.721H892.476L569.165 687.854v-.026Z"/></svg>
             Share on X
           </a>
           <button
             onClick={() => {
-              onLiDraftChange(
-                `🌍 ${repo} just hit ${starsLabel} ⭐ with stargazers from ${displayStats?.countryCount ?? "?"} countries!\n\n${typeof window !== "undefined" ? window.location.href : ""}`,
-              );
+              onLiDraftChange(`🌍 ${repo} just hit ${starsLabel} ⭐ with stargazers from ${displayStats?.countryCount ?? "?"} countries!\n\n${typeof window !== "undefined" ? window.location.href : ""}`);
               setLiCopied(false);
               setLiPanelOpen(true);
             }}
             className="flex-1 flex items-center justify-center gap-2 bg-surface-alt hover:bg-border border border-border text-muted hover:text-foreground text-xs py-2 rounded-lg transition-colors"
           >
-            <svg
-              aria-hidden="true"
-              width="13"
-              height="13"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-            >
-              <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
-            </svg>
+            <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
             Share on LinkedIn
           </button>
 
           {/* LinkedIn pre-share panel */}
           {liPanelOpen && (
-            <div
-              ref={liPanelRef}
-              tabIndex={-1}
-              className="absolute inset-0 z-10 rounded-xl bg-background border border-border flex flex-col p-4 gap-3"
-            >
+            <div ref={liPanelRef} tabIndex={-1} className="absolute inset-0 z-10 rounded-xl bg-background border border-border flex flex-col p-4 gap-3">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-foreground">
-                  Your LinkedIn post
-                </span>
-                <button
-                  onClick={() => setLiPanelOpen(false)}
-                  aria-label="Close LinkedIn post"
-                  className="text-muted hover:text-foreground text-lg leading-none"
-                >
-                  <span aria-hidden="true">×</span>
-                </button>
+                <span className="text-xs font-medium text-foreground">Your LinkedIn post</span>
+                <button onClick={() => setLiPanelOpen(false)} aria-label="Close LinkedIn post" className="text-muted hover:text-foreground text-lg leading-none"><span aria-hidden="true">×</span></button>
               </div>
               <textarea
                 value={liDraft}
@@ -405,10 +267,7 @@ export const ShareModal = ({
                 aria-label="LinkedIn post draft"
                 className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-xs text-foreground resize-none focus:outline-none focus:border-accent-blue"
               />
-              <p className="text-2xs text-muted-subtle">
-                LinkedIn doesn&apos;t allow pre-filled text. Copy this post,
-                then paste it after clicking below.
-              </p>
+              <p className="text-2xs text-muted-subtle">LinkedIn doesn&apos;t allow pre-filled text. Copy this post, then paste it after clicking below.</p>
               <div className="flex gap-2">
                 <button
                   onClick={() => {
@@ -418,31 +277,17 @@ export const ShareModal = ({
                   }}
                   className={`flex-1 bg-surface-alt border border-border text-xs py-2 rounded-lg transition-colors hover:bg-border ${liCopied ? "text-accent-green" : "text-muted"}`}
                 >
-                  <span aria-live="polite">
-                    {liCopied ? "✓ Copied!" : "Copy text"}
-                  </span>
+                  <span aria-live="polite">{liCopied ? "✓ Copied!" : "Copy text"}</span>
                 </button>
                 <button
                   onClick={() => {
                     navigator.clipboard.writeText(liDraft).catch(() => {});
-                    window.open(
-                      `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}`,
-                      "_blank",
-                      "noopener,noreferrer",
-                    );
+                    window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}`, "_blank", "noopener,noreferrer");
                     setLiPanelOpen(false);
                   }}
                   className="flex-1 bg-brand-linkedin hover:bg-brand-linkedin-hover text-white text-xs py-2 rounded-lg transition-colors font-medium flex items-center justify-center gap-1.5"
                 >
-                  <svg
-                    aria-hidden="true"
-                    width="11"
-                    height="11"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                  >
-                    <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
-                  </svg>
+                  <svg aria-hidden="true" width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
                   Post on LinkedIn →
                 </button>
               </div>
@@ -453,9 +298,7 @@ export const ShareModal = ({
         {/* README badge */}
         <div className="border border-border rounded-lg overflow-hidden">
           <div className="px-3 py-2 border-b border-border-subtle">
-            <span className="text-foreground text-xs font-medium">
-              README badge
-            </span>
+            <span className="text-foreground text-xs font-medium">README badge</span>
           </div>
           <div className="bg-surface-alt px-3 py-2">
             <code className="text-muted text-xs break-all select-all leading-relaxed whitespace-pre-wrap">
@@ -475,20 +318,8 @@ export const ShareModal = ({
               }}
               className="w-full flex items-center justify-center gap-2 bg-surface-alt hover:bg-border border border-border text-muted hover:text-foreground text-xs py-1.5 rounded-md transition-colors"
             >
-              <svg
-                width="12"
-                height="12"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <rect x="9" y="9" width="13" height="13" rx="2" />
-                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-              </svg>
-              <span aria-live="polite">
-                {badgeCopied ? "Copied ✓" : "Copy HTML"}
-              </span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              <span aria-live="polite">{badgeCopied ? "Copied ✓" : "Copy HTML"}</span>
             </button>
           </div>
         </div>
@@ -497,66 +328,30 @@ export const ShareModal = ({
         {hasActiveFilters && (
           <div className="border border-border rounded-lg overflow-hidden">
             <div className="px-3 py-2 border-b border-border-subtle flex items-center justify-between">
-              <span className="text-foreground text-xs font-medium">
-                Current view
-              </span>
+              <span className="text-foreground text-xs font-medium">Current view</span>
               <div className="flex flex-wrap gap-1">
-                {filterCountry && (
-                  <span className="text-2xs bg-surface border border-border-subtle rounded px-1.5 py-0.5 text-muted">
-                    {filterCountry}
-                  </span>
-                )}
-                {filterCity && (
-                  <span className="text-2xs bg-surface border border-border-subtle rounded px-1.5 py-0.5 text-muted">
-                    {filterCity}
-                  </span>
-                )}
-                {filterCompany && (
-                  <span className="text-2xs bg-surface border border-border-subtle rounded px-1.5 py-0.5 text-muted">
-                    {filterCompany}
-                  </span>
-                )}
-                {filterFollowers > 0 && (
-                  <span className="text-2xs bg-surface border border-border-subtle rounded px-1.5 py-0.5 text-muted">
-                    {filterFollowers}+ flw
-                  </span>
-                )}
-                {filterDate !== "all" && (
-                  <span className="text-2xs bg-surface border border-border-subtle rounded px-1.5 py-0.5 text-muted">
-                    {filterDate}
-                  </span>
-                )}
-                {followerMapFilter !== "all" && (
-                  <span className="text-2xs bg-surface border border-border-subtle rounded px-1.5 py-0.5 text-muted">
-                    {followerMapFilter}
-                  </span>
-                )}
-                {viewMode !== "clusters" && (
-                  <span className="text-2xs bg-surface border border-border-subtle rounded px-1.5 py-0.5 text-muted">
-                    {viewMode}
-                  </span>
-                )}
+                {filterCountry && <span className="text-2xs bg-surface border border-border-subtle rounded px-1.5 py-0.5 text-muted">{filterCountry}</span>}
+                {filterCity && <span className="text-2xs bg-surface border border-border-subtle rounded px-1.5 py-0.5 text-muted">{filterCity}</span>}
+                {filterCompany && <span className="text-2xs bg-surface border border-border-subtle rounded px-1.5 py-0.5 text-muted">{filterCompany}</span>}
+                {filterFollowers > 0 && <span className="text-2xs bg-surface border border-border-subtle rounded px-1.5 py-0.5 text-muted">{filterFollowers}+ flw</span>}
+                {filterDate !== "all" && <span className="text-2xs bg-surface border border-border-subtle rounded px-1.5 py-0.5 text-muted">{filterDate}</span>}
+                {followerMapFilter !== "all" && <span className="text-2xs bg-surface border border-border-subtle rounded px-1.5 py-0.5 text-muted">{followerMapFilter}</span>}
+                {viewMode !== "clusters" && <span className="text-2xs bg-surface border border-border-subtle rounded px-1.5 py-0.5 text-muted">{viewMode}</span>}
               </div>
             </div>
             <div className="px-3 py-2 flex items-center gap-2">
               <code className="flex-1 text-xs text-muted truncate">
-                {typeof window !== "undefined"
-                  ? buildFilteredUrl().replace(/^https?:\/\//, "")
-                  : ""}
+                {typeof window !== "undefined" ? buildFilteredUrl().replace(/^https?:\/\//, "") : ""}
               </code>
               <button
                 onClick={() => {
-                  navigator.clipboard
-                    .writeText(buildFilteredUrl())
-                    .catch(() => {});
+                  navigator.clipboard.writeText(buildFilteredUrl()).catch(() => {});
                   setFilterLinkCopied(true);
                   setTimeout(() => setFilterLinkCopied(false), 2000);
                 }}
                 className="flex-shrink-0 bg-surface-alt hover:bg-border border border-border text-muted hover:text-foreground text-xs px-3 py-1.5 rounded-md transition-colors"
               >
-                <span aria-live="polite">
-                  {filterLinkCopied ? "✓ Copied" : "Copy"}
-                </span>
+                <span aria-live="polite">{filterLinkCopied ? "✓ Copied" : "Copy"}</span>
               </button>
             </div>
           </div>
