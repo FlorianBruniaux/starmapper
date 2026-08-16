@@ -534,8 +534,17 @@ export const proxy = async (req: NextRequest): Promise<NextResponse> => {
 
 export const config = {
   matcher: [
-    // All routes except Next.js internals and static files
-    "/((?!_next/static|_next/image|favicon\\.ico).*)",
+    // Next.js internals plus every static asset extension.
+    //
+    // The non-API branch of this middleware mints a nonce, builds a full CSP and sets an
+    // HMAC cookie on every response it touches. None of that means anything on a PNG, and
+    // a Set-Cookie header makes the response uncacheable at the CDN, so every cookie-less
+    // client (that is, every bot) was pulling public/world-110m.json (105 KB) from the
+    // origin instead of the edge.
+    //
+    // The `.json$` clause does not catch API routes: /api/feed/[login]/json has no dot,
+    // and no other route ends in a literal extension.
+    "/((?!_next/static|_next/image|favicon\\.ico|.*\\.(?:png|jpg|jpeg|svg|webp|ico|json|txt|xml|webmanifest)$).*)",
   ],
 };
 
