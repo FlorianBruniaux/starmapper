@@ -42,7 +42,15 @@ export const fetchReposData = async (
 ): Promise<{ repos: RepoItem[]; total: number }> => {
   "use cache";
   cacheTag("repos");
-  cacheLife({ revalidate: 300, stale: 3600 });
+  // /repos accounted for 13% of the project's ISR write units on 2026-08-16 (40.9k over
+  // 7 days), second only to /trending, because a 300s window rewrote every cache entry
+  // 288 times a day whether or not the underlying rows moved.
+  //
+  // Lengthening it costs no freshness: badge-update/route.ts:113 and
+  // contributors-badge-update/route.ts:43 both call revalidateTag("repos") when a scan
+  // completes, so a genuinely new repo still lands on the page at once. The window only
+  // governs how long an idle cache entry survives untouched.
+  cacheLife({ revalidate: 21600, stale: 3600, expire: 86400 });
 
   const pool = diverse ? Math.min(limit * 40, 500) : limit;
 
