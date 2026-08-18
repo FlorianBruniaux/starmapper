@@ -1,0 +1,19 @@
+docs/firewall-config.json
+  s_bf002407078bf7::t_d0e0ff436e1900 1-182
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "c7ba02fb584dd26194ebe493a5355e753b6795c4",
+  "prompts": {},
+  "sessions": {
+    "s_bf002407078bf7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e86d3f49-425a-461e-a736-3b6c7057c86e",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Florian BRUNIAUX <florian@bruniaux.com>"
+    }
+  }
+}
