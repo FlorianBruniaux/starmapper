@@ -92,6 +92,8 @@ pnpm db:pull                     # Full dump + restore: prod → local
 
 make maintenance                 # Interactive wizard: checkboxes per step, dry-run prompt, then calls maintenance.sh
 pnpm stats:views                 # Analytics overview (last 7 days, top 20)
+pnpm ops:firewall-snapshot       # Record the live Vercel WAF config into docs/firewall-config.json
+pnpm ops:firewall-snapshot --check  # Exit 1 if that file no longer matches production
 
 # ─── Indexing new repos ───────────────────────────────────────────────────────
 make auto-index                  # Discover + scan 100 new trending repos → Neon prod (default)

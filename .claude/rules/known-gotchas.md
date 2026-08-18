@@ -136,6 +136,19 @@ Ce bug a cassé 122/123 caches du batch indexer (nosia : 2/208 mappés au lieu d
 
 `src/lib/user-cache.ts` appelle `checkDbHealth()` avant chaque write. Si le DB est > 95% capacité, les writes `GitHubUser`/`StarEvent` sont silencieusement ignorés. Intentionnel.
 
+## WAF : la règle de bypass camo doit rester en position 1
+
+Les cartes embarquées dans les README passent par le proxy image de GitHub (`github-camo`), qui frappe **uniquement** `/api/map-image/*`, environ 2 400 requêtes par jour. Camo n'exécute pas de JavaScript : un challenge le bloque aussi sûrement qu'un deny.
+
+Les règles WAF s'évaluent de haut en bas et la première qui deny ou challenge arrête la chaîne. La règle `Bypass GitHub camo and badge embeds` doit donc rester au-dessus de toute règle terminale, en particulier si le managed ruleset Bot Protection passe un jour de `log` à `challenge`.
+
+```bash
+vercel firewall rules list           # vérifier l'ordre
+vercel firewall rules reorder "Bypass GitHub camo and badge embeds" --first --yes
+```
+
+Après toute modification publiée, relancer `pnpm ops:firewall-snapshot` pour que `docs/firewall-config.json` reflète la production. Le script refuse de tourner tant que des drafts sont en attente, ce qui évite d'enregistrer un état qui ne sert pas le trafic.
+
 ---
 
 **Auto-loaded**: ce fichier est chargé automatiquement à chaque session.
