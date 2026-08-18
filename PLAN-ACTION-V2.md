@@ -39,7 +39,7 @@ Le ratio n'a pas bougé, ce qui veut dire que le cache continue de fonctionner c
 
 La famille `/trending` pèse **233 396 écritures sur 313 734, soit 74,4 %**. Avec `/repos` à 13,0 %, deux pages de liste concentrent **87 % du poste de coût numéro un**. Tout le travail fait sur les routes `[owner]/[repo]` dans la PR #125 ne touchait pas la vraie cause.
 
-## 2. La cause racine : une entrée de cache de 5 Mo réécrite toutes les 5 minutes
+## 2. La cause racine : une entrée de cache de 14,7 Mo réécrite toutes les 5 minutes
 
 `src/lib/trending-query.ts:79` définit `fetchTrendingMap()`, qui construit un tableau de points de carte et le met en cache :
 
@@ -59,15 +59,55 @@ Le cron `/api/admin/refresh-trending` tourne toutes les 6 heures et appelle `rev
 
 | Changement | Fichier | Facteur | Statut |
 |---|---|---|---|
-| `revalidate: 300` → `21600` | `trending-query.ts`, les deux fonctions | ÷ 72 sur la fréquence | **appliqué** |
-| `revalidate: 300` → `21600` | `repos-query.ts:45` | ÷ 72 sur la fréquence | **appliqué** |
-| `MAX_MAP_POINTS: 30_000` → `5_000` | `trending-query.ts:33` | ÷ 6 sur la taille | à valider visuellement |
+| `revalidate: 300` → `21600` | `trending-query.ts`, les deux fonctions | ÷ 72 sur la fréquence | **appliqué**, commit `7ad81a1` |
+| `revalidate: 300` → `21600` | `repos-query.ts:45` | ÷ 72 sur la fréquence | **appliqué**, commit `7ad81a1` |
 
-Les deux premiers ne coûtent aucune fraîcheur, et c'est le point qui les rend sûrs. `revalidateTag("trending")` est appelé par le cron toutes les 6 heures, `revalidateTag("repos")` l'est par `badge-update/route.ts:113` et `contributors-badge-update/route.ts:43` à la fin de chaque scan. La fenêtre ne gouverne que la durée de vie d'une entrée que personne n'a invalidée.
+Aucun des deux ne coûte de fraîcheur, et c'est le point qui les rend sûrs. `revalidateTag("trending")` est appelé par le cron toutes les 6 heures, `revalidateTag("repos")` l'est par `badge-update/route.ts:113` et `contributors-badge-update/route.ts:43` à la fin de chaque scan. La fenêtre ne gouverne que la durée de vie d'une entrée que personne n'a invalidée.
 
-Le troisième reste ouvert : la carte trending groupe ses points en clusters, donc 5 000 points rendent probablement la même image que 30 000. À regarder sur `localhost:3000/trending` avant de trancher, c'est la seule inconnue du lot.
+Calcul de l'économie, en supposant que seules les invalidations par tag subsistent :
 
-Économie attendue sur `/trending` et `/repos`, en ne comptant que le changement de fenêtre : **3,80 $/mois** sur 5,45 $. Le poste ISR passerait sous 1,70 $.
+| Famille | Avant / jour | Après / jour |
+|---|---|---|
+| `/trending` | 33 342 | ≈ 800 |
+| `/repos` | 5 848 | ≈ 500 |
+| reste | 5 629 | 5 629 |
+| **total** | **44 819** | **≈ 6 900** |
+
+Le poste ISR Writes passe de **5,45 $ à environ 0,84 $ par mois**, soit **4,61 $ d'économie**. Il cesse d'être le premier poste de la facture.
+
+### Pourquoi je retire la piste `MAX_MAP_POINTS`
+
+Le plan initial proposait de descendre le cap de 30 000 à 5 000 points. Deux mesures faites après coup me font retirer cette recommandation.
+
+Le cap mord réellement : les cinq dépôts du top trending totalisent **108 207 points cartographiés**, dont 98 556 pour `practical-tutorials/project-based-learning` à lui seul. Les 14,7 Mo sont donc une taille réelle et non une borne théorique. Jusque-là l'argument tenait.
+
+Mais `StargazerPoint` porte onze champs, et `stargazer-map.tsx:187-193` les lit **tous** pour construire les popups : `name`, `bio`, `company`, `location`, `followers`, `avatarUrl`, `linkedinUrl`. Couper le nombre de points dégrade les compteurs de clusters affichés à l'utilisateur, alléger chaque point vide les popups. Les deux sont des régressions produit, pas des optimisations.
+
+Et surtout, après le correctif de fenêtre, la famille `/trending` coûte de l'ordre de **0,10 $ par mois**. Diviser sa taille par six en ferait gagner huit centimes contre une dégradation visible. Le rapport ne se défend plus.
+
+La seule micro-optimisation qui resterait gratuite est de ne pas stocker `avatarUrl`, que `trending-query.ts` reconstruit lui-même depuis `login` avant de le mettre en cache, et que le client pourrait reconstruire à l'identique. Cela vaut environ 1,2 Mo sur 14,7, soit 8 %, soit moins d'un centime par mois désormais. À laisser.
+
+## 2 bis. Ce que devient la facture, et pourquoi cela change la stratégie
+
+Une fois le correctif de fenêtre appliqué, plus aucun poste ne domine. Voici l'ensemble des lignes mesurables, ramenées au mois, fenêtre 7 jours au 18/08 :
+
+| Poste | Mesure 7 jours | Par mois | Coût |
+|---|---|---|---|
+| Fast Origin Transfer | 4,96 Go | 21,3 Go | **1,45 $** |
+| Image Optimization | 3 686 transformations | 16 000 | **0,96 $** |
+| ISR Writes après correctif | : | 0,21 M | **0,84 $** |
+| Fluid Active CPU | 3 818 s | 4,6 h | **0,67 $** |
+| Observability Events (estimation) | : | ≈ 1,05 M | ≈ 1,26 $ |
+| ISR Reads | 45 401 | 0,20 M | 0,08 $ |
+| Function Invocations | 34 763 | 0,15 M | 0,07 $ |
+
+Six lignes entre 0,07 $ et 1,45 $. Chercher la prochaine optimisation applicative reviendrait à gratter des dizaines de centimes, poste par poste, sur du code qui marche.
+
+**C'est exactement ce qui donne sa valeur au firewall.** Une requête bloquée n'entre dans aucune de ces lignes : ni CDN Request, ni Fast Data Transfer, ni invocation de fonction, ni invocation de middleware, ni écriture ISR, ni événement d'observabilité. Elle disparaît en amont de la facturation, pas à l'intérieur.
+
+Avec 60 % du trafic venant de sept hébergeurs, le filtre attaque les sept lignes en une seule fois, pour un coût de mise en œuvre nul. L'ordre de grandeur est de **2,50 $ par mois**, davantage que toute optimisation de code restante, et sans toucher au produit.
+
+Un chiffre secondaire mérite d'être noté au passage : le middleware tourne **18 125 fois par jour** contre 4 966 invocations de fonction, soit sur 52 % des requêtes. Le resserrement du matcher dans la PR #125 (commit `a01c6c4`) vise précisément cette ligne, et son effet sera lisible sur `vercel.middleware_invocation.count` après merge.
 
 ## 3. État réel du firewall
 
@@ -225,7 +265,11 @@ Déclencheur de rollback sur la règle 4 : si `challenge` dépasse 500 par jour 
 
 ## 9. Ce que je n'ai pas pu établir
 
-`vercel.isr_operation.write_bytes` renvoie une moyenne par intervalle et non un total, ce qui rend le rapport octets/unité incohérent avec le compte d'unités. J'ai donc raisonné uniquement sur `write_units`, qui est la grandeur facturée à 4,00 $ le million. La taille de 5 Mo de l'entrée `fetchTrendingMap` est une estimation dérivée de `MAX_MAP_POINTS = 30_000` et de la forme de `StargazerPoint`, pas une mesure directe.
+`vercel.isr_operation.write_bytes` renvoie une moyenne par intervalle et non un total, ce qui rend le rapport octets/unité incohérent avec le compte d'unités. J'ai donc raisonné uniquement sur `write_units`, qui est la grandeur facturée à 4,00 $ le million.
+
+La taille de 14,7 Mo de l'entrée `fetchTrendingMap` vient du commentaire de `trending-query.ts:32`, et le fait que le cap de 30 000 morde réellement est confirmé par requête sur la base de production (108 207 points cartographiés sur les cinq dépôts du top). Le découpage en unités d'environ 220 Ko, lui, est déduit du quotient 19 266 / 288 et non d'une documentation Next.js. Le correctif ne dépend pas de cette déduction : la fenêtre de revalidation est trop courte quel que soit le mode de découpage.
+
+La ligne Observability Events du tableau §2 bis est la seule estimation du document. Aucune métrique de la CLI ne l'expose, je l'ai déduite du volume de requêtes multiplié par le tarif de 1,20 $ le million. À vérifier sur la facture.
 
 Le taux de capture réel du managed ruleset Bot Protection face à un Chrome headless reste inconnu tant que la règle 4 n'a pas tourné 24 h.
 
