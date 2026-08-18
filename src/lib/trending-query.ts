@@ -32,6 +32,19 @@ const MAP_REPOS_LIMIT = 5;
 // Hard cap: 30k points × ~490 bytes ≈ 14.7 MB, safely under Vercel's 19 MB ISR fallback limit.
 const MAX_MAP_POINTS = 30_000;
 
+// Both cached functions below share this window, and the map one is why it matters.
+// fetchTrendingMap caches ~14.7 MB, which Next splits into roughly 67 ISR write units.
+// At the previous revalidate of 300s that was 288 rewrites a day, so ~19.3k write units
+// daily on /trending alone: 74% of the project's entire ISR write bill, for a page that
+// served 3 function invocations that day. Measured 2026-08-16 via
+// `vercel metrics vercel.isr_operation.write_units --group-by route`.
+//
+// 21600s matches the only thing that actually changes the data: the 6-hourly cron at
+// /api/admin/refresh-trending, which calls revalidateTag("trending") and so still
+// refreshes the page immediately on every real update. The window is the ceiling for
+// when nothing happens, not the refresh cadence.
+const TRENDING_CACHE_LIFE = { revalidate: 21600, stale: 3600, expire: 86400 };
+
 // Returns null when trending_repos_mv is empty (not yet initialized).
 export const fetchTrendingRepos = async (): Promise<{
   repos: TrendingRepo[];
@@ -39,7 +52,7 @@ export const fetchTrendingRepos = async (): Promise<{
 } | null> => {
   "use cache";
   cacheTag("trending");
-  cacheLife({ revalidate: 300, stale: 3600 });
+  cacheLife(TRENDING_CACHE_LIFE);
 
   const rows = await prisma.$queryRaw<MvRow[]>`
     SELECT owner, repo, stars_7d, stars_30d, stars_90d, language, "totalCount" AS total_count
@@ -79,7 +92,7 @@ export const fetchTrendingRepos = async (): Promise<{
 export const fetchTrendingMap = async (): Promise<StargazerPoint[]> => {
   "use cache";
   cacheTag("trending");
-  cacheLife({ revalidate: 300, stale: 3600 });
+  cacheLife(TRENDING_CACHE_LIFE);
 
   const topRows = await prisma.$queryRaw<{ owner: string; repo: string }[]>`
     SELECT owner, repo
