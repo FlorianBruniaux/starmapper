@@ -1,0 +1,182 @@
+{
+  "attackMode": {
+    "enabled": false
+  },
+  "crs": {
+    "gen": {
+      "action": "log",
+      "active": true
+    },
+    "java": {
+      "action": "log",
+      "active": false
+    },
+    "lfi": {
+      "action": "log",
+      "active": false
+    },
+    "ma": {
+      "action": "log",
+      "active": false
+    },
+    "php": {
+      "action": "log",
+      "active": false
+    },
+    "rce": {
+      "action": "log",
+      "active": true
+    },
+    "rfi": {
+      "action": "log",
+      "active": false
+    },
+    "sd": {
+      "action": "log",
+      "active": false
+    },
+    "sf": {
+      "action": "log",
+      "active": false
+    },
+    "sqli": {
+      "action": "log",
+      "active": true
+    },
+    "xss": {
+      "action": "log",
+      "active": true
+    }
+  },
+  "firewallEnabled": true,
+  "ipBlocks": [],
+  "managedRules": {
+    "bot_protection": {
+      "action": "log",
+      "active": true,
+      "updatedAt": "2026-08-16T17:37:34.207Z"
+    }
+  },
+  "rules": [
+    {
+      "action": {
+        "mitigate": {
+          "action": "bypass",
+          "actionDuration": null,
+          "rateLimit": null,
+          "redirect": null
+        }
+      },
+      "active": true,
+      "conditionGroup": [
+        {
+          "conditions": [
+            {
+              "op": "pre",
+              "type": "path",
+              "value": "/api/map-image"
+            }
+          ]
+        },
+        {
+          "conditions": [
+            {
+              "op": "pre",
+              "type": "path",
+              "value": "/api/badge"
+            }
+          ]
+        }
+      ],
+      "id": "rule_bypass_git_hub_camo_and_badge_embeds_0JDSgk",
+      "name": "Bypass GitHub camo and badge embeds",
+      "valid": true,
+      "validationErrors": null
+    },
+    {
+      "action": {
+        "mitigate": {
+          "action": "bypass",
+          "actionDuration": null,
+          "rateLimit": null,
+          "redirect": null
+        }
+      },
+      "active": true,
+      "conditionGroup": [
+        {
+          "conditions": [
+            {
+              "op": "pre",
+              "type": "path",
+              "value": "/api/mcp"
+            }
+          ]
+        }
+      ],
+      "id": "rule_bypass_mcp_clients_nwPV1J",
+      "name": "Bypass MCP clients",
+      "valid": true,
+      "validationErrors": null
+    },
+    {
+      "action": {
+        "mitigate": {
+          "action": "deny",
+          "actionDuration": null,
+          "rateLimit": null,
+          "redirect": null
+        }
+      },
+      "active": true,
+      "conditionGroup": [
+        {
+          "conditions": [
+            {
+              "op": "eq",
+              "type": "geo_as_number",
+              "value": "45102"
+            }
+          ]
+        }
+      ],
+      "id": "rule_log_alibaba_sg_asn_45102_scraping_investigation_3UjETp",
+      "name": "Block Alibaba SG ASN 45102 (confirmed scraping, 71k/h)",
+      "valid": true,
+      "validationErrors": null
+    },
+    {
+      "action": {
+        "mitigate": {
+          "action": "log",
+          "actionDuration": null,
+          "rateLimit": null,
+          "redirect": null
+        }
+      },
+      "active": true,
+      "conditionGroup": [
+        {
+          "conditions": [
+            {
+              "op": "inc",
+              "type": "geo_as_number",
+              "value": [
+                "212238",
+                "18779",
+                "30058",
+                "62874",
+                "201341"
+              ]
+            }
+          ]
+        }
+      ],
+      "id": "rule_scraper_hosting_as_ns_staging_log_only_KZ3KCZ",
+      "name": "Scraper hosting ASNs (STAGING: log only)",
+      "valid": true,
+      "validationErrors": null
+    }
+  ],
+  "systemBypass": []
+}
