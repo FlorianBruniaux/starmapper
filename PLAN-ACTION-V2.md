@@ -186,6 +186,37 @@ Sans persistent action, chaque requête d'un client déjà identifié est réév
 
 Les règles s'évaluent de haut en bas et la première qui deny ou challenge arrête la chaîne. L'ordre ci-dessous n'est pas indicatif, il est la sécurité du dispositif.
 
+### État au 18/08 : trois règles stagées, aucune publiée
+
+`vercel firewall rules add` fonctionne en script et **stage un draft** au lieu d'appliquer. Les règles 1, 2 et 3 sont donc déjà écrites et attendent ta publication :
+
+```
++ 1  Bypass GitHub camo and badge embeds        Bypass   (nouveau)
++ 2  Bypass MCP clients                         Bypass   (nouveau)
+  3  Block Alibaba SG ASN 45102                 Deny     (existant, 26 req/j)
++ 4  Scraper hosting ASNs (STAGING: log only)   Log      (nouveau)
+```
+
+Trois commandes, dans cet ordre :
+
+```bash
+vercel firewall diff             # relire ce qui va partir
+vercel firewall publish --yes    # appliquer
+vercel firewall discard --yes    # ou tout annuler
+```
+
+La règle 3 est volontairement en **`Log`** et non en `Deny`. La discipline de staging veut 24 h d'observation avant toute action terminale, parce qu'un ASN peut abriter des clients légitimes qu'aucune mesure agrégée ne révèle. Après vérification dans le dashboard :
+
+```bash
+vercel firewall rules edit "Scraper hosting ASNs (STAGING: log only)" \
+  --condition '{"type":"geo_as_number","op":"inc","value":["212238","18779","30058","62874","201341"]}' \
+  --action deny --duration 1h --yes
+```
+
+Attention, `edit --condition` **écrase toutes les conditions** de la règle, d'où la répétition de la condition complète ci-dessus.
+
+Les règles 5 et 6 restent à faire, elles sont décrites plus bas.
+
 **Règle 1, Bypass, à créer en premier.**
 Condition : `Request Path` starts with `/api/map-image` OR starts with `/api/badge`.
 Action : Bypass.
