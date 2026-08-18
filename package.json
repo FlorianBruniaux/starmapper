@@ -30,6 +30,7 @@
     "seed:geonames": "tsx scripts/backfill/seed-geocache-geonames.ts",
     "seed:geonames:dry": "tsx scripts/backfill/seed-geocache-geonames.ts --dry-run",
     "stats:views": "tsx scripts/ops/view-stats.ts",
+    "ops:firewall-snapshot": "bash scripts/ops/snapshot-firewall.sh",
     "maintenance": "tsx scripts/ops/maintenance-wizard.ts",
     "db:seed:trending-watchlist": "echo 'Target required: pnpm db:seed:trending-watchlist:local OR :prod' && exit 1",
     "db:seed:trending-watchlist:local": "sh -c 'set -a && . .env.local && set +a && DATABASE_DRIVER=standard DATABASE_URL=$DATABASE_URL_LOCAL tsx scripts/db/seed-trending-watchlist.ts \"$@\"' _",
