@@ -176,7 +176,7 @@ export const ShareModal = ({
       {/* Preview card */}
       <div id="share-card" className="mx-5 my-4 bg-background rounded-xl p-6 border border-border">
         <div className="flex items-center gap-3 mb-4">
-          {repoInfo.avatar && <NextImage src={repoInfo.avatar} alt="" width={40} height={40} sizes="40px" className="w-10 h-10 rounded-full border border-border flex-shrink-0" />}
+          {repoInfo.avatar && <NextImage src={repoInfo.avatar} alt="" width={40} height={40} sizes="40px" className="w-10 h-10 rounded-full border border-border flex-shrink-0" unoptimized />}
           <div className="min-w-0">
             <div className="text-muted text-xs leading-tight">{owner}</div>
             <div className="text-foreground font-bold text-base leading-tight truncate">{repo}</div>

@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import { cacheLife, cacheTag } from "next/cache";
 import MapPageClient from "./page.client";
 import LoadingFallback from "./loading";
+import { computeRepoStats } from "@/lib/repo-stats-query";
 import type { RepoStats } from "@/app/api/stats/[owner]/[repo]/route";
 
 type RepoInfo = {
@@ -23,7 +24,13 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://starmapper.bruniaux.
 const fetchRepoInfo = async (owner: string, repo: string): Promise<RepoInfo | null> => {
   "use cache";
   cacheTag(`repo-info-${owner}-${repo}`);
-  cacheLife("minutes");
+  // /api/repo-info already pins the upstream GitHub data for 300s (its own fetch carries
+  // next: { revalidate: 300 }), so anything below that rewrote an identical value. The one
+  // event that must show up immediately is the end of a scan, and badge-update already
+  // fires revalidateTag("repo-info-…"). expire matters as much as revalidate here: the
+  // "minutes" profile killed the entry after an hour, so a repo visited twice in a day
+  // paid two full writes.
+  cacheLife({ stale: 300, revalidate: 900, expire: 86400 });
   try {
     const res = await fetch(
       `${APP_URL}/api/repo-info?owner=${encodeURIComponent(owner)}&repo=${encodeURIComponent(repo)}`,
@@ -38,21 +45,29 @@ const fetchRepoInfo = async (owner: string, repo: string): Promise<RepoInfo | nu
 const fetchStats = async (owner: string, repo: string): Promise<RepoStats | null> => {
   "use cache";
   cacheTag(`repo-stats-${owner}-${repo}`);
-  cacheLife("minutes");
+  // Aggregates move on three events only: a finished scan, the refresh-repo-stats cron
+  // (02:00 and 14:00 UTC), and newly indexed star events. A 60s window matched none of
+  // them. The scanning user does not depend on this cache at all, useScanController
+  // re-fetches /api/stats directly when the scan ends; this entry only serves the first
+  // render for later visitors, and badge-update now invalidates the tag for them.
+  cacheLife({ stale: 300, revalidate: 600, expire: 86400 });
   try {
-    const res = await fetch(
-      `${APP_URL}/api/stats/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`,
-    );
-    if (!res.ok) return null;
-    const stats = (await res.json()) as RepoStats;
-    // The route already shortens its own Cache-Control to 30s when the Neon
-    // aggregation timed out, but that header only governs the CDN. This SSR
-    // path is governed by cacheLife alone, and "minutes" would hold a stats
-    // panel with empty countries/cities/companies for revalidate=60s with a
-    // 300s stale window. cacheLife keeps the minimum across calls, so this
-    // second call can only shorten the entry, never extend it.
-    if (stats.isPartial) cacheLife("seconds");
-    return stats;
+    // Direct call rather than fetch(APP_URL + "/api/stats/…"): the handler only wraps
+    // computeRepoStats and maps its result to a status code. Both 400 and 404 collapse to
+    // null here, exactly as the previous `!res.ok` check did.
+    const result = await computeRepoStats(owner, repo);
+    if (!result.ok) return null;
+    // The route shortens its own Cache-Control to 30s when the Neon aggregation timed out,
+    // but that header only governs the CDN. This SSR path is governed by cacheLife alone,
+    // and cacheLife keeps the per-field minimum across calls, so this second call can only
+    // shorten the entry, never extend it.
+    //
+    // The old value here was "seconds", which floors revalidate at 1: up to 86 400 writes
+    // per day per repo under continuous traffic, unbounded. Aligning on the CDN's 30s/60s
+    // instead of inventing a third value, with expire: 300 so a partial panel never
+    // outlives 5 minutes.
+    if (result.stats.isPartial) cacheLife({ stale: 60, revalidate: 60, expire: 300 });
+    return result.stats;
   } catch {
     return null;
   }

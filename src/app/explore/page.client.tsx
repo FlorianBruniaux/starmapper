@@ -989,6 +989,7 @@ export default function ExplorePage({ initialSummary }: ExplorePageProps = {}) {
                             height={32}
                             loading="lazy"
                             className="w-8 h-8 rounded-full flex-shrink-0 ring-1 ring-border"
+                            unoptimized
                           />
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-1.5">
@@ -1105,6 +1106,7 @@ export default function ExplorePage({ initialSummary }: ExplorePageProps = {}) {
                                 height={32}
                                 loading="lazy"
                                 className="w-8 h-8 rounded-full flex-shrink-0 ring-1 ring-border"
+                                unoptimized
                               />
                               <div className="flex-1 min-w-0">
                                 <a
@@ -1325,6 +1327,7 @@ export default function ExplorePage({ initialSummary }: ExplorePageProps = {}) {
                                   height={32}
                                   loading="lazy"
                                   className="w-8 h-8 rounded-full flex-shrink-0 ring-1 ring-border"
+                                  unoptimized
                                 />
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-center gap-1.5">

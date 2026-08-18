@@ -287,7 +287,7 @@ export default function UserPage({ params }: { params: Promise<{ owner: string }
             <>
               {/* User header */}
               <div className="flex items-center gap-4 mb-8">
-                <Image src={userInfo.avatar} alt="" width={56} height={56} className="size-14 rounded-full border border-border" />
+                <Image src={userInfo.avatar} alt="" width={56} height={56} className="size-14 rounded-full border border-border" unoptimized />
                 <div className="flex-1">
                   <h1 className="text-foreground font-semibold text-lg">{userInfo.name ?? userInfo.login}</h1>
                   <p className="text-muted text-sm">{userInfo.publicRepos} public repos</p>

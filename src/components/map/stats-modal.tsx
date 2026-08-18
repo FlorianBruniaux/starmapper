@@ -184,7 +184,7 @@ export const StatsModal = ({ open, onClose, owner, repo, displayStats, starsThis
                     className="flex items-center gap-2 hover:opacity-75 transition-opacity"
                   >
                     {u.avatarUrl
-                      ? <NextImage src={u.avatarUrl} alt="" width={24} height={24} sizes="24px" className="w-6 h-6 rounded-full ring-1 ring-border flex-shrink-0" />
+                      ? <NextImage src={u.avatarUrl} alt="" width={24} height={24} sizes="24px" className="w-6 h-6 rounded-full ring-1 ring-border flex-shrink-0" unoptimized />
                       : <div className="w-6 h-6 rounded-full bg-surface-alt ring-1 ring-border flex-shrink-0" />
                     }
                     <div className="flex-1 min-w-0">
@@ -281,7 +281,7 @@ export const StatsModal = ({ open, onClose, owner, repo, displayStats, starsThis
                     <div key={u.login} className="flex items-center gap-3 py-0.5">
                       <span className="text-muted-subtle text-xs w-5 text-right flex-shrink-0">{i + 1}</span>
                       {u.avatarUrl
-                        ? <NextImage src={u.avatarUrl} alt="" width={32} height={32} sizes="32px" className="w-8 h-8 rounded-full flex-shrink-0 ring-1 ring-border" />
+                        ? <NextImage src={u.avatarUrl} alt="" width={32} height={32} sizes="32px" className="w-8 h-8 rounded-full flex-shrink-0 ring-1 ring-border" unoptimized />
                         : <div className="w-8 h-8 rounded-full bg-surface-alt flex-shrink-0 ring-1 ring-border" />
                       }
                       <div className="flex-1 min-w-0">
@@ -420,7 +420,7 @@ export const StatsModal = ({ open, onClose, owner, repo, displayStats, starsThis
                 {displayStats.powerStargazers.map((u, i) => (
                   <div key={u.login} className="flex items-center gap-3 py-0.5">
                     <span className="text-muted-subtle text-xs w-5 text-right flex-shrink-0">{i + 1}</span>
-                    <NextImage src={u.avatarUrl} alt="" width={32} height={32} sizes="32px" className="w-8 h-8 rounded-full flex-shrink-0 ring-1 ring-border" />
+                    <NextImage src={u.avatarUrl} alt="" width={32} height={32} sizes="32px" className="w-8 h-8 rounded-full flex-shrink-0 ring-1 ring-border" unoptimized />
                     <div className="flex-1 min-w-0">
                       <a
                         href={`/profile/${encodeURIComponent(u.login)}`}

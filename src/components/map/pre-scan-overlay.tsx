@@ -54,7 +54,7 @@ export const PreScanOverlay = ({
       >
         <div className="flex items-center gap-3 mb-6">
           {repoInfo.avatar && (
-            <NextImage src={repoInfo.avatar} alt="" width={40} height={40} sizes="40px" className="w-10 h-10 rounded-full" />
+            <NextImage src={repoInfo.avatar} alt="" width={40} height={40} sizes="40px" className="w-10 h-10 rounded-full" unoptimized />
           )}
           <div>
             <h2 id="prescan-title" className="text-foreground font-semibold">{repoInfo.name}</h2>

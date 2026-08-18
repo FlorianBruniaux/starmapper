@@ -7,6 +7,9 @@ export const runtime = "edge";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
+// Fully static card, no fetch, no params. Render it once and never again.
+export const revalidate = false;
+
 export default function Image() {
   return new ImageResponse(
     (

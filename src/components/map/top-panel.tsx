@@ -122,7 +122,7 @@ const TopPanelInner = ({
         {/* Repo identity, centred with flex-1 */}
         <div className="flex items-center gap-2 flex-1 justify-center min-w-0">
           {repoInfo?.avatar && (
-            <Image src={repoInfo.avatar} alt="" width={20} height={20} className="size-5 rounded-full flex-shrink-0" />
+            <Image src={repoInfo.avatar} alt="" width={20} height={20} className="size-5 rounded-full flex-shrink-0" unoptimized />
           )}
           <a
             href={`https://github.com/${owner}/${repo}`}

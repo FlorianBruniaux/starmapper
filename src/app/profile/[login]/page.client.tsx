@@ -586,6 +586,7 @@ export default function ProfilePageClient({ login, initialProfile }: Props) {
               width={80}
               height={80}
               priority
+              unoptimized
             />
             <div className="flex flex-col gap-1.5 min-w-0 pt-0.5 flex-1">
               <div className="flex items-start justify-between gap-2">
@@ -1190,6 +1191,7 @@ export default function ProfilePageClient({ login, initialProfile }: Props) {
                               width={36}
                               height={36}
                               loading="lazy"
+                              unoptimized
                             />
                             {u.trackedRepos > 1 && (
                               <span className="absolute -bottom-0.5 -right-0.5 min-w-4 h-4 px-0.5

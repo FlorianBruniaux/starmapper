@@ -6,6 +6,8 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { cacheLife, cacheTag } from "next/cache";
 import RoadmapPageClient from "./page.client";
+import { getTallies } from "@/lib/roadmap-vote";
+import { logError } from "@/lib/api-helpers";
 import type { RoadmapVoteResponse } from "@/app/api/roadmap-vote/route";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://starmapper.bruniaux.com";
@@ -40,12 +42,18 @@ const EMPTY_TALLIES: RoadmapVoteResponse = { tallies: { A: 0, B: 0, C: 0, D: 0 }
 const fetchTallies = async (): Promise<RoadmapVoteResponse> => {
   "use cache";
   cacheTag("roadmap-vote-tallies");
-  cacheLife("minutes");
+  // A voter gets fresh tallies straight back in the POST response, so nobody depends on
+  // this entry being current. It only has to keep an arriving visitor from seeing a stale
+  // counter, and this page sits in the sitemap so it gets crawled steadily.
+  cacheLife({ stale: 300, revalidate: 900, expire: 3600 });
   try {
-    const res = await fetch(`${APP_URL}/api/roadmap-vote`);
-    if (!res.ok) return EMPTY_TALLIES;
-    return (await res.json()) as RoadmapVoteResponse;
-  } catch {
+    // Direct call rather than fetch(APP_URL + "/api/roadmap-vote"): the handler is a
+    // getTallies() wrapper and adds nothing this page needs, while the round trip cost one
+    // extra edge request and one extra function invocation per render.
+    return await getTallies();
+  } catch (err) {
+    // The route used to log this on our behalf; keep the trace now that we bypass it.
+    logError("roadmap page tallies", err);
     return EMPTY_TALLIES;
   }
 };

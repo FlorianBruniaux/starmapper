@@ -22,7 +22,10 @@ export const ReposClient = ({ initialRepos, initialTotal }: Props) => {
 
   return (
     <>
-      <CommandSearch repos={initialRepos} />
+      {/* No repos prop on purpose: CommandSearch self-fetches /api/repos when the prop
+          is absent, exactly as on / and /[owner]. Passing initialRepos here put the same
+          array on the RSC wire twice for a search box that only ever renders 12 results. */}
+      <CommandSearch />
       {tokenOpen && (
         <TokenModal
           onClose={() => {

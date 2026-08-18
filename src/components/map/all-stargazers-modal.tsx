@@ -423,7 +423,7 @@ export const AllStargazersModal = ({
                     <td className="px-3 py-2">
                       <div className="flex items-center gap-2">
                         {u.avatarUrl
-                          ? <NextImage src={u.avatarUrl} alt="" width={24} height={24} sizes="24px" className="w-6 h-6 rounded-full flex-shrink-0" />
+                          ? <NextImage src={u.avatarUrl} alt="" width={24} height={24} sizes="24px" className="w-6 h-6 rounded-full flex-shrink-0" unoptimized />
                           : <div className="w-6 h-6 rounded-full bg-surface-alt flex-shrink-0" />
                         }
                         <div className="min-w-0">
