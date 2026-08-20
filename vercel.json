@@ -6,11 +6,11 @@
     },
     {
       "path": "/api/admin/refresh-grid-mv",
-      "schedule": "0 */4 * * *"
+      "schedule": "0 1 * * *"
     },
     {
       "path": "/api/admin/refresh-trending",
-      "schedule": "30 */6 * * *"
+      "schedule": "15 1 * * *"
     },
     {
       "path": "/api/admin/daily-digest",
@@ -18,11 +18,11 @@
     },
     {
       "path": "/api/admin/refresh-repo-stats?part=1",
-      "schedule": "0 2,14 * * *"
+      "schedule": "0 2 * * *"
     },
     {
       "path": "/api/admin/refresh-repo-stats?part=2",
-      "schedule": "20 2,14 * * *"
+      "schedule": "20 2 * * *"
     }
   ]
 }
