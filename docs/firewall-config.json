@@ -201,7 +201,7 @@
       "action": {
         "mitigate": {
           "action": "deny",
-          "actionDuration": "1h",
+          "actionDuration": null,
           "rateLimit": null,
           "redirect": null
         }
