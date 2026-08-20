@@ -74,7 +74,7 @@
             {
               "op": "pre",
               "type": "path",
-              "value": "/api/map-image"
+              "value": "/api/map-image/"
             }
           ]
         },
@@ -83,7 +83,7 @@
             {
               "op": "pre",
               "type": "path",
-              "value": "/api/badge"
+              "value": "/api/badge/"
             }
           ]
         }
@@ -109,7 +109,7 @@
             {
               "op": "pre",
               "type": "path",
-              "value": "/api/mcp"
+              "value": "/api/mcp/"
             }
           ]
         }
@@ -161,7 +161,7 @@
             {
               "op": "pre",
               "type": "path",
-              "value": "/api/admin"
+              "value": "/api/admin/"
             }
           ]
         }
