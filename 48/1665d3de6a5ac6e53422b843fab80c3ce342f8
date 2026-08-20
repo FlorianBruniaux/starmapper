@@ -1,0 +1,29 @@
+docs/firewall-config.json
+  s_bf002407078bf7::t_3ede42a17eb4b8 122-161,163,165-168,171-173
+  s_bf002407078bf7::t_32a4e38db3bd6a 203-204
+  s_a6272ac9eeea28::t_0c0410ea3d569d 162,164,169-170
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "481665d3de6a5ac6e53422b843fab80c3ce342f8",
+  "prompts": {},
+  "sessions": {
+    "s_a6272ac9eeea28": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c67912ad-4ff6-4340-b106-34a9a2e26546",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "Florian BRUNIAUX <florian@bruniaux.com>"
+    },
+    "s_bf002407078bf7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e86d3f49-425a-461e-a736-3b6c7057c86e",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "Florian BRUNIAUX <florian@bruniaux.com>"
+    }
+  }
+}
