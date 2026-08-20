@@ -74,7 +74,7 @@
             {
               "op": "pre",
               "type": "path",
-              "value": "/api/map-image"
+              "value": "/api/map-image/"
             }
           ]
         },
@@ -83,7 +83,7 @@
             {
               "op": "pre",
               "type": "path",
-              "value": "/api/badge"
+              "value": "/api/badge/"
             }
           ]
         }
@@ -109,13 +109,65 @@
             {
               "op": "pre",
               "type": "path",
-              "value": "/api/mcp"
+              "value": "/api/mcp/"
             }
           ]
         }
       ],
       "id": "rule_bypass_mcp_clients_nwPV1J",
       "name": "Bypass MCP clients",
+      "valid": true,
+      "validationErrors": null
+    },
+    {
+      "action": {
+        "mitigate": {
+          "action": "bypass",
+          "actionDuration": null,
+          "rateLimit": null,
+          "redirect": null
+        }
+      },
+      "active": true,
+      "conditionGroup": [
+        {
+          "conditions": [
+            {
+              "op": "eq",
+              "type": "path",
+              "value": "/api/repo-info"
+            }
+          ]
+        }
+      ],
+      "id": "rule_bypass_repo_info_self_call_UPB3CV",
+      "name": "Bypass repo-info self-call",
+      "valid": true,
+      "validationErrors": null
+    },
+    {
+      "action": {
+        "mitigate": {
+          "action": "bypass",
+          "actionDuration": null,
+          "rateLimit": null,
+          "redirect": null
+        }
+      },
+      "active": true,
+      "conditionGroup": [
+        {
+          "conditions": [
+            {
+              "op": "pre",
+              "type": "path",
+              "value": "/api/admin/"
+            }
+          ]
+        }
+      ],
+      "id": "rule_bypass_admin_cron_routes_FqWAYo",
+      "name": "Bypass admin cron routes",
       "valid": true,
       "validationErrors": null
     },
@@ -148,8 +200,8 @@
     {
       "action": {
         "mitigate": {
-          "action": "log",
-          "actionDuration": null,
+          "action": "deny",
+          "actionDuration": "1h",
           "rateLimit": null,
           "redirect": null
         }
