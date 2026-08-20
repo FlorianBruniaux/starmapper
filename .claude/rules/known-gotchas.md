@@ -67,7 +67,9 @@ Sans le gate : `error: The server does not support SSL connections` au premier `
 
 ## Cron trending : migrer la DB avant que le code parte en prod
 
-Le cron `30 */6 * * *` (`/api/admin/refresh-trending`) appelle `selectRefreshTargets` qui lit `trending_watchlist` + `trending_refresh`. Si le code est déployé avant le `prisma db push` sur Neon, le cron throw toutes les 6h (tables inexistantes). Inoffensif si `CRON_SECRET` non défini (route → 404). Pas de corruption : `/trending` continue sur le MV existant. Migration prod = push schema + recréer le MV 30j (`scripts/db/sql/create-trending-mv.sql`) + seed watchlist.
+Le cron `15 1 * * *` (`/api/admin/refresh-trending`) appelle `selectRefreshTargets` qui lit `trending_watchlist` + `trending_refresh`. Si le code est déployé avant le `prisma db push` sur Neon, le cron throw une fois par jour (tables inexistantes). Inoffensif si `CRON_SECRET` non défini (route → 404). Pas de corruption : `/trending` continue sur le MV existant. Migration prod = push schema + recréer le MV 30j (`scripts/db/sql/create-trending-mv.sql`) + seed watchlist.
+
+**Crons ramenés à 1x/jour le 2026-08-20** : `star_event` et `badge_cache` sont gelés depuis que GitHub a coupé la connexion `stargazers` (23/07, voir `docs/ROADMAP.md` Phase 3, bloquée sans échéance). `refresh-grid-mv`, `refresh-trending` et les deux parts de `refresh-repo-stats` tournaient sur une source qui ne bouge plus, pour un coût réel en écritures ISR (`revalidateTag("trending")` réécrit une entrée de 14,7 Mo à chaque passage). Ordre horaire à respecter si retouché : `refresh-grid-mv` (01:00) doit toujours précéder `refresh-repo-stats?part=1` (02:00), sa marge de sécurité, `repo_power_users_mv` dépend de `power_users_mv` qu'il reconstruit.
 
 ---
 
