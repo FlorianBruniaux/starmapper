@@ -1,5 +1,17 @@
 # StarMapper
 
+<table>
+  <tr>
+    <td width="64">
+      <a href="https://www.florian.bruniaux.com/about/?utm_source=github&amp;utm_medium=readme&amp;utm_campaign=starmapper"><img src="https://cc.bruniaux.com/author.png" width="56" height="56" alt="Florian Bruniaux" /></a>
+    </td>
+    <td>
+      <strong><a href="https://www.florian.bruniaux.com/about/?utm_source=github&amp;utm_medium=readme&amp;utm_campaign=starmapper">Florian BRUNIAUX</a></strong> &middot; AI Founding Engineer @ <a href="https://methode-aristote.fr/">Méthode Aristote</a><br />
+      13 years from developer to CTO / VP Eng &middot; <a href="https://www.florian.bruniaux.com/blog/?utm_source=github&amp;utm_medium=readme&amp;utm_campaign=starmapper">Blog &#8599;</a> &middot; <a href="https://www.florian.bruniaux.com/projects/?utm_source=github&amp;utm_medium=readme&amp;utm_campaign=starmapper">Projects &#8599;</a>
+    </td>
+  </tr>
+</table>
+
 > [!WARNING]
 > **GitHub restricted public access to stargazer lists (July 2026).**
 > On [June 30 2026 GitHub announced access restrictions to public API endpoints and UI views](https://github.blog/changelog/2026-06-30-upcoming-access-restrictions-to-public-api-endpoints-and-ui-views/). Since **July 23 2026** the `Repository.stargazers` connection returns empty on GraphQL, REST, and the `/stargazers` web page, for every repo. StarMapper builds its map from that exact list, so **new repo scans currently return no stargazers to place.** Repos mapped before the cutoff still render from cached data.
