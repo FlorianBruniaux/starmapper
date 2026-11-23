@@ -206,8 +206,8 @@ export const AllStargazersModal = ({
               All Stargazers
               <span className="text-muted font-normal ml-2">
                 {filteredStargazers.length !== allStargazers.length
-                  ? `${filteredStargazers.length} / ${allStargazers.length.toLocaleString()}`
-                  : allStargazers.length.toLocaleString()}
+                  ? `${filteredStargazers.length} / ${allStargazers.length.toLocaleString("en-US")}`
+                  : allStargazers.length.toLocaleString("en-US")}
               </span>
             </h2>
             <button onClick={onClose} aria-label="Close all stargazers" className="text-muted hover:text-foreground text-lg leading-none"><span aria-hidden="true">✕</span></button>
@@ -444,7 +444,7 @@ export const AllStargazersModal = ({
                       </div>
                     </td>
                     <td className="px-3 py-2 text-right text-muted tabular-nums">
-                      {u.followers > 0 ? u.followers.toLocaleString() : "—"}
+                      {u.followers > 0 ? u.followers.toLocaleString("en-US") : "—"}
                     </td>
                     <td className="px-3 py-2 text-muted max-w-40 hidden sm:table-cell">
                       <span className="truncate block">{u.location ?? "—"}</span>

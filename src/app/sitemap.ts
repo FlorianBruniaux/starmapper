@@ -2,15 +2,17 @@
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 
 import type { MetadataRoute } from "next";
+import { cacheLife } from "next/cache";
 import { prisma } from "@/lib/db";
 import { LANGUAGE_SLUG_MAP } from "@/lib/languages";
 import { countryToSlug } from "@/lib/countries";
 
-export const revalidate = 3600;
-
 const BASE = process.env.NEXT_PUBLIC_APP_URL ?? "https://starmapper.bruniaux.com";
 
-export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+const sitemap = async (): Promise<MetadataRoute.Sitemap> => {
+  "use cache";
+  cacheLife({ revalidate: 3600 });
+
   const now = new Date();
 
   // Top repos from BadgeCache
@@ -109,4 +111,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...profileEntries,
     ...feedEntries,
   ];
-}
+};
+
+export default sitemap;

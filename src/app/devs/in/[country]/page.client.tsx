@@ -21,7 +21,7 @@ type Props = {
 const cellsToPoints = (data: CountryMapData): StargazerPoint[] =>
   data.cells.map((c) => ({
     login: c.topLogin,
-    name: `${c.count.toLocaleString()} developers`,
+    name: `${c.count.toLocaleString("en-US")} developers`,
     bio: `__grid__:${c.count}:${c.topLogin}`,
     company: null,
     location: null,
@@ -37,12 +37,12 @@ const MappedBadge = ({ count }: { count: number }) => (
   <div
     className="flex items-center gap-1.5 shrink-0 bg-accent-blue/10 border border-accent-blue/20
                 text-accent-blue text-xs font-medium px-2.5 py-1 rounded-full"
-    aria-label={`${count.toLocaleString()} developers mapped`}
+    aria-label={`${count.toLocaleString("en-US")} developers mapped`}
   >
     <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
       <path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0zm.25 7.5a.75.75 0 0 0-.75.75v3.5a.75.75 0 0 0 1.5 0v-3.5A.75.75 0 0 0 8.25 7.5zm0-3a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5z" />
     </svg>
-    <span className="hidden sm:inline">{count.toLocaleString()} mapped</span>
+    <span className="hidden sm:inline">{count.toLocaleString("en-US")} mapped</span>
     <span className="sm:hidden">
       {count >= 1000 ? `${(count / 1000).toFixed(1)}k` : count}
     </span>
@@ -326,7 +326,7 @@ export default function DevsCountryClient({ initialSlug }: Props) {
                         {l.lang}
                       </Link>
                       <span className="text-muted text-xs shrink-0 tabular-nums">
-                        {l.count.toLocaleString()}
+                        {l.count.toLocaleString("en-US")}
                       </span>
                     </div>
                     <div className="ml-6 h-0.5 rounded-full bg-border-subtle overflow-hidden">
@@ -347,7 +347,7 @@ export default function DevsCountryClient({ initialSlug }: Props) {
                   Total mapped
                 </p>
                 <p className="text-foreground text-sm font-semibold tabular-nums mt-0.5">
-                  {data.totalMapped.toLocaleString()}
+                  {data.totalMapped.toLocaleString("en-US")}
                 </p>
               </div>
             )}

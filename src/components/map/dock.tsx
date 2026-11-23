@@ -210,7 +210,7 @@ export const Dock = ({
             <Users size={16} className="text-accent-purple flex-shrink-0" aria-hidden="true" />
             <span>Stargazers</span>
             <span className="bg-border text-muted text-2xs px-1.5 py-px rounded-full tabular-nums leading-none ml-auto">
-              {allStargazersCount.toLocaleString()}
+              {allStargazersCount.toLocaleString("en-US")}
             </span>
           </button>
         )}

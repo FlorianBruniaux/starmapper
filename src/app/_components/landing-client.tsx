@@ -364,7 +364,7 @@ export const LandingClient = ({ initialRepos, initialTotal }: Props) => {
                   )}
                   {initialTotal > 0 && (
                     <p className="text-xs text-muted-subtle">
-                      {initialTotal.toLocaleString()}+ repos mapped, including{" "}
+                      {initialTotal.toLocaleString("en-US")}+ repos mapped, including{" "}
                       <span className="text-muted">Next.js, React, and Rust</span>
                     </p>
                   )}
@@ -543,7 +543,7 @@ export const LandingClient = ({ initialRepos, initialTotal }: Props) => {
                 <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
                   <path d="M2 2.5A2.5 2.5 0 0 1 4.5 0h8.75a.75.75 0 0 1 .75.75v12.5a.75.75 0 0 1-.75.75h-2.5a.75.75 0 0 1 0-1.5h1.75v-2h-8a1 1 0 0 0-.714 1.7.75.75 0 1 1-1.072 1.05A2.495 2.495 0 0 1 2 11.5Zm10.5-1h-8a1 1 0 0 0-1 1v6.708A2.486 2.486 0 0 1 4.5 9h8Z" />
                 </svg>
-                Browse all {initialTotal > 0 ? initialTotal.toLocaleString() : ""} repos
+                Browse all {initialTotal > 0 ? initialTotal.toLocaleString("en-US") : ""} repos
               </Link>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">

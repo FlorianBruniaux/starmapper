@@ -45,7 +45,6 @@ const buildClipPath = (rect: Rect): string => {
 export const TourOverlay = ({ step, currentIndex, totalSteps, onNext, onPrev, onSkip }: Props) => {
   const [rect, setRect] = useState<Rect | null>(null);
   const rafRef = useRef<number | null>(null);
-  const observerRef = useRef<ResizeObserver | null>(null);
 
   const updateRect = () => {
     setRect(step.placement === "center" ? null : getRect(step.selector));
@@ -83,7 +82,6 @@ export const TourOverlay = ({ step, currentIndex, totalSteps, onNext, onPrev, on
     return () => {
       if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
       window.removeEventListener("resize", onResize);
-      observerRef.current?.disconnect();
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step.selector]);

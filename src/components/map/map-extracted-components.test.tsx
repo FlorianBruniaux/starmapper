@@ -99,6 +99,12 @@ describe("PreScanOverlay", () => {
     expect(screen.getByRole("dialog")).toBeInTheDocument();
   });
 
+  it("renders English star counts consistently when the runtime locale is French", () => {
+    render(<PreScanOverlay {...minProps} total={2641} />);
+    expect(screen.getByText("2,641")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Start indexing 2,641 stars →" })).toBeInTheDocument();
+  });
+
   it("returns null when status is not idle", () => {
     const { container } = render(<PreScanOverlay {...minProps} status="loading" />);
     expect(container.firstChild).toBeNull();

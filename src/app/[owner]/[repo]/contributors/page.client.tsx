@@ -98,7 +98,7 @@ export default function ContributorsPageClient({ params }: Props) {
         repoOwner: owner,
         repoRepo: repo,
       })) as unknown as StargazerPoint[],
-    [points],
+    [points, owner, repo],
   );
 
   const isScanning = status === "loading" || status === "waiting" || status === "computing";
@@ -187,11 +187,11 @@ export default function ContributorsPageClient({ params }: Props) {
                 data-tour="contributors-count"
                 onClick={() => setPanelOpen(true)}
                 className="flex items-center gap-1 bg-surface-alt border border-border rounded-md px-2 py-1 text-xs text-foreground hover:border-accent-blue/50 hover:text-accent-blue transition-colors whitespace-nowrap"
-                aria-label={`${points.length.toLocaleString()} contributors mapped, open list`}
+                aria-label={`${points.length.toLocaleString("en-US")} contributors mapped, open list`}
               >
                 <GitCommit size={12} aria-hidden="true" />
-                <span className="tabular-nums">{points.length.toLocaleString()}</span>
-                <span className="text-muted-subtle">/ {total.toLocaleString()}</span>
+                <span className="tabular-nums">{points.length.toLocaleString("en-US")}</span>
+                <span className="text-muted-subtle">/ {total.toLocaleString("en-US")}</span>
               </button>
             )}
 

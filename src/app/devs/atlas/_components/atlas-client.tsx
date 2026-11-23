@@ -103,7 +103,7 @@ const CountryModal = ({
           <div className="grid grid-cols-3 gap-2 mb-5">
             <div className="bg-surface-alt border border-border-subtle rounded-xl p-3 text-center">
               <p className="text-lg font-bold text-foreground tabular-nums">
-                {selected.total.toLocaleString()}
+                {selected.total.toLocaleString("en-US")}
               </p>
               <p className="text-xs text-muted-subtle mt-0.5">developers</p>
             </div>
@@ -118,7 +118,7 @@ const CountryModal = ({
             </div>
             <div className="bg-surface-alt border border-border-subtle rounded-xl p-3 text-center">
               <p className="text-lg font-bold text-foreground tabular-nums">
-                {selected.topCnt.toLocaleString()}
+                {selected.topCnt.toLocaleString("en-US")}
               </p>
               <p className="text-xs text-muted-subtle mt-0.5">{selected.topLang} devs</p>
             </div>

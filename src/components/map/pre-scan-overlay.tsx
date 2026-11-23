@@ -66,7 +66,7 @@ export const PreScanOverlay = ({
 
         <div className="flex gap-4 mb-6">
           <div className="flex-1 bg-background rounded-lg px-4 py-3 text-center">
-            <div className="text-2xl font-bold text-foreground">{total.toLocaleString()}</div>
+            <div className="text-2xl font-bold text-foreground">{total.toLocaleString("en-US")}</div>
             <div className="text-2xs text-muted uppercase tracking-wide mt-0.5">stars</div>
           </div>
           <div className="flex-1 bg-background rounded-lg px-4 py-3 text-center">
@@ -148,7 +148,7 @@ export const PreScanOverlay = ({
             total >= TOKEN_REQUIRED_STARS && !hasToken ? "opacity-40 cursor-not-allowed" : "hover:opacity-90"
           }`}
         >
-          {lastDbScan ? `Rescan ${total.toLocaleString()} stars →` : `Start indexing ${total.toLocaleString()} stars →`}
+          {lastDbScan ? `Rescan ${total.toLocaleString("en-US")} stars →` : `Start indexing ${total.toLocaleString("en-US")} stars →`}
         </button>
       </div>
     </div>

@@ -371,7 +371,7 @@ const main = async () => {
     try {
       const pool = createScriptPool(process.env.DATABASE_URL ?? "");
       const adapter = new PrismaPg(pool);
-      db = new PrismaClient({ adapter } as never);
+      db = new PrismaClient({ adapter });
       console.log("✓ DB connected\n");
     } catch (err) {
       console.warn("⚠ DB connection failed — running in --no-db mode\n", err);

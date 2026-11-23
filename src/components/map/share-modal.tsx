@@ -189,7 +189,7 @@ export const ShareModal = ({
             <div className="text-2xs text-muted-subtle uppercase tracking-wide mt-0.5">★ stars</div>
           </div>
           <div className="flex-1 bg-surface rounded-lg p-3 text-center">
-            <div className="text-2xl font-bold text-accent-blue">{points.length.toLocaleString()}</div>
+            <div className="text-2xl font-bold text-accent-blue">{points.length.toLocaleString("en-US")}</div>
             <div className="text-2xs text-muted-subtle uppercase tracking-wide mt-0.5">mapped</div>
           </div>
           {displayStats && (

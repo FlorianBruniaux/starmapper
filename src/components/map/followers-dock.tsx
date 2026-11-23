@@ -157,7 +157,7 @@ export const FollowersDock = ({
             <Users size={16} className="text-accent-blue flex-shrink-0" aria-hidden="true" />
             <span>Followers</span>
             <span className="bg-surface-alt text-foreground text-2xs font-medium px-1.5 py-0.5 rounded tabular-nums">
-              {totalCount > 0 ? totalCount.toLocaleString() : followersCount.toLocaleString()}
+              {totalCount > 0 ? totalCount.toLocaleString("en-US") : followersCount.toLocaleString("en-US")}
             </span>
           </button>
         )}

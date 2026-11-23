@@ -137,11 +137,11 @@ export const ContributorsPanel = ({
           <h2 className="text-foreground font-semibold text-sm">Contributors</h2>
           <span className="text-muted text-xs tabular-nums">
             {filtered.length !== total
-              ? `${filtered.length} / ${total.toLocaleString()}`
-              : total.toLocaleString()}
+              ? `${filtered.length} / ${total.toLocaleString("en-US")}`
+              : total.toLocaleString("en-US")}
           </span>
           <span className="text-muted-subtle text-xs">
-            ({mappedCount.toLocaleString()} mapped)
+            ({mappedCount.toLocaleString("en-US")} mapped)
           </span>
         </div>
         <button

@@ -4,7 +4,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useMemo, memo } from "react";
-import maplibregl from "maplibre-gl";
+import * as maplibregl from "@/lib/maplibre";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { MAP_STYLE_DARK, MAP_STYLE_LIGHT } from "@/lib/theme";
 import { fetchAndPatchStyle } from "@/lib/map-style";
@@ -244,7 +244,7 @@ export const LanguageChoropleth = memo(({ countries, onCountryClick }: Props) =>
 
           const subEl = document.createElement("span");
           subEl.className = "tip-sub";
-          subEl.textContent = `${props.topCnt.toLocaleString()} / ${props.total.toLocaleString()} developers`;
+          subEl.textContent = `${props.topCnt.toLocaleString("en-US")} / ${props.total.toLocaleString("en-US")} developers`;
           tipEl.appendChild(subEl);
         } else {
           const subEl = document.createElement("span");

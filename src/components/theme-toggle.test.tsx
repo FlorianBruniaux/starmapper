@@ -2,7 +2,10 @@
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { act, render, screen, fireEvent } from "@testing-library/react";
+import { renderToString } from "react-dom/server";
+import { hydrateRoot } from "react-dom/client";
+import type { Root } from "react-dom/client";
 import { ThemeToggle } from "./theme-toggle";
 
 // jsdom does not implement window.matchMedia — stub it before any import
@@ -28,6 +31,32 @@ beforeEach(() => {
 });
 
 describe("ThemeToggle", () => {
+  it("hydrates the server icon without recovery when a light preference is stored", async () => {
+    let markup: string;
+    vi.stubGlobal("window", undefined);
+    try {
+      markup = renderToString(<ThemeToggle />);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+    localStorage.setItem("starmapper:theme", "light");
+    const container = document.createElement("div");
+    container.innerHTML = markup;
+    document.body.appendChild(container);
+    const onRecoverableError = vi.fn();
+    let root: Root | undefined;
+    try {
+      await act(async () => {
+        root = hydrateRoot(container, <ThemeToggle />, { onRecoverableError });
+      });
+      expect(container.querySelector("button")).toHaveAttribute("aria-label", "Switch to dark mode");
+      expect(onRecoverableError).not.toHaveBeenCalled();
+    } finally {
+      await act(async () => { root?.unmount(); });
+      container.remove();
+    }
+  });
+
   it("renders without crashing", () => {
     render(<ThemeToggle />);
     const btn = screen.getByRole("button");

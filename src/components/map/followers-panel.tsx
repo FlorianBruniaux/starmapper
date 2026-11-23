@@ -149,11 +149,11 @@ export const FollowersPanel = ({
           <h2 className="text-foreground font-semibold text-sm">Followers</h2>
           <span className="text-muted text-xs tabular-nums">
             {filtered.length !== total
-              ? `${filtered.length} / ${total.toLocaleString()}`
-              : total.toLocaleString()}
+              ? `${filtered.length} / ${total.toLocaleString("en-US")}`
+              : total.toLocaleString("en-US")}
           </span>
           <span className="text-muted-subtle text-xs">
-            ({mappedCount.toLocaleString()} mapped)
+            ({mappedCount.toLocaleString("en-US")} mapped)
           </span>
         </div>
         <button
@@ -221,7 +221,6 @@ export const FollowersPanel = ({
             >
               {/* Avatar */}
               {f.avatarUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={f.avatarUrl}
                   alt=""

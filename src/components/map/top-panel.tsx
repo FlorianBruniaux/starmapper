@@ -158,7 +158,7 @@ const TopPanelInner = ({
             vs <span className="text-accent-purple">{compareOwner}/{compareRepo}</span>
             {compareInfo && (
               <span className="text-muted-subtle ml-1">
-                ({compareInfo.stars.toLocaleString()} ★)
+                ({compareInfo.stars.toLocaleString("en-US")} ★)
               </span>
             )}
             {compareStatus === "loading" && (
@@ -177,7 +177,7 @@ const TopPanelInner = ({
           {/* Mapped */}
           <div className="flex flex-col items-center py-2 px-3">
             <div className="text-xl font-bold text-foreground tabular-nums leading-tight">
-              {points.length.toLocaleString()}
+              {points.length.toLocaleString("en-US")}
             </div>
             <div className="text-2xs text-muted uppercase tracking-wide mt-0.5">Mapped</div>
           </div>
@@ -185,7 +185,7 @@ const TopPanelInner = ({
           {/* Total stars */}
           <div className="flex flex-col items-center py-2 px-3">
             <div className="text-xl font-bold text-foreground tabular-nums leading-tight">
-              {(repoInfo?.stars ?? total).toLocaleString() || "—"}
+              {(repoInfo?.stars ?? total).toLocaleString("en-US") || "—"}
             </div>
             <div className="text-2xs text-muted uppercase tracking-wide mt-0.5">Stars</div>
           </div>
@@ -235,7 +235,7 @@ const TopPanelInner = ({
           </div>
           <div className="flex items-center gap-1.5">
             <span className="text-xs font-medium text-muted-subtle tabular-nums">
-              {unmapped.length.toLocaleString()}
+              {unmapped.length.toLocaleString("en-US")}
             </span>
             <ChevronRight size={10} className="text-muted-subtle group-hover:text-muted transition-colors" aria-hidden="true" />
           </div>
@@ -263,7 +263,7 @@ const TopPanelInner = ({
               ? `⏸ Queued, resuming in ${retryIn}s…`
               : status === "refreshing"
               ? "↻ Fetching new stars…"
-              : `Fetching ${processed.toLocaleString()} / ${total.toLocaleString()} (${pct}%)`
+              : `Fetching ${processed.toLocaleString("en-US")} / ${total.toLocaleString("en-US")} (${pct}%)`
             }
             {estimate && status === "loading" && (
               <span className="ml-1 text-muted-subtle">· est. {formatEstimate(estimate)}</span>
@@ -290,12 +290,12 @@ const TopPanelInner = ({
           </div>
           <div className="text-xs text-muted mt-0.5 text-center flex items-center justify-center gap-1">
             <span>
-              {mappingPct}% mapped · {points.length.toLocaleString()} of {displayTotal.toLocaleString()}
+              {mappingPct}% mapped · {points.length.toLocaleString("en-US")} of {displayTotal.toLocaleString("en-US")}
             </span>
             <span className="relative group/tip">
               <Info size={9} className="opacity-60" aria-hidden="true" />
               <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-52 rounded-lg bg-surface border border-border px-3 py-2 text-xs text-foreground leading-relaxed shadow-xl opacity-0 group-hover/tip:opacity-100 transition-opacity duration-150 z-50 whitespace-normal font-normal normal-case tracking-normal">
-                All {displayTotal.toLocaleString()} stargazers are indexed. Only those who&apos;ve set a location in their GitHub profile can be placed on the map.
+                All {displayTotal.toLocaleString("en-US")} stargazers are indexed. Only those who&apos;ve set a location in their GitHub profile can be placed on the map.
               </span>
             </span>
           </div>

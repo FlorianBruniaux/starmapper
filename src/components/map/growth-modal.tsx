@@ -67,7 +67,7 @@ export const GrowthModal = ({ open, onClose, owner, repo, points, unmapped, tota
         <div>
           <h2 className="text-foreground font-semibold text-sm">Star Growth</h2>
           <p className="text-muted text-2xs mt-0.5">
-            {fetching ? "Loading…" : chartData.length > 0 ? `${chartData.length} weeks · ${(totalCount ?? points.length + unmapped.length).toLocaleString()} total stars` : "No timestamp data available"}
+            {fetching ? "Loading…" : chartData.length > 0 ? `${chartData.length} weeks · ${(totalCount ?? points.length + unmapped.length).toLocaleString("en-US")} total stars` : "No timestamp data available"}
           </p>
         </div>
         <button onClick={onClose} aria-label="Close star growth" className="text-muted hover:text-foreground text-lg leading-none"><span aria-hidden="true">✕</span></button>

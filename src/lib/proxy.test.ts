@@ -141,6 +141,14 @@ describe("proxy.ts", () => {
   // MED-1 / LOW-7 / LOW-9: pin the CSP shape so a future edit can't silently reopen the
   // wss: exfiltration channel in production or drop the object-src/style-src fallback.
   describe("buildCsp", () => {
+    it("allows MapLibre module workers only from the same origin", async () => {
+      vi.stubEnv("NODE_ENV", "production");
+      const { __TEST_ONLY__ } = await import("@/proxy");
+      const csp = __TEST_ONLY__.buildCsp("test-nonce");
+      const workerSrc = csp.split("; ").find((d) => d.startsWith("worker-src"));
+      expect(workerSrc).toBe("worker-src 'self'");
+    });
+
     it("omits wss: and unused geocoding hosts from connect-src in production", async () => {
       vi.stubEnv("NODE_ENV", "production");
       const { __TEST_ONLY__ } = await import("@/proxy");

@@ -379,7 +379,7 @@ export const useScanController = ({
     } finally {
       runningRef.current = false;
     }
-  }, [fetchNextChunk, latestStarredAt, owner, repo, total, dispatch, scanRef, setCachedAt, setLatestStarredAt, setTotal]);
+  }, [fetchNextChunk, latestStarredAt, owner, repo, total, dispatch, scanRef, setCachedAt, setLatestStarredAt, setTotal, setHasToken, setServerStats, repoInfo]);
 
   const handleStartScan = useCallback(() => {
     if (!getStoredToken()) {

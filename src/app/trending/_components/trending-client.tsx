@@ -135,7 +135,7 @@ export const TrendingClient = ({ initialRepos, initialTotal, initialMapPoints, r
                           {formatK(vel)}
                         </span>
                         <p className="text-xs text-muted-subtle tabular-nums">
-                          {repo.totalCount.toLocaleString()} total
+                          {repo.totalCount.toLocaleString("en-US")} total
                         </p>
                       </div>
 
