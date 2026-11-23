@@ -215,8 +215,8 @@ export const Header = ({
                 </button>
 
                 {menuOpen && (
-                  <div
-                    role="menu"
+                  <nav
+                    aria-label="Mobile navigation"
                     className="absolute right-0 top-full mt-1 z-50 w-52 rounded-xl border border-border bg-surface shadow-xl overflow-hidden py-1"
                     onClick={() => setMenuOpen(false)}
                   >
@@ -224,7 +224,6 @@ export const Header = ({
                       <>
                         <Link
                           href="/explore"
-                          role="menuitem"
                           className="flex items-center gap-2 px-4 py-2.5 text-sm text-muted hover:text-foreground hover:bg-surface-alt transition-colors"
                         >
                           <Trophy size={13} aria-hidden="true" />
@@ -232,7 +231,6 @@ export const Header = ({
                         </Link>
                         <Link
                           href="/repos"
-                          role="menuitem"
                           className="flex items-center gap-2 px-4 py-2.5 text-sm text-muted hover:text-foreground hover:bg-surface-alt transition-colors"
                         >
                           <BookOpen size={13} aria-hidden="true" />
@@ -240,7 +238,6 @@ export const Header = ({
                         </Link>
                         <Link
                           href="/devs"
-                          role="menuitem"
                           className="flex items-center gap-2 px-4 py-2.5 text-sm text-muted hover:text-foreground hover:bg-surface-alt transition-colors"
                         >
                           <Server size={13} aria-hidden="true" />
@@ -248,7 +245,6 @@ export const Header = ({
                         </Link>
                         <Link
                           href="/devs/atlas"
-                          role="menuitem"
                           className="flex items-center gap-2 px-4 py-2.5 text-sm text-muted hover:text-foreground hover:bg-surface-alt transition-colors"
                         >
                           <Globe size={13} aria-hidden="true" />
@@ -256,7 +252,6 @@ export const Header = ({
                         </Link>
                         <Link
                           href="/feeds"
-                          role="menuitem"
                           className="flex items-center gap-2 px-4 py-2.5 text-sm text-muted hover:text-foreground hover:bg-surface-alt transition-colors"
                         >
                           <Rss size={13} aria-hidden="true" />
@@ -273,7 +268,6 @@ export const Header = ({
                       <>
                         {(showNav || nav) && <div className="my-1 border-t border-border-subtle" />}
                         <button
-                          role="menuitem"
                           onClick={onTokenClick}
                           className={`w-full flex items-center gap-2 px-4 py-2.5 text-sm transition-colors ${
                             hasToken
@@ -295,7 +289,7 @@ export const Header = ({
                         </button>
                       </>
                     )}
-                  </div>
+                  </nav>
                 )}
               </div>
             )}

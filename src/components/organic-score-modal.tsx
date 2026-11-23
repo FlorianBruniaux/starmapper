@@ -96,7 +96,7 @@ const buildSignals = (organic: RepoOrganic): SignalRow[] => {
     rows.push({
       label: "Fork / star ratio",
       tooltip: FORK_TOOLTIP,
-      rawValue: `${fmtPct(ratio)} · ${forksCount.toLocaleString()} forks / ${totalCount.toLocaleString()} ★`,
+      rawValue: `${fmtPct(ratio)} · ${forksCount.toLocaleString("en-US")} forks / ${totalCount.toLocaleString("en-US")} ★`,
       weight: "25%",
       signalScore: score,
       status: totalCount < 5000 ? "na" : ratio >= 0.07 ? "ok" : "warn",
@@ -117,7 +117,7 @@ const buildSignals = (organic: RepoOrganic): SignalRow[] => {
     rows.push({
       label: "Watcher / star ratio",
       tooltip: WATCHER_TOOLTIP,
-      rawValue: `${fmtPct(ratio)} · ${watchersCount.toLocaleString()} watchers`,
+      rawValue: `${fmtPct(ratio)} · ${watchersCount.toLocaleString("en-US")} watchers`,
       weight: "5%",
       signalScore: normWatcher(ratio),
       status: ratio >= 0.005 ? "ok" : "warn",
@@ -147,7 +147,7 @@ const buildSignals = (organic: RepoOrganic): SignalRow[] => {
     rows.push({
       label: "Releases cadence",
       tooltip: RELEASES_TOOLTIP,
-      rawValue: `${releasesCount.toLocaleString()} total releases`,
+      rawValue: `${releasesCount.toLocaleString("en-US")} total releases`,
       weight: "15%",
       signalScore: score,
       status: score >= 60 ? "ok" : "warn",
@@ -174,7 +174,7 @@ const buildSignals = (organic: RepoOrganic): SignalRow[] => {
     rows.push({
       label: "Contributors / 1k stars",
       tooltip: CONTRIBUTORS_TOOLTIP,
-      rawValue: `${contributorsCount.toLocaleString()} contributors · ${((contributorsCount / totalCount) * 1000).toFixed(1)}/1k ★`,
+      rawValue: `${contributorsCount.toLocaleString("en-US")} contributors · ${((contributorsCount / totalCount) * 1000).toFixed(1)}/1k ★`,
       weight: "10%",
       signalScore: score,
       status: score >= 50 ? "ok" : "warn",
@@ -352,7 +352,7 @@ export const OrganicScoreModal = ({ open, onClose, organic, owner, repo, onRecal
                     >
                       <AlertCircle className="size-3.5 text-muted flex-shrink-0" aria-hidden="true" />
                       <span className="text-sm font-semibold text-foreground tabular-nums">
-                        {issuesOnlyCount.toLocaleString()}
+                        {issuesOnlyCount.toLocaleString("en-US")}
                       </span>
                       <span className="text-xs text-muted">issues</span>
                     </a>
@@ -366,7 +366,7 @@ export const OrganicScoreModal = ({ open, onClose, organic, owner, repo, onRecal
                     >
                       <GitPullRequest className="size-3.5 text-muted flex-shrink-0" aria-hidden="true" />
                       <span className="text-sm font-semibold text-foreground tabular-nums">
-                        {organic.openPRsCount.toLocaleString()}
+                        {organic.openPRsCount.toLocaleString("en-US")}
                       </span>
                       <span className="text-xs text-muted">open PRs</span>
                     </a>
@@ -380,7 +380,7 @@ export const OrganicScoreModal = ({ open, onClose, organic, owner, repo, onRecal
                     >
                       <AlertCircle className="size-3.5 text-muted flex-shrink-0" aria-hidden="true" />
                       <span className="text-sm font-semibold text-foreground tabular-nums">
-                        {organic.openIssuesCount.toLocaleString()}
+                        {organic.openIssuesCount.toLocaleString("en-US")}
                       </span>
                       <span className="text-xs text-muted">issues & PRs</span>
                     </a>

@@ -6,12 +6,12 @@ import react from "@vitejs/plugin-react";
 import path from "path";
 
 const alias = {
-  "@": path.resolve(__dirname, "./src"),
+  "@": path.resolve(import.meta.dirname, "./src"),
   // Force react and react-dom to resolve from the same node_modules path,
   // preventing the "Incompatible React versions" error from pnpm's deduped installs.
-  "react": path.resolve(__dirname, "node_modules/react"),
-  "react-dom": path.resolve(__dirname, "node_modules/react-dom"),
-  "react-dom/client": path.resolve(__dirname, "node_modules/react-dom/client"),
+  "react": path.resolve(import.meta.dirname, "node_modules/react"),
+  "react-dom": path.resolve(import.meta.dirname, "node_modules/react-dom"),
+  "react-dom/client": path.resolve(import.meta.dirname, "node_modules/react-dom/client"),
 };
 
 const WORKTREE_EXCLUDE = ["**/.claude/worktrees/**", "**/.worktrees/**", "**/node_modules/**"];
@@ -66,7 +66,6 @@ export default defineConfig({
       },
       // ── Project 2: React components (jsdom environment) ─────────────────────
       {
-        plugins: [react()],
         test: {
           name: "components",
           environment: "jsdom",

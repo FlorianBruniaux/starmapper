@@ -6,10 +6,16 @@ allowBuilds:
 ignoredBuiltDependencies:
   - sharp
   - unrs-resolver
+peerDependencyRules:
+  allowedVersions:
+    # Upstream declares ESLint <=9. This local exception covers only the tested
+    # pair. Keep the accessibility regression test when revalidating versions.
+    'eslint-plugin-jsx-a11y@6.10.2>eslint': "10.15.0"
 overrides:
   hono: ">=4.12.25"
   '@hono/node-server': 1.19.13
   postcss: ">=8.5.18"
-  vite: 8.0.5
+  vite: 8.3.8
   fast-uri: ">=3.1.4"
+  effect: ">=3.22.1 <4"
   sharp: ">=0.35.0"

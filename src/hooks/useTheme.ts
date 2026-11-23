@@ -31,15 +31,9 @@ const notifyThemeListeners = (theme: Theme, preference: Theme | null) => {
 };
 
 export const useTheme = (): UseThemeResult => {
-  const [preference, setPreference] = useState<Theme | null>(() => {
-    if (typeof window === "undefined") return null;
-    return getStoredTheme();
-  });
-  const [theme, setThemeState] = useState<Theme>(() => {
-    if (typeof window === "undefined") return "dark";
-    const stored = getStoredTheme();
-    return stored ?? getSystemTheme();
-  });
+  // Match SSR until the effect resolves the saved or system preference.
+  const [preference, setPreference] = useState<Theme | null>(null);
+  const [theme, setThemeState] = useState<Theme>("dark");
 
   // Apply class to <html> + subscribe to cross-instance theme changes
   useEffect(() => {

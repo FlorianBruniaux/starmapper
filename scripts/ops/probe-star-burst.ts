@@ -307,7 +307,7 @@ const main = async () => {
   if (!SKIP_DB) {
     try {
       const pool = createScriptPool(process.env.DATABASE_URL ?? "");
-      db = new PrismaClient({ adapter: new PrismaPg(pool) } as never);
+      db = new PrismaClient({ adapter: new PrismaPg(pool) });
       await db.$queryRaw`SELECT 1`;
       console.log("✓ DB connected\n");
     } catch (err) {

@@ -81,6 +81,24 @@ describe("useRepoCacheLoader", () => {
 
   // ── localStorage hit ──────────────────────────────────────────────────────
 
+  it("syncs the badge when an updated star count makes the local cache valid", async () => {
+    mockLoadCache.mockReturnValue({ ...LOCAL_CACHE, totalCount: 1000 });
+    mockFetch.mockImplementation((url: string) => {
+      if (url === "/api/stats/test/repo") return jsonResponse({ totalStars: 1000 });
+      return Promise.resolve(new Response(null, { status: 404 }));
+    });
+    const opts = { ...makeOpts(), currentStars: 100 };
+    const { rerender } = renderHook((props) => useRepoCacheLoader(props), { initialProps: opts });
+    await waitFor(() => expect(mockFetch).toHaveBeenCalledWith("/api/stargazer-cache/test/repo", expect.anything()));
+    mockFetch.mockClear();
+
+    rerender({ ...opts, currentStars: 1000 });
+    await waitFor(() => expect(mockFetch).toHaveBeenCalledWith("/api/badge-update", expect.objectContaining({
+      method: "POST",
+      body: JSON.stringify({ owner: "test", repo: "repo", mappedCount: 1, countryCount: 0, totalCount: 1000 }),
+    })));
+  });
+
   it("dispatches set + setStatus(cached) when localStorage has data", async () => {
     mockLoadCache.mockReturnValue(LOCAL_CACHE);
     mockFetch.mockResolvedValue(new Response(null, { status: 404 }));

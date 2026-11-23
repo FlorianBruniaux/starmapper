@@ -72,11 +72,11 @@ export const TimelapseBar = ({
           <span className="text-sm font-semibold text-foreground">{currentLabel}</span>
           <div className="flex flex-col items-end">
             <span className="text-xs font-medium text-foreground tabular-nums">
-              {(totalCount > 0 ? totalCount : mapCount).toLocaleString()} stars
+              {(totalCount > 0 ? totalCount : mapCount).toLocaleString("en-US")} stars
             </span>
             {totalCount > 0 && (
               <span className="text-2xs text-muted-subtle tabular-nums">
-                {mapCount.toLocaleString()} on map
+                {mapCount.toLocaleString("en-US")} on map
               </span>
             )}
           </div>

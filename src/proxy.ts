@@ -170,7 +170,8 @@ const buildCsp = (nonce: string): string =>
     // requestAnimationFrame(function(){$RT=performance.now()});
     // Verify hash after Next.js major version bumps.
     `script-src 'self' 'nonce-${nonce}' 'sha256-7mu4H06fwDCjmnxxr/xNHyuQC6pLTHr4M2E4jXw5WZs='${isDev ? " 'unsafe-eval'" : ""}`,
-    "worker-src blob:",
+    // MapLibre 6 loads its module worker from a same-origin build asset.
+    "worker-src 'self'",
     // <style> elements: only nonce-tagged blocks and self-hosted sheets (no unsafe-inline injection)
     `style-src-elem 'self' 'nonce-${nonce}'`,
     // style="" attributes: unsafe-inline is unavoidable — React dynamic styles (progress bars,

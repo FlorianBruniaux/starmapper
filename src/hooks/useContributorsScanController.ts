@@ -175,7 +175,7 @@ export const useContributorsScanController = ({
     } finally {
       runningRef.current = false;
     }
-  }, [fetchPage, dispatch, setTotal, setTokenOpen]);
+  }, [fetchPage, owner, repo, dispatch, setTotal, setTokenOpen, setHasToken]);
 
   const handleStartScan = useCallback(() => {
     if (!getStoredToken()) {

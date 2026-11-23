@@ -28,15 +28,15 @@ export const GrowthChart = ({ data, totalStars }: { data: [string, number][]; to
     <div>
       <div className="flex gap-4 mb-4">
         <div className="bg-background rounded-lg px-3 py-2 text-center flex-1">
-          <div className="text-lg font-bold text-foreground">{(totalStars ?? total).toLocaleString()}</div>
+          <div className="text-lg font-bold text-foreground">{(totalStars ?? total).toLocaleString("en-US")}</div>
           <div className="text-2xs text-muted uppercase tracking-wide mt-0.5">total stars</div>
         </div>
         <div className="bg-background rounded-lg px-3 py-2 text-center flex-1">
-          <div className="text-lg font-bold text-accent-blue">{peak[1].toLocaleString()}</div>
+          <div className="text-lg font-bold text-accent-blue">{peak[1].toLocaleString("en-US")}</div>
           <div className="text-2xs text-muted uppercase tracking-wide mt-0.5">best week</div>
         </div>
         <div className="bg-background rounded-lg px-3 py-2 text-center flex-1">
-          <div className="text-lg font-bold text-accent-orange">{avg.toLocaleString()}</div>
+          <div className="text-lg font-bold text-accent-orange">{avg.toLocaleString("en-US")}</div>
           <div className="text-2xs text-muted uppercase tracking-wide mt-0.5">avg / week</div>
         </div>
       </div>
@@ -46,7 +46,7 @@ export const GrowthChart = ({ data, totalStars }: { data: [string, number][]; to
         style={{ height: H + 20 }}
         onMouseLeave={() => setHoveredIdx(null)}
         role="img"
-        aria-label={`Star growth chart: ${total.toLocaleString()} total stars, peak week ${peak[1].toLocaleString()} stars on ${peak[0]}, average ${avg.toLocaleString()} per week`}
+        aria-label={`Star growth chart: ${total.toLocaleString("en-US")} total stars, peak week ${peak[1].toLocaleString("en-US")} stars on ${peak[0]}, average ${avg.toLocaleString("en-US")} per week`}
       >
         <title>Star growth chart</title>
         {/* Average line */}
@@ -95,7 +95,7 @@ export const GrowthChart = ({ data, totalStars }: { data: [string, number][]; to
               {hoveredItem[0].slice(5)}
             </text>
             <text x={tooltipX + 8} y={Math.max(26, tooltipY + 24)} fontSize={9} fill="var(--color-foreground)" fontWeight="bold">
-              {hoveredItem[1].toLocaleString()} stars
+              {hoveredItem[1].toLocaleString("en-US")} stars
             </text>
           </g>
         )}

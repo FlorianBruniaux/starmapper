@@ -187,7 +187,7 @@ const ReposBadge = ({ login, count }: { login: string; count: number }) => {
                       )}
                     </div>
                     <span className="text-xs text-muted-subtle flex-shrink-0 tabular-nums mt-0.5">
-                      ★ {(r.stars ?? 0).toLocaleString()}
+                      ★ {(r.stars ?? 0).toLocaleString("en-US")}
                     </span>
                   </a>
                 </li>
@@ -783,7 +783,7 @@ export default function ExplorePage({ initialSummary }: ExplorePageProps = {}) {
           {([
             {
               label: "Developers",
-              value: summaryLoading ? "…" : (summary?.totalUsers ?? 0).toLocaleString(),
+              value: summaryLoading ? "…" : (summary?.totalUsers ?? 0).toLocaleString("en-US"),
               accent: "text-foreground",
               icon: (
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="text-muted-subtle">
@@ -793,7 +793,7 @@ export default function ExplorePage({ initialSummary }: ExplorePageProps = {}) {
             },
             {
               label: "Tracked repos",
-              value: summaryLoading ? "…" : (summary?.totalTrackedRepos ?? 0).toLocaleString(),
+              value: summaryLoading ? "…" : (summary?.totalTrackedRepos ?? 0).toLocaleString("en-US"),
               accent: "text-foreground",
               icon: (
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="text-muted-subtle">
@@ -817,7 +817,7 @@ export default function ExplorePage({ initialSummary }: ExplorePageProps = {}) {
             },
             {
               label: "Countries",
-              value: summaryLoading ? "…" : (summary?.totalCountries ?? 0).toLocaleString(),
+              value: summaryLoading ? "…" : (summary?.totalCountries ?? 0).toLocaleString("en-US"),
               accent: "text-accent-green",
               icon: (
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="text-accent-green/60">
@@ -1014,7 +1014,7 @@ export default function ExplorePage({ initialSummary }: ExplorePageProps = {}) {
                             <span className="text-muted-subtle text-xs tabular-nums w-10 text-right">
                               {u.followers >= 1000
                                 ? `${(u.followers / 1000).toFixed(1)}k`
-                                : u.followers.toLocaleString()}
+                                : u.followers.toLocaleString("en-US")}
                             </span>
                             <button
                               onClick={() => {
@@ -1071,7 +1071,7 @@ export default function ExplorePage({ initialSummary }: ExplorePageProps = {}) {
                       <p className="text-xs text-muted leading-relaxed">
                         Developers who starred the most repos tracked on StarMapper. The count shows how many
                         of the{" "}
-                        {(summary?.totalTrackedRepos ?? 0).toLocaleString()} scanned repos they&apos;ve starred.
+                        {(summary?.totalTrackedRepos ?? 0).toLocaleString("en-US")} scanned repos they&apos;ve starred.
                       </p>
                     </div>
                     {powerData && (
@@ -1273,7 +1273,7 @@ export default function ExplorePage({ initialSummary }: ExplorePageProps = {}) {
                         <div className="flex items-center justify-between text-xs text-muted-subtle pb-1 border-b border-border-subtle">
                           <span>
                             {nearbyData.total > 0
-                              ? `${nearbyData.total.toLocaleString()} developer${nearbyData.total !== 1 ? "s" : ""} within ${nearbyRadius}km of ${nearbyCoords.label}`
+                              ? `${nearbyData.total.toLocaleString("en-US")} developer${nearbyData.total !== 1 ? "s" : ""} within ${nearbyRadius}km of ${nearbyCoords.label}`
                               : `No developers found within ${nearbyRadius}km`}
                           </span>
                         </div>

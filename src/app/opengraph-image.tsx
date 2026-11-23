@@ -3,14 +3,10 @@
 
 import { ImageResponse } from "next/og";
 
-export const runtime = "edge";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-// Fully static card, no fetch, no params. Render it once and never again.
-export const revalidate = false;
-
-export default function Image() {
+const Image = () => {
   return new ImageResponse(
     (
       <div
@@ -85,4 +81,6 @@ export default function Image() {
     ),
     { width: 1200, height: 630 },
   );
-}
+};
+
+export default Image;

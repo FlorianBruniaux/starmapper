@@ -76,7 +76,7 @@ export const Tabs = <T extends string>({
             {tab.label}
             {tab.count !== undefined && (
               <span className="text-2xs tabular-nums bg-surface border border-border px-1.5 py-0.5 rounded-full text-muted-subtle">
-                {tab.count.toLocaleString()}
+                {tab.count.toLocaleString("en-US")}
               </span>
             )}
           </button>

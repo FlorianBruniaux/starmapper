@@ -419,8 +419,8 @@ export default function MapPageClient({ owner, repo, initialRepoInfo, initialSta
 
       {/* Global screen-reader live region for scan progress, errors, and status changes */}
       <div role="status" aria-live="polite" aria-atomic="true" className="sr-only">
-        {status === "loading" && total > 0 && `${processed.toLocaleString()} of ${total.toLocaleString()} stargazers loaded`}
-        {status === "done" && `Scan complete: ${processed.toLocaleString()} stargazers loaded`}
+        {status === "loading" && total > 0 && `${processed.toLocaleString("en-US")} of ${total.toLocaleString("en-US")} stargazers loaded`}
+        {status === "done" && `Scan complete: ${processed.toLocaleString("en-US")} stargazers loaded`}
         {status === "error" && error ? `Error: ${error}` : null}
       </div>
 
@@ -616,7 +616,7 @@ export default function MapPageClient({ owner, repo, initialRepoInfo, initialSta
           <div className="flex items-center justify-between px-5 py-3 border-b border-border-subtle flex-shrink-0">
             <div>
               <span className="text-sm text-muted">
-                <strong className="text-foreground">{unmapped.length.toLocaleString()} stargazers</strong> without location
+                <strong className="text-foreground">{unmapped.length.toLocaleString("en-US")} stargazers</strong> without location
               </span>
               <span className="ml-2 text-2xs text-muted-subtle">(no location set on their GitHub profile)</span>
             </div>
@@ -653,7 +653,7 @@ export default function MapPageClient({ owner, repo, initialRepoInfo, initialSta
                       <span className="flex-shrink-0 text-2xs text-accent-orange font-medium"><span aria-hidden="true">⚡</span> {(u.followers / 1000).toFixed(1)}k</span>
                     )}
                     {u.followers > 0 && u.followers < 1000 && (
-                      <span className="flex-shrink-0 text-2xs text-muted-subtle">{u.followers.toLocaleString()}</span>
+                      <span className="flex-shrink-0 text-2xs text-muted-subtle">{u.followers.toLocaleString("en-US")}</span>
                     )}
                   </div>
                 </div>

@@ -4,17 +4,10 @@
 import { ImageResponse } from "next/og";
 import { logError } from "@/lib/api-helpers";
 
-export const runtime = "edge";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-// Social crawlers hit one OG image per repo path and that path space is unvalidated.
-// Without this, every scanner-invented /{owner}/{repo} rendered a fresh ImageResponse
-// plus an uncached GitHub call. A repo card is stable for a day; the star count on it
-// is decorative.
-export const revalidate = 86400;
-
-export default async function Image({ params }: { params: Promise<{ owner: string; repo: string }> }) {
+const Image = async ({ params }: { params: Promise<{ owner: string; repo: string }> }) => {
   const { owner, repo } = await params;
 
   let stars: number | null = null;
@@ -79,7 +72,7 @@ export default async function Image({ params }: { params: Promise<{ owner: strin
               ? "unknown"
               : stars >= 1000
                 ? `${(stars / 1000).toFixed(1)}k`
-                : stars.toLocaleString()}
+                : stars.toLocaleString("en-US")}
           </span>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             {/* Inline star path (no text glyph): Satori can't download a dynamic
@@ -98,6 +91,13 @@ export default async function Image({ params }: { params: Promise<{ owner: strin
         </div>
       </div>
     ),
-    { width: 1200, height: 630 }
+    {
+      width: 1200,
+      height: 630,
+      // Cache rendered cards for a day as well as the GitHub metadata above.
+      headers: { "Cache-Control": "public, max-age=0, s-maxage=86400, stale-while-revalidate=86400" },
+    },
   );
-}
+};
+
+export default Image;

@@ -4,7 +4,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useMemo, memo } from "react";
-import maplibregl from "maplibre-gl";
+import * as maplibregl from "@/lib/maplibre";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { MAP_STYLE_DARK, MAP_STYLE_LIGHT } from "@/lib/theme";
 import { fetchAndPatchStyle } from "@/lib/map-style";
@@ -213,7 +213,7 @@ export const CountryChoropleth = memo(({ countryData, selectedCountry, onCountry
         const strong = document.createElement("strong");
         strong.textContent = name;
         const span = document.createElement("span");
-        span.textContent = count > 0 ? `${count.toLocaleString()} developers` : "no data";
+        span.textContent = count > 0 ? `${count.toLocaleString("en-US")} developers` : "no data";
         tipEl.append(strong, span);
 
         tooltipRef.current

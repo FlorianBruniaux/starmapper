@@ -127,7 +127,7 @@ export const LanguageSwitcher = ({
                   ].join(" ")}
                 >
                   <span className="truncate">{opt.name}</span>
-                  <span className="text-muted shrink-0">{opt.count.toLocaleString()}</span>
+                  <span className="text-muted shrink-0">{opt.count.toLocaleString("en-US")}</span>
                 </button>
               ))
             )}

@@ -4,7 +4,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, useMemo, memo } from "react";
-import maplibregl from "maplibre-gl";
+import * as maplibregl from "@/lib/maplibre";
 import "maplibre-gl/dist/maplibre-gl.css";
 import type { StargazerPoint } from "@/app/api/chunk/route";
 import { getStoredProjection, setStoredProjection } from "@/lib/theme";
@@ -318,7 +318,7 @@ const makeGridCellPopup = (bio: string, login: string): HTMLElement => {
 
   const heading = document.createElement("div");
   heading.style.cssText = "font-weight:600;font-size:15px;color:var(--color-foreground);margin-bottom:6px";
-  heading.textContent = `${count.toLocaleString()} developer${count !== 1 ? "s" : ""}`;
+  heading.textContent = `${count.toLocaleString("en-US")} developer${count !== 1 ? "s" : ""}`;
   el.appendChild(heading);
 
   const sub = document.createElement("div");
@@ -426,8 +426,8 @@ const makePopupElement = (props: Record<string, unknown>): HTMLElement => {
     }
     countLink.style.cssText = "color:var(--color-muted);text-decoration:none;border-bottom:1px dotted currentColor;cursor:pointer";
     countLink.textContent = isContributors
-      ? `${commitCount.toLocaleString()} ${commitCount === 1 ? "commit" : "commits"}`
-      : `${commitCount.toLocaleString()} followers`;
+      ? `${commitCount.toLocaleString("en-US")} ${commitCount === 1 ? "commit" : "commits"}`
+      : `${commitCount.toLocaleString("en-US")} followers`;
     countLink.addEventListener("mouseenter", () => {
       countLink.style.color = "var(--color-accent-blue)";
     });
@@ -938,7 +938,7 @@ const StargazerMapInner = ({ points, comparePoints, flyTarget, onFlyDone, onRead
   }
 
   return (
-    <div role="region" aria-label={`Stargazer map — ${points.length.toLocaleString()} developers mapped`} className="relative w-full h-full">
+    <div role="region" aria-label={`Stargazer map — ${points.length.toLocaleString("en-US")} developers mapped`} className="relative w-full h-full">
       <div ref={containerRef} className="w-full h-full" />
       <JawgBadge />
       {showProjectionToggle && ENABLE_GLOBE && (

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright (C) 2026 Florian Bruniaux <florian@bruniaux.com>
 
-import "@testing-library/jest-dom";
+import "@testing-library/jest-dom/vitest";
 
 // jsdom does not fully initialise Storage when running inside Vitest worker threads.
 // Provide a Map-backed implementation so component tests can use localStorage normally.
